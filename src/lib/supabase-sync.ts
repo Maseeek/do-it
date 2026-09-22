@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AppState, CheckIn, Habit, Player, Stake } from './types';
-import { INITIAL_HABITS, INITIAL_PLAYERS, getInitialStakes } from './seed';
+import { AppState, CheckIn, Habit, Stake } from './types';
+import { INITIAL_HABITS, getInitialStakes } from './seed';
 
 // Type mapping helpers (camelCase <-> snake_case)
 export function habitToRow(habit: Habit) {
@@ -24,6 +24,7 @@ export function habitToRow(habit: Habit) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function rowToHabit(row: any): Habit {
   return {
     id: row.id,
@@ -63,6 +64,7 @@ export function checkInToRow(checkIn: CheckIn) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function rowToCheckIn(row: any): CheckIn {
   let proofUrl: string | undefined = undefined;
   let proofUrls: string[] | undefined = undefined;
@@ -111,6 +113,7 @@ export function stakeToRow(stake: Stake) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function rowToStake(row: any): Stake {
   return {
     id: row.id,

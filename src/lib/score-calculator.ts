@@ -40,7 +40,7 @@ export function calculatePlayerScores(
   // Calculate streak
   const uniqueDates = Array.from(new Set(playerLogs.map((l) => l.date))).sort().reverse();
   let currentStreak = 0;
-  let checkDate = parseDate(today);
+  const checkDate = parseDate(today);
 
   // Check if today is completed or yesterday was the last
   const todayIncluded = uniqueDates.includes(today);

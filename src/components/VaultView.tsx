@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Habit, HabitCategory, PlayerId, Stake, StakePeriod } from '@/lib/types';
+import { Habit, HabitCategory, PlayerId, Stake, StakePeriod, CheckIn, Player } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
-import { getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
+import { ProofGalleryModal } from './ProofGalleryModal';
+import { formatFriendlyDate, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import {
-  Award,
+  Camera,
   CheckCircle2,
   Cloud,
   Flame,
@@ -28,6 +29,8 @@ export function VaultView() {
     maciekSummary,
     myrnaSummary,
     habits,
+    checkIns,
+    players,
     addHabit,
     updateHabit,
     deleteHabit,
@@ -41,7 +44,13 @@ export function VaultView() {
     updateSupabaseConfig,
   } = useStore();
 
-  const [activeSection, setActiveSection] = useState<'karma' | 'stakes' | 'habits' | 'settings'>('karma');
+  const [activeSection, setActiveSection] = useState<'karma' | 'stakes' | 'proofs' | 'habits' | 'settings'>('karma');
+  const [proofFilter, setProofFilter] = useState<'all' | 'maciek' | 'myrna'>('all');
+  const [selectedVaultProof, setSelectedVaultProof] = useState<{
+    checkIn: CheckIn;
+    habit: Habit;
+    player: Player;
+  } | null>(null);
 
   // Habit modal
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
@@ -213,6 +222,14 @@ export function VaultView() {
           }`}
         >
           Stakes
+        </button>
+        <button
+          onClick={() => setActiveSection('proofs')}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+            activeSection === 'proofs' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Proofs
         </button>
         <button
           onClick={() => setActiveSection('habits')}
@@ -418,6 +435,139 @@ export function VaultView() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* PROOF VAULT */}
+      {activeSection === 'proofs' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <h3 className="text-sm font-bold text-white">Proof Gallery</h3>
+              <p className="text-[11px] text-zinc-400 font-mono">
+                Clean Space photo evidence & accountability
+              </p>
+            </div>
+
+            {/* Filter pills */}
+            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 p-0.5 rounded-lg text-xs font-mono">
+              <button
+                onClick={() => setProofFilter('all')}
+                className={`px-2 py-0.5 rounded transition-colors ${
+                  proofFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setProofFilter('maciek')}
+                className={`px-2 py-0.5 rounded transition-colors ${
+                  proofFilter === 'maciek' ? 'bg-blue-500/20 text-blue-300' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                ⚡ Maciek
+              </button>
+              <button
+                onClick={() => setProofFilter('myrna')}
+                className={`px-2 py-0.5 rounded transition-colors ${
+                  proofFilter === 'myrna' ? 'bg-pink-500/20 text-pink-300' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                ✨ Myrna
+              </button>
+            </div>
+          </div>
+
+          {/* List of check-ins with proof */}
+          {(() => {
+            const proofCheckIns = checkIns
+              .filter((c) => (c.proofUrls && c.proofUrls.length > 0) || c.proofUrl)
+              .filter((c) => proofFilter === 'all' || c.playerId === proofFilter)
+              .sort(
+                (a, b) =>
+                  new Date(b.completedAt || b.date).getTime() -
+                  new Date(a.completedAt || a.date).getTime()
+              );
+
+            if (proofCheckIns.length === 0) {
+              return (
+                <div className="rounded-2xl border border-zinc-800 bg-[#0c0d10] p-8 text-center text-zinc-400">
+                  <Camera className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-white">No proof photos found</p>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Upload photos when checking in Clean Space to view them in the gallery.
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {proofCheckIns.map((ci) => {
+                  const habit = habits.find((h) => h.id === ci.habitId);
+                  const player = players[ci.playerId];
+                  const photos =
+                    ci.proofUrls && ci.proofUrls.length > 0
+                      ? ci.proofUrls
+                      : ci.proofUrl
+                      ? [ci.proofUrl]
+                      : [];
+
+                  if (!habit || !player || photos.length === 0) return null;
+
+                  return (
+                    <div
+                      key={ci.id}
+                      className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-2.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{player.avatar}</span>
+                          <div>
+                            <div className="text-xs font-semibold text-white">
+                              {player.name} • {habit.title}
+                            </div>
+                            <span className="text-[10px] text-zinc-400 font-mono">
+                              {formatFriendlyDate(ci.date)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setSelectedVaultProof({ checkIn: ci, habit, player })}
+                          className="text-[10px] font-mono text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1"
+                        >
+                          <Camera className="w-3 h-3 text-emerald-400" />
+                          <span>{photos.length} {photos.length === 1 ? 'photo' : 'photos'}</span>
+                        </button>
+                      </div>
+
+                      {/* Photo thumbnails grid */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {photos.map((photo, pIdx) => (
+                          <button
+                            key={pIdx}
+                            onClick={() => setSelectedVaultProof({ checkIn: ci, habit, player })}
+                            className="relative rounded-xl overflow-hidden aspect-video border border-zinc-800 hover:border-zinc-500 transition-colors group"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={photo}
+                              alt={`${player.name}'s proof photo ${pIdx + 1}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[8px] font-mono px-1 rounded">
+                              #{pIdx + 1}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -864,6 +1014,26 @@ export function VaultView() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Vault Proof Gallery Lightbox Modal */}
+      {selectedVaultProof && (
+        <ProofGalleryModal
+          isOpen={selectedVaultProof !== null}
+          onClose={() => setSelectedVaultProof(null)}
+          playerName={selectedVaultProof.player.name}
+          playerAvatar={selectedVaultProof.player.avatar}
+          habitTitle={selectedVaultProof.habit.title}
+          images={
+            selectedVaultProof.checkIn.proofUrls && selectedVaultProof.checkIn.proofUrls.length > 0
+              ? selectedVaultProof.checkIn.proofUrls
+              : selectedVaultProof.checkIn.proofUrl
+              ? [selectedVaultProof.checkIn.proofUrl]
+              : []
+          }
+          date={selectedVaultProof.checkIn.date}
+          completedAt={selectedVaultProof.checkIn.completedAt}
+        />
       )}
     </div>
   );

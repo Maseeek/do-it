@@ -5,12 +5,24 @@ import { Habit } from '@/lib/types';
 import { useStore } from '@/lib/store';
 import { HabitIcon } from './HabitIcon';
 import { ProofModal } from './ProofModal';
+import { ProofGalleryModal } from './ProofGalleryModal';
 import { BookOpen, Camera, Check, Minus, Plus, Sparkles } from 'lucide-react';
 
 export function HabitCard({ habit }: { habit: Habit }) {
-  const { toggleHabit, isHabitCompletedToday, getHabitCheckInToday, activePlayer } = useStore();
+  const {
+    toggleHabit,
+    isHabitCompletedToday,
+    getHabitCheckInToday,
+    activePlayer,
+    partnerId,
+    players,
+    partnerCleanSpaceCheckIn,
+    partnerCleanSpaceHabit,
+  } = useStore();
+
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [showFullProof, setShowFullProof] = useState(false);
+  const [showPartnerProof, setShowPartnerProof] = useState(false);
   const [showQtyLogger, setShowQtyLogger] = useState(false);
 
   const completed = isHabitCompletedToday(habit.id);
@@ -18,6 +30,22 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const isMaciek = activePlayer?.id === 'maciek';
   const accentColor = isMaciek ? 'border-blue-500/50 bg-blue-500' : 'border-pink-500/50 bg-pink-500';
+
+  const partnerPlayer = partnerId ? players[partnerId] : null;
+
+  const proofPhotos = checkIn?.proofUrls && checkIn.proofUrls.length > 0
+    ? checkIn.proofUrls
+    : checkIn?.proofUrl
+    ? [checkIn.proofUrl]
+    : [];
+
+  const partnerProofPhotos = partnerCleanSpaceCheckIn?.proofUrls && partnerCleanSpaceCheckIn.proofUrls.length > 0
+    ? partnerCleanSpaceCheckIn.proofUrls
+    : partnerCleanSpaceCheckIn?.proofUrl
+    ? [partnerCleanSpaceCheckIn.proofUrl]
+    : [];
+
+  const isCleanSpace = habit.category === 'environment' && habit.requiresProof;
 
   const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);
 
@@ -34,7 +62,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
     if (completed) {
       toggleHabit(habit.id);
     } else {
-      if (habit.requiresProof && !checkIn?.proofUrl) {
+      if (habit.requiresProof && proofPhotos.length === 0) {
         setIsProofModalOpen(true);
       } else {
         toggleHabit(habit.id);
@@ -42,8 +70,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
     }
   };
 
-  const handleProofConfirmed = (proofUrl?: string) => {
-    toggleHabit(habit.id, proofUrl);
+  const handleProofConfirmed = (proofUrls?: string[]) => {
+    toggleHabit(habit.id, proofUrls);
   };
 
   const handleLogQuantity = (qty: number) => {
@@ -78,6 +106,10 @@ export function HabitCard({ habit }: { habit: Habit }) {
           {/* Middle: Habit Details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="w-3.5 h-3.5 text-zinc-400">
+                <HabitIcon name={habit.iconName} className="w-3.5 h-3.5" />
+              </span>
+
               <span className={`text-[10px] uppercase font-mono font-medium tracking-wider ${
                 completed ? 'text-zinc-500' : 'text-zinc-400'
               }`}>
@@ -134,13 +166,14 @@ export function HabitCard({ habit }: { habit: Habit }) {
             </button>
 
             {/* Proof thumbnail button if proof exists */}
-            {checkIn?.proofUrl && (
+            {proofPhotos.length > 0 && (
               <button
                 onClick={() => setShowFullProof(true)}
-                className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 hover:text-emerald-300"
+                className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30 transition-colors"
+                title="View your uploaded proof photos"
               >
                 <Camera className="w-3 h-3" />
-                Proof
+                Proof {proofPhotos.length > 1 ? `(${proofPhotos.length})` : ''}
               </button>
             )}
 
@@ -155,6 +188,24 @@ export function HabitCard({ habit }: { habit: Habit }) {
             )}
           </div>
         </div>
+
+        {/* Clean Space Partner Proof Quick link */}
+        {isCleanSpace && partnerCleanSpaceCheckIn && partnerProofPhotos.length > 0 && (
+          <div className="mt-2.5 pt-2 border-t border-zinc-800/60 flex items-center justify-between text-[11px] font-mono">
+            <span className="text-zinc-400 flex items-center gap-1">
+              <span>{partnerPlayer?.avatar}</span>
+              <span>{partnerPlayer?.name} checked in Clean Space</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowPartnerProof(true)}
+              className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-1 bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20 transition-colors"
+            >
+              <Camera className="w-3 h-3" />
+              View {partnerPlayer?.name}&apos;s photos ({partnerProofPhotos.length})
+            </button>
+          </div>
+        )}
 
         {/* Inline Quantitative Reading Logger */}
         {showQtyLogger && habit.isQuantitative && (
@@ -235,28 +286,35 @@ export function HabitCard({ habit }: { habit: Habit }) {
         isOpen={isProofModalOpen}
         onClose={() => setIsProofModalOpen(false)}
         onConfirm={handleProofConfirmed}
+        initialPhotos={proofPhotos}
       />
 
-      {/* Photo Preview Modal */}
-      {showFullProof && checkIn?.proofUrl && (
-        <div
-          onClick={() => setShowFullProof(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-        >
-          <div className="max-w-md w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={checkIn.proofUrl}
-              alt="Verification"
-              className="w-full h-auto rounded-xl object-contain max-h-[70vh]"
-            />
-            <div className="p-3 text-center">
-              <span className="text-xs text-zinc-400 font-mono">
-                Verified check-in for {habit.title}
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* Own Proof Gallery Modal */}
+      {showFullProof && proofPhotos.length > 0 && (
+        <ProofGalleryModal
+          isOpen={showFullProof}
+          onClose={() => setShowFullProof(false)}
+          playerName={activePlayer?.name || 'You'}
+          playerAvatar={activePlayer?.avatar || '⚡'}
+          habitTitle={habit.title}
+          images={proofPhotos}
+          date={checkIn?.date}
+          completedAt={checkIn?.completedAt}
+        />
+      )}
+
+      {/* Partner Proof Gallery Modal */}
+      {showPartnerProof && partnerProofPhotos.length > 0 && (
+        <ProofGalleryModal
+          isOpen={showPartnerProof}
+          onClose={() => setShowPartnerProof(false)}
+          playerName={partnerPlayer?.name || 'Partner'}
+          playerAvatar={partnerPlayer?.avatar || '✨'}
+          habitTitle={partnerCleanSpaceHabit?.title || 'Clean Space'}
+          images={partnerProofPhotos}
+          date={partnerCleanSpaceCheckIn?.date}
+          completedAt={partnerCleanSpaceCheckIn?.completedAt}
+        />
       )}
     </>
   );

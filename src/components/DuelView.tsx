@@ -4,13 +4,21 @@ import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { LeaderboardTier } from '@/lib/types';
 import { getDaysRemainingInMonth, getDaysRemainingInWeek, getTodayDateString } from '@/lib/date-utils';
-import { Check, Clock, Flame, Sparkles, Trophy, Zap, Sliders, Trash2, X } from 'lucide-react';
+import { Check, Clock, Flame, Sparkles, Trophy, Zap, Sliders, Trash2, X, Camera } from 'lucide-react';
+import { ProofGalleryModal } from './ProofGalleryModal';
+import { Habit, CheckIn, Player } from '@/lib/types';
 
 export function DuelView() {
   const [selectedTier, setSelectedTier] = useState<LeaderboardTier>('weekly');
   const [isEditingStake, setIsEditingStake] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [activeProofView, setActiveProofView] = useState<{
+    habit: Habit;
+    checkIn: CheckIn;
+    player: Player;
+  } | null>(null);
+
   const {
     maciekSummary,
     myrnaSummary,
@@ -21,6 +29,7 @@ export function DuelView() {
     deleteStake,
     habits,
     checkIns,
+    players,
   } = useStore();
 
   const comparison = getComparison(selectedTier);
@@ -309,11 +318,18 @@ export function DuelView() {
               Maciek ({maciekSummary.today} pts)
             </div>
             {maciekHabits.map((h) => {
-              const done = isCompletedToday(h.id);
+              const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
+              const done = !!checkIn;
+              const proofPhotos = checkIn?.proofUrls && checkIn.proofUrls.length > 0
+                ? checkIn.proofUrls
+                : checkIn?.proofUrl
+                ? [checkIn.proofUrl]
+                : [];
+
               return (
                 <div
                   key={h.id}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg border text-[11px] truncate ${
+                  className={`flex items-center gap-1.5 p-1.5 rounded-lg border text-[11px] ${
                     done
                       ? 'bg-blue-500/10 border-blue-500/20 text-white'
                       : 'bg-zinc-900/40 border-zinc-800/40 text-zinc-500'
@@ -326,7 +342,19 @@ export function DuelView() {
                   >
                     {done && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                   </div>
-                  <span className="truncate">{h.title}</span>
+                  <span className="truncate flex-1">{h.title}</span>
+
+                  {proofPhotos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveProofView({ habit: h, checkIn: checkIn!, player: players.maciek })}
+                      className="flex items-center gap-1 text-[9px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 px-1.5 py-0.5 rounded border border-emerald-500/30 flex-shrink-0 transition-colors"
+                      title="View Maciek's proof photos"
+                    >
+                      <Camera className="w-2.5 h-2.5" />
+                      <span>{proofPhotos.length > 1 ? proofPhotos.length : 'Proof'}</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -338,11 +366,18 @@ export function DuelView() {
               Myrna ({myrnaSummary.today} pts)
             </div>
             {myrnaHabits.map((h) => {
-              const done = isCompletedToday(h.id);
+              const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
+              const done = !!checkIn;
+              const proofPhotos = checkIn?.proofUrls && checkIn.proofUrls.length > 0
+                ? checkIn.proofUrls
+                : checkIn?.proofUrl
+                ? [checkIn.proofUrl]
+                : [];
+
               return (
                 <div
                   key={h.id}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg border text-[11px] truncate ${
+                  className={`flex items-center gap-1.5 p-1.5 rounded-lg border text-[11px] ${
                     done
                       ? 'bg-pink-500/10 border-pink-500/20 text-white'
                       : 'bg-zinc-900/40 border-zinc-800/40 text-zinc-500'
@@ -355,13 +390,45 @@ export function DuelView() {
                   >
                     {done && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                   </div>
-                  <span className="truncate">{h.title}</span>
+                  <span className="truncate flex-1">{h.title}</span>
+
+                  {proofPhotos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveProofView({ habit: h, checkIn: checkIn!, player: players.myrna })}
+                      className="flex items-center gap-1 text-[9px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 px-1.5 py-0.5 rounded border border-emerald-500/30 flex-shrink-0 transition-colors"
+                      title="View Myrna's proof photos"
+                    >
+                      <Camera className="w-2.5 h-2.5" />
+                      <span>{proofPhotos.length > 1 ? proofPhotos.length : 'Proof'}</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
       </div>
+
+      {/* Proof Gallery Lightbox Modal */}
+      {activeProofView && (
+        <ProofGalleryModal
+          isOpen={activeProofView !== null}
+          onClose={() => setActiveProofView(null)}
+          playerName={activeProofView.player.name}
+          playerAvatar={activeProofView.player.avatar}
+          habitTitle={activeProofView.habit.title}
+          images={
+            activeProofView.checkIn.proofUrls && activeProofView.checkIn.proofUrls.length > 0
+              ? activeProofView.checkIn.proofUrls
+              : activeProofView.checkIn.proofUrl
+              ? [activeProofView.checkIn.proofUrl]
+              : []
+          }
+          date={activeProofView.checkIn.date}
+          completedAt={activeProofView.checkIn.completedAt}
+        />
+      )}
     </div>
   );
 }
