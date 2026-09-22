@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Do It ⚡
 
-## Getting Started
+A minimalist, high-performance couples habit tracking and accountability duel built for **Maciek** and **Myrna**.
 
-First, run the development server:
+Designed with a sleek **Linear-inspired dark mode aesthetic**, 1-tap manual logging, calibrated habit parity, tiered leaderboards (Weekly, Monthly, Yearly, Lifetime Karma), and customizable mutual stakes.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Linear Dark Palette**: Deep black `#08090a` canvas, hairline `#27272a` borders, and high-contrast typography.
+- **1-Tap Tactile Logging**: Fast, frictionless check-ins with micro-animations and celebration confetti.
+- **Reading Page Stepper**: Quantitative habit tracking awarding 1 point per page up to a 25-point cap.
+- **Balanced Parity Matrix**: 10 daily habits with a **240 Daily Par target** and weekly frequency flexibility (Gym 4x/wk, Sport 3x/wk).
+- **The Duel**: Real-time head-to-head tug-of-war score bar, lead differentials, and side-by-side mutual checklist.
+- **Stakes & Wagers**: Weekly (Sunday dinner dates) and Monthly (Spa getaways) reward stakes with direct prize crediting.
+- **Zero-Password Profile Identity**: 1-time "Who are you?" device picker persisted for everyday use.
+- **PWA Ready**: Dynamic app icons (`/icon`, `/apple-icon`, `/manifest.webmanifest`) ready for *"Add to Home Screen"* on iOS & Android.
+- **Cloud Sync Seam**: Runs offline-first with zero setup, with optional Supabase PostgreSQL sync configurable in Settings.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠️ Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Framework**: [Next.js 15](https://nextjs.org) (App Router, Turbopack)
+- **Language**: TypeScript
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com)
+- **Icons**: [Lucide React](https://lucide.dev)
+- **Micro-effects**: [canvas-confetti](https://www.npmjs.com/package/canvas-confetti)
+- **Persistence**: Hybrid LocalStorage + optional [Supabase](https://supabase.com)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Getting Started
 
-## Deploy on Vercel
+### Local Development
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Mobile Installation (Add to Home Screen)
+
+1. Deploy to [Vercel](https://vercel.com) by connecting this repository.
+2. Open your deployed URL on your phone (Safari on iOS, Chrome on Android).
+3. Tap **Share → Add to Home Screen**.
+4. Launch "Do It" directly from your home screen as a standalone borderless app.
+
+---
+
+## 🗺️ Architecture & Decisions
+
+- Domain glossary: [`CONTEXT.md`](CONTEXT.md)
+- Architectural Decision Records: [`docs/adr/`](docs/adr/)
+- Wayfinder planning map: [`.scratch/do-it-app/map.md`](.scratch/do-it-app/map.md)
