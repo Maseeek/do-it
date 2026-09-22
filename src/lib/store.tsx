@@ -26,6 +26,7 @@ import {
   syncInitialDataFromSupabase,
   upsertHabitSupabase,
   upsertStakeSupabase,
+  deleteStakeSupabase,
 } from './supabase-sync';
 
 const STORAGE_KEY = 'do_it_app_data_v2';
@@ -47,14 +48,19 @@ interface StoreContextType {
   activePlayerSummary: PlayerScoreSummary;
   selectProfile: (id: PlayerId) => void;
   switchProfile: () => void;
-  toggleHabit: (habitId: string, proofUrl?: string, quantity?: number) => void;
+  toggleHabit: (habitId: string, proofUrl?: string | string[], quantity?: number) => void;
   isHabitCompletedToday: (habitId: string) => boolean;
   getHabitCheckInToday: (habitId: string) => CheckIn | undefined;
+  getCheckInForHabit: (habitId: string, date?: string) => CheckIn | undefined;
+  partnerId: PlayerId | null;
+  partnerCleanSpaceHabit: Habit | undefined;
+  partnerCleanSpaceCheckIn: CheckIn | undefined;
   addHabit: (newHabit: Omit<Habit, 'id'>) => void;
   updateHabit: (updatedHabit: Habit) => void;
   deleteHabit: (habitId: string) => void;
   updateStake: (updatedStake: Stake) => void;
   addStake: (newStake: Omit<Stake, 'id'>) => void;
+  deleteStake: (stakeId: string) => void;
   activeWeeklyStake: Stake | undefined;
   activeMonthlyStake: Stake | undefined;
   getComparison: (tier: LeaderboardTier) => ReturnType<typeof getVersusComparison>;
@@ -195,6 +201,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 ? prev.stakes.map((s) => (s.id === stake.id ? stake : s))
                 : [...prev.stakes, stake],
             }));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setState((prev) => ({
+              ...prev,
+              stakes: prev.stakes.filter((s) => s.id !== deletedId),
+            }));
           }
         }
       )
@@ -235,7 +247,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return state.checkIns.find((c) => c.habitId === habitId && c.date === todayStr);
   };
 
-  const toggleHabit = (habitId: string, proofUrl?: string, quantity?: number) => {
+  const getCheckInForHabit = (habitId: string, date = todayStr): CheckIn | undefined => {
+    return state.checkIns.find((c) => c.habitId === habitId && c.date === date);
+  };
+
+  const partnerId: PlayerId | null =
+    state.activePlayerId === 'maciek' ? 'myrna' : state.activePlayerId === 'myrna' ? 'maciek' : null;
+
+  const partnerCleanSpaceHabit = state.habits.find(
+    (h) => h.playerId === partnerId && h.category === 'environment' && h.requiresProof
+  );
+
+  const partnerCleanSpaceCheckIn = partnerCleanSpaceHabit
+    ? state.checkIns.find((c) => c.habitId === partnerCleanSpaceHabit.id && c.date === todayStr)
+    : undefined;
+
+  const toggleHabit = (habitId: string, proofUrl?: string | string[], quantity?: number) => {
     if (!state.activePlayerId) return;
 
     const habit = state.habits.find((h) => h.id === habitId);
@@ -254,7 +281,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       );
     }
 
-    if (existingCheckIn && quantity === undefined) {
+    // Process proofUrl / proofUrls array
+    const proofUrls = Array.isArray(proofUrl)
+      ? proofUrl
+      : proofUrl
+      ? [proofUrl]
+      : undefined;
+    const primaryProofUrl = proofUrls && proofUrls.length > 0 ? proofUrls[0] : undefined;
+
+    if (existingCheckIn && quantity === undefined && proofUrl === undefined) {
       // Un-check
       setState((prev) => ({
         ...prev,
@@ -264,13 +299,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (supabaseRef.current) {
         deleteCheckInSupabase(supabaseRef.current, habitId, todayStr);
       }
-    } else if (existingCheckIn && quantity !== undefined) {
-      // Update quantity on existing check-in
+    } else if (existingCheckIn) {
+      // Update existing check-in
       const updatedCheckIn: CheckIn = {
         ...existingCheckIn,
         pointsEarned: pointsToAward,
-        quantity,
-        proofUrl: proofUrl || existingCheckIn.proofUrl,
+        quantity: quantity !== undefined ? quantity : existingCheckIn.quantity,
+        proofUrl: primaryProofUrl || existingCheckIn.proofUrl,
+        proofUrls: proofUrls || existingCheckIn.proofUrls,
       };
 
       setState((prev) => ({
@@ -290,7 +326,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         date: todayStr,
         pointsEarned: pointsToAward,
         quantity,
-        proofUrl,
+        proofUrl: primaryProofUrl,
+        proofUrls,
         completedAt: new Date().toISOString(),
       };
 
@@ -369,6 +406,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteStake = (stakeId: string) => {
+    setState((prev) => ({
+      ...prev,
+      stakes: prev.stakes.filter((s) => s.id !== stakeId),
+    }));
+
+    if (supabaseRef.current) {
+      deleteStakeSupabase(supabaseRef.current, stakeId);
+    }
+  };
+
   const updateSupabaseConfig = (config: { url: string; anonKey: string; enabled: boolean }) => {
     setState((prev) => ({
       ...prev,
@@ -433,11 +481,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         toggleHabit,
         isHabitCompletedToday,
         getHabitCheckInToday,
+        getCheckInForHabit,
+        partnerId,
+        partnerCleanSpaceHabit,
+        partnerCleanSpaceCheckIn,
         addHabit,
         updateHabit,
         deleteHabit,
         updateStake,
         addStake,
+        deleteStake,
         activeWeeklyStake,
         activeMonthlyStake,
         getComparison,

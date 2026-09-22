@@ -49,7 +49,8 @@ export interface CheckIn {
   date: string; // YYYY-MM-DD
   pointsEarned: number;
   quantity?: number; // e.g. 25 pages
-  proofUrl?: string; // base64 or url
+  proofUrl?: string; // base64 or url (primary)
+  proofUrls?: string[]; // multiple base64 or urls
   completedAt: string; // ISO string
 }
 

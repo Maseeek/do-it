@@ -34,6 +34,7 @@ export function VaultView() {
     stakes,
     addStake,
     updateStake,
+    deleteStake,
     switchProfile,
     selectProfile,
     resetToDefaults,
@@ -135,6 +136,14 @@ export function VaultView() {
     setStakePeriod(period);
     setStakeTitle('');
     setStakeDesc('');
+    setIsStakeModalOpen(true);
+  };
+
+  const openEditStakeModal = (stake: Stake) => {
+    setEditingStake(stake);
+    setStakePeriod(stake.period);
+    setStakeTitle(stake.title);
+    setStakeDesc(stake.description);
     setIsStakeModalOpen(true);
   };
 
@@ -330,7 +339,7 @@ export function VaultView() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                           stake.period === 'monthly'
@@ -345,7 +354,7 @@ export function VaultView() {
                         )}
                       </div>
 
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <span
                           className={`text-[10px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full border ${
                             stake.period === 'monthly'
@@ -355,9 +364,26 @@ export function VaultView() {
                         >
                           {stake.period} Wager
                         </span>
-                        <h4 className="text-sm font-bold text-white mt-1.5">{stake.title}</h4>
+                        <h4 className="text-sm font-bold text-white mt-1.5 truncate">{stake.title}</h4>
                         <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{stake.description}</p>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => openEditStakeModal(stake)}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors"
+                        title="Edit wager"
+                      >
+                        <Sliders className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => deleteStake(stake.id)}
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-800/80 transition-colors"
+                        title="Delete wager"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -738,7 +764,9 @@ export function VaultView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
           <div className="w-full max-w-sm rounded-2xl bg-zinc-950 border border-zinc-800 p-5 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white">Set New Wager / Stake</h3>
+              <h3 className="text-sm font-bold text-white">
+                {editingStake ? `Edit ${editingStake.period === 'monthly' ? 'Monthly' : 'Weekly'} Wager` : 'Set New Wager / Stake'}
+              </h3>
               <button
                 onClick={() => setIsStakeModalOpen(false)}
                 className="text-zinc-500 hover:text-white p-1"
@@ -805,7 +833,20 @@ export function VaultView() {
                 />
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-2">
+                {editingStake && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteStake(editingStake.id);
+                      setIsStakeModalOpen(false);
+                    }}
+                    className="p-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs transition-colors"
+                    title="Delete this wager"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setIsStakeModalOpen(false)}
@@ -817,7 +858,7 @@ export function VaultView() {
                   type="submit"
                   className="flex-1 py-2 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200"
                 >
-                  Save Wager
+                  {editingStake ? 'Update Wager' : 'Save Wager'}
                 </button>
               </div>
             </form>

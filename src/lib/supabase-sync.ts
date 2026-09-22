@@ -46,6 +46,11 @@ export function rowToHabit(row: any): Habit {
 }
 
 export function checkInToRow(checkIn: CheckIn) {
+  const proofPayload =
+    checkIn.proofUrls && checkIn.proofUrls.length > 0
+      ? JSON.stringify(checkIn.proofUrls)
+      : checkIn.proofUrl || null;
+
   return {
     id: checkIn.id,
     habit_id: checkIn.habitId,
@@ -53,12 +58,33 @@ export function checkInToRow(checkIn: CheckIn) {
     date: checkIn.date,
     points_earned: checkIn.pointsEarned,
     quantity: checkIn.quantity || null,
-    proof_url: checkIn.proofUrl || null,
+    proof_url: proofPayload,
     completed_at: checkIn.completedAt || new Date().toISOString(),
   };
 }
 
 export function rowToCheckIn(row: any): CheckIn {
+  let proofUrl: string | undefined = undefined;
+  let proofUrls: string[] | undefined = undefined;
+
+  if (row.proof_url) {
+    if (typeof row.proof_url === 'string' && row.proof_url.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(row.proof_url);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          proofUrls = parsed;
+          proofUrl = parsed[0];
+        }
+      } catch {
+        proofUrl = row.proof_url;
+        proofUrls = [row.proof_url];
+      }
+    } else {
+      proofUrl = row.proof_url;
+      proofUrls = [row.proof_url];
+    }
+  }
+
   return {
     id: row.id,
     habitId: row.habit_id,
@@ -66,7 +92,8 @@ export function rowToCheckIn(row: any): CheckIn {
     date: typeof row.date === 'string' ? row.date.slice(0, 10) : row.date,
     pointsEarned: Number(row.points_earned) || 0,
     quantity: row.quantity || undefined,
-    proofUrl: row.proof_url || undefined,
+    proofUrl,
+    proofUrls,
     completedAt: row.completed_at || new Date().toISOString(),
   };
 }
@@ -206,3 +233,12 @@ export async function upsertStakeSupabase(supabase: SupabaseClient, stake: Stake
     console.error('Error upserting stake to Supabase', e);
   }
 }
+
+export async function deleteStakeSupabase(supabase: SupabaseClient, stakeId: string) {
+  try {
+    await supabase.from('stakes').delete().eq('id', stakeId);
+  } catch (e) {
+    console.error('Error deleting stake from Supabase', e);
+  }
+}
+
