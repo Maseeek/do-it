@@ -1,0 +1,263 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Habit } from '@/lib/types';
+import { useStore } from '@/lib/store';
+import { HabitIcon } from './HabitIcon';
+import { ProofModal } from './ProofModal';
+import { BookOpen, Camera, Check, Minus, Plus, Sparkles } from 'lucide-react';
+
+export function HabitCard({ habit }: { habit: Habit }) {
+  const { toggleHabit, isHabitCompletedToday, getHabitCheckInToday, activePlayer } = useStore();
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+  const [showFullProof, setShowFullProof] = useState(false);
+  const [showQtyLogger, setShowQtyLogger] = useState(false);
+
+  const completed = isHabitCompletedToday(habit.id);
+  const checkIn = getHabitCheckInToday(habit.id);
+
+  const isMaciek = activePlayer?.id === 'maciek';
+  const accentColor = isMaciek ? 'border-blue-500/50 bg-blue-500' : 'border-pink-500/50 bg-pink-500';
+
+  const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);
+
+  const handleToggle = () => {
+    if (habit.isQuantitative) {
+      if (completed) {
+        toggleHabit(habit.id);
+      } else {
+        setShowQtyLogger(true);
+      }
+      return;
+    }
+
+    if (completed) {
+      toggleHabit(habit.id);
+    } else {
+      if (habit.requiresProof && !checkIn?.proofUrl) {
+        setIsProofModalOpen(true);
+      } else {
+        toggleHabit(habit.id);
+      }
+    }
+  };
+
+  const handleProofConfirmed = (proofUrl?: string) => {
+    toggleHabit(habit.id, proofUrl);
+  };
+
+  const handleLogQuantity = (qty: number) => {
+    setQuantity(qty);
+    toggleHabit(habit.id, undefined, qty);
+    setShowQtyLogger(false);
+  };
+
+  return (
+    <>
+      <div
+        className={`group relative rounded-xl p-3.5 transition-all duration-200 border ${
+          completed
+            ? 'bg-zinc-900/40 border-zinc-800/60 opacity-80'
+            : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-sm'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          {/* 1-Tap Completion Check Button */}
+          <button
+            onClick={handleToggle}
+            aria-label={completed ? `Mark ${habit.title} uncompleted` : `Mark ${habit.title} completed`}
+            className={`relative flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+              completed
+                ? `${accentColor} text-white shadow-sm scale-95`
+                : 'border border-zinc-700 hover:border-zinc-500 bg-zinc-900/80 text-transparent hover:text-zinc-600'
+            }`}
+          >
+            <Check className="w-4 h-4 stroke-[3]" />
+          </button>
+
+          {/* Middle: Habit Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={`text-[10px] uppercase font-mono font-medium tracking-wider ${
+                completed ? 'text-zinc-500' : 'text-zinc-400'
+              }`}>
+                {habit.category.replace('_', ' ')}
+              </span>
+
+              {/* Weekly Frequency Target Badge */}
+              {habit.weeklyTargetDays && (
+                <span className="inline-flex items-center text-[9px] font-mono text-zinc-400 bg-zinc-800/60 px-1.5 py-0.2 rounded border border-zinc-700/60">
+                  {habit.weeklyTargetDays}x / wk
+                </span>
+              )}
+
+              {habit.points >= 40 && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-amber-400/90 bg-amber-400/10 px-1 py-0.2 rounded border border-amber-400/20">
+                  <Sparkles className="w-2 h-2" />
+                  Key
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 mt-0.5">
+              <span
+                className={`text-sm font-medium tracking-tight truncate ${
+                  completed ? 'line-through text-zinc-500' : 'text-white'
+                }`}
+              >
+                {habit.title}
+              </span>
+            </div>
+
+            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+              {completed && checkIn?.quantity
+                ? `Logged ${checkIn.quantity} ${habit.quantityUnit || 'units'} (+${checkIn.pointsEarned} pts)`
+                : habit.description}
+            </p>
+          </div>
+
+          {/* Right: Point Badge & Quick Actions */}
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <button
+              onClick={() => {
+                if (habit.isQuantitative) setShowQtyLogger(true);
+              }}
+              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-colors ${
+                completed
+                  ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                  : habit.isQuantitative
+                  ? 'bg-zinc-900 border-zinc-700 text-blue-400 hover:border-blue-500/50'
+                  : 'bg-zinc-900 border-zinc-800 text-white'
+              }`}
+            >
+              +{completed ? checkIn?.pointsEarned || habit.points : habit.points}
+            </button>
+
+            {/* Proof thumbnail button if proof exists */}
+            {checkIn?.proofUrl && (
+              <button
+                onClick={() => setShowFullProof(true)}
+                className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 hover:text-emerald-300"
+              >
+                <Camera className="w-3 h-3" />
+                Proof
+              </button>
+            )}
+
+            {/* If quantitative and completed, allow editing pages */}
+            {habit.isQuantitative && completed && (
+              <button
+                onClick={() => setShowQtyLogger(true)}
+                className="text-[10px] font-mono text-zinc-400 hover:text-white"
+              >
+                Edit pages
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Inline Quantitative Reading Logger */}
+        {showQtyLogger && habit.isQuantitative && (
+          <div className="mt-3 pt-3 border-t border-zinc-800/80 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-zinc-300 font-medium flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                How many pages did you read today?
+              </span>
+              <span className="font-mono text-blue-400 font-bold">
+                {quantity} {habit.quantityUnit} = +{Math.min(habit.points, quantity)} pts
+              </span>
+            </div>
+
+            {/* Quick Preset Buttons */}
+            <div className="flex items-center gap-2">
+              {[10, 15, 20, 25].map((pages) => (
+                <button
+                  key={pages}
+                  onClick={() => handleLogQuantity(pages)}
+                  className={`flex-1 py-1 rounded-lg text-xs font-mono border transition-colors ${
+                    quantity === pages
+                      ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {pages}p
+                </button>
+              ))}
+            </div>
+
+            {/* Stepper + Custom */}
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900/80">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="p-1.5 text-zinc-400 hover:text-white"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max={habit.maxQuantity || 25}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className="w-12 text-center text-xs font-mono font-bold bg-transparent text-white focus:outline-none"
+                />
+                <button
+                  onClick={() => setQuantity((q) => Math.min(habit.maxQuantity || 25, q + 1))}
+                  className="p-1.5 text-zinc-400 hover:text-white"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <button
+                onClick={() => handleLogQuantity(quantity)}
+                className="flex-1 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
+              >
+                Confirm {quantity} Pages
+              </button>
+
+              <button
+                onClick={() => setShowQtyLogger(false)}
+                className="px-2.5 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-500 hover:text-zinc-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Proof Modal */}
+      <ProofModal
+        habit={habit}
+        isOpen={isProofModalOpen}
+        onClose={() => setIsProofModalOpen(false)}
+        onConfirm={handleProofConfirmed}
+      />
+
+      {/* Photo Preview Modal */}
+      {showFullProof && checkIn?.proofUrl && (
+        <div
+          onClick={() => setShowFullProof(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+        >
+          <div className="max-w-md w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={checkIn.proofUrl}
+              alt="Verification"
+              className="w-full h-auto rounded-xl object-contain max-h-[70vh]"
+            />
+            <div className="p-3 text-center">
+              <span className="text-xs text-zinc-400 font-mono">
+                Verified check-in for {habit.title}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
