@@ -15,6 +15,8 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
     { key: '1', desc: 'Jump to Today (Daily Ritual & Feed)' },
     { key: '2', desc: 'Jump to Duel (Tug-of-War & Battles)' },
     { key: '3', desc: 'Jump to Vault (Karma, Badges & Settings)' },
+    { key: 'P', desc: 'Switch Active Player (Maciek ⇄ Myrna)' },
+    { key: 'T', desc: 'Jump back to Today (reset date traveler)' },
     { key: '?', desc: 'Toggle keyboard shortcuts help' },
     { key: 'Esc', desc: 'Close any active modal or lightbox' },
   ];

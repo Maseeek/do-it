@@ -13,7 +13,7 @@ import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
 import { Check } from 'lucide-react';
 
 function AppContent() {
-  const { isHydrated, activePlayerId, toggleHabit, habits } = useStore();
+  const { isHydrated, activePlayerId, toggleHabit, habits, switchProfile, setSelectedDate } = useStore();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -41,7 +41,7 @@ function AppContent() {
     }
   }, [isHydrated, searchParams, habits, toggleHabit]);
 
-  // Global Keyboard shortcuts (1, 2, 3, ?)
+  // Global Keyboard shortcuts (1, 2, 3, P, T, ?)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if user is typing in an input or textarea
@@ -55,6 +55,15 @@ function AppContent() {
         setActiveTab('duel');
       } else if (e.key === '3') {
         setActiveTab('vault');
+      } else if (e.key === 'p' || e.key === 'P') {
+        switchProfile();
+        setToastMessage('Switched player profile');
+        setTimeout(() => setToastMessage(null), 2000);
+      } else if (e.key === 't' || e.key === 'T') {
+        const todayStr = new Date().toISOString().split('T')[0];
+        setSelectedDate(todayStr);
+        setToastMessage('Jumped to Today');
+        setTimeout(() => setToastMessage(null), 2000);
       } else if (e.key === '?') {
         e.preventDefault();
         setIsShortcutsModalOpen((prev) => !prev);
@@ -65,7 +74,7 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [switchProfile, setSelectedDate]);
 
   // SSR hydration placeholder
   if (!isHydrated) {
