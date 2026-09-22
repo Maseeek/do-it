@@ -267,3 +267,37 @@ export function getStakesRecord(stakes: Stake[]): StakesRecord {
     history: completed,
   };
 }
+
+// Calculate consecutive day streak for an individual habit
+export function calculateHabitStreak(habit: Habit, checkIns: CheckIn[]): number {
+  const habitLogs = checkIns.filter((c) => c.habitId === habit.id);
+  if (habitLogs.length === 0) return 0;
+
+  const today = getTodayDateString();
+  const uniqueDates = Array.from(new Set(habitLogs.map((l) => l.date)));
+
+  let streak = 0;
+  const checkDate = parseDate(today);
+
+  // If not completed today, check from yesterday
+  if (!uniqueDates.includes(today)) {
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  for (let i = 0; i < 365; i++) {
+    const y = checkDate.getFullYear();
+    const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+    const d = String(checkDate.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+
+    if (uniqueDates.includes(dateStr)) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+

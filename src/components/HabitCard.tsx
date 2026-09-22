@@ -6,7 +6,8 @@ import { useStore } from '@/lib/store';
 import { HabitIcon } from './HabitIcon';
 import { ProofModal } from './ProofModal';
 import { ProofGalleryModal } from './ProofGalleryModal';
-import { BookOpen, Camera, Check, MessageSquare, MessageSquarePlus, Minus, Plus, Sparkles, X } from 'lucide-react';
+import { calculateHabitStreak } from '@/lib/score-calculator';
+import { BookOpen, Camera, Check, Flame, MessageSquare, MessageSquarePlus, Minus, Plus, Sparkles, X } from 'lucide-react';
 
 export function HabitCard({ habit }: { habit: Habit }) {
   const {
@@ -16,6 +17,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
     getHabitCheckInOnDate,
     selectedDate,
     isTodaySelected,
+    checkIns,
     activePlayer,
     partnerId,
     players,
@@ -53,6 +55,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
   const isCleanSpace = habit.category === 'environment' && habit.requiresProof;
 
   const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);
+  const habitStreak = calculateHabitStreak(habit, checkIns);
 
   const handleToggle = () => {
     if (habit.isQuantitative) {
@@ -140,6 +143,17 @@ export function HabitCard({ habit }: { habit: Habit }) {
               {habit.weeklyTargetDays && (
                 <span className="inline-flex items-center text-[9px] font-mono text-zinc-400 bg-zinc-800/60 px-1.5 py-0.2 rounded border border-zinc-700/60">
                   {habit.weeklyTargetDays}x / wk
+                </span>
+              )}
+
+              {/* Individual Habit Streak Badge */}
+              {habitStreak >= 2 && (
+                <span
+                  className="inline-flex items-center gap-0.5 text-[9px] font-mono text-orange-400 bg-orange-400/10 px-1.5 py-0.2 rounded border border-orange-400/20"
+                  title={`${habitStreak}-day streak`}
+                >
+                  <Flame className="w-2.5 h-2.5 text-orange-400" />
+                  {habitStreak}d
                 </span>
               )}
 

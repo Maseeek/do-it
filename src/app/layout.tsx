@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Do It — Couples Habit Duel",
-  description: "Minimalist couples habit tracking and accountability duel for Machek & Myra.",
+  description: "Minimalist couples habit tracking and accountability duel for Maciek & Myrna.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
