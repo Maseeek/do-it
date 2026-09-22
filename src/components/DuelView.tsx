@@ -50,10 +50,6 @@ export function DuelView() {
   const maciekHabits = habits.filter((h) => h.playerId === 'maciek' && h.isActive);
   const myrnaHabits = habits.filter((h) => h.playerId === 'myrna' && h.isActive);
 
-  const isCompletedToday = (habitId: string) => {
-    return checkIns.some((c) => c.habitId === habitId && c.date === todayStr);
-  };
-
   return (
     <div className="space-y-4 pb-24">
       {/* Tier Switcher Pill */}

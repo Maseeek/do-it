@@ -28,10 +28,12 @@ export function ProofGalleryModal({
   initialIndex = 0,
 }: ProofGalleryModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [prevProps, setPrevProps] = useState({ initialIndex, isOpen });
 
-  useEffect(() => {
+  if (prevProps.initialIndex !== initialIndex || prevProps.isOpen !== isOpen) {
+    setPrevProps({ initialIndex, isOpen });
     setCurrentIndex(initialIndex);
-  }, [initialIndex, isOpen]);
+  }
 
   // Keyboard navigation (Arrow keys & Escape)
   useEffect(() => {

@@ -8,7 +8,6 @@ import { ProofGalleryModal } from './ProofGalleryModal';
 import { formatFriendlyDate, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import {
   Camera,
-  CheckCircle2,
   Cloud,
   Flame,
   Gift,
