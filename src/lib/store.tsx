@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
   AppState,
   CheckIn,
@@ -15,11 +15,26 @@ import { getInitialState } from './seed';
 import { getTodayDateString } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { fireCelebrationConfetti } from './confetti';
+import { getSupabaseClient } from './supabase';
+import {
+  deleteCheckInSupabase,
+  deleteHabitSupabase,
+  insertCheckInSupabase,
+  rowToCheckIn,
+  rowToHabit,
+  rowToStake,
+  syncInitialDataFromSupabase,
+  upsertHabitSupabase,
+  upsertStakeSupabase,
+} from './supabase-sync';
 
-const STORAGE_KEY = 'do_it_app_data_v2'; // Bumped version for clean Maciek & Myrna migration
+const STORAGE_KEY = 'do_it_app_data_v2';
+
+export type SyncStatus = 'connected' | 'syncing' | 'offline' | 'local_only';
 
 interface StoreContextType {
   isHydrated: boolean;
+  syncStatus: SyncStatus;
   activePlayerId: PlayerId | null;
   activePlayer: Player | null;
   players: Record<PlayerId, Player>;
@@ -52,18 +67,19 @@ const StoreContext = createContext<StoreContextType | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(getInitialState);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('local_only');
 
-  // Hydrate from localStorage on client mount
+  const supabaseRef = useRef(getSupabaseClient());
+
+  // 1. Hydrate from localStorage on client mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Verify it contains maciek and myrna players
         if (parsed.players && parsed.players.maciek && parsed.players.myrna) {
           setState(parsed);
         } else {
-          // Reset to clean seed if old format
           const fresh = getInitialState();
           setState(fresh);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
@@ -76,7 +92,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Persist state changes
+  // 2. Persist state changes to localStorage
   useEffect(() => {
     if (isHydrated) {
       try {
@@ -86,6 +102,114 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [state, isHydrated]);
+
+  // 3. Supabase Cloud Sync & Realtime Subscription
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const customUrl = state.supabaseConfig?.enabled ? state.supabaseConfig.url : undefined;
+    const customKey = state.supabaseConfig?.enabled ? state.supabaseConfig.anonKey : undefined;
+    const client = getSupabaseClient(customUrl, customKey);
+    supabaseRef.current = client;
+
+    if (!client) {
+      setSyncStatus('local_only');
+      return;
+    }
+
+    setSyncStatus('syncing');
+
+    // Fetch cloud data and seed if needed
+    syncInitialDataFromSupabase(client).then((remoteData) => {
+      if (remoteData) {
+        setState((prev) => ({
+          ...prev,
+          habits: remoteData.habits && remoteData.habits.length > 0 ? remoteData.habits : prev.habits,
+          checkIns: remoteData.checkIns || prev.checkIns,
+          stakes: remoteData.stakes && remoteData.stakes.length > 0 ? remoteData.stakes : prev.stakes,
+        }));
+        setSyncStatus('connected');
+      } else {
+        setSyncStatus('offline');
+      }
+    });
+
+    // Realtime channel subscriptions
+    const channel = client
+      .channel('do_it_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'check_ins' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newCheckIn = rowToCheckIn(payload.new);
+            setState((prev) => {
+              if (prev.checkIns.some((c) => c.id === newCheckIn.id)) return prev;
+              return { ...prev, checkIns: [...prev.checkIns, newCheckIn] };
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setState((prev) => ({
+              ...prev,
+              checkIns: prev.checkIns.filter((c) => c.id !== deletedId),
+            }));
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = rowToCheckIn(payload.new);
+            setState((prev) => ({
+              ...prev,
+              checkIns: prev.checkIns.map((c) => (c.id === updated.id ? updated : c)),
+            }));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'habits' },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const habit = rowToHabit(payload.new);
+            setState((prev) => ({
+              ...prev,
+              habits: prev.habits.some((h) => h.id === habit.id)
+                ? prev.habits.map((h) => (h.id === habit.id ? habit : h))
+                : [...prev.habits, habit],
+            }));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setState((prev) => ({
+              ...prev,
+              habits: prev.habits.filter((h) => h.id !== deletedId),
+            }));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stakes' },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const stake = rowToStake(payload.new);
+            setState((prev) => ({
+              ...prev,
+              stakes: prev.stakes.some((s) => s.id === stake.id)
+                ? prev.stakes.map((s) => (s.id === stake.id ? stake : s))
+                : [...prev.stakes, stake],
+            }));
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setSyncStatus('connected');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setSyncStatus('offline');
+        }
+      });
+
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, [isHydrated, state.supabaseConfig]);
 
   const selectProfile = (id: PlayerId) => {
     setState((prev) => ({ ...prev, activePlayerId: id }));
@@ -117,64 +241,85 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const habit = state.habits.find((h) => h.id === habitId);
     if (!habit) return;
 
-    setState((prev) => {
-      const existingIndex = prev.checkIns.findIndex(
-        (c) => c.habitId === habitId && c.date === todayStr
+    const existingCheckIn = state.checkIns.find(
+      (c) => c.habitId === habitId && c.date === todayStr
+    );
+
+    // Calculate points
+    let pointsToAward = habit.points;
+    if (habit.isQuantitative && quantity !== undefined) {
+      pointsToAward = Math.min(
+        habit.points,
+        Math.max(1, Math.round(quantity * (habit.pointsPerUnit || 1)))
       );
+    }
 
-      let updatedCheckIns: CheckIn[];
-
-      // Calculate points earned
-      let pointsToAward = habit.points;
-      if (habit.isQuantitative && quantity !== undefined) {
-        pointsToAward = Math.min(
-          habit.points,
-          Math.max(1, Math.round(quantity * (habit.pointsPerUnit || 1)))
-        );
-      }
-
-      if (existingIndex >= 0 && quantity === undefined) {
-        // Simple un-check when clicked again without quantity update
-        updatedCheckIns = prev.checkIns.filter((_, i) => i !== existingIndex);
-      } else if (existingIndex >= 0 && quantity !== undefined) {
-        // Update quantity & points on existing checkin
-        updatedCheckIns = prev.checkIns.map((c, i) =>
-          i === existingIndex
-            ? { ...c, pointsEarned: pointsToAward, quantity, proofUrl: proofUrl || c.proofUrl }
-            : c
-        );
-      } else {
-        // Create new check-in
-        const newCheckIn: CheckIn = {
-          id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          habitId,
-          playerId: state.activePlayerId!,
-          date: todayStr,
-          pointsEarned: pointsToAward,
-          quantity,
-          proofUrl,
-          completedAt: new Date().toISOString(),
-        };
-        updatedCheckIns = [...prev.checkIns, newCheckIn];
-
-        if (pointsToAward >= 40) {
-          fireCelebrationConfetti();
-        }
-      }
-
-      return {
+    if (existingCheckIn && quantity === undefined) {
+      // Un-check
+      setState((prev) => ({
         ...prev,
-        checkIns: updatedCheckIns,
+        checkIns: prev.checkIns.filter((c) => c.id !== existingCheckIn.id),
+      }));
+
+      if (supabaseRef.current) {
+        deleteCheckInSupabase(supabaseRef.current, habitId, todayStr);
+      }
+    } else if (existingCheckIn && quantity !== undefined) {
+      // Update quantity on existing check-in
+      const updatedCheckIn: CheckIn = {
+        ...existingCheckIn,
+        pointsEarned: pointsToAward,
+        quantity,
+        proofUrl: proofUrl || existingCheckIn.proofUrl,
       };
-    });
+
+      setState((prev) => ({
+        ...prev,
+        checkIns: prev.checkIns.map((c) => (c.id === existingCheckIn.id ? updatedCheckIn : c)),
+      }));
+
+      if (supabaseRef.current) {
+        insertCheckInSupabase(supabaseRef.current, updatedCheckIn);
+      }
+    } else {
+      // Create new check-in
+      const newCheckIn: CheckIn = {
+        id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        habitId,
+        playerId: state.activePlayerId!,
+        date: todayStr,
+        pointsEarned: pointsToAward,
+        quantity,
+        proofUrl,
+        completedAt: new Date().toISOString(),
+      };
+
+      setState((prev) => ({
+        ...prev,
+        checkIns: [...prev.checkIns, newCheckIn],
+      }));
+
+      if (pointsToAward >= 40) {
+        fireCelebrationConfetti();
+      }
+
+      if (supabaseRef.current) {
+        insertCheckInSupabase(supabaseRef.current, newCheckIn);
+      }
+    }
   };
 
   const addHabit = (newHabit: Omit<Habit, 'id'>) => {
     const id = `habit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const fullHabit: Habit = { ...newHabit, id };
     setState((prev) => ({
       ...prev,
-      habits: [...prev.habits, { ...newHabit, id }],
+      habits: [...prev.habits, fullHabit],
     }));
+
+    if (supabaseRef.current) {
+      upsertHabitSupabase(supabaseRef.current, fullHabit);
+    }
   };
 
   const updateHabit = (updatedHabit: Habit) => {
@@ -182,6 +327,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       habits: prev.habits.map((h) => (h.id === updatedHabit.id ? updatedHabit : h)),
     }));
+
+    if (supabaseRef.current) {
+      upsertHabitSupabase(supabaseRef.current, updatedHabit);
+    }
   };
 
   const deleteHabit = (habitId: string) => {
@@ -190,6 +339,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       habits: prev.habits.filter((h) => h.id !== habitId),
       checkIns: prev.checkIns.filter((c) => c.habitId !== habitId),
     }));
+
+    if (supabaseRef.current) {
+      deleteHabitSupabase(supabaseRef.current, habitId);
+    }
   };
 
   const updateStake = (updatedStake: Stake) => {
@@ -197,14 +350,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       stakes: prev.stakes.map((s) => (s.id === updatedStake.id ? updatedStake : s)),
     }));
+
+    if (supabaseRef.current) {
+      upsertStakeSupabase(supabaseRef.current, updatedStake);
+    }
   };
 
   const addStake = (newStake: Omit<Stake, 'id'>) => {
     const id = `stake-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const fullStake: Stake = { ...newStake, id };
     setState((prev) => ({
       ...prev,
-      stakes: [...prev.stakes, { ...newStake, id }],
+      stakes: [...prev.stakes, fullStake],
     }));
+
+    if (supabaseRef.current) {
+      upsertStakeSupabase(supabaseRef.current, fullStake);
+    }
   };
 
   const updateSupabaseConfig = (config: { url: string; anonKey: string; enabled: boolean }) => {
@@ -255,6 +417,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreContext.Provider
       value={{
         isHydrated,
+        syncStatus,
         activePlayerId: state.activePlayerId,
         activePlayer,
         players: state.players,

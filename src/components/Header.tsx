@@ -3,10 +3,10 @@
 import React from 'react';
 import { useStore } from '@/lib/store';
 import { formatFriendlyDate, getTodayDateString } from '@/lib/date-utils';
-import { Flame, Settings } from 'lucide-react';
+import { Cloud, Flame, Settings } from 'lucide-react';
 
 export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const { activePlayer, activePlayerSummary } = useStore();
+  const { activePlayer, activePlayerSummary, syncStatus } = useStore();
   const todayStr = getTodayDateString();
   const friendlyDate = formatFriendlyDate(todayStr);
 
@@ -18,7 +18,7 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
     <header className="sticky top-0 z-40 bg-[#08090a]/90 backdrop-blur-md border-b border-zinc-900/80 px-4 py-3">
       <div className="max-w-md mx-auto flex items-center justify-between">
-        {/* Left: Player + Date */}
+        {/* Left: Player + Date + Sync Status */}
         <div className="flex items-center gap-2.5">
           <div
             className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border transition-colors ${
@@ -41,8 +41,29 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
                   {activePlayerSummary.currentStreak}d
                 </span>
               )}
+              {/* Cloud Sync Status Indicator */}
+              {syncStatus === 'connected' && (
+                <span
+                  title="Supabase Real-Time Live Sync Active"
+                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"
+                />
+              )}
+              {syncStatus === 'syncing' && (
+                <span
+                  title="Syncing with Supabase..."
+                  className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"
+                />
+              )}
             </div>
-            <p className="text-[11px] text-zinc-400 font-mono mt-0.5">{friendlyDate}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-[11px] text-zinc-400 font-mono">{friendlyDate}</p>
+              {syncStatus === 'connected' && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-emerald-400/80">
+                  <Cloud className="w-2.5 h-2.5" />
+                  Live
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
