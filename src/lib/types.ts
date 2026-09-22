@@ -52,6 +52,43 @@ export interface CheckIn {
   proofUrl?: string; // base64 or url (primary)
   proofUrls?: string[]; // multiple base64 or urls
   completedAt: string; // ISO string
+  note?: string; // optional micro-note or reflection
+  isRetroactive?: boolean; // true if logged for past date
+  loggedAt?: string; // timestamp when the check-in was registered
+}
+
+export interface CouplesReaction {
+  id: string;
+  fromPlayerId: PlayerId;
+  toPlayerId: PlayerId;
+  emoji: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface RestDay {
+  id: string;
+  playerId: PlayerId;
+  date: string; // YYYY-MM-DD
+  reason?: string;
+  createdAt: string;
+}
+
+export interface BadgeDefinition {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  targetCount: number;
+  category: 'streak' | 'parity' | 'reading' | 'proof' | 'competition' | 'mastery';
+}
+
+export interface PlayerBadgeStatus {
+  badge: BadgeDefinition;
+  isUnlocked: boolean;
+  progress: number; // 0 to 100
+  currentValue: number;
+  unlockedAt?: string;
 }
 
 export type StakePeriod = 'weekly' | 'monthly' | 'yearly';
@@ -79,6 +116,7 @@ export interface PlayerScoreSummary {
   karma: number; // all-time lifetime total
   currentStreak: number;
   completionRateWeekly: number; // percentage
+  restDaysUsed?: number;
 }
 
 export interface AppState {
@@ -87,6 +125,10 @@ export interface AppState {
   habits: Habit[];
   checkIns: CheckIn[];
   stakes: Stake[];
+  reactions?: CouplesReaction[];
+  restDays?: RestDay[];
+  soundEnabled?: boolean;
+  hapticsEnabled?: boolean;
   supabaseConfig?: {
     url: string;
     anonKey: string;

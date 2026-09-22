@@ -288,6 +288,26 @@ export function getInitialStakes(): Stake[] {
       status: 'active',
       dueDate: today,
     },
+    {
+      id: 'stake-week-prev-1',
+      period: 'weekly',
+      periodKey: '2026-W37',
+      title: 'Coffee & Cinnamon Buns ☕',
+      description: 'Winner gets freshly brewed flat white and bakery treats delivered in bed.',
+      status: 'completed',
+      winnerId: 'myrna',
+      dueDate: '2026-09-14',
+    },
+    {
+      id: 'stake-week-prev-2',
+      period: 'weekly',
+      periodKey: '2026-W36',
+      title: 'Gourmet Ramen Night 🍜',
+      description: 'Loser books table and covers dinner at the top ramen spot in town.',
+      status: 'completed',
+      winnerId: 'maciek',
+      dueDate: '2026-09-07',
+    },
   ];
 }
 
@@ -310,6 +330,7 @@ export function getInitialState(): AppState {
         date: yStr,
         pointsEarned: 50,
         completedAt: new Date(Date.now() - 86400000).toISOString(),
+        note: 'Solid 8h 15m deep sleep recorded on Fitbit',
       },
       {
         id: 'c-m2',
@@ -318,6 +339,7 @@ export function getInitialState(): AppState {
         date: yStr,
         pointsEarned: 40,
         completedAt: new Date(Date.now() - 80000000).toISOString(),
+        note: 'Push day: Incline bench 85kg 4x8 + tricep dips',
       },
       {
         id: 'c-m3',
@@ -327,6 +349,7 @@ export function getInitialState(): AppState {
         pointsEarned: 20,
         quantity: 20,
         completedAt: new Date(Date.now() - 70000000).toISOString(),
+        note: 'Read 20 pages of The Psychology of Money',
       },
       {
         id: 'c-m4',
@@ -344,6 +367,7 @@ export function getInitialState(): AppState {
         date: yStr,
         pointsEarned: 50,
         completedAt: new Date(Date.now() - 86400000).toISOString(),
+        note: 'Restful 8.5 hours tracked on Garmin',
       },
       {
         id: 'c-y2',
@@ -352,6 +376,7 @@ export function getInitialState(): AppState {
         date: yStr,
         pointsEarned: 30,
         completedAt: new Date(Date.now() - 75000000).toISOString(),
+        note: '5.2km morning run in the park 🏃‍♀️',
       },
       {
         id: 'c-y3',
@@ -361,6 +386,7 @@ export function getInitialState(): AppState {
         pointsEarned: 25,
         quantity: 25,
         completedAt: new Date(Date.now() - 65000000).toISOString(),
+        note: '25 pages completed - loving this book!',
       },
       {
         id: 'c-y4',
@@ -377,8 +403,30 @@ export function getInitialState(): AppState {
         date: today,
         pointsEarned: 10,
         completedAt: new Date(Date.now() - 1500000).toISOString(),
+        note: '15m meditation & red light therapy session',
       },
     ],
     stakes: getInitialStakes(),
+    reactions: [
+      {
+        id: 'r-1',
+        fromPlayerId: 'myrna',
+        toPlayerId: 'maciek',
+        emoji: '💪',
+        message: 'Crushing the gym session! Keep it up!',
+        timestamp: new Date(Date.now() - 72000000).toISOString(),
+      },
+      {
+        id: 'r-2',
+        fromPlayerId: 'maciek',
+        toPlayerId: 'myrna',
+        emoji: '🍕',
+        message: 'Sunday dinner stake is looking fierce!',
+        timestamp: new Date(Date.now() - 36000000).toISOString(),
+      },
+    ],
+    restDays: [],
+    soundEnabled: true,
+    hapticsEnabled: true,
   };
 }

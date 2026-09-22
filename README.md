@@ -9,11 +9,23 @@ Designed with a sleek **Linear-inspired dark mode aesthetic**, 1-tap manual logg
 ## ✨ Features
 
 - **Linear Dark Palette**: Deep black `#08090a` canvas, hairline `#27272a` borders, and high-contrast typography.
-- **1-Tap Tactile Logging**: Fast, frictionless check-ins with micro-animations and celebration confetti.
+- **1-Tap Tactile Logging**: Fast, frictionless check-ins with micro-animations, celebration confetti, and synthesized Web Audio clicks & fanfare chimes.
+- **Interactive 7-Day Date Traveling**: Slide across calendar days to view history or retroactively backfill habits.
+- **Couples Activity Feed**: Chronological timeline of check-ins, micro-notes, photo proofs, and 1-tap cheer reactions (`⚡`, `💪`, `🍕`, `☕`).
+- **Check-in Micro-Notes**: Attach workout details, book chapters, or daily reflections directly to completions.
+- **Deep Duel Analytics**: 
+  - Real-time head-to-head tug-of-war score bar & lead differentials.
+  - Weekly Daily Battles comparison chart (Monday through Sunday).
+  - Category Dominance Matrix comparing Foundation, Gym, Cardio, Intellect, Mind, Deep Work, Skills, Nutrition, Environment, and Language.
+- **Consistency Matrix (12-Week Heatmap)**: Interactive GitHub/Linear-style annual contribution grid for both Maciek and Myrna.
+- **Trophy Cabinet & Badges**: 12 dynamically calculated milestone achievements (e.g. *Daily Par Master*, *Centurion Reader*, *Clean Space Sentinel*, *Iron Couple Synergy*).
+- **Streak Protection & Rest Days**: Declare scheduled recovery days that protect active streaks without penalty.
 - **Reading Page Stepper**: Quantitative habit tracking awarding 1 point per page up to a 25-point cap.
 - **Balanced Parity Matrix**: 10 daily habits with a **240 Daily Par target** and weekly frequency flexibility (Gym 4x/wk, Sport 3x/wk).
-- **The Duel**: Real-time head-to-head tug-of-war score bar, lead differentials, and side-by-side mutual checklist.
-- **Stakes & Wagers**: Weekly (Sunday dinner dates) and Monthly (Spa getaways) reward stakes with direct prize crediting.
+- **Stakes & Hall of Champions**: Weekly (Sunday dinner dates) and Monthly (Spa getaways) reward stakes with historical winners ledger.
+- **Desktop Keyboard Shortcuts**: Jump between tabs (`1`, `2`, `3`), toggle shortcuts cheat-sheet (`?`), and dismiss modals (`Esc`).
+- **URL Automation & Deep Linking**: Quick log habits directly via URL query parameters (`?action=checkin&habit=...`) for iOS Shortcuts and Siri.
+- **Full Data Sovereignty**: 1-click JSON backup export & restore, plus shareable weekly text scorecard generator.
 - **Zero-Password Profile Identity**: 1-time "Who are you?" device picker persisted for everyday use.
 - **PWA Ready**: Dynamic app icons (`/icon`, `/apple-icon`, `/manifest.webmanifest`) ready for *"Add to Home Screen"* on iOS & Android.
 - **Cloud Sync Seam**: Runs offline-first with zero setup, with optional Supabase PostgreSQL sync configurable in Settings.

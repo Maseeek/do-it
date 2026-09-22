@@ -1,23 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Habit, HabitCategory, PlayerId, Stake, StakePeriod, CheckIn, Player } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 import { ProofGalleryModal } from './ProofGalleryModal';
+import { HabitHeatmap } from './HabitHeatmap';
+import { TrophyCabinet } from './TrophyCabinet';
 import { formatFriendlyDate, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import {
   Camera,
+  Check,
+  ClipboardCopy,
   Cloud,
+  Download,
   Flame,
   Gift,
   Plus,
   RotateCcw,
   Sliders,
+  Smartphone,
   Sparkles,
   Trash2,
   Trophy,
+  Upload,
   UserCheck,
+  Volume2,
+  VolumeX,
   X,
   Zap,
 } from 'lucide-react';
@@ -41,15 +50,25 @@ export function VaultView() {
     selectProfile,
     resetToDefaults,
     updateSupabaseConfig,
+    soundEnabled,
+    setSoundEnabled,
+    exportStateToJson,
+    importStateFromJson,
+    activeWeeklyStake,
   } = useStore();
 
-  const [activeSection, setActiveSection] = useState<'karma' | 'stakes' | 'proofs' | 'habits' | 'settings'>('karma');
+  const [activeSection, setActiveSection] = useState<'karma' | 'badges' | 'stakes' | 'proofs' | 'habits' | 'settings'>('karma');
   const [proofFilter, setProofFilter] = useState<'all' | 'maciek' | 'myrna'>('all');
   const [selectedVaultProof, setSelectedVaultProof] = useState<{
     checkIn: CheckIn;
     habit: Habit;
     player: Player;
   } | null>(null);
+
+  // Scorecard copy alert
+  const [copiedScorecard, setCopiedScorecard] = useState(false);
+  const [importStatus, setImportStatus] = useState<{ message: string; isError: boolean } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Habit modal
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
@@ -194,6 +213,68 @@ export function VaultView() {
     setTimeout(() => setSbSaved(false), 3000);
   };
 
+  // JSON Export Handler
+  const handleExportJson = () => {
+    const jsonStr = exportStateToJson();
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `do-it-backup-${getTodayDateString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // JSON Import Handler
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const res = importStateFromJson(content);
+      if (res.success) {
+        setImportStatus({ message: 'Backup restored successfully!', isError: false });
+      } else {
+        setImportStatus({ message: res.error || 'Failed to restore backup', isError: true });
+      }
+      setTimeout(() => setImportStatus(null), 4000);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Copy Weekly Scorecard
+  const handleCopyScorecard = () => {
+    const today = getTodayDateString();
+    const weekKey = getWeekKey(today);
+    const leader =
+      maciekSummary.weekly > myrnaSummary.weekly
+        ? 'Maciek ⚡'
+        : myrnaSummary.weekly > maciekSummary.weekly
+        ? 'Myrna ✨'
+        : 'Tied 🤝';
+    const delta = Math.abs(maciekSummary.weekly - myrnaSummary.weekly);
+
+    const scorecard = `⚡ DO IT — COUPLES HABIT SCORECARD ⚡
+Week: ${weekKey} (${today})
+━━━━━━━━━━━━━━━━━━
+Maciek ⚡: ${maciekSummary.weekly} pts (${maciekSummary.currentStreak}d streak)
+Myrna ✨: ${myrnaSummary.weekly} pts (${myrnaSummary.currentStreak}d streak)
+Leader: ${leader} (+${delta} pts)
+Active Stake: ${activeWeeklyStake ? activeWeeklyStake.title : 'None set'}
+━━━━━━━━━━━━━━━━━━
+Lifetime Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
+
+    navigator.clipboard.writeText(scorecard).then(() => {
+      setCopiedScorecard(true);
+      setTimeout(() => setCopiedScorecard(false), 3000);
+    });
+  };
+
   const STAKE_PRESETS = [
     { title: 'Sunday Dinner Date 🍕', description: 'Winner chooses favorite restaurant, loser pays.' },
     { title: 'Breakfast in Bed for a Week ☕', description: 'Loser prepares coffee & breakfast every morning.' },
@@ -203,20 +284,28 @@ export function VaultView() {
   ];
 
   return (
-    <div className="space-y-5 pb-24">
-      {/* Sub-nav switcher */}
-      <div className="flex p-1 rounded-xl bg-zinc-900 border border-zinc-800">
+    <div className="space-y-4 pb-24">
+      {/* Sub-nav switcher: 6 sections */}
+      <div className="flex p-1 rounded-xl bg-zinc-900 border border-zinc-800 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveSection('karma')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
             activeSection === 'karma' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
           Karma
         </button>
         <button
+          onClick={() => setActiveSection('badges')}
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
+            activeSection === 'badges' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Badges 🏆
+        </button>
+        <button
           onClick={() => setActiveSection('stakes')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
             activeSection === 'stakes' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -224,7 +313,7 @@ export function VaultView() {
         </button>
         <button
           onClick={() => setActiveSection('proofs')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
             activeSection === 'proofs' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -232,7 +321,7 @@ export function VaultView() {
         </button>
         <button
           onClick={() => setActiveSection('habits')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
             activeSection === 'habits' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -240,7 +329,7 @@ export function VaultView() {
         </button>
         <button
           onClick={() => setActiveSection('settings')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
             activeSection === 'settings' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -248,7 +337,7 @@ export function VaultView() {
         </button>
       </div>
 
-      {/* KARMA STATS */}
+      {/* KARMA STATS & HEATMAP */}
       {activeSection === 'karma' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -309,7 +398,10 @@ export function VaultView() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4.5">
+          {/* 12-Week Consistency Matrix */}
+          <HabitHeatmap />
+
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono mb-2">
               Non-Spendable Lifetime Karma
             </h4>
@@ -321,6 +413,9 @@ export function VaultView() {
           </div>
         </div>
       )}
+
+      {/* TROPHY CABINET & BADGES */}
+      {activeSection === 'badges' && <TrophyCabinet />}
 
       {/* STAKES & WAGERS */}
       {activeSection === 'stakes' && (
@@ -653,11 +748,11 @@ export function VaultView() {
       {activeSection === 'settings' && (
         <div className="space-y-4">
           {/* Active Profile Switcher */}
-          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4.5">
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono mb-2">
               Device Profile Identity
             </h3>
-            <p className="text-xs text-zinc-400 mb-4">
+            <p className="text-xs text-zinc-400 mb-3">
               Current active player on this device:{' '}
               <span className="text-white font-bold">{activePlayer?.name}</span>
             </p>
@@ -679,8 +774,122 @@ export function VaultView() {
             </div>
           </div>
 
+          {/* Tactile Audio Sound Engine */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  {soundEnabled ? (
+                    <Volume2 className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-zinc-500" />
+                  )}
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                    Tactile Audio Sound Engine
+                  </h3>
+                </div>
+                <p className="text-[11px] text-zinc-400">
+                  Synthesized mechanical clicks and victory fanfare
+                </p>
+              </div>
+
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium border transition-colors ${
+                  soundEnabled
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                }`}
+              >
+                {soundEnabled ? 'Enabled' : 'Muted'}
+              </button>
+            </div>
+          </div>
+
+          {/* Weekly Scorecard Export */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                  Weekly Duel Scorecard
+                </h3>
+                <p className="text-[11px] text-zinc-400">
+                  Copy formatted summary for iMessage / WhatsApp
+                </p>
+              </div>
+              <button
+                onClick={handleCopyScorecard}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-white hover:bg-zinc-800 transition-colors"
+              >
+                {copiedScorecard ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
+                <span>{copiedScorecard ? 'Copied!' : 'Copy'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Backup & Restore Sovereignty */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-3">
+            <div className="space-y-0.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                Data Sovereignty & Backups
+              </h3>
+              <p className="text-[11px] text-zinc-400">
+                Export or import full JSON data between devices
+              </p>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportJson}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export JSON</span>
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Import JSON</span>
+              </button>
+            </div>
+
+            {importStatus && (
+              <p
+                className={`text-xs font-mono ${
+                  importStatus.isError ? 'text-red-400' : 'text-emerald-400'
+                }`}
+              >
+                {importStatus.message}
+              </p>
+            )}
+          </div>
+
+          {/* iOS Shortcuts & Automations Info */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-blue-400" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                iOS Shortcuts & Siri Automation
+              </h3>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              You can trigger quick logging from an iOS Shortcut widget or Siri by opening the app URL.
+              PWA installation supports full standalone execution.
+            </p>
+          </div>
+
           {/* Supabase Cloud Sync */}
-          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4.5">
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4">
             <div className="flex items-center gap-2 mb-2">
               <Cloud className="w-4 h-4 text-blue-400" />
               <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
@@ -729,7 +938,7 @@ export function VaultView() {
           </div>
 
           {/* Reset Baseline Data */}
-          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4.5">
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-medium text-white">Reset Default Habits & Data</div>
