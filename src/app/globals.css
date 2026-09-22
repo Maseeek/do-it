@@ -34,3 +34,16 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
 }
+
+/* Mobile Safe Areas */
+.safe-area-bottom {
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+}
+.safe-area-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+/* Smooth tap highlights */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
