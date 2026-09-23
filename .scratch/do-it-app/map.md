@@ -25,10 +25,10 @@ A production-ready, ultra-minimalist couples habit tracker PWA with Linear-style
 - [Linear UI & 3-Tab Views](issues/03-linear-dark-ui-and-daily-ritual.md): 3 spacious tabs (Today, Duel, Vault) with tactile 1-tap check-ins and confetti.
 - [Rollover & Stakes](issues/04-stakes-and-rollover-mechanics.md): Midnight resets for weekly/monthly cycles with automatic carryover to Lifetime Karma, direct crediting without blocking modals.
 - [Names & Point Recalibration](issues/05-refine-names-points-and-three-tab-architecture.md): Maciek & Myrna profiles, quantitative reading stepper up to 25 pts, meditation (10 pts), language (5 pts), skills (25 pts), personal project (25 pts).
+- [Wearables & Health Adapters](issues/06-google-health-and-wearables-adapter.md): Google Health GCP OAuth2 REST API for Maciek and Apple Health iOS Shortcuts webhook automation for Myrna.
 
 ## Frontier (Next Phase / Unblocked)
 
-- `06-google-health-and-wearables-adapter.md` (Phase 2 Integration)
 - `07-strava-and-hevy-webhooks.md` (Phase 2 Integration)
 
 ## Not yet specified

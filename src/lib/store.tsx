@@ -13,6 +13,7 @@ import {
   PlayerScoreSummary,
   RestDay,
   Stake,
+  WearableConfig,
 } from './types';
 import { getInitialState } from './seed';
 import { getTodayDateString, isFutureDate } from './date-utils';
@@ -20,7 +21,7 @@ import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
 import { fireCelebrationConfetti } from './confetti';
 import { soundEngine } from './sound-utils';
-import { hapticCelebration, hapticLight, hapticSuccess } from './haptic-utils';
+import { hapticCelebration, hapticLight, hapticMedium, hapticSuccess } from './haptic-utils';
 import { getSupabaseClient } from './supabase';
 import {
   deleteCheckInSupabase,
@@ -96,6 +97,10 @@ interface StoreContextType {
   updateSupabaseConfig: (config: { url: string; anonKey: string; enabled: boolean }) => void;
   exportStateToJson: () => string;
   importStateFromJson: (jsonStr: string) => { success: boolean; error?: string };
+  wearableConfig: WearableConfig | undefined;
+  syncGoogleHealth: (simulate?: boolean) => Promise<{ success: boolean; message: string; count?: number }>;
+  testAppleHealthSync: (metric: 'sleep' | 'running' | 'gym', value: number) => Promise<{ success: boolean; message: string }>;
+  disconnectGoogleHealth: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -133,6 +138,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const isSnd = savedSound === 'true';
         setSoundEnabledState(isSnd);
         soundEngine.setEnabled(isSnd);
+      }
+
+      if (typeof document !== 'undefined') {
+        const hasGoogleCookie = document.cookie.includes('g_fit_connected=true');
+        if (hasGoogleCookie) {
+          setState((prev) => ({
+            ...prev,
+            wearableConfig: {
+              ...prev.wearableConfig,
+              googleConnected: true,
+            },
+          }));
+        }
       }
     } catch (e) {
       console.error('Error hydrating state from localStorage', e);
@@ -612,6 +630,146 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const syncGoogleHealth = async (
+    simulate = false
+  ): Promise<{ success: boolean; message: string; count?: number }> => {
+    try {
+      const url = `/api/sync/google-health?date=${selectedDate}${simulate ? '&simulate=true' : ''}`;
+      const res = await fetch(url, { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        return {
+          success: false,
+          message: data.message || 'Failed to sync with Google Health.',
+        };
+      }
+
+      if (data.checkInsCreated && data.checkInsCreated.length > 0) {
+        setState((prev) => {
+          const newCheckIns = [...prev.checkIns];
+          for (const incoming of data.checkInsCreated) {
+            const idx = newCheckIns.findIndex(
+              (c) => c.habitId === incoming.habitId && c.date === incoming.date
+            );
+            if (idx >= 0) {
+              newCheckIns[idx] = incoming;
+            } else {
+              newCheckIns.push(incoming);
+            }
+          }
+          return {
+            ...prev,
+            checkIns: newCheckIns,
+            wearableConfig: {
+              ...prev.wearableConfig,
+              googleConnected: true,
+              googleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          };
+        });
+
+        soundEngine.playFanfare();
+        hapticMedium();
+        fireCelebrationConfetti();
+        return {
+          success: true,
+          message: `Synced! Completed ${data.checkInsCreated.length} habit(s) from Google Health.`,
+          count: data.checkInsCreated.length,
+        };
+      }
+
+      setState((prev) => ({
+        ...prev,
+        wearableConfig: {
+          ...prev.wearableConfig,
+          googleConnected: true,
+          googleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      }));
+
+      return {
+        success: true,
+        message: data.message || 'Checked: No qualifying sleep or workouts found for this date.',
+        count: 0,
+      };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Network error';
+      return { success: false, message: msg };
+    }
+  };
+
+  const testAppleHealthSync = async (
+    metric: 'sleep' | 'running' | 'gym',
+    value: number
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/sync/apple-health', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player: 'myrna',
+          metric,
+          value,
+          date: selectedDate,
+          note: `Auto-logged from Apple Health (${metric}: ${value})`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, message: data.message || 'Sync failed.' };
+      }
+
+      if (data.checkIn) {
+        setState((prev) => {
+          const newCheckIns = [...prev.checkIns];
+          const idx = newCheckIns.findIndex(
+            (c) => c.habitId === data.checkIn.habitId && c.date === data.checkIn.date
+          );
+          if (idx >= 0) {
+            newCheckIns[idx] = data.checkIn;
+          } else {
+            newCheckIns.push(data.checkIn);
+          }
+          return {
+            ...prev,
+            checkIns: newCheckIns,
+            wearableConfig: {
+              ...prev.wearableConfig,
+              appleConnected: true,
+              appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          };
+        });
+
+        soundEngine.playFanfare();
+        hapticMedium();
+        fireCelebrationConfetti();
+      }
+
+      return { success: true, message: data.message };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Network error';
+      return { success: false, message: msg };
+    }
+  };
+
+  const disconnectGoogleHealth = () => {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'g_fit_connected=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'g_fit_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'g_fit_refresh_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+    setState((prev) => ({
+      ...prev,
+      wearableConfig: {
+        ...prev.wearableConfig,
+        googleConnected: false,
+      },
+    }));
+  };
+
   // Summaries
   const maciekSummary = calculatePlayerScores('maciek', state.checkIns, state.habits, state.restDays || []);
   const myrnaSummary = calculatePlayerScores('myrna', state.checkIns, state.habits, state.restDays || []);
@@ -711,6 +869,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         updateSupabaseConfig,
         exportStateToJson,
         importStateFromJson,
+        wearableConfig: state.wearableConfig,
+        syncGoogleHealth,
+        testAppleHealthSync,
+        disconnectGoogleHealth,
       }}
     >
       {children}

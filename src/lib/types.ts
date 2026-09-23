@@ -119,6 +119,35 @@ export interface PlayerScoreSummary {
   restDaysUsed?: number;
 }
 
+export interface WearableConfig {
+  googleConnected?: boolean;
+  googleLastSync?: string;
+  appleConnected?: boolean;
+  appleLastSync?: string;
+}
+
+export interface GoogleHealthSyncResult {
+  success: boolean;
+  date: string;
+  sleepHours?: number;
+  sleepQualified?: boolean;
+  activities?: Array<{
+    name: string;
+    activityType: number;
+    durationMinutes: number;
+  }>;
+  checkInsCreated: string[];
+  message: string;
+}
+
+export interface AppleHealthSyncPayload {
+  player: 'myrna' | 'maciek';
+  metric: 'sleep' | 'running' | 'gym' | 'sport';
+  value: number; // sleep in hours, running in km or mins, gym in mins
+  date?: string; // YYYY-MM-DD
+  note?: string;
+}
+
 export interface AppState {
   activePlayerId: PlayerId | null;
   players: Record<PlayerId, Player>;
@@ -134,4 +163,6 @@ export interface AppState {
     anonKey: string;
     enabled: boolean;
   };
+  wearableConfig?: WearableConfig;
 }
+

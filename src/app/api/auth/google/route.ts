@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+  const redirectUri = `${appUrl}/api/auth/google/callback`;
+
+  if (!clientId) {
+    return NextResponse.json(
+      {
+        error: 'GOOGLE_CLIENT_ID is not configured in environment variables.',
+        instructions: 'Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env.local',
+      },
+      { status: 500 }
+    );
+  }
+
+  // Required Google Fitness / Health Scopes for Sleep & Workouts
+  const scopes = [
+    'https://www.googleapis.com/auth/fitness.sleep.read',
+    'https://www.googleapis.com/auth/fitness.activity.read',
+  ].join(' ');
+
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  authUrl.searchParams.set('client_id', clientId);
+  authUrl.searchParams.set('redirect_uri', redirectUri);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('scope', scopes);
+  authUrl.searchParams.set('access_type', 'offline');
+  authUrl.searchParams.set('prompt', 'consent'); // Force refresh_token on consent
+  authUrl.searchParams.set('state', 'maciek');
+
+  return NextResponse.redirect(authUrl.toString());
+}

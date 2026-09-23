@@ -9,14 +9,19 @@ import { HabitHeatmap } from './HabitHeatmap';
 import { TrophyCabinet } from './TrophyCabinet';
 import { formatFriendlyDate, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import {
+  Activity,
   Camera,
   Check,
+  CheckCircle2,
   ClipboardCopy,
   Cloud,
   Download,
+  ExternalLink,
   Flame,
   Gift,
+  Link2,
   Plus,
+  RefreshCw,
   RotateCcw,
   Sliders,
   Smartphone,
@@ -27,6 +32,7 @@ import {
   UserCheck,
   Volume2,
   VolumeX,
+  Watch,
   X,
   Zap,
 } from 'lucide-react';
@@ -55,15 +61,45 @@ export function VaultView() {
     exportStateToJson,
     importStateFromJson,
     activeWeeklyStake,
+    wearableConfig,
+    syncGoogleHealth,
+    testAppleHealthSync,
+    disconnectGoogleHealth,
   } = useStore();
 
-  const [activeSection, setActiveSection] = useState<'karma' | 'badges' | 'stakes' | 'proofs' | 'habits' | 'settings'>('karma');
+  const [activeSection, setActiveSection] = useState<
+    'karma' | 'badges' | 'stakes' | 'proofs' | 'habits' | 'wearables' | 'settings'
+  >('karma');
   const [proofFilter, setProofFilter] = useState<'all' | 'maciek' | 'myrna'>('all');
   const [selectedVaultProof, setSelectedVaultProof] = useState<{
     checkIn: CheckIn;
     habit: Habit;
     player: Player;
   } | null>(null);
+
+  // Wearables state
+  const [isSyncingGoogle, setIsSyncingGoogle] = useState(false);
+  const [googleSyncMsg, setGoogleSyncMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [appleSyncMsg, setAppleSyncMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
+  const [showAppleGuide, setShowAppleGuide] = useState(false);
+
+  // Auto-switch to wearables tab if redirected from Google OAuth
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('wearable_connected') === 'google' || params.get('connected') === 'google') {
+        setActiveSection('wearables');
+        setGoogleSyncMsg({ text: 'Google Health connected successfully! ⚡', isError: false });
+      } else if (params.get('wearable_error')) {
+        setActiveSection('wearables');
+        setGoogleSyncMsg({
+          text: `Google connection notice: ${params.get('wearable_error')}`,
+          isError: true,
+        });
+      }
+    }
+  }, []);
 
   // Scorecard copy alert
   const [copiedScorecard, setCopiedScorecard] = useState(false);
@@ -326,6 +362,14 @@ Lifetime Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
           }`}
         >
           Habits
+        </button>
+        <button
+          onClick={() => setActiveSection('wearables')}
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex-shrink-0 ${
+            activeSection === 'wearables' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Wearables ⌚
         </button>
         <button
           onClick={() => setActiveSection('settings')}
@@ -744,6 +788,315 @@ Lifetime Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
         </div>
       )}
 
+      {/* WEARABLES & INTEGRATIONS */}
+      {activeSection === 'wearables' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-gradient-to-br from-zinc-900 via-[#0c0d10] to-[#08090a] border border-zinc-800/80 p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Watch className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-white font-mono">
+                Wearables & Automated Sync
+              </h2>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Automated 1-tap and background check-ins directly from Google Health (Maciek) and Apple Health (Myrna).
+            </p>
+          </div>
+
+          {/* MACIEK: GOOGLE HEALTH */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">⚡</span>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200 font-mono">
+                    Maciek: Google Health
+                  </h3>
+                </div>
+                <p className="text-[11px] text-zinc-400">
+                  Google Cloud Platform OAuth 2.0 REST API sync for sleep and workouts.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border bg-zinc-900 border-zinc-800">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    wearableConfig?.googleConnected ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'
+                  }`}
+                />
+                <span className={wearableConfig?.googleConnected ? 'text-emerald-400' : 'text-zinc-400'}>
+                  {wearableConfig?.googleConnected ? 'Connected' : 'Not Connected'}
+                </span>
+              </div>
+            </div>
+
+            {/* Habit Triggers Matrix */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 py-1">
+              <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/60 text-xs">
+                <div className="text-[10px] text-zinc-400 font-mono uppercase">Sleep (8+ Hrs)</div>
+                <div className="text-white font-medium mt-0.5">+50 pts</div>
+                <div className="text-[10px] text-zinc-400 mt-1">activityType: 72 (Sleep)</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/60 text-xs">
+                <div className="text-[10px] text-zinc-400 font-mono uppercase">Gym & Strength</div>
+                <div className="text-white font-medium mt-0.5">+40 pts</div>
+                <div className="text-[10px] text-zinc-400 mt-1">activityType: 97 (Weights)</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/60 text-xs">
+                <div className="text-[10px] text-zinc-400 font-mono uppercase">Basketball / Run</div>
+                <div className="text-white font-medium mt-0.5">+30 pts</div>
+                <div className="text-[10px] text-zinc-400 mt-1">activityType: 8 & 10</div>
+              </div>
+            </div>
+
+            {/* Feedback Message */}
+            {googleSyncMsg && (
+              <div
+                className={`p-2.5 rounded-xl text-xs font-mono border ${
+                  googleSyncMsg.isError
+                    ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                }`}
+              >
+                {googleSyncMsg.text}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {!wearableConfig?.googleConnected ? (
+                <>
+                  <a
+                    href="/api/auth/google"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Connect Google Cloud OAuth</span>
+                  </a>
+                  <button
+                    onClick={async () => {
+                      setIsSyncingGoogle(true);
+                      setGoogleSyncMsg(null);
+                      const res = await syncGoogleHealth(true);
+                      setIsSyncingGoogle(false);
+                      setGoogleSyncMsg({ text: res.message, isError: !res.success });
+                    }}
+                    disabled={isSyncingGoogle}
+                    className="px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+                  >
+                    {isSyncingGoogle ? 'Simulating...' : '⚡ Test Sync (Demo)'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={async () => {
+                      setIsSyncingGoogle(true);
+                      setGoogleSyncMsg(null);
+                      const res = await syncGoogleHealth(false);
+                      setIsSyncingGoogle(false);
+                      setGoogleSyncMsg({ text: res.message, isError: !res.success });
+                    }}
+                    disabled={isSyncingGoogle}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-500 text-black text-xs font-semibold hover:bg-emerald-400 transition-colors"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingGoogle ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingGoogle ? 'Syncing...' : 'Sync Today From Google'}</span>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setIsSyncingGoogle(true);
+                      setGoogleSyncMsg(null);
+                      const res = await syncGoogleHealth(true);
+                      setIsSyncingGoogle(false);
+                      setGoogleSyncMsg({ text: res.message, isError: !res.success });
+                    }}
+                    disabled={isSyncingGoogle}
+                    className="px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+                  >
+                    ⚡ Test Sync
+                  </button>
+                  <button
+                    onClick={() => {
+                      disconnectGoogleHealth();
+                      setGoogleSyncMsg({ text: 'Google Health disconnected.', isError: false });
+                    }}
+                    className="px-3 py-2 rounded-xl border border-zinc-800 text-xs font-mono text-zinc-500 hover:text-red-400 hover:bg-zinc-900 transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                </>
+              )}
+            </div>
+
+            {wearableConfig?.googleLastSync && (
+              <p className="text-[10px] font-mono text-zinc-400">
+                Last checked: {wearableConfig.googleLastSync}
+              </p>
+            )}
+          </div>
+
+          {/* MYRNA: APPLE HEALTH */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">✨</span>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200 font-mono">
+                    Myrna: Apple Health (iOS Shortcuts)
+                  </h3>
+                </div>
+                <p className="text-[11px] text-zinc-400">
+                  Background webhook ingestion triggered natively by iPhone Apple Health Automations.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono border bg-zinc-900 border-zinc-800 text-pink-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                <span>Ready</span>
+              </div>
+            </div>
+
+            {/* Webhook URL Endpoint Box */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-mono text-zinc-400 uppercase">
+                Ingestion Webhook URL
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    typeof window !== 'undefined'
+                      ? `${window.location.origin}/api/sync/apple-health`
+                      : 'https://do-it-app.vercel.app/api/sync/apple-health'
+                  }
+                  className="flex-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 font-mono text-[11px] focus:outline-none select-all"
+                />
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/api/sync/apple-health`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      setCopiedWebhook(true);
+                      setTimeout(() => setCopiedWebhook(false), 2500);
+                    });
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-white hover:bg-zinc-800 transition-colors"
+                >
+                  {copiedWebhook ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <ClipboardCopy className="w-3.5 h-3.5" />
+                  )}
+                  <span>{copiedWebhook ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Feedback Message */}
+            {appleSyncMsg && (
+              <div
+                className={`p-2.5 rounded-xl text-xs font-mono border ${
+                  appleSyncMsg.isError
+                    ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                }`}
+              >
+                {appleSyncMsg.text}
+              </div>
+            )}
+
+            {/* Instant Test Simulator */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-mono text-zinc-400 uppercase">
+                Instant Shortcut Simulator (Test from Web)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  onClick={async () => {
+                    setAppleSyncMsg(null);
+                    const res = await testAppleHealthSync('sleep', 8.5);
+                    setAppleSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  className="py-2 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-left"
+                >
+                  <div className="font-semibold text-white">🌙 Sleep 8.5h</div>
+                  <div className="text-[10px] text-zinc-400">+50 pts to Myrna</div>
+                </button>
+                <button
+                  onClick={async () => {
+                    setAppleSyncMsg(null);
+                    const res = await testAppleHealthSync('running', 5.0);
+                    setAppleSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  className="py-2 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-left"
+                >
+                  <div className="font-semibold text-white">🏃‍♀️ 5km Run</div>
+                  <div className="text-[10px] text-zinc-400">+30 pts to Myrna</div>
+                </button>
+                <button
+                  onClick={async () => {
+                    setAppleSyncMsg(null);
+                    const res = await testAppleHealthSync('gym', 50);
+                    setAppleSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  className="py-2 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-left"
+                >
+                  <div className="font-semibold text-white">🏋️‍♀️ Gym Session</div>
+                  <div className="text-[10px] text-zinc-400">+40 pts to Myrna</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible iOS Setup Guide */}
+            <div className="pt-2 border-t border-zinc-800/60">
+              <button
+                onClick={() => setShowAppleGuide(!showAppleGuide)}
+                className="w-full flex items-center justify-between text-xs font-mono text-zinc-400 hover:text-white py-1"
+              >
+                <span>{showAppleGuide ? '▼ Hide 60-Second iPhone Guide' : '▶ 60-Second iPhone Setup Guide'}</span>
+                <span className="text-[10px] text-pink-400 font-mono">No App Store App Needed</span>
+              </button>
+
+              {showAppleGuide && (
+                <div className="mt-2.5 p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/60 space-y-2 text-xs text-zinc-400">
+                  <div className="flex gap-2">
+                    <span className="font-mono text-pink-400 font-bold">1.</span>
+                    <p>Open Apple&apos;s built-in <strong>Shortcuts</strong> app on Myrna&apos;s iPhone.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-mono text-pink-400 font-bold">2.</span>
+                    <p>Tap <strong>Automation</strong> tab at the bottom &rarr; tap <strong>+</strong> (New Automation).</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-mono text-pink-400 font-bold">3.</span>
+                    <p>Select trigger: <strong>When waking up alarm is stopped</strong> (or Workout ends).</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-mono text-pink-400 font-bold">4.</span>
+                    <div>
+                      <p>Add action: <strong>Get Contents of URL</strong>:</p>
+                      <ul className="list-disc pl-4 mt-1 space-y-0.5 text-[11px]">
+                        <li>URL: Paste the webhook URL above</li>
+                        <li>Method: <code>POST</code></li>
+                        <li>Request Body: <code>JSON</code> with fields:
+                          <code className="block mt-0.5 text-zinc-300 font-mono bg-black/40 p-1 rounded">
+                            &#123;&quot;player&quot;: &quot;myrna&quot;, &quot;metric&quot;: &quot;sleep&quot;, &quot;value&quot;: 8.5&#125;
+                          </code>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-emerald-400 pt-1">
+                    ✓ Every morning when her alarm rings or run finishes, her points are automatically credited!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SETTINGS */}
       {activeSection === 'settings' && (
         <div className="space-y-4">
@@ -872,6 +1225,27 @@ Lifetime Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 {importStatus.message}
               </p>
             )}
+          </div>
+
+          {/* Wearables & Health Sync Quick Link */}
+          <div className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Watch className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                  Wearables & Health Adapters
+                </h3>
+              </div>
+              <button
+                onClick={() => setActiveSection('wearables')}
+                className="text-[11px] font-mono text-emerald-400 hover:underline"
+              >
+                Configure &rarr;
+              </button>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Google Health OAuth for Maciek and Apple Health iOS Shortcuts webhook automation for Myrna.
+            </p>
           </div>
 
           {/* iOS Shortcuts & Automations Info */}
