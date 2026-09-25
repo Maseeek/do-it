@@ -321,7 +321,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
             <div className="flex items-center gap-2">
               <div className="flex items-center rounded-xl border border-white/[0.08] bg-[#2c2c2e]">
                 <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setQuantity((q) => Math.max(1, q - 1));
+                  }}
                   className="p-1.5 text-zinc-400 hover:text-white"
                 >
                   <Minus className="w-3.5 h-3.5" />
@@ -335,7 +339,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   className="w-10 text-center text-xs font-semibold bg-transparent text-white focus:outline-none"
                 />
                 <button
-                  onClick={() => setQuantity((q) => Math.min(habit.maxQuantity || 25, q + 1))}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setQuantity((q) => Math.min(habit.maxQuantity || 25, q + 1));
+                  }}
                   className="p-1.5 text-zinc-400 hover:text-white"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -350,7 +358,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
               </button>
 
               <button
-                onClick={() => setShowQtyLogger(false)}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setShowQtyLogger(false);
+                }}
                 className="px-2.5 py-1.5 rounded-xl border border-white/[0.08] text-xs text-zinc-400 hover:text-white"
               >
                 Cancel

@@ -97,14 +97,18 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
                   strokeDashoffset={strokeDashoffset}
                   strokeLinecap="round"
                   className={`transition-all duration-500 ${
-                    isMaciek ? 'text-blue-500' : 'text-pink-500'
+                    pct >= 100
+                      ? 'text-emerald-400'
+                      : isMaciek
+                      ? 'text-blue-500'
+                      : 'text-pink-500'
                   }`}
                 />
               </svg>
             </div>
 
             <div className="flex items-baseline gap-1 pr-1">
-              <span className="text-xs font-semibold text-white tabular-nums">
+              <span className={`text-xs font-semibold tabular-nums ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
                 {activePlayerSummary.today}
               </span>
               <span className="text-[10px] text-zinc-400">/{dailyPar}</span>

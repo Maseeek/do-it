@@ -159,11 +159,17 @@ export function TodayView() {
                     strokeDashoffset={strokeDashoffset}
                     strokeLinecap="round"
                     className={`transition-all duration-700 ${
-                      isMaciek ? 'text-blue-500' : 'text-pink-500'
+                      pct >= 100
+                        ? 'text-emerald-400'
+                        : isRest
+                        ? 'text-indigo-400'
+                        : isMaciek
+                        ? 'text-blue-500'
+                        : 'text-pink-500'
                     }`}
                   />
                 </svg>
-                <span className="absolute text-xs font-bold text-white font-mono">
+                <span className={`absolute text-xs font-bold font-mono ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
                   {pct}%
                 </span>
               </div>
@@ -171,7 +177,7 @@ export function TodayView() {
               {/* Score metrics */}
               <div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold tracking-tight text-white tabular-nums">
+                  <span className={`text-2xl font-bold tracking-tight tabular-nums ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
                     {selectedDatePoints}
                   </span>
                   <span className="text-xs text-zinc-400">/ {totalPossible} pts</span>
