@@ -847,7 +847,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
       {isHabitModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
-          onClick={() => setIsHabitModalOpen(false)}
+          onClick={() => {
+            soundEngine.playClick();
+            hapticLight();
+            setIsHabitModalOpen(false);
+          }}
         >
           <div
             className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3.5"
@@ -857,7 +861,14 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               <h3 className="text-sm font-semibold text-white">
                 {editingHabit ? 'Edit Habit' : 'New Habit'}
               </h3>
-              <button onClick={() => setIsHabitModalOpen(false)} className="text-zinc-400 hover:text-white p-1">
+              <button
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setIsHabitModalOpen(false);
+                }}
+                className="text-zinc-400 hover:text-white p-1"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -866,7 +877,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setTargetPlayer('maciek')}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setTargetPlayer('maciek');
+                  }}
                   className={`flex-1 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                     targetPlayer === 'maciek'
                       ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-semibold'
@@ -877,7 +892,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTargetPlayer('myrna')}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setTargetPlayer('myrna');
+                  }}
                   className={`flex-1 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                     targetPlayer === 'myrna'
                       ? 'bg-pink-500/20 text-pink-300 border-pink-500/40 font-semibold'
@@ -965,7 +984,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsHabitModalOpen(false)}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setIsHabitModalOpen(false);
+                  }}
                   className="flex-1 py-2 rounded-xl border border-white/[0.08] text-zinc-400 text-xs font-medium hover:text-white"
                 >
                   Cancel
