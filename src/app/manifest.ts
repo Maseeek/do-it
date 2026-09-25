@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Do It — Couples Habit Duel',
+    name: 'Do It: Couples Habit Duel',
     short_name: 'Do It',
     description: 'Minimalist habit tracking and accountability duel for Maciek & Myrna',
     start_url: '/',

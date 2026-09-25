@@ -236,7 +236,7 @@ export function VaultView() {
         : 'Tied';
     const delta = Math.abs(maciekSummary.weekly - myrnaSummary.weekly);
 
-    const scorecard = `DO IT — Weekly Scorecard (${weekKey})
+    const scorecard = `DO IT: Weekly Scorecard (${weekKey})
 Maciek: ${maciekSummary.weekly} pts (${maciekSummary.currentStreak}d streak)
 Myrna: ${myrnaSummary.weekly} pts (${myrnaSummary.currentStreak}d streak)
 Leader: ${leader} (+${delta} pts)
@@ -337,7 +337,13 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
 
               <div className="flex items-center gap-1 bg-[#2c2c2e] p-0.5 rounded-full text-xs">
                 <button
-                  onClick={() => setProofFilter('all')}
+                  onClick={() => {
+                    if (proofFilter !== 'all') {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setProofFilter('all');
+                    }
+                  }}
                   className={`px-2.5 py-0.5 rounded-full transition-colors ${
                     proofFilter === 'all' ? 'bg-[#3a3a3c] text-white font-medium' : 'text-zinc-400'
                   }`}
@@ -345,7 +351,13 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   All
                 </button>
                 <button
-                  onClick={() => setProofFilter('maciek')}
+                  onClick={() => {
+                    if (proofFilter !== 'maciek') {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setProofFilter('maciek');
+                    }
+                  }}
                   className={`px-2.5 py-0.5 rounded-full transition-colors ${
                     proofFilter === 'maciek' ? 'bg-blue-500/20 text-blue-300 font-medium' : 'text-zinc-400'
                   }`}
@@ -353,7 +365,13 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   Maciek
                 </button>
                 <button
-                  onClick={() => setProofFilter('myrna')}
+                  onClick={() => {
+                    if (proofFilter !== 'myrna') {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setProofFilter('myrna');
+                    }
+                  }}
                   className={`px-2.5 py-0.5 rounded-full transition-colors ${
                     proofFilter === 'myrna' ? 'bg-pink-500/20 text-pink-300 font-medium' : 'text-zinc-400'
                   }`}
@@ -413,7 +431,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                           {photos.map((photo, pIdx) => (
                             <button
                               key={pIdx}
-                              onClick={() => setSelectedVaultProof({ checkIn: ci, habit, player })}
+                              onClick={() => {
+                                soundEngine.playClick();
+                                hapticLight();
+                                setSelectedVaultProof({ checkIn: ci, habit, player });
+                              }}
                               className="relative rounded-xl overflow-hidden aspect-video border border-white/[0.08] hover:border-zinc-400 transition-colors"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
