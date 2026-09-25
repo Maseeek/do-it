@@ -135,12 +135,20 @@ async function handleSync(request: NextRequest) {
 
     if (!fitRes.ok) {
       const errText = await fitRes.text();
+      console.error('Google Fitness API error:', fitRes.status, errText);
+      let parsedMsg = '';
+      try {
+        const parsed = JSON.parse(errText);
+        parsedMsg = parsed.error?.message || errText;
+      } catch {
+        parsedMsg = errText;
+      }
       return NextResponse.json(
         {
           success: false,
           error: 'fitness_api_error',
           details: errText,
-          message: 'Error querying Google Fitness sessions.',
+          message: `Google Fitness API error (${fitRes.status}): ${parsedMsg}`,
         },
         { status: fitRes.status }
       );
