@@ -4,6 +4,8 @@ import React from 'react';
 import { useStore } from '@/lib/store';
 import { formatFriendlyDate, getTodayDateString } from '@/lib/date-utils';
 import { Flame, Settings } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { activePlayer, activePlayerSummary, syncStatus, selectProfile } = useStore();
@@ -13,6 +15,12 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   const dailyPar = 240;
   const pct = Math.min(100, Math.round((activePlayerSummary.today / dailyPar) * 100));
   const isMaciek = activePlayer?.id === 'maciek';
+
+  const handleProfileSwitch = () => {
+    soundEngine.playClick();
+    hapticLight();
+    selectProfile(isMaciek ? 'myrna' : 'maciek');
+  };
 
   // Apple Activity style circular ring parameters
   const radius = 13;
@@ -25,7 +33,7 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
         {/* Left: Player Profile & Date */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => selectProfile(isMaciek ? 'myrna' : 'maciek')}
+            onClick={handleProfileSwitch}
             title={`Switch to ${isMaciek ? 'Myrna' : 'Maciek'}`}
             className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-transform active:scale-95 border ${
               isMaciek
@@ -104,7 +112,11 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
           </div>
 
           <button
-            onClick={onOpenSettings}
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              onOpenSettings();
+            }}
             aria-label="Settings"
             className="w-8 h-8 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-zinc-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
           >

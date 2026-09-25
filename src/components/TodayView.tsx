@@ -13,6 +13,9 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
+import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function TodayView() {
   const {
@@ -44,6 +47,15 @@ export function TodayView() {
   const allDone = completedCount === totalCount && totalCount > 0;
   const pct = Math.min(100, Math.round((selectedDatePoints / totalPossible) * 100));
 
+  const prevPointsRef = React.useRef(selectedDatePoints);
+  React.useEffect(() => {
+    if (selectedDatePoints >= totalPossible && prevPointsRef.current < totalPossible) {
+      soundEngine.playFanfare();
+      fireCelebrationConfetti();
+    }
+    prevPointsRef.current = selectedDatePoints;
+  }, [selectedDatePoints, totalPossible]);
+
   const pendingHabits = activeHabits.filter((h) => !isHabitCompletedOnDate(h.id, selectedDate));
   const doneHabits = activeHabits.filter((h) => isHabitCompletedOnDate(h.id, selectedDate));
 
@@ -67,7 +79,11 @@ export function TodayView() {
       {/* Apple Segmented Control: Today vs Activity */}
       <div className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
         <button
-          onClick={() => setActiveSubTab('ritual')}
+          onClick={() => {
+            soundEngine.playClick();
+            hapticLight();
+            setActiveSubTab('ritual');
+          }}
           className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${
             activeSubTab === 'ritual'
               ? 'bg-[#2c2c2e] text-white shadow-sm font-semibold'
@@ -77,7 +93,11 @@ export function TodayView() {
           Daily Ritual
         </button>
         <button
-          onClick={() => setActiveSubTab('feed')}
+          onClick={() => {
+            soundEngine.playClick();
+            hapticLight();
+            setActiveSubTab('feed');
+          }}
           className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${
             activeSubTab === 'feed'
               ? 'bg-[#2c2c2e] text-white shadow-sm font-semibold'
@@ -163,10 +183,10 @@ export function TodayView() {
             </div>
 
             {/* Status Badge */}
-            {allDone ? (
+            {pct >= 100 ? (
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                Done
+                {allDone ? 'All Done' : 'Par Met'}
               </span>
             ) : (
               <span className="text-xs text-zinc-400 tabular-nums">

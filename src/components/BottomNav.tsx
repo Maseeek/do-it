@@ -3,6 +3,9 @@
 import React from 'react';
 import { CheckCircle2, Flame, SlidersHorizontal } from 'lucide-react';
 
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
+
 export type TabType = 'today' | 'duel' | 'vault';
 
 interface BottomNavProps {
@@ -17,6 +20,14 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
     { id: 'vault' as TabType, label: 'Vault', icon: SlidersHorizontal },
   ];
 
+  const handleTabClick = (tabId: TabType) => {
+    if (activeTab !== tabId) {
+      soundEngine.playClick();
+      hapticLight();
+      onChangeTab(tabId);
+    }
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-2xl border-t border-white/[0.08] py-2 px-6 safe-area-bottom">
       <div className="max-w-md mx-auto flex items-center justify-around">
@@ -27,7 +38,7 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
           return (
             <button
               key={tab.id}
-              onClick={() => onChangeTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`flex flex-col items-center gap-1 py-1 px-5 rounded-2xl transition-all active:scale-95 ${
                 isActive
                   ? 'text-white'

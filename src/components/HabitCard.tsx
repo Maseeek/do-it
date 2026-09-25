@@ -16,6 +16,8 @@ import {
   Plus,
   X,
 } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
 export function HabitCard({ habit }: { habit: Habit }) {
   const {
@@ -63,6 +65,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const handleToggle = () => {
     if (habit.isQuantitative) {
+      soundEngine.playClick();
+      hapticLight();
       if (completed) {
         toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
       } else {
@@ -72,21 +76,31 @@ export function HabitCard({ habit }: { habit: Habit }) {
     }
 
     if (completed) {
+      soundEngine.playUncheck();
+      hapticLight();
       toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
     } else {
       if (habit.requiresProof && proofPhotos.length === 0) {
+        soundEngine.playClick();
+        hapticLight();
         setIsProofModalOpen(true);
       } else {
+        soundEngine.playCheck();
+        hapticSuccess();
         toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
       }
     }
   };
 
   const handleProofConfirmed = (proofUrls?: string[]) => {
+    soundEngine.playCheck();
+    hapticSuccess();
     toggleHabit(habit.id, proofUrls, undefined, undefined, selectedDate);
   };
 
   const handleLogQuantity = (qty: number) => {
+    soundEngine.playCheck();
+    hapticSuccess();
     setQuantity(qty);
     toggleHabit(habit.id, undefined, qty, undefined, selectedDate);
     setShowQtyLogger(false);
@@ -94,6 +108,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const handleSaveNote = (e: React.FormEvent) => {
     e.preventDefault();
+    soundEngine.playClick();
+    hapticLight();
     if (checkIn) {
       updateCheckInNote(checkIn.id, noteText.trim());
     } else {
@@ -103,6 +119,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
   };
 
   const openNoteEditor = () => {
+    soundEngine.playClick();
+    hapticLight();
     setNoteText(checkIn?.note || '');
     setIsEditingNote(true);
   };

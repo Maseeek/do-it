@@ -4,6 +4,8 @@ import React from 'react';
 import { useStore } from '@/lib/store';
 import { addDays, formatFriendlyDate, getCurrentWeekDays, getTodayDateString, isFutureDate } from '@/lib/date-utils';
 import { BedDouble, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 export function DateNavigator() {
   const {
@@ -20,13 +22,37 @@ export function DateNavigator() {
   const weekDays = getCurrentWeekDays(selectedDate);
 
   const handlePrevDay = () => {
+    soundEngine.playClick();
+    hapticLight();
     setSelectedDate(addDays(selectedDate, -1));
   };
 
   const handleNextDay = () => {
     const nextDate = addDays(selectedDate, 1);
     if (!isFutureDate(nextDate)) {
+      soundEngine.playClick();
+      hapticLight();
       setSelectedDate(nextDate);
+    }
+  };
+
+  const handleToggleRest = () => {
+    soundEngine.playClick();
+    hapticLight();
+    toggleRestDay(selectedDate);
+  };
+
+  const handleJumpToday = () => {
+    soundEngine.playClick();
+    hapticLight();
+    setSelectedDate(todayStr);
+  };
+
+  const handleSelectDay = (dateStr: string, isFuture: boolean) => {
+    if (!isFuture && dateStr !== selectedDate) {
+      soundEngine.playClick();
+      hapticLight();
+      setSelectedDate(dateStr);
     }
   };
 
@@ -63,7 +89,7 @@ export function DateNavigator() {
         <div className="flex items-center gap-1.5">
           {/* Rest day toggle */}
           <button
-            onClick={() => toggleRestDay(selectedDate)}
+            onClick={handleToggleRest}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all active:scale-95 border ${
               isRest
                 ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
@@ -78,7 +104,7 @@ export function DateNavigator() {
           {/* Jump to Today Button */}
           {!isTodaySelected && (
             <button
-              onClick={() => setSelectedDate(todayStr)}
+              onClick={handleJumpToday}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[11px] font-medium hover:bg-blue-500/25 transition-colors active:scale-95"
             >
               <RotateCcw className="w-3 h-3" />
@@ -108,7 +134,7 @@ export function DateNavigator() {
           return (
             <button
               key={day.dateStr}
-              onClick={() => !day.isFuture && setSelectedDate(day.dateStr)}
+              onClick={() => handleSelectDay(day.dateStr, day.isFuture)}
               disabled={day.isFuture}
               className={`flex flex-col items-center justify-between py-2 rounded-xl transition-all relative ${
                 day.isFuture
