@@ -230,7 +230,11 @@ export function TodayView() {
                   {partnerProofPhotos.map((photo, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setSelectedProofIndex(idx)}
+                      onClick={() => {
+                        soundEngine.playClick();
+                        hapticLight();
+                        setSelectedProofIndex(idx);
+                      }}
                       className="relative rounded-xl overflow-hidden aspect-video w-24 flex-shrink-0 border border-white/[0.1] hover:border-zinc-400 transition-all active:scale-95"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
