@@ -79,7 +79,7 @@ function AppContent() {
   // SSR hydration placeholder
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-[#070809] flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3">
         <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center animate-pulse">
           <Sparkles className="w-5 h-5 text-zinc-500 animate-spin" />
         </div>
@@ -94,7 +94,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070809] text-zinc-100 flex flex-col font-sans relative selection:bg-zinc-800 selection:text-white">
+    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col font-sans relative selection:bg-zinc-800 selection:text-white">
       {/* Ambient background glow mesh */}
       <div className="ambient-mesh" aria-hidden="true" />
 
@@ -104,13 +104,13 @@ function AppContent() {
 
         {/* Floating Quick Action Toast */}
         {toastMessage && (
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 glass-panel bg-emerald-500/15 border-emerald-500/30 text-emerald-200 px-4 py-2 rounded-xl text-xs font-mono font-semibold shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
-            <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#1c1c1e] border border-white/[0.12] text-white px-4 py-2 rounded-2xl text-xs font-medium shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+            <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
             <span>{toastMessage}</span>
           </div>
         )}
 
-        <main className="flex-1 max-w-md w-full mx-auto px-4 pt-3.5 pb-20">
+        <main className="flex-1 max-w-md w-full mx-auto px-4 pt-3.5 pb-24">
           {activeTab === 'today' && <TodayView />}
           {activeTab === 'duel' && <DuelView />}
           {activeTab === 'vault' && <VaultView />}
@@ -131,8 +131,8 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#070809] flex items-center justify-center">
-          <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/[0.08] animate-pulse" />
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] animate-pulse" />
         </div>
       }
     >

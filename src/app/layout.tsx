@@ -41,7 +41,8 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col bg-[#08090a] text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white">
+      <body className="min-h-full flex flex-col bg-black text-[#f5f5f7] font-sans selection:bg-zinc-800 selection:text-white">
+        <div className="ambient-mesh" />
         <StoreProvider>{children}</StoreProvider>
       </body>
     </html>

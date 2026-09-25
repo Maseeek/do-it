@@ -37,7 +37,6 @@ export function ProofGalleryModal({
     setCurrentIndex(initialIndex);
   }
 
-  // Keyboard navigation (Arrow keys & Escape)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -61,10 +60,6 @@ export function ProofGalleryModal({
 
   const currentImage = images[currentIndex] || images[0];
 
-  const formattedTime = completedAt
-    ? new Date(completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    : null;
-
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
     soundEngine.playClick();
@@ -79,68 +74,70 @@ export function ProofGalleryModal({
     setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
   };
 
+  const formattedTime = completedAt
+    ? new Date(completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-3 sm:p-5"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl glass-panel bg-zinc-950 border border-white/[0.1] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-lg rounded-3xl bg-[#1c1c1e] border border-white/[0.1] overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3.5 border-b border-white/[0.08] bg-zinc-900/60">
+        <div className="flex items-center justify-between p-3.5 border-b border-white/[0.08] bg-[#1c1c1e]">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">{playerAvatar}</span>
+            <span className="text-base">{playerAvatar}</span>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white tracking-tight font-mono">
-                  {playerName}&apos;s {habitTitle}
+                <span className="text-xs font-semibold text-white">
+                  {playerName} · {habitTitle}
                 </span>
-                <span className="text-[10px] font-mono text-zinc-300 bg-white/[0.06] px-2 py-0.5 rounded-md border border-white/[0.08]">
-                  {currentIndex + 1} of {images.length}
+                <span className="text-[10px] text-zinc-400 bg-white/[0.06] px-1.5 py-0.2 rounded-full">
+                  {currentIndex + 1}/{images.length}
                 </span>
               </div>
-              <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+              <p className="text-[11px] text-zinc-400 mt-0.5">
                 {date ? formatFriendlyDate(date) : 'Today'}
-                {formattedTime ? ` • ${formattedTime}` : ''}
+                {formattedTime ? ` · ${formattedTime}` : ''}
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+            className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Main Photo View with Left/Right arrows */}
-        <div className="relative flex-1 bg-black/60 flex items-center justify-center min-h-[300px] max-h-[60vh] overflow-hidden select-none group">
+        {/* Main Photo View */}
+        <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[60vh] overflow-hidden select-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={currentImage}
-            alt={`${habitTitle} proof photo ${currentIndex + 1}`}
-            className="w-full h-full object-contain max-h-[60vh] transition-all duration-200"
+            alt={`${habitTitle} proof ${currentIndex + 1}`}
+            className="w-full h-full object-contain max-h-[60vh]"
           />
 
           {images.length > 1 && (
             <>
-              {/* Prev Button */}
               <button
                 onClick={handlePrev}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-all border border-white/[0.1] shadow-xl active:scale-95"
-                aria-label="Previous photo"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all border border-white/[0.1] active:scale-95"
+                aria-label="Previous"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
-              {/* Next Button */}
               <button
                 onClick={handleNext}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-all border border-white/[0.1] shadow-xl active:scale-95"
-                aria-label="Next photo"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all border border-white/[0.1] active:scale-95"
+                aria-label="Next"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -148,9 +145,9 @@ export function ProofGalleryModal({
           )}
         </div>
 
-        {/* Bottom Thumbnail Strip */}
+        {/* Thumbnail Strip */}
         {images.length > 1 && (
-          <div className="p-3 border-t border-white/[0.08] bg-zinc-950/80 flex items-center gap-2 overflow-x-auto justify-center">
+          <div className="p-3 border-t border-white/[0.08] bg-[#1c1c1e] flex items-center gap-2 overflow-x-auto justify-center">
             {images.map((img, idx) => (
               <button
                 key={idx}
@@ -158,16 +155,16 @@ export function ProofGalleryModal({
                   soundEngine.playClick();
                   setCurrentIndex(idx);
                 }}
-                className={`relative rounded-xl overflow-hidden flex-shrink-0 w-12 h-12 border transition-all ${
+                className={`relative rounded-xl overflow-hidden flex-shrink-0 w-11 h-11 border transition-all ${
                   currentIndex === idx
-                    ? 'border-white scale-105 shadow-md shadow-white/10 ring-1 ring-white/50'
-                    : 'border-white/[0.08] opacity-60 hover:opacity-100 hover:border-zinc-500'
+                    ? 'border-white scale-105 ring-1 ring-white/40'
+                    : 'border-white/[0.08] opacity-50 hover:opacity-100'
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img}
-                  alt={`Thumbnail ${idx + 1}`}
+                  alt={`Thumb ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />
               </button>
