@@ -204,6 +204,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
             {/* Note icon button */}
             <button
               onClick={openNoteEditor}
+              aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
               className={`p-1.5 rounded-full transition-colors ${
                 checkIn?.note
                   ? 'text-blue-400 bg-blue-500/10'
@@ -222,6 +223,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   hapticLight();
                   setShowFullProof(true);
                 }}
+                aria-label={`View ${proofPhotos.length} proof photos for ${habit.title}`}
                 className="flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/20 transition-colors"
                 title="View proof photos"
               >
@@ -239,6 +241,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   setShowQtyLogger(true);
                 }
               }}
+              aria-label={habit.isQuantitative ? `Log quantity for ${habit.title}` : `${habit.points} points`}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                 completed
                   ? 'bg-white/[0.04] text-zinc-500'
@@ -260,6 +263,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder="Add reflection or workout details..."
+              aria-label={`Reflection note for ${habit.title}`}
               autoFocus
               className="flex-1 px-3 py-1.5 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400"
             />
@@ -276,6 +280,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 hapticLight();
                 setIsEditingNote(false);
               }}
+              aria-label="Cancel note edit"
               className="p-1.5 rounded-xl text-zinc-400 hover:text-white"
             >
               <X className="w-3.5 h-3.5" />
@@ -338,11 +343,13 @@ export function HabitCard({ habit }: { habit: Habit }) {
             <div className="flex items-center gap-2">
               <div className="flex items-center rounded-xl border border-white/[0.08] bg-[#2c2c2e]">
                 <button
+                  type="button"
                   onClick={() => {
                     soundEngine.playClick();
                     hapticLight();
                     setQuantity((q) => Math.max(1, q - 1));
                   }}
+                  aria-label="Decrease quantity"
                   className="p-1.5 text-zinc-400 hover:text-white"
                 >
                   <Minus className="w-3.5 h-3.5" />
@@ -353,14 +360,17 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   max={habit.maxQuantity || 25}
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
+                  aria-label="Quantity value"
                   className="w-10 text-center text-xs font-semibold bg-transparent text-white focus:outline-none"
                 />
                 <button
+                  type="button"
                   onClick={() => {
                     soundEngine.playClick();
                     hapticLight();
                     setQuantity((q) => Math.min(habit.maxQuantity || 25, q + 1));
                   }}
+                  aria-label="Increase quantity"
                   className="p-1.5 text-zinc-400 hover:text-white"
                 >
                   <Plus className="w-3.5 h-3.5" />
