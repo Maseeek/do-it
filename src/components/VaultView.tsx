@@ -439,6 +439,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                           {photos.map((photo, pIdx) => (
                             <button
                               key={pIdx}
+                              aria-label={`View proof photo ${pIdx + 1} for ${player.name} ${habit.title}`}
                               onClick={() => {
                                 soundEngine.playClick();
                                 hapticLight();
@@ -517,16 +518,20 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditHabitModal(h)}
+                          aria-label={`Edit ${h.title}`}
                           className="p-1 rounded text-zinc-400 hover:text-white"
                         >
                           <Sliders className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => {
-                            soundEngine.playClick();
-                            hapticLight();
-                            deleteHabit(h.id);
+                            if (confirm(`Delete habit "${h.title}"?`)) {
+                              soundEngine.playClick();
+                              hapticLight();
+                              deleteHabit(h.id);
+                            }
                           }}
+                          aria-label={`Delete ${h.title}`}
                           className="p-1 rounded text-zinc-500 hover:text-red-400"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

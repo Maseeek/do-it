@@ -242,6 +242,7 @@ export function TodayView() {
                   {partnerProofPhotos.map((photo, idx) => (
                     <button
                       key={idx}
+                      aria-label={`View ${partner.name}'s clean space proof photo ${idx + 1}`}
                       onClick={() => {
                         soundEngine.playClick();
                         hapticLight();
@@ -268,11 +269,9 @@ export function TodayView() {
           {/* Incomplete Habits */}
           {pendingHabits.length > 0 && (
             <div className="space-y-2">
-              <div className="space-y-2">
-                {pendingHabits.map((habit) => (
-                  <HabitCard key={habit.id} habit={habit} />
-                ))}
-              </div>
+              {pendingHabits.map((habit) => (
+                <HabitCard key={habit.id} habit={habit} />
+              ))}
             </div>
           )}
 
