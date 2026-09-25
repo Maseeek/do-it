@@ -253,6 +253,7 @@ export function DuelView() {
                   hapticLight();
                   setIsCreatingStake(true);
                 }}
+                aria-label="Set new wager"
                 className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white text-black font-semibold text-[11px] hover:bg-zinc-200 transition-colors"
               >
                 <Plus className="w-3 h-3" />
@@ -278,6 +279,7 @@ export function DuelView() {
                   hapticLight();
                   setIsResolvingStake(true);
                 }}
+                aria-label="Resolve wager"
                 className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium hover:bg-amber-500/25 transition-colors"
               >
                 Resolve
@@ -290,6 +292,7 @@ export function DuelView() {
                   setStakeDesc(activeStake.description);
                   setIsEditingStake(true);
                 }}
+                aria-label="Edit wager"
                 className="p-1.5 rounded-full text-zinc-400 hover:text-white"
                 title="Edit wager"
               >
@@ -303,6 +306,7 @@ export function DuelView() {
                     deleteStake(activeStake.id);
                   }
                 }}
+                aria-label="Delete wager"
                 className="p-1.5 rounded-full text-zinc-500 hover:text-red-400"
                 title="Delete wager"
               >
@@ -364,6 +368,7 @@ export function DuelView() {
                         hapticLight();
                         setActiveProofView({ habit: h, checkIn: checkIn!, player: players.maciek });
                       }}
+                      aria-label={`View proof photos for ${h.title}`}
                       className="text-emerald-400 p-0.5 hover:text-emerald-300 transition-colors"
                       title="View proof photos"
                     >
@@ -415,6 +420,7 @@ export function DuelView() {
                         hapticLight();
                         setActiveProofView({ habit: h, checkIn: checkIn!, player: players.myrna });
                       }}
+                      aria-label={`View proof photos for ${h.title}`}
                       className="text-emerald-400 p-0.5 hover:text-emerald-300 transition-colors"
                       title="View proof photos"
                     >
@@ -462,7 +468,15 @@ export function DuelView() {
                   </div>
                 </div>
 
-                <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex">
+                <div
+                  role="meter"
+                  aria-label={`${point.dayName} score share`}
+                  aria-valuenow={point.maciekPoints}
+                  aria-valuemin={0}
+                  aria-valuemax={total}
+                  aria-valuetext={`Maciek ${point.maciekPoints}, Myrna ${point.myrnaPoints}`}
+                  className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
+                >
                   <div
                     className="h-full bg-blue-500 transition-all duration-300"
                     style={{ width: `${mPct}%` }}
@@ -501,7 +515,15 @@ export function DuelView() {
                   </div>
                 </div>
 
-                <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex">
+                <div
+                  role="meter"
+                  aria-label={`${cat.label} score share`}
+                  aria-valuenow={cat.maciekPoints}
+                  aria-valuemin={0}
+                  aria-valuemax={total}
+                  aria-valuetext={`Maciek ${cat.maciekPoints}, Myrna ${cat.myrnaPoints}`}
+                  className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
+                >
                   <div
                     className="h-full bg-blue-500 transition-all duration-300"
                     style={{ width: `${mPct}%` }}
@@ -528,13 +550,16 @@ export function DuelView() {
           }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resolve-wager-title"
             className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-semibold text-white">Resolve Wager</h3>
+                <h3 id="resolve-wager-title" className="text-sm font-semibold text-white">Resolve Wager</h3>
               </div>
               <button
                 onClick={() => {
@@ -542,6 +567,7 @@ export function DuelView() {
                   hapticLight();
                   setIsResolvingStake(false);
                 }}
+                aria-label="Close resolve wager dialog"
                 className="text-zinc-400 hover:text-white p-1"
               >
                 <X className="w-4 h-4" />
