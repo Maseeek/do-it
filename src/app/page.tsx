@@ -120,7 +120,16 @@ function AppContent() {
 
         {/* Floating Quick Action Toast */}
         {toastMessage && (
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#1c1c1e] border border-white/[0.12] text-white px-4 py-2 rounded-2xl text-xs font-medium shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+          <div
+            role="status"
+            aria-live="polite"
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              setToastMessage(null);
+            }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#1c1c1e] border border-white/[0.12] text-white px-4 py-2 rounded-2xl text-xs font-medium shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200 cursor-pointer active:scale-95"
+          >
             <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
             <span>{toastMessage}</span>
           </div>
