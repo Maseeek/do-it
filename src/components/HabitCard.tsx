@@ -216,7 +216,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
             {/* Proof icon if exists */}
             {proofPhotos.length > 0 && (
               <button
-                onClick={() => setShowFullProof(true)}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setShowFullProof(true);
+                }}
                 className="flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/20 transition-colors"
                 title="View proof photos"
               >
@@ -228,7 +232,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
             {/* Points pill */}
             <button
               onClick={() => {
-                if (habit.isQuantitative) setShowQtyLogger(true);
+                if (habit.isQuantitative) {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setShowQtyLogger(true);
+                }
               }}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                 completed
@@ -262,7 +270,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
             </button>
             <button
               type="button"
-              onClick={() => setIsEditingNote(false)}
+              onClick={() => {
+                soundEngine.playClick();
+                hapticLight();
+                setIsEditingNote(false);
+              }}
               className="p-1.5 rounded-xl text-zinc-400 hover:text-white"
             >
               <X className="w-3.5 h-3.5" />
@@ -279,7 +291,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
             </span>
             <button
               type="button"
-              onClick={() => setShowPartnerProof(true)}
+              onClick={() => {
+                soundEngine.playClick();
+                hapticLight();
+                setShowPartnerProof(true);
+              }}
               className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-1 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20 transition-colors"
             >
               <Camera className="w-3 h-3" />
