@@ -123,96 +123,159 @@ async function handleSync(request: NextRequest) {
     const startTimeIso = new Date(startTimeMillis).toISOString();
     const endTimeIso = new Date(endTimeMillis).toISOString();
 
-    const sessionsUrl = `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${encodeURIComponent(
-      startTimeIso
-    )}&endTime=${encodeURIComponent(endTimeIso)}`;
-
-    const fitRes = await fetch(sessionsUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!fitRes.ok) {
-      const errText = await fitRes.text();
-      console.error('Google Fitness API error:', fitRes.status, errText);
-      let parsedMsg = '';
-      try {
-        const parsed = JSON.parse(errText);
-        parsedMsg = parsed.error?.message || errText;
-      } catch {
-        parsedMsg = errText;
-      }
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'fitness_api_error',
-          details: errText,
-          message: `Google Fitness API error (${fitRes.status}): ${parsedMsg}`,
-        },
-        { status: fitRes.status }
-      );
-    }
-
-    const fitData = await fitRes.json();
-    const sessions: GoogleSession[] = fitData.session || [];
-
     let totalSleepMillis = 0;
-    const detectedActivities: Array<{ name: string; activityType: number; durationMinutes: number }> = [];
+    const detectedActivities: Array<{ name: string; activityType: number | string; durationMinutes: number }> = [];
     const checkInsToCreate: CheckIn[] = [];
 
     let hasGym = false;
     let hasSport = false;
+    let syncProvider = '';
 
-    for (const s of sessions) {
-      const start = parseInt(s.startTimeMillis, 10);
-      const end = parseInt(s.endTimeMillis, 10);
-      const durationMillis = Math.max(0, end - start);
-      const durationMinutes = Math.round(durationMillis / (1000 * 60));
+    // =========================================================================
+    // 1. ATTEMPT MODERN GOOGLE HEALTH API (v4)
+    // =========================================================================
+    let healthApiError = '';
+    try {
+      const healthSleepUrl = `https://health.googleapis.com/v4/users/me/dataTypes/sleep/dataPoints`;
+      const healthExerciseUrl = `https://health.googleapis.com/v4/users/me/dataTypes/exercise/dataPoints`;
 
-      const lowerName = (s.name || '').toLowerCase();
+      const [sleepRes, exerciseRes] = await Promise.all([
+        fetch(healthSleepUrl, { headers: { Authorization: `Bearer ${accessToken}` } }),
+        fetch(healthExerciseUrl, { headers: { Authorization: `Bearer ${accessToken}` } }),
+      ]);
 
-      // Check sleep
-      if (s.activityType === 72 || lowerName.includes('sleep')) {
-        totalSleepMillis += durationMillis;
-        detectedActivities.push({
-          name: s.name || 'Sleep',
-          activityType: s.activityType,
-          durationMinutes,
-        });
+      if (sleepRes.ok || exerciseRes.ok) {
+        syncProvider = 'Google Health API (v4)';
+
+        if (sleepRes.ok) {
+          const sleepData = await sleepRes.json();
+          const points = sleepData.dataPoints || sleepData.data_points || [];
+          for (const pt of points) {
+            const st = pt.startTime ? new Date(pt.startTime).getTime() : 0;
+            const et = pt.endTime ? new Date(pt.endTime).getTime() : 0;
+            if (st >= startTimeMillis && et <= endTimeMillis && et > st) {
+              const dur = et - st;
+              totalSleepMillis += dur;
+              detectedActivities.push({
+                name: pt.sleepType ? `Sleep (${pt.sleepType})` : 'Sleep',
+                activityType: 'sleep',
+                durationMinutes: Math.round(dur / (1000 * 60)),
+              });
+            }
+          }
+        }
+
+        if (exerciseRes.ok) {
+          const exData = await exerciseRes.json();
+          const exPoints = exData.dataPoints || exData.data_points || [];
+          for (const ex of exPoints) {
+            const st = ex.startTime ? new Date(ex.startTime).getTime() : 0;
+            const et = ex.endTime ? new Date(ex.endTime).getTime() : 0;
+            const dur = Math.max(0, et - st);
+            const durMins = Math.round(dur / (1000 * 60));
+            const exType = (ex.exerciseType || ex.name || '').toLowerCase();
+
+            if (exType.includes('strength') || exType.includes('weight') || exType.includes('gym')) {
+              hasGym = true;
+              detectedActivities.push({ name: 'Gym / Strength', activityType: 'gym', durationMinutes: durMins });
+            } else if (exType.includes('run') || exType.includes('basketball') || exType.includes('sport')) {
+              hasSport = true;
+              detectedActivities.push({ name: 'Sport / Run', activityType: 'sport', durationMinutes: durMins });
+            }
+          }
+        }
+      } else {
+        const err1 = await sleepRes.text();
+        healthApiError = `Health API (${sleepRes.status}): ${err1}`;
       }
+    } catch (e) {
+      healthApiError = e instanceof Error ? e.message : 'Health API call failed';
+    }
 
-      // Check Strength / Gym
-      if (
-        s.activityType === 97 ||
-        lowerName.includes('gym') ||
-        lowerName.includes('strength') ||
-        lowerName.includes('lifting') ||
-        lowerName.includes('hevy')
-      ) {
-        hasGym = true;
-        detectedActivities.push({
-          name: s.name || 'Gym Session',
-          activityType: s.activityType,
-          durationMinutes,
-        });
-      }
+    // =========================================================================
+    // 2. FALLBACK TO GOOGLE FITNESS REST API (v1)
+    // =========================================================================
+    if (!syncProvider) {
+      const sessionsUrl = `https://www.googleapis.com/fitness/v1/users/me/sessions?startTime=${encodeURIComponent(
+        startTimeIso
+      )}&endTime=${encodeURIComponent(endTimeIso)}`;
 
-      // Check Cardio / Running / Basketball
-      if (
-        s.activityType === 8 ||
-        s.activityType === 10 ||
-        lowerName.includes('run') ||
-        lowerName.includes('basketball') ||
-        lowerName.includes('hoops') ||
-        lowerName.includes('strava')
-      ) {
-        hasSport = true;
-        detectedActivities.push({
-          name: s.name || 'Sport / Run',
-          activityType: s.activityType,
-          durationMinutes,
-        });
+      const fitRes = await fetch(sessionsUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (fitRes.ok) {
+        syncProvider = 'Google Fitness API';
+        const fitData = await fitRes.json();
+        const sessions: GoogleSession[] = fitData.session || [];
+
+        for (const s of sessions) {
+          const start = parseInt(s.startTimeMillis, 10);
+          const end = parseInt(s.endTimeMillis, 10);
+          const durationMillis = Math.max(0, end - start);
+          const durationMinutes = Math.round(durationMillis / (1000 * 60));
+          const lowerName = (s.name || '').toLowerCase();
+
+          if (s.activityType === 72 || lowerName.includes('sleep')) {
+            totalSleepMillis += durationMillis;
+            detectedActivities.push({
+              name: s.name || 'Sleep',
+              activityType: s.activityType,
+              durationMinutes,
+            });
+          }
+
+          if (
+            s.activityType === 97 ||
+            lowerName.includes('gym') ||
+            lowerName.includes('strength') ||
+            lowerName.includes('lifting') ||
+            lowerName.includes('hevy')
+          ) {
+            hasGym = true;
+            detectedActivities.push({
+              name: s.name || 'Gym Session',
+              activityType: s.activityType,
+              durationMinutes,
+            });
+          }
+
+          if (
+            s.activityType === 8 ||
+            s.activityType === 10 ||
+            lowerName.includes('run') ||
+            lowerName.includes('basketball') ||
+            lowerName.includes('hoops') ||
+            lowerName.includes('strava')
+          ) {
+            hasSport = true;
+            detectedActivities.push({
+              name: s.name || 'Sport / Run',
+              activityType: s.activityType,
+              durationMinutes,
+            });
+          }
+        }
+      } else {
+        const fitErrText = await fitRes.text();
+        console.error('Google Fitness API error:', fitRes.status, fitErrText);
+        let parsedMsg = '';
+        try {
+          const parsed = JSON.parse(fitErrText);
+          parsedMsg = parsed.error?.message || fitErrText;
+        } catch {
+          parsedMsg = fitErrText;
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'google_health_api_error',
+            details: { healthApiError, fitnessApiError: fitErrText },
+            message: `Google API query failed. Fitness: ${parsedMsg}. ${healthApiError ? `Health API: ${healthApiError}` : ''}`,
+          },
+          { status: fitRes.status }
+        );
       }
     }
 
@@ -228,7 +291,7 @@ async function handleSync(request: NextRequest) {
         date: targetDate,
         pointsEarned: 50,
         completedAt: new Date().toISOString(),
-        note: `Auto-synced from Google Health (${sleepHours} hrs sleep)`,
+        note: `Auto-synced from ${syncProvider} (${sleepHours} hrs sleep)`,
       });
     }
 
@@ -240,7 +303,7 @@ async function handleSync(request: NextRequest) {
         date: targetDate,
         pointsEarned: 40,
         completedAt: new Date().toISOString(),
-        note: 'Auto-synced from Google Health (Strength Workout)',
+        note: `Auto-synced from ${syncProvider} (Strength Workout)`,
       });
     }
 
@@ -252,7 +315,7 @@ async function handleSync(request: NextRequest) {
         date: targetDate,
         pointsEarned: 30,
         completedAt: new Date().toISOString(),
-        note: 'Auto-synced from Google Health (Basketball / Running)',
+        note: `Auto-synced from ${syncProvider} (Basketball / Running)`,
       });
     }
 
@@ -261,12 +324,13 @@ async function handleSync(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      provider: syncProvider,
       date: targetDate,
       sleepHours,
       sleepQualified,
       activities: detectedActivities,
       checkInsCreated: checkInsToCreate,
-      message: `Google Health sync complete: ${checkInsToCreate.length} habit(s) qualified.`,
+      message: `${syncProvider} sync complete: ${checkInsToCreate.length} habit(s) qualified.`,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
