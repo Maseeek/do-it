@@ -2,12 +2,13 @@ import confetti from 'canvas-confetti';
 
 export function fireCelebrationConfetti() {
   if (typeof window === 'undefined') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  // Linear-style minimalist monochrome & subtle pastel sparks
+  // Linear & Apple Health style minimalist sparks
   const count = 60;
   const defaults = {
     origin: { y: 0.8 },
-    colors: ['#ffffff', '#60a5fa', '#f472b6', '#a1a1aa'],
+    colors: ['#ffffff', '#60a5fa', '#f472b6', '#30d158', '#a1a1aa'],
   };
 
   function fire(particleRatio: number, opts: confetti.Options) {
