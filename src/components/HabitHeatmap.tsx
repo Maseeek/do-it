@@ -50,8 +50,10 @@ export function HabitHeatmap() {
         </span>
 
         {/* Player toggle */}
-        <div className="flex p-0.5 rounded-full bg-[#2c2c2e] text-xs">
+        <div role="tablist" aria-label="Select player for consistency heatmap" className="flex p-0.5 rounded-full bg-[#2c2c2e] text-xs">
           <button
+            role="tab"
+            aria-selected={selectedPlayer === 'maciek'}
             onClick={() => {
               if (selectedPlayer !== 'maciek') {
                 soundEngine.playClick();
@@ -68,6 +70,8 @@ export function HabitHeatmap() {
             Maciek
           </button>
           <button
+            role="tab"
+            aria-selected={selectedPlayer === 'myrna'}
             onClick={() => {
               if (selectedPlayer !== 'myrna') {
                 soundEngine.playClick();

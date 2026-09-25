@@ -193,7 +193,14 @@ export function TrophyCabinet() {
                 </p>
 
                 {!isUnlocked && (
-                  <div className="mt-2 space-y-1">
+                  <div
+                    role="progressbar"
+                    aria-valuenow={currentValue}
+                    aria-valuemin={0}
+                    aria-valuemax={badge.targetCount}
+                    aria-label={`${badge.title} progress: ${currentValue} of ${badge.targetCount}`}
+                    className="mt-2 space-y-1"
+                  >
                     <div className="h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${isMaciek ? 'bg-blue-500' : 'bg-pink-500'}`}
