@@ -58,6 +58,7 @@ export function DateNavigator() {
 
   const isRest = isRestDay(selectedDate);
   const isFuture = isFutureDate(addDays(selectedDate, 1));
+  const isMaciek = activePlayerId === 'maciek';
 
   return (
     <div className="space-y-2">
@@ -105,7 +106,11 @@ export function DateNavigator() {
           {!isTodaySelected && (
             <button
               onClick={handleJumpToday}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[11px] font-medium hover:bg-blue-500/25 transition-colors active:scale-95"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors active:scale-95 border ${
+                isMaciek
+                  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 hover:bg-blue-500/25'
+                  : 'bg-pink-500/15 border-pink-500/30 text-pink-400 hover:bg-pink-500/25'
+              }`}
             >
               <RotateCcw className="w-3 h-3" />
               <span>Today</span>
@@ -152,7 +157,9 @@ export function DateNavigator() {
                 isSelected
                   ? 'font-bold text-black'
                   : isToday
-                  ? 'font-bold text-blue-400'
+                  ? isMaciek
+                    ? 'font-bold text-blue-400'
+                    : 'font-bold text-pink-400'
                   : 'font-medium'
               }`}>
                 {day.dayNumber}
