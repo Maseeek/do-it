@@ -7,6 +7,9 @@ import { formatTimeAgo } from '@/lib/date-utils';
 import { HabitIcon } from './HabitIcon';
 import { ProofGalleryModal } from './ProofGalleryModal';
 import { Camera, MessageSquare, Send } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticSuccess } from '@/lib/haptic-utils';
+import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function ActivityFeed() {
   const {
@@ -39,6 +42,9 @@ export function ActivityFeed() {
 
   const handleSendReaction = (emoji: string, text: string) => {
     if (!partnerId) return;
+    soundEngine.playCheck();
+    hapticSuccess();
+    fireCelebrationConfetti();
     addReaction({
       toPlayerId: partnerId,
       emoji,

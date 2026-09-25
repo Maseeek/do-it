@@ -4,11 +4,15 @@ import React from 'react';
 import { useStore } from '@/lib/store';
 import { PlayerId } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticSuccess } from '@/lib/haptic-utils';
 
 export function ProfileGate() {
   const { selectProfile, maciekSummary, myrnaSummary } = useStore();
 
   const handleSelect = (id: PlayerId) => {
+    soundEngine.playCheck();
+    hapticSuccess();
     selectProfile(id);
   };
 
