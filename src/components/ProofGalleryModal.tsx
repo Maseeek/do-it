@@ -88,6 +88,9 @@ export function ProofGalleryModal({
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Proof photo gallery"
         className="w-full max-w-lg rounded-3xl bg-[#1c1c1e] border border-white/[0.1] overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -117,6 +120,7 @@ export function ProofGalleryModal({
               hapticLight();
               onClose();
             }}
+            aria-label="Close proof photo gallery"
             className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <X className="w-4 h-4" />

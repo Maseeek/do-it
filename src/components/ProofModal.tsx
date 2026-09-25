@@ -64,13 +64,16 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="proof-modal-title"
         className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div>
-            <h2 className="text-sm font-semibold text-white">Attach Proof</h2>
+            <h2 id="proof-modal-title" className="text-sm font-semibold text-white">Attach Proof</h2>
             <span className="text-xs text-zinc-400">{habit.title}</span>
           </div>
           <button
@@ -79,6 +82,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
               hapticLight();
               onClose();
             }}
+            aria-label="Close attach proof dialog"
             className="text-zinc-400 hover:text-white p-1 rounded-full transition-colors"
           >
             <X className="w-4 h-4" />

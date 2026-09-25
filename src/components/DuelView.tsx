@@ -589,11 +589,14 @@ export function DuelView() {
           }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="stake-modal-title"
             className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">
+              <h3 id="stake-modal-title" className="text-sm font-semibold text-white">
                 {isEditingStake ? 'Edit Wager' : 'New Wager'}
               </h3>
               <button
@@ -603,6 +606,7 @@ export function DuelView() {
                   setIsEditingStake(false);
                   setIsCreatingStake(false);
                 }}
+                aria-label="Close wager dialog"
                 className="text-zinc-400 hover:text-white p-1"
               >
                 <X className="w-4 h-4" />
@@ -629,9 +633,11 @@ export function DuelView() {
               className="space-y-3"
             >
               {isCreatingStake && (
-                <div className="flex gap-2">
+                <div role="radiogroup" aria-label="Wager period" className="flex gap-2">
                   <button
                     type="button"
+                    role="radio"
+                    aria-checked={stakePeriod === 'weekly'}
                     onClick={() => {
                       soundEngine.playClick();
                       hapticLight();
@@ -647,6 +653,8 @@ export function DuelView() {
                   </button>
                   <button
                     type="button"
+                    role="radio"
+                    aria-checked={stakePeriod === 'monthly'}
                     onClick={() => {
                       soundEngine.playClick();
                       hapticLight();

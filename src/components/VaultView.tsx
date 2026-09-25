@@ -906,11 +906,14 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
           }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="habit-modal-title"
             className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">
+              <h3 id="habit-modal-title" className="text-sm font-semibold text-white">
                 {editingHabit ? 'Edit Habit' : 'New Habit'}
               </h3>
               <button
@@ -919,6 +922,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   hapticLight();
                   setIsHabitModalOpen(false);
                 }}
+                aria-label="Close habit dialog"
                 className="text-zinc-400 hover:text-white p-1"
               >
                 <X className="w-4 h-4" />
@@ -926,9 +930,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
             </div>
 
             <form onSubmit={handleSaveHabit} className="space-y-3">
-              <div className="flex gap-2">
+              <div role="radiogroup" aria-label="Target player" className="flex gap-2">
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={targetPlayer === 'maciek'}
                   onClick={() => {
                     soundEngine.playClick();
                     hapticLight();
@@ -944,6 +950,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 </button>
                 <button
                   type="button"
+                  role="radio"
+                  aria-checked={targetPlayer === 'myrna'}
                   onClick={() => {
                     soundEngine.playClick();
                     hapticLight();

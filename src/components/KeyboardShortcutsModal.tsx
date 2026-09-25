@@ -33,13 +33,16 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-modal-title"
         className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
             <Keyboard className="w-4 h-4 text-blue-400" />
-            <h3 className="text-sm font-semibold text-white">Shortcuts</h3>
+            <h3 id="shortcuts-modal-title" className="text-sm font-semibold text-white">Shortcuts</h3>
           </div>
           <button
             onClick={() => {
@@ -47,6 +50,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
               hapticLight();
               onClose();
             }}
+            aria-label="Close shortcuts modal"
             className="text-zinc-400 hover:text-white p-1 rounded-full transition-colors"
           >
             <X className="w-4 h-4" />
