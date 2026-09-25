@@ -269,18 +269,26 @@ export function getStakesRecord(stakes: Stake[]): StakesRecord {
 }
 
 // Calculate consecutive day streak for an individual habit
-export function calculateHabitStreak(habit: Habit, checkIns: CheckIn[]): number {
+export function calculateHabitStreak(
+  habit: Habit,
+  checkIns: CheckIn[],
+  restDays: RestDay[] = []
+): number {
   const habitLogs = checkIns.filter((c) => c.habitId === habit.id);
   if (habitLogs.length === 0) return 0;
 
   const today = getTodayDateString();
   const uniqueDates = Array.from(new Set(habitLogs.map((l) => l.date)));
+  const playerRestDays = restDays
+    .filter((r) => r.playerId === habit.playerId)
+    .map((r) => r.date);
 
   let streak = 0;
   const checkDate = parseDate(today);
 
-  // If not completed today, check from yesterday
-  if (!uniqueDates.includes(today)) {
+  // If not completed today and not a rest day, check from yesterday
+  const todayCovered = uniqueDates.includes(today) || playerRestDays.includes(today);
+  if (!todayCovered) {
     checkDate.setDate(checkDate.getDate() - 1);
   }
 
@@ -292,6 +300,9 @@ export function calculateHabitStreak(habit: Habit, checkIns: CheckIn[]): number 
 
     if (uniqueDates.includes(dateStr)) {
       streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else if (playerRestDays.includes(dateStr)) {
+      // Rest day preserves the habit streak without penalizing
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
       break;

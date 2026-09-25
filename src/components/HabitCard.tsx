@@ -32,6 +32,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
     players,
     partnerCleanSpaceCheckIn,
     partnerCleanSpaceHabit,
+    restDays,
   } = useStore();
 
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
@@ -61,7 +62,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const isCleanSpace = habit.category === 'environment' && habit.requiresProof;
   const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);
-  const habitStreak = calculateHabitStreak(habit, checkIns);
+  const habitStreak = calculateHabitStreak(habit, checkIns, restDays);
 
   const handleToggle = () => {
     if (habit.isQuantitative) {
