@@ -86,8 +86,10 @@ export function TrophyCabinet() {
     <div className="space-y-3">
       {/* Top Controls: Player & Filter */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
+        <div role="tablist" aria-label="Select player for badges" className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
           <button
+            role="tab"
+            aria-selected={selectedPlayer === 'maciek'}
             onClick={() => handlePlayerChange('maciek')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'maciek'
@@ -98,6 +100,8 @@ export function TrophyCabinet() {
             Maciek
           </button>
           <button
+            role="tab"
+            aria-selected={selectedPlayer === 'myrna'}
             onClick={() => handlePlayerChange('myrna')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'myrna'
@@ -115,8 +119,10 @@ export function TrophyCabinet() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
+      <div role="tablist" aria-label="Filter badges by unlock state" className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
         <button
+          role="tab"
+          aria-selected={filter === 'all'}
           onClick={() => handleFilterChange('all')}
           className={`flex-1 py-1 rounded-full transition-colors ${
             filter === 'all' ? 'bg-[#2c2c2e] text-white font-medium' : 'text-zinc-400'
@@ -125,6 +131,8 @@ export function TrophyCabinet() {
           All
         </button>
         <button
+          role="tab"
+          aria-selected={filter === 'unlocked'}
           onClick={() => handleFilterChange('unlocked')}
           className={`flex-1 py-1 rounded-full transition-colors ${
             filter === 'unlocked' ? 'bg-[#2c2c2e] text-emerald-400 font-medium' : 'text-zinc-400'
@@ -133,6 +141,8 @@ export function TrophyCabinet() {
           Unlocked
         </button>
         <button
+          role="tab"
+          aria-selected={filter === 'locked'}
           onClick={() => handleFilterChange('locked')}
           className={`flex-1 py-1 rounded-full transition-colors ${
             filter === 'locked' ? 'bg-[#2c2c2e] text-white font-medium' : 'text-zinc-400'

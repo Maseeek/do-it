@@ -101,6 +101,7 @@ export function HabitHeatmap() {
                   hapticLight();
                   setHoveredDay(isHovered ? null : { dateStr: d.dateStr, points: stats.points, count: stats.count });
                 }}
+                aria-label={`${formatFriendlyDate(d.dateStr)}: ${stats.points} points, ${stats.count} habits`}
                 className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-xs transition-all ${getIntensityClass(
                   stats.points
                 )} ${isHovered ? 'scale-125 ring-2 ring-white z-10' : 'hover:scale-110'}`}

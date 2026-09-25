@@ -39,6 +39,8 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center gap-1 py-1 px-5 rounded-2xl transition-all active:scale-95 ${
                 isActive
                   ? 'text-white'
