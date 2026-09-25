@@ -596,6 +596,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                     </a>
                     <button
                       onClick={async () => {
+                        soundEngine.playClick();
+                        hapticLight();
                         setIsSyncingGoogle(true);
                         setGoogleSyncMsg(null);
                         const res = await syncGoogleHealth(true);
@@ -612,6 +614,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   <>
                     <button
                       onClick={async () => {
+                        soundEngine.playClick();
+                        hapticLight();
                         setIsSyncingGoogle(true);
                         setGoogleSyncMsg(null);
                         const res = await syncGoogleHealth(false);
@@ -626,6 +630,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                     </button>
                     <button
                       onClick={() => {
+                        soundEngine.playClick();
+                        hapticLight();
                         disconnectGoogleHealth();
                         setGoogleSyncMsg({ text: 'Disconnected', isError: false });
                       }}
@@ -668,6 +674,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 />
                 <button
                   onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
                     const url = `${window.location.origin}/api/sync/apple-health`;
                     navigator.clipboard.writeText(url).then(() => {
                       setCopiedWebhook(true);
@@ -685,6 +693,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               <div className="grid grid-cols-3 gap-1.5 pt-0.5">
                 <button
                   onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
                     setAppleSyncMsg(null);
                     const res = await testAppleHealthSync('sleep', 8.5);
                     setAppleSyncMsg({ text: res.message, isError: !res.success });
@@ -695,6 +705,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 </button>
                 <button
                   onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
                     setAppleSyncMsg(null);
                     const res = await testAppleHealthSync('running', 5.0);
                     setAppleSyncMsg({ text: res.message, isError: !res.success });
@@ -705,6 +717,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 </button>
                 <button
                   onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
                     setAppleSyncMsg(null);
                     const res = await testAppleHealthSync('gym', 50);
                     setAppleSyncMsg({ text: res.message, isError: !res.success });
@@ -724,7 +738,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               )}
 
               <button
-                onClick={() => setShowAppleGuide(!showAppleGuide)}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setShowAppleGuide(!showAppleGuide);
+                }}
                 className="text-[11px] text-zinc-400 hover:text-white"
               >
                 {showAppleGuide ? 'Hide Shortcuts Guide' : 'How to setup iOS Shortcut'}
@@ -801,7 +819,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 <span>Export Backup</span>
               </button>
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  fileInputRef.current?.click();
+                }}
                 className="flex-1 py-2 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-xs font-medium text-white hover:bg-zinc-700 transition-colors flex items-center justify-center gap-1.5"
               >
                 <Upload className="w-3.5 h-3.5" />
