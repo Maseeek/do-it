@@ -8,7 +8,7 @@ import { HabitIcon } from './HabitIcon';
 import { ProofGalleryModal } from './ProofGalleryModal';
 import { Camera, MessageSquare, Send } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
-import { hapticSuccess } from '@/lib/haptic-utils';
+import { hapticSuccess, hapticLight } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function ActivityFeed() {
@@ -263,13 +263,15 @@ export function ActivityFeed() {
                     {photos.map((photo, pIdx) => (
                       <button
                         key={pIdx}
-                        onClick={() =>
+                        onClick={() => {
+                          soundEngine.playClick();
+                          hapticLight();
                           setActiveProofView({
                             habit: item.habit,
                             checkIn: item.checkIn,
                             player: item.player,
-                          })
-                        }
+                          });
+                        }}
                         className="relative rounded-xl overflow-hidden aspect-video w-20 flex-shrink-0 border border-white/[0.08] hover:border-zinc-400 transition-colors"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
