@@ -492,7 +492,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                           <Sliders className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => deleteHabit(h.id)}
+                          onClick={() => {
+                            soundEngine.playClick();
+                            hapticLight();
+                            deleteHabit(h.id);
+                          }}
                           className="p-1 rounded text-zinc-500 hover:text-red-400"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -518,14 +522,22 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
             </div>
             <div className="flex gap-1.5">
               <button
-                onClick={() => selectProfile(activePlayer?.id === 'maciek' ? 'myrna' : 'maciek')}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  selectProfile(activePlayer?.id === 'maciek' ? 'myrna' : 'maciek');
+                }}
                 className="px-3 py-1.5 rounded-full bg-[#2c2c2e] border border-white/[0.08] text-xs font-medium text-white hover:bg-zinc-700 transition-colors"
               >
                 <UserCheck className="w-3.5 h-3.5 inline mr-1" />
                 Switch to {activePlayer?.id === 'maciek' ? 'Myrna' : 'Maciek'}
               </button>
               <button
-                onClick={switchProfile}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  switchProfile();
+                }}
                 className="px-3 py-1.5 rounded-full border border-white/[0.08] text-xs text-zinc-400 hover:text-white"
               >
                 Log Out
@@ -718,7 +730,11 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
             </div>
 
             <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
+              onClick={() => {
+                soundEngine.playClick();
+                hapticLight();
+                setSoundEnabled(!soundEnabled);
+              }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                 soundEnabled
                   ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
@@ -811,7 +827,13 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               <div className="text-[11px] text-zinc-500">Restore default seed state</div>
             </div>
             <button
-              onClick={resetToDefaults}
+              onClick={() => {
+                if (confirm('Reset all habits and progress to defaults?')) {
+                  soundEngine.playClick();
+                  hapticLight();
+                  resetToDefaults();
+                }
+              }}
               className="px-3 py-1.5 rounded-full border border-red-500/30 text-xs text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
