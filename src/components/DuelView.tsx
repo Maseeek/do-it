@@ -485,8 +485,14 @@ export function DuelView() {
 
       {/* Resolve Wager Modal */}
       {isResolvingStake && activeStake && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
+          onClick={() => setIsResolvingStake(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-400" />
@@ -528,8 +534,17 @@ export function DuelView() {
 
       {/* Edit / New Stake Modal */}
       {(isEditingStake || isCreatingStake) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3.5">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
+          onClick={() => {
+            setIsEditingStake(false);
+            setIsCreatingStake(false);
+          }}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3.5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">
                 {isEditingStake ? 'Edit Wager' : 'New Wager'}
