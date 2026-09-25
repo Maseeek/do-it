@@ -150,11 +150,13 @@ export function ActivityFeed() {
               value={customMsg}
               onChange={(e) => setCustomMsg(e.target.value)}
               placeholder={`Message ${partner.name}...`}
+              aria-label={`Message ${partner.name}`}
               className="flex-1 px-3 py-1.5 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400"
             />
             <button
               type="submit"
               disabled={!customMsg.trim()}
+              aria-label="Send message"
               className="px-3.5 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-40 flex items-center gap-1"
             >
               <Send className="w-3 h-3" />
@@ -164,7 +166,7 @@ export function ActivityFeed() {
       )}
 
       {/* Activity Timeline List */}
-      <div className="space-y-2">
+      <div role="feed" aria-label="Activity timeline" className="space-y-2">
         {timelineItems.length === 0 ? (
           <div className="rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-6 text-center text-zinc-500 text-xs">
             No activity logged yet
@@ -263,6 +265,7 @@ export function ActivityFeed() {
                     {photos.map((photo, pIdx) => (
                       <button
                         key={pIdx}
+                        aria-label={`View proof photo ${pIdx + 1} for ${item.habit.title}`}
                         onClick={() => {
                           soundEngine.playClick();
                           hapticLight();

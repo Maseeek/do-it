@@ -91,6 +91,8 @@ export function DateNavigator() {
           {/* Rest day toggle */}
           <button
             onClick={handleToggleRest}
+            aria-pressed={isRest}
+            aria-label={isRest ? 'Disable rest day' : 'Enable rest day'}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all active:scale-95 border ${
               isRest
                 ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
@@ -106,6 +108,7 @@ export function DateNavigator() {
           {!isTodaySelected && (
             <button
               onClick={handleJumpToday}
+              aria-label="Jump to today"
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors active:scale-95 border ${
                 isMaciek
                   ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 hover:bg-blue-500/25'
@@ -120,7 +123,7 @@ export function DateNavigator() {
       </div>
 
       {/* 7-Day Apple Calendar Style Week Strip */}
-      <div className="grid grid-cols-7 gap-1 p-1 rounded-2xl bg-[#1c1c1e] border border-white/[0.08]">
+      <div role="tablist" aria-label="Week dates" className="grid grid-cols-7 gap-1 p-1 rounded-2xl bg-[#1c1c1e] border border-white/[0.08]">
         {weekDays.map((day) => {
           const isSelected = day.dateStr === selectedDate;
           const isToday = day.isToday;
@@ -139,6 +142,9 @@ export function DateNavigator() {
           return (
             <button
               key={day.dateStr}
+              role="tab"
+              aria-selected={isSelected}
+              aria-label={`${day.dayName}, ${day.dateStr}${isSelected ? ', selected' : ''}${isToday ? ', today' : ''}${dayRest ? ', rest day' : ''}${isParAchieved ? ', par achieved' : ''}`}
               onClick={() => handleSelectDay(day.dateStr, day.isFuture)}
               disabled={day.isFuture}
               className={`flex flex-col items-center justify-between py-2 rounded-xl transition-all relative ${
