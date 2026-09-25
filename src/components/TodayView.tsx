@@ -78,8 +78,10 @@ export function TodayView() {
   return (
     <div className="space-y-4">
       {/* Apple Segmented Control: Today vs Activity */}
-      <div className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
+      <div role="tablist" aria-label="Today views" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
         <button
+          role="tab"
+          aria-selected={activeSubTab === 'ritual'}
           onClick={() => {
             soundEngine.playClick();
             hapticLight();
@@ -94,6 +96,8 @@ export function TodayView() {
           Daily Ritual
         </button>
         <button
+          role="tab"
+          aria-selected={activeSubTab === 'feed'}
           onClick={() => {
             soundEngine.playClick();
             hapticLight();
@@ -135,7 +139,14 @@ export function TodayView() {
           )}
 
           {/* Apple Fitness Activity Summary Card */}
-          <div className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 flex items-center justify-between">
+          <div
+            role="progressbar"
+            aria-valuenow={selectedDatePoints}
+            aria-valuemin={0}
+            aria-valuemax={totalPossible}
+            aria-label={`Progress: ${selectedDatePoints} of ${totalPossible} points, ${completedCount} of ${totalCount} habits completed`}
+            className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 flex items-center justify-between"
+          >
             <div className="flex items-center gap-4">
               {/* Circular Progress Ring */}
               <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">

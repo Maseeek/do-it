@@ -34,6 +34,7 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
         <div className="flex items-center gap-3">
           <button
             onClick={handleProfileSwitch}
+            aria-label={`Switch profile to ${isMaciek ? 'Myrna' : 'Maciek'}`}
             title={`Switch to ${isMaciek ? 'Myrna' : 'Maciek'}`}
             className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-transform active:scale-95 border ${
               isMaciek
@@ -73,7 +74,14 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
 
         {/* Right: Apple Activity Ring & Settings */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2 bg-[#1c1c1e] px-2.5 py-1 rounded-full border border-white/[0.08]">
+          <div
+            role="progressbar"
+            aria-valuenow={activePlayerSummary.today}
+            aria-valuemin={0}
+            aria-valuemax={dailyPar}
+            aria-label={`Today's points: ${activePlayerSummary.today} of ${dailyPar}`}
+            className="flex items-center gap-2 bg-[#1c1c1e] px-2.5 py-1 rounded-full border border-white/[0.08]"
+          >
             {/* Circular Ring */}
             <div className="relative w-7 h-7 flex items-center justify-center">
               <svg className="w-7 h-7 -rotate-90" viewBox="0 0 32 32">

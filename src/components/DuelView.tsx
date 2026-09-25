@@ -110,7 +110,7 @@ export function DuelView() {
   return (
     <div className="space-y-4">
       {/* Timeframe Segmented Control (Apple 3-Pill) */}
-      <div className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
+      <div role="tablist" aria-label="Leaderboard timeframe" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
         {(
           [
             { id: 'weekly', label: 'Week' },
@@ -120,6 +120,8 @@ export function DuelView() {
         ).map((t) => (
           <button
             key={t.id}
+            role="tab"
+            aria-selected={selectedTier === t.id}
             onClick={() => {
               if (selectedTier !== t.id) {
                 soundEngine.playClick();
@@ -205,7 +207,15 @@ export function DuelView() {
 
         {/* Apple Dual Activity Bar */}
         <div className="space-y-1">
-          <div className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden flex">
+          <div
+            role="meter"
+            aria-label="Score share"
+            aria-valuenow={comparison.maciekPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuetext={`Maciek ${comparison.maciekPct}%, Myrna ${comparison.myrnaPct}%`}
+            className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden flex"
+          >
             <div
               className="h-full bg-blue-500 transition-all duration-500"
               style={{ width: `${comparison.maciekPct}%` }}

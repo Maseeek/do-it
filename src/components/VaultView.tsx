@@ -252,7 +252,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
   return (
     <div className="space-y-4">
       {/* 3-Option Apple Segmented Control */}
-      <div className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
+      <div role="tablist" aria-label="Vault sections" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
         {[
           { id: 'stats', label: 'Stats' },
           { id: 'habits', label: 'Habits' },
@@ -260,6 +260,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
         ].map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => {
               if (activeTab !== tab.id) {
                 soundEngine.playClick();
@@ -335,8 +337,10 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-300">Clean Space Proofs</span>
 
-              <div className="flex items-center gap-1 bg-[#2c2c2e] p-0.5 rounded-full text-xs">
+              <div role="tablist" aria-label="Filter clean space proofs" className="flex items-center gap-1 bg-[#2c2c2e] p-0.5 rounded-full text-xs">
                 <button
+                  role="tab"
+                  aria-selected={proofFilter === 'all'}
                   onClick={() => {
                     if (proofFilter !== 'all') {
                       soundEngine.playClick();
@@ -351,6 +355,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   All
                 </button>
                 <button
+                  role="tab"
+                  aria-selected={proofFilter === 'maciek'}
                   onClick={() => {
                     if (proofFilter !== 'maciek') {
                       soundEngine.playClick();
@@ -365,6 +371,8 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   Maciek
                 </button>
                 <button
+                  role="tab"
+                  aria-selected={proofFilter === 'myrna'}
                   onClick={() => {
                     if (proofFilter !== 'myrna') {
                       soundEngine.playClick();
