@@ -81,7 +81,11 @@ export function ProofGalleryModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-3 sm:p-5"
-      onClick={onClose}
+      onClick={() => {
+        soundEngine.playClick();
+        hapticLight();
+        onClose();
+      }}
     >
       <div
         className="w-full max-w-lg rounded-3xl bg-[#1c1c1e] border border-white/[0.1] overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
@@ -108,7 +112,11 @@ export function ProofGalleryModal({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              onClose();
+            }}
             className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <X className="w-4 h-4" />
@@ -153,6 +161,7 @@ export function ProofGalleryModal({
                 key={idx}
                 onClick={() => {
                   soundEngine.playClick();
+                  hapticLight();
                   setCurrentIndex(idx);
                 }}
                 className={`relative rounded-xl overflow-hidden flex-shrink-0 w-11 h-11 border transition-all ${

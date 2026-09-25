@@ -5,7 +5,7 @@ import { Habit } from '@/lib/types';
 import { Check, ImagePlus, Loader2, Upload, X } from 'lucide-react';
 import { compressMultipleImages } from '@/lib/image-utils';
 import { soundEngine } from '@/lib/sound-utils';
-import { hapticMedium } from '@/lib/haptic-utils';
+import { hapticMedium, hapticLight } from '@/lib/haptic-utils';
 
 interface ProofModalProps {
   habit: Habit;
@@ -27,6 +27,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
 
     setIsCompressing(true);
     soundEngine.playClick();
+    hapticLight();
     try {
       const compressed = await compressMultipleImages(files, 1200, 0.8);
       setPhotoPreviews((prev) => [...prev, ...compressed]);
@@ -42,6 +43,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
 
   const handleRemovePhoto = (indexToRemove: number) => {
     soundEngine.playClick();
+    hapticLight();
     setPhotoPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
@@ -55,7 +57,11 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
-      onClick={onClose}
+      onClick={() => {
+        soundEngine.playClick();
+        hapticLight();
+        onClose();
+      }}
     >
       <div
         className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl max-h-[90vh] flex flex-col"
@@ -68,7 +74,11 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
             <span className="text-xs text-zinc-400">{habit.title}</span>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              onClose();
+            }}
             className="text-zinc-400 hover:text-white p-1 rounded-full transition-colors"
           >
             <X className="w-4 h-4" />
@@ -153,7 +163,11 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
         {/* Action buttons */}
         <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-white/[0.06]">
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              onClose();
+            }}
             className="px-3.5 py-2 rounded-xl border border-white/[0.08] text-xs font-medium text-zinc-400 hover:text-white"
           >
             Cancel

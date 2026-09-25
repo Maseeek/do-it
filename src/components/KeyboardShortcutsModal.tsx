@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Keyboard, X } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -24,7 +26,11 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
-      onClick={onClose}
+      onClick={() => {
+        soundEngine.playClick();
+        hapticLight();
+        onClose();
+      }}
     >
       <div
         className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-3"
@@ -36,7 +42,11 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
             <h3 className="text-sm font-semibold text-white">Shortcuts</h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              onClose();
+            }}
             className="text-zinc-400 hover:text-white p-1 rounded-full transition-colors"
           >
             <X className="w-4 h-4" />
