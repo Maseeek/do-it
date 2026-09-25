@@ -11,6 +11,8 @@ import { DuelView } from '@/components/DuelView';
 import { VaultView } from '@/components/VaultView';
 import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
 import { Check, Sparkles } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 function AppContent() {
   const { isHydrated, activePlayerId, toggleHabit, habits, switchProfile, setSelectedDate } = useStore();
@@ -50,24 +52,38 @@ function AppContent() {
       }
 
       if (e.key === '1') {
+        soundEngine.playClick();
+        hapticLight();
         setActiveTab('today');
       } else if (e.key === '2') {
+        soundEngine.playClick();
+        hapticLight();
         setActiveTab('duel');
       } else if (e.key === '3') {
+        soundEngine.playClick();
+        hapticLight();
         setActiveTab('vault');
       } else if (e.key === 'p' || e.key === 'P') {
+        soundEngine.playClick();
+        hapticLight();
         switchProfile();
         setToastMessage('Switched player profile');
         setTimeout(() => setToastMessage(null), 2000);
       } else if (e.key === 't' || e.key === 'T') {
+        soundEngine.playClick();
+        hapticLight();
         const todayStr = new Date().toISOString().split('T')[0];
         setSelectedDate(todayStr);
         setToastMessage('Jumped to Today');
         setTimeout(() => setToastMessage(null), 2000);
       } else if (e.key === '?') {
         e.preventDefault();
+        soundEngine.playClick();
+        hapticLight();
         setIsShortcutsModalOpen((prev) => !prev);
       } else if (e.key === 'Escape') {
+        soundEngine.playClick();
+        hapticLight();
         setIsShortcutsModalOpen(false);
       }
     };
