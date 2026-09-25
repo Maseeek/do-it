@@ -238,7 +238,11 @@ export function DuelView() {
             </span>
             {!activeStake && (
               <button
-                onClick={() => setIsCreatingStake(true)}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setIsCreatingStake(true);
+                }}
                 className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white text-black font-semibold text-[11px] hover:bg-zinc-200 transition-colors"
               >
                 <Plus className="w-3 h-3" />
@@ -259,13 +263,19 @@ export function DuelView() {
 
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
-                onClick={() => setIsResolvingStake(true)}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setIsResolvingStake(true);
+                }}
                 className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium hover:bg-amber-500/25 transition-colors"
               >
                 Resolve
               </button>
               <button
                 onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
                   setStakeTitle(activeStake.title);
                   setStakeDesc(activeStake.description);
                   setIsEditingStake(true);
@@ -276,7 +286,13 @@ export function DuelView() {
                 <Sliders className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => deleteStake(activeStake.id)}
+                onClick={() => {
+                  if (confirm('Delete this wager?')) {
+                    soundEngine.playClick();
+                    hapticLight();
+                    deleteStake(activeStake.id);
+                  }
+                }}
                 className="p-1.5 rounded-full text-zinc-500 hover:text-red-400"
                 title="Delete wager"
               >
@@ -333,8 +349,12 @@ export function DuelView() {
                   {photos.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setActiveProofView({ habit: h, checkIn: checkIn!, player: players.maciek })}
-                      className="text-emerald-400 p-0.5"
+                      onClick={() => {
+                        soundEngine.playClick();
+                        hapticLight();
+                        setActiveProofView({ habit: h, checkIn: checkIn!, player: players.maciek });
+                      }}
+                      className="text-emerald-400 p-0.5 hover:text-emerald-300 transition-colors"
                       title="View proof photos"
                     >
                       <Camera className="w-3 h-3" />
@@ -380,8 +400,12 @@ export function DuelView() {
                   {photos.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setActiveProofView({ habit: h, checkIn: checkIn!, player: players.myrna })}
-                      className="text-emerald-400 p-0.5"
+                      onClick={() => {
+                        soundEngine.playClick();
+                        hapticLight();
+                        setActiveProofView({ habit: h, checkIn: checkIn!, player: players.myrna });
+                      }}
+                      className="text-emerald-400 p-0.5 hover:text-emerald-300 transition-colors"
                       title="View proof photos"
                     >
                       <Camera className="w-3 h-3" />
@@ -487,7 +511,11 @@ export function DuelView() {
       {isResolvingStake && activeStake && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
-          onClick={() => setIsResolvingStake(false)}
+          onClick={() => {
+            soundEngine.playClick();
+            hapticLight();
+            setIsResolvingStake(false);
+          }}
         >
           <div
             className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl space-y-4"
@@ -498,7 +526,14 @@ export function DuelView() {
                 <Crown className="w-4 h-4 text-amber-400" />
                 <h3 className="text-sm font-semibold text-white">Resolve Wager</h3>
               </div>
-              <button onClick={() => setIsResolvingStake(false)} className="text-zinc-400 hover:text-white p-1">
+              <button
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setIsResolvingStake(false);
+                }}
+                className="text-zinc-400 hover:text-white p-1"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -537,6 +572,8 @@ export function DuelView() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
           onClick={() => {
+            soundEngine.playClick();
+            hapticLight();
             setIsEditingStake(false);
             setIsCreatingStake(false);
           }}
@@ -551,6 +588,8 @@ export function DuelView() {
               </h3>
               <button
                 onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
                   setIsEditingStake(false);
                   setIsCreatingStake(false);
                 }}
@@ -565,6 +604,8 @@ export function DuelView() {
                 if (isEditingStake && activeStake) {
                   e.preventDefault();
                   if (!stakeTitle.trim()) return;
+                  soundEngine.playCheck();
+                  hapticSuccess();
                   updateStake({
                     ...activeStake,
                     title: stakeTitle,
@@ -581,7 +622,11 @@ export function DuelView() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setStakePeriod('weekly')}
+                    onClick={() => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setStakePeriod('weekly');
+                    }}
                     className={`flex-1 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                       stakePeriod === 'weekly'
                         ? 'bg-zinc-700 text-white border-zinc-600 font-semibold'
@@ -592,7 +637,11 @@ export function DuelView() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStakePeriod('monthly')}
+                    onClick={() => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setStakePeriod('monthly');
+                    }}
                     className={`flex-1 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                       stakePeriod === 'monthly'
                         ? 'bg-zinc-700 text-white border-zinc-600 font-semibold'
@@ -625,6 +674,8 @@ export function DuelView() {
                 <button
                   type="button"
                   onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
                     setIsEditingStake(false);
                     setIsCreatingStake(false);
                   }}
