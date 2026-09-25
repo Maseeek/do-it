@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
-import { hapticLight } from '@/lib/haptic-utils';
+import { hapticLight, hapticCelebration } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function TodayView() {
@@ -52,6 +52,7 @@ export function TodayView() {
     if (selectedDatePoints >= totalPossible && prevPointsRef.current < totalPossible) {
       soundEngine.playFanfare();
       fireCelebrationConfetti();
+      hapticCelebration();
     }
     prevPointsRef.current = selectedDatePoints;
   }, [selectedDatePoints, totalPossible]);

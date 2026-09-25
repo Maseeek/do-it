@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ProofGalleryModal } from './ProofGalleryModal';
 import { soundEngine } from '@/lib/sound-utils';
-import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
+import { hapticLight, hapticSuccess, hapticCelebration } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function DuelView() {
@@ -77,7 +77,7 @@ export function DuelView() {
     if (!activeStake) return;
     soundEngine.playFanfare();
     fireCelebrationConfetti();
-    hapticSuccess();
+    hapticCelebration();
     updateStake({
       ...activeStake,
       status: 'completed',
