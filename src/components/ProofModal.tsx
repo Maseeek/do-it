@@ -4,6 +4,8 @@ import React, { useRef, useState } from 'react';
 import { Habit } from '@/lib/types';
 import { Camera, Check, ImagePlus, Loader2, Upload, X } from 'lucide-react';
 import { compressMultipleImages } from '@/lib/image-utils';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticMedium } from '@/lib/haptic-utils';
 
 interface ProofModalProps {
   habit: Habit;
@@ -24,6 +26,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
     if (!files || files.length === 0) return;
 
     setIsCompressing(true);
+    soundEngine.playClick();
     try {
       const compressed = await compressMultipleImages(files, 1200, 0.8);
       setPhotoPreviews((prev) => [...prev, ...compressed]);
@@ -31,7 +34,6 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
       console.error('Error compressing image(s)', err);
     } finally {
       setIsCompressing(false);
-      // Reset input value so same files can be re-selected if desired
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -39,25 +41,28 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
   };
 
   const handleRemovePhoto = (indexToRemove: number) => {
+    soundEngine.playClick();
     setPhotoPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleComplete = () => {
+    soundEngine.playCheck();
+    hapticMedium();
     onConfirm(photoPreviews.length > 0 ? photoPreviews : undefined);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-zinc-950 border border-zinc-800 p-5 shadow-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md px-4">
+      <div className="w-full max-w-sm rounded-2xl glass-panel bg-zinc-950 border border-white/[0.1] p-5 shadow-2xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300">
-              <Camera className="w-3.5 h-3.5" />
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center text-zinc-300">
+              <Camera className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-white">Visual Proof</h2>
+              <h2 className="text-sm font-bold text-white font-mono">Visual Proof</h2>
               <span className="text-[10px] font-mono text-zinc-400">Multiple photos supported</span>
             </div>
           </div>
@@ -69,8 +74,8 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
           </button>
         </div>
 
-        <p className="text-xs text-zinc-400 mb-3 leading-relaxed flex-shrink-0">
-          Upload photo proof for <span className="text-white font-medium">{habit.title}</span>. You can attach multiple photos (e.g. different rooms or angles).
+        <p className="text-xs text-zinc-300 mb-3 leading-relaxed flex-shrink-0">
+          Upload photo proof for <span className="text-white font-semibold">&ldquo;{habit.title}&rdquo;</span>. Attach photos of your space, workout, or study.
         </p>
 
         {/* Hidden multi-file input */}
@@ -90,7 +95,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isCompressing}
-              className="w-full flex flex-col items-center justify-center aspect-video rounded-xl border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 hover:bg-zinc-900/80 cursor-pointer transition-all"
+              className="w-full flex flex-col items-center justify-center aspect-video rounded-xl border border-dashed border-white/[0.12] hover:border-zinc-500 bg-zinc-900/40 hover:bg-zinc-900/80 cursor-pointer transition-all"
             >
               {isCompressing ? (
                 <>
@@ -99,8 +104,8 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
                 </>
               ) : (
                 <>
-                  <Upload className="w-6 h-6 text-zinc-500 mb-2" />
-                  <span className="text-xs font-medium text-zinc-300">Tap to upload photos</span>
+                  <Upload className="w-6 h-6 text-zinc-400 mb-2" />
+                  <span className="text-xs font-semibold text-zinc-200">Tap to upload photos</span>
                   <span className="text-[10px] text-zinc-500 mt-0.5">Take photos or choose from library</span>
                 </>
               )}
@@ -121,7 +126,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
                 {photoPreviews.map((preview, index) => (
                   <div
                     key={index}
-                    className="relative rounded-xl overflow-hidden border border-zinc-800 aspect-video bg-zinc-900 group"
+                    className="relative rounded-xl overflow-hidden border border-white/[0.08] aspect-video bg-zinc-900 group"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -131,7 +136,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
                     />
 
                     {/* Photo index badge */}
-                    <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-xs text-white text-[9px] font-mono px-1.5 py-0.2 rounded">
+                    <div className="absolute bottom-1.5 left-1.5 bg-black/75 backdrop-blur-xs text-white text-[9px] font-mono px-1.5 py-0.2 rounded">
                       #{index + 1}
                     </div>
 
@@ -152,9 +157,9 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isCompressing}
-                  className="flex flex-col items-center justify-center aspect-video rounded-xl border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 hover:bg-zinc-900/60 text-zinc-400 hover:text-white transition-colors"
+                  className="flex flex-col items-center justify-center aspect-video rounded-xl border border-dashed border-white/[0.1] hover:border-zinc-500 bg-zinc-900/30 hover:bg-zinc-900/60 text-zinc-400 hover:text-white transition-colors"
                 >
-                  <ImagePlus className="w-5 h-5 mb-1 text-zinc-500" />
+                  <ImagePlus className="w-5 h-5 mb-1 text-zinc-400" />
                   <span className="text-[11px] font-medium">+ Add More</span>
                 </button>
               </div>
@@ -163,17 +168,17 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-zinc-900">
+        <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-white/[0.08]">
           <button
             onClick={onClose}
-            className="px-3 py-2.5 rounded-xl border border-zinc-800 text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+            className="px-3.5 py-2.5 rounded-xl border border-white/[0.08] text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleComplete}
             disabled={isCompressing}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50 shadow-sm"
           >
             <Check className="w-3.5 h-3.5 stroke-[2.5]" />
             {photoPreviews.length > 0

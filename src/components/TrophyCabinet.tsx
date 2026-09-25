@@ -18,6 +18,8 @@ import {
   Trophy,
   Zap,
 } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 export function TrophyCabinet() {
   const { maciekBadges, myrnaBadges, activePlayerId } = useStore();
@@ -34,6 +36,18 @@ export function TrophyCabinet() {
   });
 
   const unlockedCount = badges.filter((b) => b.isUnlocked).length;
+
+  const handlePlayerChange = (playerId: PlayerId) => {
+    soundEngine.playClick();
+    hapticLight();
+    setSelectedPlayer(playerId);
+  };
+
+  const handleFilterChange = (f: 'all' | 'unlocked' | 'locked') => {
+    soundEngine.playClick();
+    hapticLight();
+    setFilter(f);
+  };
 
   const renderBadgeIcon = (iconName: string) => {
     const props = { className: 'w-4 h-4' };
@@ -65,16 +79,22 @@ export function TrophyCabinet() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Top Banner: Unlocked Count & Player Switcher */}
-      <div className="rounded-2xl bg-gradient-to-b from-[#14161f] to-[#0c0d10] border border-zinc-800/90 p-4 shadow-md">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+      <div className="rounded-2xl glass-card border border-white/[0.08] p-4 shadow-md relative overflow-hidden">
+        <div
+          className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl pointer-events-none ${
+            isMaciek ? 'bg-blue-500/10' : 'bg-pink-500/10'
+          }`}
+        />
+
+        <div className="flex items-center justify-between mb-3 relative z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.2)]">
               <Trophy className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-200 font-mono">
                 Trophy Cabinet & Badges
               </h3>
               <p className="text-[10px] font-mono text-zinc-400">
@@ -84,22 +104,22 @@ export function TrophyCabinet() {
           </div>
 
           {/* Player Switcher */}
-          <div className="flex bg-zinc-900 border border-zinc-800 p-0.5 rounded-lg text-xs font-mono">
+          <div className="flex bg-zinc-900 border border-white/[0.08] p-0.5 rounded-xl text-xs font-mono">
             <button
-              onClick={() => setSelectedPlayer('maciek')}
-              className={`px-2.5 py-1 rounded transition-colors ${
+              onClick={() => handlePlayerChange('maciek')}
+              className={`px-2.5 py-1 rounded-lg transition-colors ${
                 selectedPlayer === 'maciek'
-                  ? 'bg-blue-500/20 text-blue-300 font-bold'
+                  ? 'bg-blue-500/20 text-blue-300 font-bold shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               ⚡ Maciek
             </button>
             <button
-              onClick={() => setSelectedPlayer('myrna')}
-              className={`px-2.5 py-1 rounded transition-colors ${
+              onClick={() => handlePlayerChange('myrna')}
+              className={`px-2.5 py-1 rounded-lg transition-colors ${
                 selectedPlayer === 'myrna'
-                  ? 'bg-pink-500/20 text-pink-300 font-bold'
+                  ? 'bg-pink-500/20 text-pink-300 font-bold shadow-xs'
                   : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
@@ -109,12 +129,12 @@ export function TrophyCabinet() {
         </div>
 
         {/* Global Trophy Progress Bar */}
-        <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+        <div className="h-1.5 w-full rounded-full bg-zinc-800/80 overflow-hidden relative z-10">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${
+            className={`h-full rounded-full transition-all duration-700 ${
               isMaciek
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-400'
-                : 'bg-gradient-to-r from-pink-500 to-rose-400'
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-400 shadow-[0_0_8px_#60a5fa]'
+                : 'bg-gradient-to-r from-pink-500 to-rose-400 shadow-[0_0_8px_#f472b6]'
             }`}
             style={{ width: `${(unlockedCount / badges.length) * 100}%` }}
           />
@@ -123,27 +143,27 @@ export function TrophyCabinet() {
 
       {/* Filter Tabs */}
       <div className="flex items-center justify-between px-1">
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 p-0.5 rounded-lg text-xs font-mono">
+        <div className="flex gap-1 bg-zinc-900 border border-white/[0.08] p-0.5 rounded-xl text-xs font-mono">
           <button
-            onClick={() => setFilter('all')}
-            className={`px-2.5 py-0.5 rounded transition-colors ${
-              filter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+            onClick={() => handleFilterChange('all')}
+            className={`px-2.5 py-1 rounded-lg transition-colors ${
+              filter === 'all' ? 'bg-white/[0.1] text-white font-semibold' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             All ({badges.length})
           </button>
           <button
-            onClick={() => setFilter('unlocked')}
-            className={`px-2.5 py-0.5 rounded transition-colors ${
-              filter === 'unlocked' ? 'bg-zinc-800 text-emerald-400' : 'text-zinc-500 hover:text-zinc-300'
+            onClick={() => handleFilterChange('unlocked')}
+            className={`px-2.5 py-1 rounded-lg transition-colors ${
+              filter === 'unlocked' ? 'bg-emerald-500/20 text-emerald-300 font-semibold' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             Unlocked ({unlockedCount})
           </button>
           <button
-            onClick={() => setFilter('locked')}
-            className={`px-2.5 py-0.5 rounded transition-colors ${
-              filter === 'locked' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+            onClick={() => handleFilterChange('locked')}
+            className={`px-2.5 py-1 rounded-lg transition-colors ${
+              filter === 'locked' ? 'bg-white/[0.1] text-white font-semibold' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             In Progress ({badges.length - unlockedCount})
@@ -159,9 +179,9 @@ export function TrophyCabinet() {
             className={`p-3.5 rounded-2xl border transition-all ${
               isUnlocked
                 ? isMaciek
-                  ? 'bg-gradient-to-b from-[#10141f] to-[#0c0d10] border-blue-500/30 shadow-md'
-                  : 'bg-gradient-to-b from-[#18121a] to-[#0c0d10] border-pink-500/30 shadow-md'
-                : 'bg-[#0c0d10] border-zinc-800/70 opacity-60'
+                  ? 'glass-card border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.12)]'
+                  : 'glass-card border-pink-500/30 shadow-[0_0_12px_rgba(236,72,153,0.12)]'
+                : 'glass-card border-white/[0.05] opacity-60'
             }`}
           >
             <div className="flex items-start gap-3">
@@ -169,9 +189,9 @@ export function TrophyCabinet() {
                 className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                   isUnlocked
                     ? isMaciek
-                      ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
-                      : 'bg-pink-500/15 border-pink-500/40 text-pink-400'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-600'
+                      ? 'bg-blue-500/15 border-blue-500/40 text-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.3)]'
+                      : 'bg-pink-500/15 border-pink-500/40 text-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.3)]'
+                    : 'bg-zinc-900 border-white/[0.06] text-zinc-600'
                 }`}
               >
                 {isUnlocked ? renderBadgeIcon(badge.icon) : <Lock className="w-4 h-4" />}
@@ -181,12 +201,12 @@ export function TrophyCabinet() {
                 <div className="flex items-center justify-between gap-1">
                   <h4 className="text-xs font-bold text-white truncate">{badge.title}</h4>
                   {isUnlocked ? (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-medium flex-shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold flex-shrink-0">
                       <CheckCircle2 className="w-2.5 h-2.5" />
                       Unlocked
                     </span>
                   ) : (
-                    <span className="text-[9px] font-mono text-zinc-500 flex-shrink-0">
+                    <span className="text-[9px] font-mono text-zinc-500 flex-shrink-0 font-medium">
                       {progress}%
                     </span>
                   )}

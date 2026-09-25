@@ -16,6 +16,8 @@ import {
   Sparkles,
   Trophy,
 } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 export function TodayView() {
   const {
@@ -46,6 +48,7 @@ export function TodayView() {
   const completedCount = activeHabits.filter((h) => isHabitCompletedOnDate(h.id, selectedDate)).length;
   const totalCount = activeHabits.length;
   const allDone = completedCount === totalCount && totalCount > 0;
+  const isParMet = selectedDatePoints >= totalPossible;
 
   // Separate uncompleted and completed habits for crisp daily focus
   const pendingHabits = activeHabits.filter((h) => !isHabitCompletedOnDate(h.id, selectedDate));
@@ -62,25 +65,31 @@ export function TodayView() {
     ? [partnerCleanSpaceCheckIn.proofUrl]
     : [];
 
+  const handleSubTabChange = (tab: 'ritual' | 'feed') => {
+    soundEngine.playClick();
+    hapticLight();
+    setActiveSubTab(tab);
+  };
+
   return (
-    <div className="space-y-4 pb-24">
-      {/* Sub-tab switcher: Daily Ritual vs Couples Activity Feed */}
-      <div className="flex p-1 rounded-xl bg-zinc-900 border border-zinc-800">
+    <div className="space-y-3.5 pb-24">
+      {/* Sub-tab segmented pill switch */}
+      <div className="flex p-1 rounded-2xl glass-panel bg-zinc-900/60 border border-white/[0.08]">
         <button
-          onClick={() => setActiveSubTab('ritual')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 ${
+          onClick={() => handleSubTabChange('ritual')}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-mono font-medium transition-all duration-200 ${
             activeSubTab === 'ritual'
-              ? 'bg-zinc-800 text-white shadow-sm'
+              ? 'bg-white/[0.1] text-white shadow-sm font-semibold'
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
           Daily Ritual ⚡
         </button>
         <button
-          onClick={() => setActiveSubTab('feed')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium transition-all duration-200 ${
+          onClick={() => handleSubTabChange('feed')}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-mono font-medium transition-all duration-200 ${
             activeSubTab === 'feed'
-              ? 'bg-zinc-800 text-white shadow-sm'
+              ? 'bg-white/[0.1] text-white shadow-sm font-semibold'
               : 'text-zinc-500 hover:text-zinc-300'
           }`}
         >
@@ -97,90 +106,103 @@ export function TodayView() {
 
           {/* Rest Day Announcement Banner */}
           {isRest && (
-            <div className="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-4 text-center space-y-1 shadow-sm">
-              <div className="flex items-center justify-center gap-1.5 text-indigo-300 font-semibold text-xs">
-                <BedDouble className="w-4 h-4" />
+            <div className="rounded-2xl bg-indigo-950/40 border border-indigo-500/30 p-3.5 text-center space-y-1 shadow-[0_0_15px_rgba(99,102,241,0.15)] animate-in fade-in duration-300">
+              <div className="flex items-center justify-center gap-2 text-indigo-300 font-semibold text-xs">
+                <BedDouble className="w-4 h-4 text-indigo-400" />
                 <span>Rest & Recovery Day Active</span>
               </div>
-              <p className="text-[11px] text-indigo-200/80">
-                Scheduled rest day for {formatFriendlyDate(selectedDate)}. Your streak is protected while you recharge!
+              <p className="text-[11px] text-indigo-200/80 font-sans">
+                Scheduled rest day for {formatFriendlyDate(selectedDate)}. Your streak is protected while you recharge.
               </p>
             </div>
           )}
 
           {/* Daily Progress Overview Card */}
-          <div className="rounded-2xl bg-gradient-to-b from-[#12141a] to-[#0c0d10] border border-zinc-800/80 p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-3">
+          <div className="rounded-2xl glass-card border border-white/[0.09] p-4.5 shadow-xl relative overflow-hidden">
+            {/* Ambient subtle corner glow based on player */}
+            <div
+              className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl pointer-events-none ${
+                isMaciek ? 'bg-blue-500/10' : 'bg-pink-500/10'
+              }`}
+            />
+
+            <div className="flex items-start justify-between mb-3 relative z-10">
               <div>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">
-                  {isTodaySelected ? 'Daily Target' : `Score for ${formatFriendlyDate(selectedDate)}`}
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-medium">
+                  {isTodaySelected ? 'Daily Par Goal' : `Score for ${formatFriendlyDate(selectedDate)}`}
                 </span>
                 <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-3xl font-bold font-mono tracking-tight text-white">
+                  <span className="text-3xl font-extrabold font-mono tracking-tight text-white drop-shadow-sm">
                     {selectedDatePoints}
                   </span>
-                  <span className="text-sm font-mono text-zinc-400">/ {totalPossible} pts</span>
+                  <span className="text-xs font-mono text-zinc-400 font-medium">
+                    / {totalPossible} pts
+                  </span>
                 </div>
               </div>
 
               <div className="text-right">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-medium">
                   Habits Done
                 </span>
-                <div className="text-sm font-semibold text-white mt-0.5">
-                  {completedCount} of {totalCount}
+                <div className="text-xs font-bold font-mono text-white mt-0.5 bg-white/[0.05] px-2 py-0.5 rounded-md border border-white/[0.08]">
+                  {completedCount} / {totalCount}
                 </div>
               </div>
             </div>
 
-            {/* Linear progress track */}
-            <div className="w-full h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
+            {/* Glowing progress track */}
+            <div className="w-full h-2 rounded-full bg-zinc-800/80 overflow-hidden relative z-10 shadow-inner">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isMaciek
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-400'
-                    : 'bg-gradient-to-r from-pink-500 to-rose-400'
+                className={`h-full rounded-full transition-all duration-700 ease-out ${
+                  isParMet
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_#34d399]'
+                    : isMaciek
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-400 shadow-[0_0_8px_#60a5fa]'
+                    : 'bg-gradient-to-r from-pink-600 to-pink-400 shadow-[0_0_8px_#f472b6]'
                 }`}
                 style={{ width: `${Math.min(100, (selectedDatePoints / totalPossible) * 100)}%` }}
               />
             </div>
 
-            {allDone ? (
-              <div className="mt-3.5 flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 py-1.5 px-3 rounded-lg border border-emerald-500/20">
-                <Trophy className="w-3.5 h-3.5" />
-                Daily Par Complete! All habits checked in for this date.
+            {isParMet ? (
+              <div className="mt-3 flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-300 bg-emerald-500/10 py-1.5 px-3 rounded-xl border border-emerald-500/25 shadow-[0_0_12px_rgba(16,185,129,0.15)] relative z-10">
+                <Trophy className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{allDone ? 'Daily Par Complete! All habits checked in.' : `Daily Par Complete! (+${selectedDatePoints} pts earned)`}</span>
               </div>
             ) : (
-              <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+              <div className="mt-2.5 flex items-center justify-between text-[11px] text-zinc-400 font-mono relative z-10">
                 <span>{Math.max(0, totalPossible - selectedDatePoints)} pts to daily par</span>
-                <span>{Math.round((selectedDatePoints / totalPossible) * 100)}%</span>
+                <span className="font-semibold text-zinc-300">
+                  {Math.round((selectedDatePoints / totalPossible) * 100)}%
+                </span>
               </div>
             )}
           </div>
 
           {/* Partner's Clean Space Accountability Card */}
           {partner && (
-            <div className="rounded-2xl bg-[#0e1013] border border-zinc-800/90 p-4 shadow-sm">
+            <div className="rounded-2xl glass-card border border-white/[0.08] p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">{partner.avatar}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-lg">{partner.avatar}</span>
                   <div>
                     <h3 className="text-xs font-semibold text-white">
                       {partner.name}&apos;s Clean Space
                     </h3>
                     <span className="text-[10px] font-mono text-zinc-400">
-                      {isTodaySelected ? 'Daily Accountability' : `Date: ${selectedDate}`}
+                      {isTodaySelected ? 'Daily Photo Accountability' : `Date: ${selectedDate}`}
                     </span>
                   </div>
                 </div>
 
                 {partnerCleanSpaceCheckIn ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-medium">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/25 font-semibold shadow-xs">
                     <CheckCircle2 className="w-3 h-3" />
                     Verified
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-full border border-zinc-800">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2.5 py-0.5 rounded-full border border-white/[0.06]">
                     <Clock className="w-3 h-3 text-zinc-500" />
                     Pending
                   </span>
@@ -200,7 +222,7 @@ export function TodayView() {
                         <button
                           key={idx}
                           onClick={() => setSelectedProofIndex(idx)}
-                          className="relative rounded-xl overflow-hidden aspect-video w-24 sm:w-28 flex-shrink-0 border border-zinc-800 hover:border-zinc-500 transition-all group"
+                          className="relative rounded-xl overflow-hidden aspect-video w-24 sm:w-28 flex-shrink-0 border border-white/[0.08] hover:border-zinc-400 transition-all group focus:outline-none"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -219,7 +241,7 @@ export function TodayView() {
 
                       <button
                         onClick={() => setSelectedProofIndex(0)}
-                        className="flex flex-col items-center justify-center aspect-video w-20 flex-shrink-0 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-white transition-colors"
+                        className="flex flex-col items-center justify-center aspect-video w-20 flex-shrink-0 rounded-xl bg-zinc-900 border border-white/[0.08] hover:border-zinc-500 text-zinc-400 hover:text-white transition-colors"
                       >
                         <ChevronRight className="w-4 h-4" />
                         <span className="text-[9px] font-mono mt-0.5">View all</span>
@@ -239,11 +261,11 @@ export function TodayView() {
             </div>
           )}
 
-          {/* Habits to Complete */}
+          {/* Pending Habits to Complete */}
           {pendingHabits.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between px-1 pt-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
                   Incomplete ({pendingHabits.length})
                 </span>
               </div>
@@ -260,7 +282,7 @@ export function TodayView() {
             <div className="space-y-2 pt-2">
               <div className="flex items-center gap-1.5 px-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
                   Completed ({doneHabits.length})
                 </span>
               </div>
@@ -273,9 +295,9 @@ export function TodayView() {
           )}
 
           {activeHabits.length === 0 && (
-            <div className="rounded-2xl border border-zinc-800 bg-[#0e1013] p-8 text-center text-zinc-400">
+            <div className="rounded-2xl border border-white/[0.08] glass-card p-8 text-center text-zinc-400">
               <Sparkles className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-white">No habits configured yet</p>
+              <p className="text-sm font-semibold text-white">No habits configured yet</p>
               <p className="text-xs text-zinc-500 mt-1">Visit Vault to configure your daily habits.</p>
             </div>
           )}

@@ -10,7 +10,7 @@ import { TodayView } from '@/components/TodayView';
 import { DuelView } from '@/components/DuelView';
 import { VaultView } from '@/components/VaultView';
 import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 
 function AppContent() {
   const { isHydrated, activePlayerId, toggleHabit, habits, switchProfile, setSelectedDate } = useStore();
@@ -79,8 +79,11 @@ function AppContent() {
   // SSR hydration placeholder
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-[#08090a] flex items-center justify-center">
-        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 animate-pulse" />
+      <div className="min-h-screen bg-[#070809] flex flex-col items-center justify-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center animate-pulse">
+          <Sparkles className="w-5 h-5 text-zinc-500 animate-spin" />
+        </div>
+        <span className="text-xs font-mono text-zinc-600">Loading arena...</span>
       </div>
     );
   }
@@ -91,29 +94,35 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#08090a] text-zinc-100 flex flex-col font-sans">
-      <Header onOpenSettings={() => setActiveTab('vault')} />
+    <div className="min-h-screen bg-[#070809] text-zinc-100 flex flex-col font-sans relative selection:bg-zinc-800 selection:text-white">
+      {/* Ambient background glow mesh */}
+      <div className="ambient-mesh" aria-hidden="true" />
 
-      {/* Deep-link quick check-in toast */}
-      {toastMessage && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-500/90 text-black px-4 py-2 rounded-xl text-xs font-mono font-bold shadow-lg flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-top-2">
-          <Check className="w-4 h-4 stroke-[3]" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+      {/* App frame */}
+      <div className="relative z-10 flex flex-col flex-1">
+        <Header onOpenSettings={() => setActiveTab('vault')} />
 
-      <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4">
-        {activeTab === 'today' && <TodayView />}
-        {activeTab === 'duel' && <DuelView />}
-        {activeTab === 'vault' && <VaultView />}
-      </main>
+        {/* Floating Quick Action Toast */}
+        {toastMessage && (
+          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 glass-panel bg-emerald-500/15 border-emerald-500/30 text-emerald-200 px-4 py-2 rounded-xl text-xs font-mono font-semibold shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200">
+            <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
 
-      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+        <main className="flex-1 max-w-md w-full mx-auto px-4 pt-3.5 pb-20">
+          {activeTab === 'today' && <TodayView />}
+          {activeTab === 'duel' && <DuelView />}
+          {activeTab === 'vault' && <VaultView />}
+        </main>
 
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsModalOpen}
-        onClose={() => setIsShortcutsModalOpen(false)}
-      />
+        <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+
+        <KeyboardShortcutsModal
+          isOpen={isShortcutsModalOpen}
+          onClose={() => setIsShortcutsModalOpen(false)}
+        />
+      </div>
     </div>
   );
 }
@@ -122,8 +131,8 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#08090a] flex items-center justify-center">
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 animate-pulse" />
+        <div className="min-h-screen bg-[#070809] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/[0.08] animate-pulse" />
         </div>
       }
     >

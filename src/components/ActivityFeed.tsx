@@ -7,6 +7,9 @@ import { formatFriendlyDate, formatTimeAgo } from '@/lib/date-utils';
 import { HabitIcon } from './HabitIcon';
 import { ProofGalleryModal } from './ProofGalleryModal';
 import { Camera, MessageSquare, Send } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticSuccess } from '@/lib/haptic-utils';
+import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function ActivityFeed() {
   const {
@@ -39,6 +42,9 @@ export function ActivityFeed() {
 
   const handleSendReaction = (emoji: string, text: string) => {
     if (!partnerId) return;
+    soundEngine.playCheck();
+    hapticSuccess();
+    fireCelebrationConfetti();
     addReaction({
       toPlayerId: partnerId,
       emoji,
@@ -53,7 +59,7 @@ export function ActivityFeed() {
     handleSendReaction(selectedEmoji, customMsg.trim());
   };
 
-  // Build unified chronological timeline items (check-ins and reactions)
+  // Build unified chronological timeline items
   type TimelineItem =
     | {
         type: 'check_in';
@@ -114,19 +120,19 @@ export function ActivityFeed() {
   timelineItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Cheer & Reaction Bar */}
       {partner && (
-        <div className="rounded-2xl bg-gradient-to-b from-[#13151c] to-[#0c0d10] border border-zinc-800/90 p-4 shadow-md">
+        <div className="rounded-2xl glass-card border border-white/[0.09] p-4 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
-              <span className="text-base">{partner.avatar}</span>
+              <span className="text-lg">{partner.avatar}</span>
               <div>
-                <h4 className="text-xs font-semibold text-white">Cheer {partner.name}</h4>
+                <h4 className="text-xs font-bold text-white">Cheer {partner.name}</h4>
                 <p className="text-[10px] font-mono text-zinc-400">1-tap accountability cheer</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-full font-semibold">
               Live Duel
             </span>
           </div>
@@ -140,7 +146,7 @@ export function ActivityFeed() {
                   setSelectedEmoji(preset.emoji);
                   handleSendReaction(preset.emoji, preset.text);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-850 text-xs text-zinc-200 hover:text-white transition-all flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-white/[0.08] hover:border-white/20 hover:bg-zinc-850 text-xs text-zinc-200 hover:text-white transition-all flex-shrink-0 active:scale-95 shadow-xs"
               >
                 <span>{preset.emoji}</span>
                 <span className="text-[11px] font-medium">{preset.text}</span>
@@ -155,14 +161,14 @@ export function ActivityFeed() {
               value={customMsg}
               onChange={(e) => setCustomMsg(e.target.value)}
               placeholder={`Send a quick message to ${partner.name}...`}
-              className="flex-1 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600"
+              className="flex-1 px-3 py-2 rounded-xl bg-zinc-900/90 border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-400"
             />
             <button
               type="submit"
               disabled={!customMsg.trim()}
-              className="px-3 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-40 flex items-center gap-1"
+              className="px-3 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-40 flex items-center gap-1 shadow-sm active:scale-95"
             >
-              <Send className="w-3 h-3" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>
@@ -171,15 +177,15 @@ export function ActivityFeed() {
       {/* Activity Timeline List */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
             Couples Activity Feed ({timelineItems.length})
           </span>
-          <span className="text-[10px] font-mono text-zinc-500">Chronological</span>
+          <span className="text-[10px] font-mono text-zinc-500">Live & Chronological</span>
         </div>
 
         {timelineItems.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-800 bg-[#0c0d10] p-6 text-center text-zinc-500 text-xs">
-            No activity logged yet. Check in a habit above!
+          <div className="rounded-2xl border border-white/[0.08] glass-card p-6 text-center text-zinc-500 text-xs font-mono">
+            No activity logged yet. Check in a habit to start the timeline!
           </div>
         ) : (
           timelineItems.slice(0, 30).map((item) => {
@@ -188,26 +194,26 @@ export function ActivityFeed() {
               return (
                 <div
                   key={item.id}
-                  className={`rounded-2xl bg-[#0e1014] border p-3.5 shadow-sm ${
-                    isMaciekSender ? 'border-blue-500/25' : 'border-pink-500/25'
+                  className={`rounded-2xl glass-card p-3.5 shadow-sm border ${
+                    isMaciekSender ? 'border-blue-500/25 bg-blue-500/[0.03]' : 'border-pink-500/25 bg-pink-500/[0.03]'
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
-                    <div className="w-7 h-7 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-base flex-shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-base flex-shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.2)]">
                       {item.emoji}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-white truncate">
+                        <span className="text-xs font-bold text-white truncate">
                           {item.fromPlayer.name} cheered {item.toPlayer.name}
                         </span>
-                        <span className="text-[10px] font-mono text-zinc-500 flex-shrink-0">
+                        <span className="text-[10px] font-mono text-zinc-400 flex-shrink-0">
                           {formatTimeAgo(item.timestamp)}
                         </span>
                       </div>
 
-                      <p className="text-xs text-zinc-300 mt-1 italic leading-relaxed">
+                      <p className="text-xs text-zinc-200 mt-1 italic leading-relaxed">
                         &ldquo;{item.message}&rdquo;
                       </p>
                     </div>
@@ -228,15 +234,15 @@ export function ActivityFeed() {
             return (
               <div
                 key={item.id}
-                className="rounded-2xl bg-[#0c0d10] border border-zinc-800/80 p-3.5 shadow-sm space-y-2 hover:border-zinc-700/80 transition-colors"
+                className="rounded-2xl glass-card border border-white/[0.08] p-3.5 shadow-sm space-y-2 hover:border-white/20 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                         isMaciek
-                          ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                          : 'bg-pink-500/10 border-pink-500/30 text-pink-400'
+                          ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.2)]'
+                          : 'bg-pink-500/15 border-pink-500/30 text-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.2)]'
                       }`}
                     >
                       <HabitIcon name={item.habit.iconName} className="w-3.5 h-3.5" />
@@ -244,20 +250,20 @@ export function ActivityFeed() {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-semibold text-white truncate">
+                        <span className="text-xs font-bold text-white truncate">
                           {item.player.name}
                         </span>
                         <span className="text-[11px] text-zinc-400 font-mono">
                           checked in
                         </span>
-                        <span className="text-xs font-medium text-white truncate">
+                        <span className="text-xs font-semibold text-zinc-200 truncate">
                           {item.habit.title}
                         </span>
                       </div>
-                      <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+                      <div className="text-[10px] font-mono text-zinc-400 mt-0.5">
                         {formatTimeAgo(item.timestamp)} • {formatFriendlyDate(item.date)}
                         {item.checkIn.isRetroactive && (
-                          <span className="ml-1 text-amber-400/90">(retroactive)</span>
+                          <span className="ml-1 text-amber-400/90 font-semibold">(retroactive)</span>
                         )}
                       </div>
                     </div>
@@ -266,8 +272,8 @@ export function ActivityFeed() {
                   <span
                     className={`font-mono text-xs font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${
                       isMaciek
-                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-300'
-                        : 'bg-pink-500/10 border-pink-500/20 text-pink-300'
+                        ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
+                        : 'bg-pink-500/15 border-pink-500/30 text-pink-300'
                     }`}
                   >
                     +{item.checkIn.pointsEarned} pts
@@ -276,9 +282,9 @@ export function ActivityFeed() {
 
                 {/* Attached micro-note */}
                 {item.checkIn.note && (
-                  <div className="flex items-start gap-1.5 bg-zinc-900/60 border border-zinc-800/60 rounded-xl px-2.5 py-1.5 text-xs text-zinc-300">
-                    <MessageSquare className="w-3 h-3 text-zinc-500 flex-shrink-0 mt-0.5" />
-                    <span className="leading-relaxed">{item.checkIn.note}</span>
+                  <div className="flex items-start gap-1.5 bg-zinc-900/60 border border-white/[0.06] rounded-xl px-2.5 py-1.5 text-xs text-zinc-300">
+                    <MessageSquare className="w-3 h-3 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">&ldquo;{item.checkIn.note}&rdquo;</span>
                   </div>
                 )}
 
@@ -295,14 +301,15 @@ export function ActivityFeed() {
                     {photos.map((photo, pIdx) => (
                       <button
                         key={pIdx}
-                        onClick={() =>
+                        onClick={() => {
+                          soundEngine.playClick();
                           setActiveProofView({
                             habit: item.habit,
                             checkIn: item.checkIn,
                             player: item.player,
-                          })
-                        }
-                        className="relative rounded-xl overflow-hidden aspect-video w-20 flex-shrink-0 border border-zinc-800 hover:border-zinc-500 transition-colors group"
+                          });
+                        }}
+                        className="relative rounded-xl overflow-hidden aspect-video w-20 flex-shrink-0 border border-white/[0.08] hover:border-zinc-400 transition-colors group focus:outline-none"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -310,7 +317,7 @@ export function ActivityFeed() {
                           alt="Proof preview"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/25 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                           <Camera className="w-3.5 h-3.5 text-white/90" />
                         </div>
                       </button>
