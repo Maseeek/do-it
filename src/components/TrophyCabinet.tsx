@@ -18,6 +18,8 @@ import {
   Trophy,
   Zap,
 } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 export function TrophyCabinet() {
   const { maciekBadges, myrnaBadges, activePlayerId } = useStore();
@@ -64,13 +66,29 @@ export function TrophyCabinet() {
     }
   };
 
+  const handlePlayerChange = (playerId: PlayerId) => {
+    if (selectedPlayer !== playerId) {
+      soundEngine.playClick();
+      hapticLight();
+      setSelectedPlayer(playerId);
+    }
+  };
+
+  const handleFilterChange = (f: 'all' | 'unlocked' | 'locked') => {
+    if (filter !== f) {
+      soundEngine.playClick();
+      hapticLight();
+      setFilter(f);
+    }
+  };
+
   return (
     <div className="space-y-3">
       {/* Top Controls: Player & Filter */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
           <button
-            onClick={() => setSelectedPlayer('maciek')}
+            onClick={() => handlePlayerChange('maciek')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'maciek'
                 ? 'bg-blue-500/20 text-blue-300 font-semibold'
@@ -80,7 +98,7 @@ export function TrophyCabinet() {
             Maciek
           </button>
           <button
-            onClick={() => setSelectedPlayer('myrna')}
+            onClick={() => handlePlayerChange('myrna')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'myrna'
                 ? 'bg-pink-500/20 text-pink-300 font-semibold'
@@ -99,7 +117,7 @@ export function TrophyCabinet() {
       {/* Filter Tabs */}
       <div className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
         <button
-          onClick={() => setFilter('all')}
+          onClick={() => handleFilterChange('all')}
           className={`flex-1 py-1 rounded-full transition-colors ${
             filter === 'all' ? 'bg-[#2c2c2e] text-white font-medium' : 'text-zinc-400'
           }`}
@@ -107,7 +125,7 @@ export function TrophyCabinet() {
           All
         </button>
         <button
-          onClick={() => setFilter('unlocked')}
+          onClick={() => handleFilterChange('unlocked')}
           className={`flex-1 py-1 rounded-full transition-colors ${
             filter === 'unlocked' ? 'bg-[#2c2c2e] text-emerald-400 font-medium' : 'text-zinc-400'
           }`}
@@ -115,7 +133,7 @@ export function TrophyCabinet() {
           Unlocked
         </button>
         <button
-          onClick={() => setFilter('locked')}
+          onClick={() => handleFilterChange('locked')}
           className={`flex-1 py-1 rounded-full transition-colors ${
             filter === 'locked' ? 'bg-[#2c2c2e] text-white font-medium' : 'text-zinc-400'
           }`}

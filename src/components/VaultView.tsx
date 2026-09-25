@@ -25,6 +25,8 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
 export function VaultView() {
   const {
@@ -107,6 +109,8 @@ export function VaultView() {
   const [sbSaved, setSbSaved] = useState(false);
 
   const openNewHabitModal = () => {
+    soundEngine.playClick();
+    hapticLight();
     setEditingHabit(null);
     setTargetPlayer(activePlayer?.id || 'maciek');
     setHabitTitle('');
@@ -120,6 +124,8 @@ export function VaultView() {
   };
 
   const openEditHabitModal = (h: Habit) => {
+    soundEngine.playClick();
+    hapticLight();
     setEditingHabit(h);
     setTargetPlayer(h.playerId);
     setHabitTitle(h.title);
@@ -136,6 +142,8 @@ export function VaultView() {
     e.preventDefault();
     if (!habitTitle.trim()) return;
 
+    soundEngine.playCheck();
+    hapticSuccess();
     if (editingHabit) {
       updateHabit({
         ...editingHabit,
@@ -178,6 +186,8 @@ export function VaultView() {
   };
 
   const handleExportJson = () => {
+    soundEngine.playClick();
+    hapticSuccess();
     const jsonStr = exportStateToJson();
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -194,13 +204,17 @@ export function VaultView() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    soundEngine.playClick();
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
       const res = importStateFromJson(content);
       if (res.success) {
+        soundEngine.playCheck();
+        hapticSuccess();
         setImportStatus({ message: 'Backup restored', isError: false });
       } else {
+        hapticLight();
         setImportStatus({ message: res.error || 'Restore failed', isError: true });
       }
       setTimeout(() => setImportStatus(null), 3000);
@@ -210,6 +224,8 @@ export function VaultView() {
   };
 
   const handleCopyScorecard = () => {
+    soundEngine.playClick();
+    hapticLight();
     const today = getTodayDateString();
     const weekKey = getWeekKey(today);
     const leader =
@@ -244,7 +260,13 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as 'stats' | 'habits' | 'settings')}
+            onClick={() => {
+              if (activeTab !== tab.id) {
+                soundEngine.playClick();
+                hapticLight();
+                setActiveTab(tab.id as 'stats' | 'habits' | 'settings');
+              }
+            }}
             className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${
               activeTab === tab.id
                 ? 'bg-[#2c2c2e] text-white shadow-sm font-semibold'

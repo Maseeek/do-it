@@ -17,6 +17,9 @@ import {
   X,
 } from 'lucide-react';
 import { ProofGalleryModal } from './ProofGalleryModal';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
+import { fireCelebrationConfetti } from '@/lib/confetti';
 
 export function DuelView() {
   const [selectedTier, setSelectedTier] = useState<LeaderboardTier>('weekly');
@@ -72,6 +75,9 @@ export function DuelView() {
 
   const handleResolveStake = (winner: PlayerId | 'tie') => {
     if (!activeStake) return;
+    soundEngine.playFanfare();
+    fireCelebrationConfetti();
+    hapticSuccess();
     updateStake({
       ...activeStake,
       status: 'completed',
@@ -84,6 +90,8 @@ export function DuelView() {
     e.preventDefault();
     if (!stakeTitle.trim()) return;
 
+    soundEngine.playCheck();
+    hapticSuccess();
     const periodKey = stakePeriod === 'weekly' ? getWeekKey(todayStr) : getMonthKey(todayStr);
     addStake({
       period: stakePeriod,
@@ -112,7 +120,13 @@ export function DuelView() {
         ).map((t) => (
           <button
             key={t.id}
-            onClick={() => setSelectedTier(t.id)}
+            onClick={() => {
+              if (selectedTier !== t.id) {
+                soundEngine.playClick();
+                hapticLight();
+                setSelectedTier(t.id);
+              }
+            }}
             className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${
               selectedTier === t.id
                 ? 'bg-[#2c2c2e] text-white shadow-sm font-semibold'

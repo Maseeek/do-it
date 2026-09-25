@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { formatFriendlyDate, getHeatmapDays } from '@/lib/date-utils';
 import { PlayerId } from '@/lib/types';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 
 export function HabitHeatmap() {
   const { checkIns, activePlayerId } = useStore();
@@ -50,7 +52,13 @@ export function HabitHeatmap() {
         {/* Player toggle */}
         <div className="flex p-0.5 rounded-full bg-[#2c2c2e] text-xs">
           <button
-            onClick={() => setSelectedPlayer('maciek')}
+            onClick={() => {
+              if (selectedPlayer !== 'maciek') {
+                soundEngine.playClick();
+                hapticLight();
+                setSelectedPlayer('maciek');
+              }
+            }}
             className={`px-2.5 py-0.5 rounded-full transition-colors ${
               selectedPlayer === 'maciek'
                 ? 'bg-blue-500/20 text-blue-300 font-semibold'
@@ -60,7 +68,13 @@ export function HabitHeatmap() {
             Maciek
           </button>
           <button
-            onClick={() => setSelectedPlayer('myrna')}
+            onClick={() => {
+              if (selectedPlayer !== 'myrna') {
+                soundEngine.playClick();
+                hapticLight();
+                setSelectedPlayer('myrna');
+              }
+            }}
             className={`px-2.5 py-0.5 rounded-full transition-colors ${
               selectedPlayer === 'myrna'
                 ? 'bg-pink-500/20 text-pink-300 font-semibold'
@@ -82,9 +96,11 @@ export function HabitHeatmap() {
             return (
               <button
                 key={d.dateStr}
-                onClick={() =>
-                  setHoveredDay(isHovered ? null : { dateStr: d.dateStr, points: stats.points, count: stats.count })
-                }
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setHoveredDay(isHovered ? null : { dateStr: d.dateStr, points: stats.points, count: stats.count });
+                }}
                 className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-xs transition-all ${getIntensityClass(
                   stats.points
                 )} ${isHovered ? 'scale-125 ring-2 ring-white z-10' : 'hover:scale-110'}`}
