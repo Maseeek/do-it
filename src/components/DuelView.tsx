@@ -525,7 +525,7 @@ export function DuelView() {
                   aria-label={`${point.dayName} score share`}
                   aria-valuenow={point.maciekPoints}
                   aria-valuemin={0}
-                  aria-valuemax={total}
+                  aria-valuemax={Math.max(1, total)}
                   aria-valuetext={`Maciek ${point.maciekPoints}, Myrna ${point.myrnaPoints}`}
                   className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
                 >
@@ -572,7 +572,7 @@ export function DuelView() {
                   aria-label={`${cat.label} score share`}
                   aria-valuenow={cat.maciekPoints}
                   aria-valuemin={0}
-                  aria-valuemax={total}
+                  aria-valuemax={Math.max(1, total)}
                   aria-valuetext={`Maciek ${cat.maciekPoints}, Myrna ${cat.myrnaPoints}`}
                   className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
                 >

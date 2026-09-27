@@ -591,7 +591,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                     {pId === 'maciek' ? 'Maciek' : 'Myrna'}
                   </span>
                   <span className="text-[11px] text-zinc-400 tabular-nums">
-                    {totalPoints} pts / day
+                    {totalPoints} pts total
                   </span>
                 </div>
 
