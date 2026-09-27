@@ -8,12 +8,17 @@ import { ProofGalleryModal } from './ProofGalleryModal';
 import { HabitHeatmap } from './HabitHeatmap';
 import { TrophyCabinet } from './TrophyCabinet';
 import { formatFriendlyDate, getTodayDateString, getWeekKey } from '@/lib/date-utils';
+import { DoLogo } from './DoLogo';
 import {
+  Activity,
   Check,
   ClipboardCopy,
+  Clock,
   Download,
+  Dumbbell,
   ExternalLink,
   Flame,
+  Moon,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -202,7 +207,7 @@ export function VaultView() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `do-it-backup-${getTodayDateString()}.json`;
+    a.download = `do-backup-${getTodayDateString()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -245,7 +250,7 @@ export function VaultView() {
         : 'Tied';
     const delta = Math.abs(maciekSummary.weekly - myrnaSummary.weekly);
 
-    const scorecard = `DO IT: Weekly Scorecard (${weekKey})
+    const scorecard = `do: weekly scorecard (${weekKey})
 Maciek: ${maciekSummary.weekly} pts (${maciekSummary.currentStreak}d streak)
 Myrna: ${myrnaSummary.weekly} pts (${myrnaSummary.currentStreak}d streak)
 Leader: ${leader} (+${delta} pts)
@@ -622,7 +627,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                         hapticLight();
                         setIsSyncingGoogle(true);
                         setGoogleSyncMsg(null);
-                        const res = await syncGoogleHealth(true);
+                        const res = await syncGoogleHealth(true, false);
                         setIsSyncingGoogle(false);
                         setGoogleSyncMsg({ text: res.message, isError: !res.success });
                       }}
@@ -640,7 +645,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                         hapticLight();
                         setIsSyncingGoogle(true);
                         setGoogleSyncMsg(null);
-                        const res = await syncGoogleHealth(false);
+                        const res = await syncGoogleHealth(false, false);
                         setIsSyncingGoogle(false);
                         setGoogleSyncMsg({ text: res.message, isError: !res.success });
                       }}
@@ -665,11 +670,138 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 )}
               </div>
 
+              {/* Simulation test buttons */}
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Test:</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setIsSyncingGoogle(true);
+                    setGoogleSyncMsg(null);
+                    const res = await syncGoogleHealth(true, false);
+                    setIsSyncingGoogle(false);
+                    setGoogleSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  disabled={isSyncingGoogle}
+                  className="px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-[10px] text-zinc-300 border border-white/[0.06] transition-colors"
+                >
+                  Simulate 8.2h (Pass)
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setIsSyncingGoogle(true);
+                    setGoogleSyncMsg(null);
+                    const res = await syncGoogleHealth(false, true);
+                    setIsSyncingGoogle(false);
+                    setGoogleSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  disabled={isSyncingGoogle}
+                  className="px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-[10px] text-zinc-300 border border-white/[0.06] transition-colors"
+                >
+                  Simulate 6.5h (Fail)
+                </button>
+              </div>
+
               {googleSyncMsg && (
                 <div className={`p-2 rounded-xl text-xs ${
                   googleSyncMsg.isError ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'
                 }`}>
                   {googleSyncMsg.text}
+                </div>
+              )}
+
+              {/* Diagnostic Card */}
+              {wearableConfig?.googleLastResult && (
+                <div className="p-3 rounded-xl bg-black/40 border border-white/[0.06] space-y-2 mt-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-zinc-300 flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-zinc-400" />
+                      Sync Diagnostic ({wearableConfig.googleLastSync || 'Just now'})
+                    </span>
+                    <span className="text-[10px] text-zinc-500 font-mono">
+                      {wearableConfig.googleLastResult.provider || 'Google Fit'}
+                    </span>
+                  </div>
+
+                  {/* Sleep Metric */}
+                  <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                        <span className="text-xs font-medium text-white">Sleep Tracked</span>
+                      </div>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        wearableConfig.googleLastResult.sleepQualified
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      }`}>
+                        {wearableConfig.googleLastResult.sleepQualified ? 'Qualified (+50 pts)' : 'Under 8.0 hrs'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline justify-between text-xs">
+                      <span className="text-zinc-200 font-semibold text-sm">
+                        {wearableConfig.googleLastResult.sleepHours ?? 0}
+                        <span className="text-xs font-normal text-zinc-400"> / 8.0 hrs</span>
+                      </span>
+                      {wearableConfig.googleLastResult.sleepSessions && wearableConfig.googleLastResult.sleepSessions.length > 0 && (
+                        <span className="text-[11px] text-zinc-400 font-mono">
+                          {wearableConfig.googleLastResult.sleepSessions.map(s => `${s.start} → ${s.end}`).join(', ')}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Visual Progress Bar */}
+                    <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          wearableConfig.googleLastResult.sleepQualified ? 'bg-emerald-500' : 'bg-amber-500'
+                        }`}
+                        style={{
+                          width: `${Math.min(100, Math.round(((wearableConfig.googleLastResult.sleepHours ?? 0) / 8.0) * 100))}%`,
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-[11px] text-zinc-400 leading-snug">
+                      {wearableConfig.googleLastResult.sleepReason || (
+                        wearableConfig.googleLastResult.sleepQualified
+                          ? 'Goal reached! 8.0+ hours completed.'
+                          : 'Under 8.0 hours required for sleep habit completion.'
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Workouts Metric */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] space-y-1">
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-zinc-300">
+                        <Dumbbell className="w-3 h-3 text-orange-400" />
+                        <span>Gym / Strength</span>
+                      </div>
+                      <div className={`text-[10px] ${wearableConfig.googleLastResult.gymDetected ? 'text-emerald-400 font-medium' : 'text-zinc-500'}`}>
+                        {wearableConfig.googleLastResult.gymReason || (wearableConfig.googleLastResult.gymDetected ? 'Session logged (+40 pts)' : 'None found')}
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] space-y-1">
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-zinc-300">
+                        <Activity className="w-3 h-3 text-cyan-400" />
+                        <span>Sport / Run</span>
+                      </div>
+                      <div className={`text-[10px] ${wearableConfig.googleLastResult.sportDetected ? 'text-emerald-400 font-medium' : 'text-zinc-500'}`}>
+                        {wearableConfig.googleLastResult.sportReason || (wearableConfig.googleLastResult.sportDetected ? 'Session logged (+30 pts)' : 'None found')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-zinc-500 text-center pt-0.5">
+                    ⚡ Auto-syncs in background whenever you open the app
+                  </div>
                 </div>
               )}
             </div>
@@ -905,6 +1037,13 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
             </button>
+          </div>
+
+          {/* App Info / Brand */}
+          <div className="pt-4 pb-2 flex flex-col items-center justify-center text-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+            <DoLogo size="xs" />
+            <div className="text-[11px] font-medium text-zinc-400">do · habit tracker</div>
+            <div className="text-[10px] text-zinc-600 font-mono">minimal edition</div>
           </div>
         </div>
       )}

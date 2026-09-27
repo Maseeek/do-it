@@ -7,6 +7,8 @@ import { ChevronRight } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticSuccess } from '@/lib/haptic-utils';
 
+import { DoLogo } from './DoLogo';
+
 export function ProfileGate() {
   const { selectProfile, maciekSummary, myrnaSummary } = useStore();
 
@@ -26,12 +28,13 @@ export function ProfileGate() {
       <div className="w-full max-w-sm">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#1c1c1e] border border-white/[0.1] text-white text-lg font-bold mb-3 shadow-2xl">
-            DO
-          </div>
+          <DoLogo size="lg" className="mb-3.5 shadow-2xl" />
           <h1 id="profile-gate-title" className="text-2xl font-bold tracking-tight text-white">
             Select Profile
           </h1>
+          <p className="text-xs text-zinc-500 mt-1">
+            do: habit tracker
+          </p>
         </div>
 
         {/* Profile cards */}

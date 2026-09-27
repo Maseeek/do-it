@@ -10,7 +10,8 @@ import { TodayView } from '@/components/TodayView';
 import { DuelView } from '@/components/DuelView';
 import { VaultView } from '@/components/VaultView';
 import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
-import { Check, Sparkles } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { DoLogo } from '@/components/DoLogo';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
@@ -96,10 +97,8 @@ function AppContent() {
   if (!isHydrated) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center animate-pulse">
-          <Sparkles className="w-5 h-5 text-zinc-500 animate-spin" />
-        </div>
-        <span className="text-xs font-mono text-zinc-600">Loading arena...</span>
+        <DoLogo size="md" className="animate-pulse" />
+        <span className="text-xs font-mono text-zinc-500">loading do...</span>
       </div>
     );
   }
@@ -157,7 +156,7 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="w-10 h-10 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] animate-pulse" />
+          <DoLogo size="md" className="animate-pulse" />
         </div>
       }
     >

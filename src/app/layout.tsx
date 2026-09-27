@@ -14,12 +14,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Do It: Couples Habit Duel",
-  description: "Minimalist couples habit tracking and accountability duel for Maciek & Myrna.",
+  title: "do: habit tracker",
+  description: "Minimalist habit tracker and daily accountability.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Do It",
+    title: "do",
   },
 };
 

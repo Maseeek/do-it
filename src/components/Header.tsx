@@ -4,6 +4,7 @@ import React from 'react';
 import { useStore } from '@/lib/store';
 import { formatFriendlyDate, getTodayDateString } from '@/lib/date-utils';
 import { Flame, Settings } from 'lucide-react';
+import { DoLogo } from './DoLogo';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
@@ -30,13 +31,15 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
     <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/[0.08] px-4 py-2.5 safe-area-top">
       <div className="max-w-md mx-auto flex items-center justify-between">
-        {/* Left: Player Profile & Date */}
-        <div className="flex items-center gap-3">
+        {/* Left: Brand + Player Profile & Date */}
+        <div className="flex items-center gap-2.5">
+          <DoLogo size="xs" className="shrink-0 shadow-sm" />
+          <div className="w-[1px] h-3.5 bg-white/10 shrink-0" />
           <button
             onClick={handleProfileSwitch}
             aria-label={`Switch profile to ${isMaciek ? 'Myrna' : 'Maciek'}`}
             title={`Switch to ${isMaciek ? 'Myrna' : 'Maciek'}`}
-            className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-transform active:scale-95 border ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-transform active:scale-95 border ${
               isMaciek
                 ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 hover:border-blue-400/50'
                 : 'bg-pink-500/15 border-pink-500/30 text-pink-400 hover:border-pink-400/50'

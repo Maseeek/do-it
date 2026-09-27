@@ -119,25 +119,42 @@ export interface PlayerScoreSummary {
   restDaysUsed?: number;
 }
 
-export interface WearableConfig {
-  googleConnected?: boolean;
-  googleLastSync?: string;
-  appleConnected?: boolean;
-  appleLastSync?: string;
+export interface SleepSessionInfo {
+  start: string;
+  end: string;
+  durationMinutes: number;
+  durationHours: number;
 }
 
 export interface GoogleHealthSyncResult {
   success: boolean;
   date: string;
+  provider?: string;
+  simulated?: boolean;
   sleepHours?: number;
   sleepQualified?: boolean;
+  sleepReason?: string;
+  sleepSessions?: SleepSessionInfo[];
   activities?: Array<{
     name: string;
-    activityType: number;
+    activityType: number | string;
     durationMinutes: number;
   }>;
-  checkInsCreated: string[];
+  gymDetected?: boolean;
+  gymReason?: string;
+  sportDetected?: boolean;
+  sportReason?: string;
+  checkInsCreated?: CheckIn[];
   message: string;
+  error?: string;
+}
+
+export interface WearableConfig {
+  googleConnected?: boolean;
+  googleLastSync?: string;
+  googleLastResult?: GoogleHealthSyncResult;
+  appleConnected?: boolean;
+  appleLastSync?: string;
 }
 
 export interface AppleHealthSyncPayload {

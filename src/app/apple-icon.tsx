@@ -11,20 +11,21 @@ export default function AppleIcon() {
     (
       <div
         style={{
-          fontSize: 68,
-          background: '#08090a',
+          fontSize: 82,
+          background: '#ffffff',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'white',
-          fontWeight: 800,
-          fontFamily: 'monospace',
-          letterSpacing: '-2px',
+          color: '#09090b',
+          fontWeight: 900,
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          letterSpacing: '-3px',
+          paddingBottom: '4px',
         }}
       >
-        DO
+        do
       </div>
     ),
     {

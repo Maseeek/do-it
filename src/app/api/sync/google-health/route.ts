@@ -19,6 +19,16 @@ interface GoogleSession {
   activityType: number;
 }
 
+function formatTime(isoOrMillis: string | number): string {
+  try {
+    const d = new Date(isoOrMillis);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch {
+    return '';
+  }
+}
+
 export async function GET(request: NextRequest) {
   return handleSync(request);
 }
@@ -31,6 +41,7 @@ async function handleSync(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const targetDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
   const isSimulated = searchParams.get('simulate') === 'true';
+  const isSimulatedUnder = searchParams.get('simulateUnder') === 'true';
 
   // Retrieve tokens from cookies or Authorization header
   let accessToken = request.cookies.get('g_fit_access_token')?.value;
@@ -40,7 +51,36 @@ async function handleSync(request: NextRequest) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
   // Handle simulation mode for easy verification and zero-friction testing
-  if (isSimulated || (!accessToken && !refreshToken && isSimulated)) {
+  if (isSimulated || isSimulatedUnder || (!accessToken && !refreshToken && (isSimulated || isSimulatedUnder))) {
+    if (isSimulatedUnder) {
+      return NextResponse.json({
+        success: true,
+        simulated: true,
+        provider: 'Google Health (Simulated)',
+        date: targetDate,
+        sleepHours: 6.5,
+        sleepQualified: false,
+        sleepReason: '6.5 / 8.0 hrs logged (1.5 hrs short of target)',
+        sleepSessions: [
+          {
+            start: '23:45',
+            end: '06:15',
+            durationMinutes: 390,
+            durationHours: 6.5,
+          },
+        ],
+        activities: [
+          { name: 'Night Sleep', activityType: 72, durationMinutes: 390 },
+        ],
+        gymDetected: false,
+        gymReason: 'No gym or strength workout found',
+        sportDetected: false,
+        sportReason: 'No basketball or running workout found',
+        checkInsCreated: [],
+        message: 'Checked: 6.5 hrs sleep found (need 8.0 hrs for habit completion).',
+      });
+    }
+
     const mockCheckIns: CheckIn[] = [
       {
         id: `checkin-maciek-sleep-${targetDate}`,
@@ -67,13 +107,27 @@ async function handleSync(request: NextRequest) {
     return NextResponse.json({
       success: true,
       simulated: true,
+      provider: 'Google Health (Simulated)',
       date: targetDate,
       sleepHours: 8.2,
       sleepQualified: true,
+      sleepReason: 'Goal achieved: 8.2 / 8.0 hrs logged (+50 pts earned)',
+      sleepSessions: [
+        {
+          start: '23:15',
+          end: '07:27',
+          durationMinutes: 492,
+          durationHours: 8.2,
+        },
+      ],
       activities: [
         { name: 'Night Sleep', activityType: 72, durationMinutes: 492 },
         { name: 'Strength Workout', activityType: 97, durationMinutes: 65 },
       ],
+      gymDetected: true,
+      gymReason: 'Strength session recorded: Heavy Strength Session (65 mins) (+40 pts)',
+      sportDetected: false,
+      sportReason: 'No basketball or running workout found',
       checkInsCreated: mockCheckIns,
       message: 'Simulated sync successful: Sleep (50 pts) and Gym (40 pts) completed.',
     });
@@ -124,6 +178,7 @@ async function handleSync(request: NextRequest) {
     const endTimeIso = new Date(endTimeMillis).toISOString();
 
     let totalSleepMillis = 0;
+    const sleepSessions: Array<{ start: string; end: string; durationMinutes: number; durationHours: number }> = [];
     const detectedActivities: Array<{ name: string; activityType: number | string; durationMinutes: number }> = [];
     const checkInsToCreate: CheckIn[] = [];
 
@@ -156,10 +211,17 @@ async function handleSync(request: NextRequest) {
             if (st >= startTimeMillis && et <= endTimeMillis && et > st) {
               const dur = et - st;
               totalSleepMillis += dur;
+              const durMins = Math.round(dur / (1000 * 60));
+              sleepSessions.push({
+                start: formatTime(st),
+                end: formatTime(et),
+                durationMinutes: durMins,
+                durationHours: Math.round((dur / (1000 * 60 * 60)) * 10) / 10,
+              });
               detectedActivities.push({
                 name: pt.sleepType ? `Sleep (${pt.sleepType})` : 'Sleep',
                 activityType: 'sleep',
-                durationMinutes: Math.round(dur / (1000 * 60)),
+                durationMinutes: durMins,
               });
             }
           }
@@ -218,10 +280,17 @@ async function handleSync(request: NextRequest) {
 
           if (s.activityType === 72 || lowerName.includes('sleep')) {
             totalSleepMillis += durationMillis;
+            const durMins = Math.round(durationMillis / (1000 * 60));
+            sleepSessions.push({
+              start: formatTime(start),
+              end: formatTime(end),
+              durationMinutes: durMins,
+              durationHours: Math.round((durationMillis / (1000 * 60 * 60)) * 10) / 10,
+            });
             detectedActivities.push({
               name: s.name || 'Sleep',
               activityType: s.activityType,
-              durationMinutes,
+              durationMinutes: durMins,
             });
           }
 
@@ -282,6 +351,24 @@ async function handleSync(request: NextRequest) {
     const sleepHours = Math.round((totalSleepMillis / (1000 * 60 * 60)) * 10) / 10;
     const sleepQualified = sleepHours >= 8.0;
 
+    let sleepReason = '';
+    if (sleepQualified) {
+      sleepReason = `Goal achieved: ${sleepHours} / 8.0 hrs logged (+50 pts earned)`;
+    } else if (sleepHours > 0) {
+      const diff = Math.round((8.0 - sleepHours) * 10) / 10;
+      sleepReason = `${sleepHours} / 8.0 hrs logged (${diff} hrs short of 8.0 hr target)`;
+    } else {
+      sleepReason = 'No sleep sessions recorded for this day';
+    }
+
+    const gymReason = hasGym
+      ? 'Strength session recorded (+40 pts)'
+      : 'No gym or strength workout found';
+
+    const sportReason = hasSport
+      ? 'Sport / Run session recorded (+30 pts)'
+      : 'No basketball or running workout found';
+
     // Build CheckIn objects for qualifying habits
     if (sleepQualified) {
       checkInsToCreate.push({
@@ -328,7 +415,13 @@ async function handleSync(request: NextRequest) {
       date: targetDate,
       sleepHours,
       sleepQualified,
+      sleepReason,
+      sleepSessions,
       activities: detectedActivities,
+      gymDetected: hasGym,
+      gymReason,
+      sportDetected: hasSport,
+      sportReason,
       checkInsCreated: checkInsToCreate,
       message: `${syncProvider} sync complete: ${checkInsToCreate.length} habit(s) qualified.`,
     });
