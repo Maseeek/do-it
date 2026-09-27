@@ -22,6 +22,7 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
+  Share2,
   Sliders,
   Trash2,
   Upload,
@@ -32,6 +33,7 @@ import {
 } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
+import { shareScorecardImage } from '@/lib/scorecard-image';
 
 export function VaultView() {
   const {
@@ -56,6 +58,8 @@ export function VaultView() {
     wearableConfig,
     syncGoogleHealth,
     testAppleHealthSync,
+    testStravaSync,
+    testHevySync,
     disconnectGoogleHealth,
   } = useStore();
 
@@ -91,6 +95,11 @@ export function VaultView() {
   }, []);
 
   const [copiedScorecard, setCopiedScorecard] = useState(false);
+  const [cardImageStatus, setCardImageStatus] = useState<string | null>(null);
+  const [stravaSyncMsg, setStravaSyncMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [hevySyncMsg, setHevySyncMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [copiedStravaWebhook, setCopiedStravaWebhook] = useState(false);
+  const [copiedHevyWebhook, setCopiedHevyWebhook] = useState(false);
   const [importStatus, setImportStatus] = useState<{ message: string; isError: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -261,6 +270,81 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
       setCopiedScorecard(true);
       setTimeout(() => setCopiedScorecard(false), 2500);
     });
+  };
+
+  const handleExportScorecardImage = async () => {
+    soundEngine.playClick();
+    hapticLight();
+    const today = getTodayDateString();
+    const weekKey = getWeekKey(today);
+    const leader =
+      maciekSummary.weekly > myrnaSummary.weekly
+        ? 'Maciek'
+        : myrnaSummary.weekly > maciekSummary.weekly
+        ? 'Myrna'
+        : 'Tied';
+    const delta = Math.abs(maciekSummary.weekly - myrnaSummary.weekly);
+
+    try {
+      setCardImageStatus('Exporting...');
+      const res = await shareScorecardImage({
+        weekKey,
+        maciekScore: maciekSummary.weekly,
+        myrnaScore: myrnaSummary.weekly,
+        maciekStreak: maciekSummary.currentStreak,
+        myrnaStreak: myrnaSummary.currentStreak,
+        stakeTitle: activeWeeklyStake?.title,
+        leaderName: leader,
+        pointDiff: delta,
+      });
+
+      soundEngine.playCheck();
+      hapticSuccess();
+      setCardImageStatus(res.action === 'copied' ? 'Copied!' : 'Saved!');
+      setTimeout(() => setCardImageStatus(null), 3000);
+    } catch (e) {
+      console.error(e);
+      setCardImageStatus('Failed');
+      setTimeout(() => setCardImageStatus(null), 3000);
+    }
+  };
+
+  const handleDownloadAppleShortcutConfig = () => {
+    soundEngine.playClick();
+    hapticLight();
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://do-it-app.vercel.app';
+    const config = {
+      name: 'Do It - Apple Health Sync',
+      endpoint: `${origin}/api/sync/apple-health`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer <YOUR_APPLE_HEALTH_SECRET>',
+      },
+      instructions: [
+        '1. Open Shortcuts app on iOS',
+        '2. Tap Automation > + (New Automation)',
+        '3. Choose "When Waking Up" or "Workout Ends"',
+        '4. Add action: "Get Contents of URL"',
+        '5. Method: POST, URL: the endpoint above',
+        '6. Body: JSON { "player": "myrna", "metric": "sleep", "value": 8.5 }',
+      ],
+      sample_payloads: {
+        sleep: { player: 'myrna', metric: 'sleep', value: 8.5 },
+        running: { player: 'myrna', metric: 'running', value: 5.0 },
+        gym: { player: 'myrna', metric: 'gym', value: 45 },
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'do-it-apple-health-shortcut-config.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -891,22 +975,162 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 </div>
               )}
 
-              <button
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setShowAppleGuide(!showAppleGuide);
-                }}
-                className="text-[11px] text-zinc-400 hover:text-white"
-              >
-                {showAppleGuide ? 'Hide Shortcuts Guide' : 'How to setup iOS Shortcut'}
-              </button>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={handleDownloadAppleShortcutConfig}
+                  className="flex-1 py-1.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5 text-pink-400" />
+                  <span>Download Shortcut Config (.json)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setShowAppleGuide(!showAppleGuide);
+                  }}
+                  className="py-1.5 px-3 rounded-xl bg-[#2c2c2e] hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors"
+                >
+                  {showAppleGuide ? 'Hide Guide' : 'Setup Guide'}
+                </button>
+              </div>
 
               {showAppleGuide && (
-                <div className="p-3 rounded-xl bg-[#2c2c2e] text-xs text-zinc-300 space-y-1">
-                  <p>1. Open Shortcuts on iPhone &rarr; Automation tab &rarr; New Automation.</p>
-                  <p>2. Trigger: When wake-up alarm stops or workout ends.</p>
-                  <p>3. Action: &ldquo;Get Contents of URL&rdquo; (POST to webhook URL with JSON: <code>&#123;&quot;player&quot;: &quot;myrna&quot;, &quot;metric&quot;: &quot;sleep&quot;, &quot;value&quot;: 8.5&#125;</code>).</p>
+                <div className="p-3 rounded-xl bg-[#2c2c2e] text-xs text-zinc-300 space-y-2">
+                  <p className="font-semibold text-white">How to setup iOS Shortcut Automation:</p>
+                  <p>1. Open <strong className="text-white">Shortcuts</strong> on iPhone &rarr; <strong className="text-white">Automation</strong> tab &rarr; <strong className="text-white">New Automation</strong>.</p>
+                  <p>2. Select trigger: &ldquo;When Waking Up&rdquo; (for sleep) or &ldquo;When Workout Ends&rdquo;.</p>
+                  <p>3. Add action: <strong className="text-white">Get Contents of URL</strong>.</p>
+                  <p>4. Set Method to <strong className="text-white">POST</strong>, Headers: <code>Authorization: Bearer &lt;secret&gt;</code>.</p>
+                  <p>5. Request Body (JSON): <code>&#123;&quot;player&quot;: &quot;myrna&quot;, &quot;metric&quot;: &quot;sleep&quot;, &quot;value&quot;: 8.5&#125;</code>.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Strava Webhook */}
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-white flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                  Strava · Webhook (Sport & Running)
+                </span>
+                <span className="text-[10px] font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                  Webhook Ready
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    typeof window !== 'undefined'
+                      ? `${window.location.origin}/api/sync/strava`
+                      : 'https://do-it-app.vercel.app/api/sync/strava'
+                  }
+                  className="flex-1 px-3 py-1 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-zinc-300 text-[11px] font-mono select-all"
+                />
+                <button
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    const url = `${window.location.origin}/api/sync/strava`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      setCopiedStravaWebhook(true);
+                      setTimeout(() => setCopiedStravaWebhook(false), 2000);
+                    });
+                  }}
+                  className="px-3 py-1 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors flex items-center gap-1"
+                >
+                  {copiedStravaWebhook ? <Check className="w-3 h-3 text-emerald-600" /> : <ClipboardCopy className="w-3 h-3" />}
+                  <span>{copiedStravaWebhook ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setStravaSyncMsg(null);
+                    const res = await testStravaSync(activePlayer?.id || 'maciek');
+                    setStravaSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  className="flex-1 py-1.5 px-3 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
+                >
+                  Simulate Sport Activity (+30 pts)
+                </button>
+              </div>
+
+              {stravaSyncMsg && (
+                <div className={`p-2 rounded-xl text-xs ${
+                  stravaSyncMsg.isError ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'
+                }`}>
+                  {stravaSyncMsg.text}
+                </div>
+              )}
+            </div>
+
+            {/* Hevy Webhook */}
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-white flex items-center gap-1.5">
+                  <Dumbbell className="w-3.5 h-3.5 text-orange-400" />
+                  Hevy · Gym Webhook (Strength)
+                </span>
+                <span className="text-[10px] font-medium text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">
+                  Webhook Ready
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    typeof window !== 'undefined'
+                      ? `${window.location.origin}/api/sync/hevy`
+                      : 'https://do-it-app.vercel.app/api/sync/hevy'
+                  }
+                  className="flex-1 px-3 py-1 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-zinc-300 text-[11px] font-mono select-all"
+                />
+                <button
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    const url = `${window.location.origin}/api/sync/hevy`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      setCopiedHevyWebhook(true);
+                      setTimeout(() => setCopiedHevyWebhook(false), 2000);
+                    });
+                  }}
+                  className="px-3 py-1 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors flex items-center gap-1"
+                >
+                  {copiedHevyWebhook ? <Check className="w-3 h-3 text-emerald-600" /> : <ClipboardCopy className="w-3 h-3" />}
+                  <span>{copiedHevyWebhook ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setHevySyncMsg(null);
+                    const res = await testHevySync('Heavy Leg & Core Session', activePlayer?.id || 'maciek');
+                    setHevySyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  className="flex-1 py-1.5 px-3 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
+                >
+                  Simulate Strength Session (+40 pts)
+                </button>
+              </div>
+
+              {hevySyncMsg && (
+                <div className={`p-2 rounded-xl text-xs ${
+                  hevySyncMsg.isError ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'
+                }`}>
+                  {hevySyncMsg.text}
                 </div>
               )}
             </div>
@@ -939,19 +1163,28 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
             </button>
           </div>
 
-          {/* Scorecard Copy */}
+          {/* Scorecard Copy & Image Export */}
           <div className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 flex items-center justify-between">
             <div>
               <div className="text-xs font-semibold text-white">Scorecard Summary</div>
-              <div className="text-[11px] text-zinc-400">Copy text for messages</div>
+              <div className="text-[11px] text-zinc-400">Share weekly scores</div>
             </div>
-            <button
-              onClick={handleCopyScorecard}
-              className="px-3 py-1.5 rounded-full bg-[#2c2c2e] border border-white/[0.08] text-xs font-medium text-white hover:bg-zinc-700 transition-colors flex items-center gap-1.5"
-            >
-              {copiedScorecard ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
-              <span>{copiedScorecard ? 'Copied' : 'Copy'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportScorecardImage}
+                className="px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-xs font-medium text-blue-300 hover:bg-blue-500/25 transition-colors flex items-center gap-1.5"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>{cardImageStatus || 'Export Card'}</span>
+              </button>
+              <button
+                onClick={handleCopyScorecard}
+                className="px-3 py-1.5 rounded-full bg-[#2c2c2e] border border-white/[0.08] text-xs font-medium text-white hover:bg-zinc-700 transition-colors flex items-center gap-1.5"
+              >
+                {copiedScorecard ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
+                <span>{copiedScorecard ? 'Copied' : 'Copy Text'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Backup / Export */}

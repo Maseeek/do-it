@@ -58,18 +58,31 @@ CREATE TABLE IF NOT EXISTS public.stakes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 5. OAuth Tokens Table (for background sync across devices)
+CREATE TABLE IF NOT EXISTS public.oauth_tokens (
+    player_id TEXT PRIMARY KEY REFERENCES public.players(id) ON DELETE CASCADE,
+    provider TEXT NOT NULL, -- 'google'
+    access_token TEXT,
+    refresh_token TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Enable Row Level Security (RLS) & Allow public read/write for private 2-player app
 ALTER TABLE public.players ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.check_ins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stakes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.oauth_tokens ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow public access to players" ON public.players FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access to habits" ON public.habits FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access to check_ins" ON public.check_ins FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public access to stakes" ON public.stakes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public access to oauth_tokens" ON public.oauth_tokens FOR ALL USING (true) WITH CHECK (true);
 
 -- Enable Realtime broadcasting on all tables
 ALTER PUBLICATION supabase_realtime ADD TABLE public.check_ins;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.habits;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.stakes;
+

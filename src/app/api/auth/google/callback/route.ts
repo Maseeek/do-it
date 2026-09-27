@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -88,6 +89,32 @@ export async function GET(request: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
     });
+
+    // Persist to Supabase oauth_tokens table for server-side & background cron sync
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const playerId = searchParams.get('state') || 'maciek';
+
+    if (sbUrl && sbKey) {
+      try {
+        const supabase = createClient(sbUrl, sbKey);
+        const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
+        const rowPayload: Record<string, string | undefined> = {
+          player_id: playerId,
+          provider: 'google',
+          access_token,
+          expires_at: expiresAt,
+          updated_at: new Date().toISOString(),
+        };
+        if (refresh_token) {
+          rowPayload.refresh_token = refresh_token;
+        }
+
+        await supabase.from('oauth_tokens').upsert(rowPayload, { onConflict: 'player_id' });
+      } catch (sbErr) {
+        console.warn('Failed to persist OAuth tokens in Supabase:', sbErr);
+      }
+    }
 
     return response;
   } catch (err: unknown) {

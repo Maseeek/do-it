@@ -113,6 +113,8 @@ interface StoreContextType {
     simulateUnder?: boolean
   ) => Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }>;
   testAppleHealthSync: (metric: 'sleep' | 'running' | 'gym', value: number) => Promise<{ success: boolean; message: string }>;
+  testStravaSync: (player?: string) => Promise<{ success: boolean; message: string }>;
+  testHevySync: (workoutTitle?: string, player?: string) => Promise<{ success: boolean; message: string }>;
   disconnectGoogleHealth: () => void;
 }
 
@@ -882,6 +884,104 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const testStravaSync = async (
+    player: string = 'maciek'
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`/api/sync/strava?player=${player}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          object_type: 'activity',
+          aspect_type: 'create',
+          object_id: Math.floor(Math.random() * 899999 + 100000),
+          event_time: Math.floor(new Date(`${selectedDate}T12:00:00Z`).getTime() / 1000),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, message: data.message || 'Strava sync failed.' };
+      }
+
+      if (data.checkIn) {
+        setState((prev) => {
+          const newCheckIns = [...prev.checkIns];
+          const idx = newCheckIns.findIndex(
+            (c) => c.habitId === data.checkIn.habitId && c.date === data.checkIn.date
+          );
+          if (idx >= 0) {
+            newCheckIns[idx] = data.checkIn;
+          } else {
+            newCheckIns.push(data.checkIn);
+          }
+          return {
+            ...prev,
+            checkIns: newCheckIns,
+          };
+        });
+
+        soundEngine.playFanfare();
+        hapticMedium();
+        fireCelebrationConfetti();
+      }
+
+      return { success: true, message: data.message };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Network error';
+      return { success: false, message: msg };
+    }
+  };
+
+  const testHevySync = async (
+    workoutTitle: string = 'Strength Workout (Bench & Squat)',
+    player: string = 'maciek'
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`/api/sync/hevy?player=${player}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player,
+          title: workoutTitle,
+          date: selectedDate,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, message: data.message || 'Hevy sync failed.' };
+      }
+
+      if (data.checkIn) {
+        setState((prev) => {
+          const newCheckIns = [...prev.checkIns];
+          const idx = newCheckIns.findIndex(
+            (c) => c.habitId === data.checkIn.habitId && c.date === data.checkIn.date
+          );
+          if (idx >= 0) {
+            newCheckIns[idx] = data.checkIn;
+          } else {
+            newCheckIns.push(data.checkIn);
+          }
+          return {
+            ...prev,
+            checkIns: newCheckIns,
+          };
+        });
+
+        soundEngine.playFanfare();
+        hapticMedium();
+        fireCelebrationConfetti();
+      }
+
+      return { success: true, message: data.message };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Network error';
+      return { success: false, message: msg };
+    }
+  };
+
   // Auto-sync Google Health in background on load for Maciek if connected
   const autoSyncedRef = useRef(false);
   useEffect(() => {
@@ -1012,6 +1112,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         wearableConfig: state.wearableConfig,
         syncGoogleHealth,
         testAppleHealthSync,
+        testStravaSync,
+        testHevySync,
         disconnectGoogleHealth,
       }}
     >

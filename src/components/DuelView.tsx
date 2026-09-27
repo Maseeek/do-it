@@ -11,6 +11,7 @@ import {
   Clock,
   Crown,
   Plus,
+  Share2,
   Sliders,
   Trash2,
   Trophy,
@@ -20,6 +21,7 @@ import { ProofGalleryModal } from './ProofGalleryModal';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess, hapticCelebration } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
+import { shareScorecardImage } from '@/lib/scorecard-image';
 
 export function DuelView() {
   const [selectedTier, setSelectedTier] = useState<LeaderboardTier>('weekly');
@@ -107,6 +109,44 @@ export function DuelView() {
     setIsCreatingStake(false);
   };
 
+  const [shareCardStatus, setShareCardStatus] = useState<string | null>(null);
+
+  const handleShareScorecardCard = async () => {
+    soundEngine.playClick();
+    hapticLight();
+    const weekKey = getWeekKey(todayStr);
+    const leader =
+      maciekSummary.weekly > myrnaSummary.weekly
+        ? 'Maciek'
+        : myrnaSummary.weekly > maciekSummary.weekly
+        ? 'Myrna'
+        : 'Tied';
+    const delta = Math.abs(maciekSummary.weekly - myrnaSummary.weekly);
+
+    try {
+      setShareCardStatus('Generating...');
+      const res = await shareScorecardImage({
+        weekKey,
+        maciekScore: maciekSummary.weekly,
+        myrnaScore: myrnaSummary.weekly,
+        maciekStreak: maciekSummary.currentStreak,
+        myrnaStreak: myrnaSummary.currentStreak,
+        stakeTitle: activeWeeklyStake?.title,
+        leaderName: leader,
+        pointDiff: delta,
+      });
+
+      soundEngine.playCheck();
+      hapticSuccess();
+      setShareCardStatus(res.action === 'copied' ? 'Copied!' : 'Saved!');
+      setTimeout(() => setShareCardStatus(null), 3000);
+    } catch (e) {
+      console.error(e);
+      setShareCardStatus('Failed');
+      setTimeout(() => setShareCardStatus(null), 3000);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Timeframe Segmented Control (Apple 3-Pill) */}
@@ -142,11 +182,23 @@ export function DuelView() {
 
       {/* Main Apple Fitness Competition Card */}
       <div className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 space-y-4">
-        {/* Top: Tier Name + Countdown */}
+        {/* Top: Tier Name + Countdown + Share Card Button */}
         <div className="flex items-center justify-between text-xs font-medium">
-          <span className="text-zinc-400 uppercase tracking-wider text-[11px]">
-            {selectedTier === 'karma' ? 'All-Time Karma' : `${selectedTier === 'weekly' ? 'Weekly' : 'Monthly'} Duel`}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-400 uppercase tracking-wider text-[11px]">
+              {selectedTier === 'karma' ? 'All-Time Karma' : `${selectedTier === 'weekly' ? 'Weekly' : 'Monthly'} Duel`}
+            </span>
+            {selectedTier === 'weekly' && (
+              <button
+                onClick={handleShareScorecardCard}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white text-[11px] transition-colors border border-white/[0.08]"
+                title="Export & Share Visual Scorecard Card"
+              >
+                <Share2 className="w-3 h-3 text-blue-400" />
+                <span>{shareCardStatus || 'Share Card'}</span>
+              </button>
+            )}
+          </div>
 
           {selectedTier === 'weekly' && (
             <span className="text-zinc-400 flex items-center gap-1 text-[11px]">

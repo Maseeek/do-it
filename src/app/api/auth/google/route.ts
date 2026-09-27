@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
     'https://www.googleapis.com/auth/fitness.activity.read',
   ].join(' ');
 
+  const player = request.nextUrl.searchParams.get('player') || 'maciek';
+
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   authUrl.searchParams.set('client_id', clientId);
   authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
   authUrl.searchParams.set('scope', scopes);
   authUrl.searchParams.set('access_type', 'offline');
   authUrl.searchParams.set('prompt', 'consent'); // Force refresh_token on consent
-  authUrl.searchParams.set('state', 'maciek');
+  authUrl.searchParams.set('state', player);
 
   return NextResponse.redirect(authUrl.toString());
 }
