@@ -16,9 +16,15 @@ import {
   WearableConfig,
 } from './types';
 import { getInitialState } from './seed';
-import { getTodayDateString, isFutureDate } from './date-utils';
+import { getTodayDateString, getWeekKey, isFutureDate } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
+import {
+  rebalanceWeeklyHabitCheckIns,
+  rebalanceAllWeeklyCheckIns,
+  getWeeklyHabitCompletionsCount,
+  isWeeklyHabitTargetMet,
+} from './weekly-utils';
 import { fireCelebrationConfetti } from './confetti';
 import { soundEngine } from './sound-utils';
 import { hapticCelebration, hapticLight, hapticMedium, hapticSuccess } from './haptic-utils';
@@ -78,6 +84,9 @@ interface StoreContextType {
   isHabitCompletedOnDate: (habitId: string, date: string) => boolean;
   getHabitCheckInOnDate: (habitId: string, date: string) => CheckIn | undefined;
   getCheckInForHabit: (habitId: string, date?: string) => CheckIn | undefined;
+  getWeeklyHabitCompletions: (habitId: string, date?: string) => number;
+  isHabitWeeklyTargetMet: (habitId: string, date?: string) => boolean;
+  isHabitSatisfiedOnDate: (habitId: string, date?: string) => boolean;
   partnerId: PlayerId | null;
   partnerCleanSpaceHabit: Habit | undefined;
   partnerCleanSpaceCheckIn: CheckIn | undefined;
@@ -121,16 +130,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.maciek && parsed.players.myrna) {
+          const habitsToUse = parsed.habits || [];
+          const checkInsToUse = parsed.checkIns || [];
+          const rebalanced = rebalanceAllWeeklyCheckIns(checkInsToUse, habitsToUse);
           setState((prev) => ({
             ...prev,
             ...parsed,
+            checkIns: rebalanced,
             reactions: parsed.reactions || prev.reactions || [],
             restDays: parsed.restDays || prev.restDays || [],
           }));
         } else {
           const fresh = getInitialState();
-          setState(fresh);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+          const rebalanced = rebalanceAllWeeklyCheckIns(fresh.checkIns, fresh.habits);
+          setState({ ...fresh, checkIns: rebalanced });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...fresh, checkIns: rebalanced }));
         }
       }
       const savedSound = localStorage.getItem('do_it_sound_enabled');
@@ -189,12 +203,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // Fetch cloud data and seed if needed
     syncInitialDataFromSupabase(client).then((remoteData) => {
       if (remoteData) {
-        setState((prev) => ({
-          ...prev,
-          habits: remoteData.habits && remoteData.habits.length > 0 ? remoteData.habits : prev.habits,
-          checkIns: remoteData.checkIns || prev.checkIns,
-          stakes: remoteData.stakes && remoteData.stakes.length > 0 ? remoteData.stakes : prev.stakes,
-        }));
+        setState((prev) => {
+          const habitsToUse = remoteData.habits && remoteData.habits.length > 0 ? remoteData.habits : prev.habits;
+          const checkInsToUse = remoteData.checkIns || prev.checkIns;
+          const rebalanced = rebalanceAllWeeklyCheckIns(checkInsToUse, habitsToUse);
+          return {
+            ...prev,
+            habits: habitsToUse,
+            checkIns: rebalanced,
+            stakes: remoteData.stakes && remoteData.stakes.length > 0 ? remoteData.stakes : prev.stakes,
+          };
+        });
         setSyncStatus('connected');
       } else {
         setSyncStatus('offline');
@@ -333,6 +352,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return state.checkIns.find((c) => c.habitId === habitId && c.date === date);
   };
 
+  const getWeeklyHabitCompletions = (habitId: string, date = selectedDate): number => {
+    return getWeeklyHabitCompletionsCount(habitId, date, state.checkIns);
+  };
+
+  const isHabitWeeklyTargetMet = (habitId: string, date = selectedDate): boolean => {
+    const habit = state.habits.find((h) => h.id === habitId);
+    if (!habit) return false;
+    return isWeeklyHabitTargetMet(habit, date, state.checkIns);
+  };
+
+  const isHabitSatisfiedOnDate = (habitId: string, date = selectedDate): boolean => {
+    if (isHabitCompletedOnDate(habitId, date)) return true;
+    return isHabitWeeklyTargetMet(habitId, date);
+  };
+
   const partnerId: PlayerId | null =
     state.activePlayerId === 'maciek' ? 'myrna' : state.activePlayerId === 'myrna' ? 'maciek' : null;
 
@@ -357,14 +391,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const habit = state.habits.find((h) => h.id === habitId);
     if (!habit) return;
 
+    const targetWeekKey = getWeekKey(targetDate);
     const existingCheckIn = state.checkIns.find(
       (c) => c.habitId === habitId && c.date === targetDate
     );
 
-    // Calculate points
-    let pointsToAward = habit.points;
+    // Calculate base points
+    let basePoints = habit.points;
     if (habit.isQuantitative && quantity !== undefined) {
-      pointsToAward = Math.min(
+      basePoints = Math.min(
         habit.points,
         Math.max(1, Math.round(quantity * (habit.pointsPerUnit || 1)))
       );
@@ -383,13 +418,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       soundEngine.playUncheck();
       hapticLight();
 
+      let nextCheckIns = state.checkIns.filter((c) => c.id !== existingCheckIn.id);
+      const syncedCheckIns: CheckIn[] = [];
+
+      if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+        const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
+        rebalanced.forEach((c) => {
+          const orig = nextCheckIns.find((o) => o.id === c.id);
+          if (orig && orig.pointsEarned !== c.pointsEarned) {
+            syncedCheckIns.push(c);
+          }
+        });
+        nextCheckIns = rebalanced;
+      }
+
       setState((prev) => ({
         ...prev,
-        checkIns: prev.checkIns.filter((c) => c.id !== existingCheckIn.id),
+        checkIns: nextCheckIns,
       }));
 
       if (supabaseRef.current) {
         deleteCheckInSupabase(supabaseRef.current, habitId, targetDate);
+        syncedCheckIns.forEach((c) => {
+          insertCheckInSupabase(supabaseRef.current!, c);
+        });
       }
     } else if (existingCheckIn) {
       // Update existing check-in
@@ -398,24 +450,60 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       const updatedCheckIn: CheckIn = {
         ...existingCheckIn,
-        pointsEarned: pointsToAward,
         quantity: quantity !== undefined ? quantity : existingCheckIn.quantity,
         proofUrl: primaryProofUrl || existingCheckIn.proofUrl,
         proofUrls: proofUrls || existingCheckIn.proofUrls,
         note: note !== undefined ? note : existingCheckIn.note,
       };
 
+      let nextCheckIns = state.checkIns.map((c) =>
+        c.id === existingCheckIn.id ? updatedCheckIn : c
+      );
+      const syncedCheckIns: CheckIn[] = [];
+
+      if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+        const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
+        rebalanced.forEach((c) => {
+          const orig = nextCheckIns.find((o) => o.id === c.id);
+          if (orig && orig.pointsEarned !== c.pointsEarned) {
+            syncedCheckIns.push(c);
+          }
+        });
+        nextCheckIns = rebalanced;
+      } else {
+        nextCheckIns = nextCheckIns.map((c) =>
+          c.id === existingCheckIn.id ? { ...c, pointsEarned: basePoints } : c
+        );
+      }
+
       setState((prev) => ({
         ...prev,
-        checkIns: prev.checkIns.map((c) => (c.id === existingCheckIn.id ? updatedCheckIn : c)),
+        checkIns: nextCheckIns,
       }));
 
       if (supabaseRef.current) {
-        insertCheckInSupabase(supabaseRef.current, updatedCheckIn);
+        const finalUpdated = nextCheckIns.find((c) => c.id === existingCheckIn.id) || updatedCheckIn;
+        insertCheckInSupabase(supabaseRef.current, finalUpdated);
+        syncedCheckIns.forEach((c) => {
+          if (c.id !== existingCheckIn.id) {
+            insertCheckInSupabase(supabaseRef.current!, c);
+          }
+        });
       }
     } else {
       // Create new check-in
       const isRetroactive = targetDate !== todayStr;
+
+      let pointsToAward = basePoints;
+      if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+        const existingCount = state.checkIns.filter(
+          (c) => c.habitId === habitId && getWeekKey(c.date) === targetWeekKey
+        ).length;
+        if (existingCount >= habit.weeklyTargetDays) {
+          pointsToAward = 0; // Extra sessions beyond weekly target earn 0 points
+        }
+      }
+
       const newCheckIn: CheckIn = {
         id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         habitId,
@@ -441,13 +529,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         hapticSuccess();
       }
 
+      let nextCheckIns = [...state.checkIns, newCheckIn];
+      const syncedCheckIns: CheckIn[] = [];
+
+      if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+        const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
+        rebalanced.forEach((c) => {
+          const orig = nextCheckIns.find((o) => o.id === c.id);
+          if (orig && orig.pointsEarned !== c.pointsEarned) {
+            syncedCheckIns.push(c);
+          }
+        });
+        nextCheckIns = rebalanced;
+      }
+
       setState((prev) => ({
         ...prev,
-        checkIns: [...prev.checkIns, newCheckIn],
+        checkIns: nextCheckIns,
       }));
 
       if (supabaseRef.current) {
-        insertCheckInSupabase(supabaseRef.current, newCheckIn);
+        const finalNew = nextCheckIns.find((c) => c.id === newCheckIn.id) || newCheckIn;
+        insertCheckInSupabase(supabaseRef.current, finalNew);
+        syncedCheckIns.forEach((c) => {
+          if (c.id !== newCheckIn.id) {
+            insertCheckInSupabase(supabaseRef.current!, c);
+          }
+        });
       }
     }
   };
@@ -850,6 +958,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         isHabitCompletedOnDate,
         getHabitCheckInOnDate,
         getCheckInForHabit,
+        getWeeklyHabitCompletions,
+        isHabitWeeklyTargetMet,
+        isHabitSatisfiedOnDate,
         partnerId,
         partnerCleanSpaceHabit,
         partnerCleanSpaceCheckIn,

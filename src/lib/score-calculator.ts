@@ -15,6 +15,7 @@ import {
   isDateInCurrentWeek,
   isDateInCurrentYear,
   parseDate,
+  addDays,
 } from './date-utils';
 
 export function calculatePlayerScores(
@@ -81,12 +82,29 @@ export function calculatePlayerScores(
   }
 
   // Weekly completion rate calculation
-  const activeHabitsCount = habits.filter((h) => h.playerId === playerId && h.isActive).length;
-  const weeklyLogs = playerLogs.filter((l) => isDateInCurrentWeek(l.date)).length;
+  const playerHabits = habits.filter((h) => h.playerId === playerId && h.isActive);
   const now = new Date();
   const dayOfWeek = (now.getDay() + 6) % 7 + 1; // 1 = Mon, 7 = Sun
-  const maxPossibleSoFar = Math.max(1, activeHabitsCount * dayOfWeek);
-  const completionRateWeekly = Math.min(100, Math.round((weeklyLogs / maxPossibleSoFar) * 100));
+
+  let maxPossibleSoFar = 0;
+  let validWeeklyLogs = 0;
+
+  playerHabits.forEach((habit) => {
+    const habitWeekLogs = playerLogs.filter(
+      (l) => l.habitId === habit.id && isDateInCurrentWeek(l.date)
+    );
+    if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+      const targetSoFar = Math.min(dayOfWeek, habit.weeklyTargetDays);
+      maxPossibleSoFar += targetSoFar;
+      validWeeklyLogs += Math.min(habitWeekLogs.length, habit.weeklyTargetDays);
+    } else {
+      maxPossibleSoFar += dayOfWeek;
+      validWeeklyLogs += Math.min(habitWeekLogs.length, dayOfWeek);
+    }
+  });
+
+  maxPossibleSoFar = Math.max(1, maxPossibleSoFar);
+  const completionRateWeekly = Math.min(100, Math.round((validWeeklyLogs / maxPossibleSoFar) * 100));
 
   return {
     today: todayPoints,
@@ -268,12 +286,57 @@ export function getStakesRecord(stakes: Stake[]): StakesRecord {
   };
 }
 
-// Calculate consecutive day streak for an individual habit
+// Calculate consecutive week streak for a weekly-target habit
+export function calculateWeeklyHabitStreak(
+  habit: Habit,
+  checkIns: CheckIn[]
+): number {
+  if (!habit.weeklyTargetDays || habit.weeklyTargetDays <= 0) return 0;
+
+  const target = habit.weeklyTargetDays;
+  const today = getTodayDateString();
+  const todayDays = getCurrentWeekDays(today);
+  const currentWeekMondayStr = todayDays[0].dateStr;
+
+  const countWeekCompletions = (mondayStr: string): number => {
+    const weekDays = getCurrentWeekDays(mondayStr).map((d) => d.dateStr);
+    const completedDates = new Set(
+      checkIns
+        .filter((c) => c.habitId === habit.id && weekDays.includes(c.date))
+        .map((c) => c.date)
+    );
+    return completedDates.size;
+  };
+
+  let streak = 0;
+  const currentWeekCompletions = countWeekCompletions(currentWeekMondayStr);
+  if (currentWeekCompletions >= target) {
+    streak++;
+  }
+
+  for (let i = 1; i <= 52; i++) {
+    const prevMondayStr = addDays(currentWeekMondayStr, -7 * i);
+    const prevCompletions = countWeekCompletions(prevMondayStr);
+    if (prevCompletions >= target) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+// Calculate streak for an individual habit (daily or weekly)
 export function calculateHabitStreak(
   habit: Habit,
   checkIns: CheckIn[],
   restDays: RestDay[] = []
 ): number {
+  if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+    return calculateWeeklyHabitStreak(habit, checkIns);
+  }
+
   const habitLogs = checkIns.filter((c) => c.habitId === habit.id);
   if (habitLogs.length === 0) return 0;
 
@@ -311,4 +374,5 @@ export function calculateHabitStreak(
 
   return streak;
 }
+
 

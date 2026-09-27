@@ -20,7 +20,7 @@ import { fireCelebrationConfetti } from '@/lib/confetti';
 export function TodayView() {
   const {
     activeHabits,
-    isHabitCompletedOnDate,
+    isHabitSatisfiedOnDate,
     selectedDate,
     checkIns,
     activePlayer,
@@ -42,23 +42,28 @@ export function TodayView() {
   );
   const selectedDatePoints = currentLogs.reduce((acc, c) => acc + c.pointsEarned, 0);
 
-  const completedCount = activeHabits.filter((h) => isHabitCompletedOnDate(h.id, selectedDate)).length;
+  const completedCount = activeHabits.filter((h) => isHabitSatisfiedOnDate(h.id, selectedDate)).length;
   const totalCount = activeHabits.length;
   const allDone = completedCount === totalCount && totalCount > 0;
   const pct = Math.min(100, Math.round((selectedDatePoints / totalPossible) * 100));
 
   const prevPointsRef = React.useRef(selectedDatePoints);
+  const prevAllDoneRef = React.useRef(allDone);
   React.useEffect(() => {
-    if (selectedDatePoints >= totalPossible && prevPointsRef.current < totalPossible) {
+    if (
+      (selectedDatePoints >= totalPossible && prevPointsRef.current < totalPossible) ||
+      (allDone && !prevAllDoneRef.current)
+    ) {
       soundEngine.playFanfare();
       fireCelebrationConfetti();
       hapticCelebration();
     }
     prevPointsRef.current = selectedDatePoints;
-  }, [selectedDatePoints, totalPossible]);
+    prevAllDoneRef.current = allDone;
+  }, [selectedDatePoints, totalPossible, allDone]);
 
-  const pendingHabits = activeHabits.filter((h) => !isHabitCompletedOnDate(h.id, selectedDate));
-  const doneHabits = activeHabits.filter((h) => isHabitCompletedOnDate(h.id, selectedDate));
+  const pendingHabits = activeHabits.filter((h) => !isHabitSatisfiedOnDate(h.id, selectedDate));
+  const doneHabits = activeHabits.filter((h) => isHabitSatisfiedOnDate(h.id, selectedDate));
 
   const isMaciek = activePlayer?.id === 'maciek';
   const partner = partnerId ? players[partnerId] : null;

@@ -102,6 +102,7 @@ export function VaultView() {
   const [habitIcon, setHabitIcon] = useState('Activity');
   const [requiresProof, setRequiresProof] = useState(false);
   const [isQuantitative, setIsQuantitative] = useState(false);
+  const [weeklyTargetDays, setWeeklyTargetDays] = useState<number | undefined>(undefined);
 
   // Supabase settings
   const [sbUrl, setSbUrl] = useState('');
@@ -120,6 +121,7 @@ export function VaultView() {
     setHabitIcon('Activity');
     setRequiresProof(false);
     setIsQuantitative(false);
+    setWeeklyTargetDays(undefined);
     setIsHabitModalOpen(true);
   };
 
@@ -135,6 +137,7 @@ export function VaultView() {
     setHabitIcon(h.iconName);
     setRequiresProof(!!h.requiresProof);
     setIsQuantitative(!!h.isQuantitative);
+    setWeeklyTargetDays(h.weeklyTargetDays);
     setIsHabitModalOpen(true);
   };
 
@@ -144,6 +147,8 @@ export function VaultView() {
 
     soundEngine.playCheck();
     hapticSuccess();
+    const finalWeeklyTarget = weeklyTargetDays && weeklyTargetDays > 0 ? weeklyTargetDays : undefined;
+
     if (editingHabit) {
       updateHabit({
         ...editingHabit,
@@ -155,6 +160,8 @@ export function VaultView() {
         iconName: habitIcon,
         requiresProof,
         isQuantitative,
+        weeklyTargetDays: finalWeeklyTarget,
+        frequency: finalWeeklyTarget ? 'weekly' : 'daily',
       });
     } else {
       addHabit({
@@ -166,6 +173,8 @@ export function VaultView() {
         iconName: habitIcon,
         requiresProof,
         isQuantitative,
+        weeklyTargetDays: finalWeeklyTarget,
+        frequency: finalWeeklyTarget ? 'weekly' : 'daily',
         order: 99,
         isActive: true,
       });
@@ -1022,6 +1031,19 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                     <option value="environment">Environment</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-zinc-400 mb-1">Weekly Target (optional, e.g. 3 or 4 days/wk)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="7"
+                  placeholder="Daily (leave blank or 0)"
+                  value={weeklyTargetDays ?? ''}
+                  onChange={(e) => setWeeklyTargetDays(e.target.value ? Number(e.target.value) : undefined)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-white text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400"
+                />
               </div>
 
               <div className="space-y-2 pt-1 text-xs text-zinc-300">

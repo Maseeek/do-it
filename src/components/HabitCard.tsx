@@ -25,6 +25,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
     updateCheckInNote,
     isHabitCompletedOnDate,
     getHabitCheckInOnDate,
+    getWeeklyHabitCompletions,
     selectedDate,
     checkIns,
     activePlayer,
@@ -44,6 +45,10 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const completed = isHabitCompletedOnDate(habit.id, selectedDate);
   const checkIn = getHabitCheckInOnDate(habit.id, selectedDate);
+  const isWeeklyHabit = Boolean(habit.weeklyTargetDays && habit.weeklyTargetDays > 0);
+  const weeklyCompletions = getWeeklyHabitCompletions(habit.id, selectedDate);
+  const isWeeklyTargetMet = isWeeklyHabit && weeklyCompletions >= habit.weeklyTargetDays!;
+  const satisfied = completed || isWeeklyTargetMet;
 
   const isMaciek = activePlayer?.id === 'maciek';
   const partnerPlayer = partnerId ? players[partnerId] : null;
@@ -130,7 +135,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
     <>
       <div
         className={`group relative rounded-2xl p-3.5 transition-all duration-200 border ${
-          completed
+          satisfied
             ? 'bg-[#1c1c1e]/60 border-white/[0.04] opacity-80'
             : 'bg-[#1c1c1e] border-white/[0.08] hover:border-white/[0.16]'
         }`}
@@ -139,47 +144,63 @@ export function HabitCard({ habit }: { habit: Habit }) {
           {/* Apple Reminders style circular checkbox */}
           <button
             onClick={handleToggle}
-            aria-label={completed ? `Mark ${habit.title} uncompleted` : `Mark ${habit.title} completed`}
+            aria-label={
+              completed
+                ? `Mark ${habit.title} uncompleted for today`
+                : isWeeklyTargetMet
+                ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
+                : `Mark ${habit.title} completed`
+            }
             className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ${
               completed
                 ? isMaciek
                   ? 'bg-blue-500 text-white'
                   : 'bg-pink-500 text-white'
+                : isWeeklyTargetMet
+                ? 'border-2 border-emerald-500/60 text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25'
                 : 'border-2 border-zinc-600 hover:border-zinc-400 text-transparent'
             }`}
           >
-            <Check className="w-3.5 h-3.5 stroke-[3]" />
+            <Check className={`w-3.5 h-3.5 stroke-[3] ${!completed && !isWeeklyTargetMet ? 'hidden' : ''}`} />
           </button>
 
           {/* Middle: Icon + Title + Metadata */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`w-3.5 h-3.5 ${completed ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              <span className={`w-3.5 h-3.5 ${satisfied ? 'text-zinc-600' : 'text-zinc-400'}`}>
                 <HabitIcon name={habit.iconName} className="w-3.5 h-3.5" />
               </span>
 
               <span
                 className={`text-sm font-semibold tracking-tight truncate ${
-                  completed ? 'line-through text-zinc-500' : 'text-white'
+                  satisfied ? 'line-through text-zinc-500' : 'text-white'
                 }`}
               >
                 {habit.title}
               </span>
 
-              {habitStreak >= 2 && (
+              {habitStreak >= (isWeeklyHabit ? 1 : 2) && (
                 <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-400 bg-amber-400/10 px-1.5 py-0.2 rounded-full">
                   <Flame className="w-2.5 h-2.5" />
-                  {habitStreak}d
+                  {habitStreak}{isWeeklyHabit ? 'w' : 'd'}
                 </span>
               )}
             </div>
 
             <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-400">
               <span className="capitalize">{habit.category.replace('_', ' ')}</span>
-              {habit.weeklyTargetDays && (
+              {isWeeklyHabit && (
                 <>
                   <span>•</span>
-                  <span>{habit.weeklyTargetDays}x/wk</span>
+                  <span
+                    className={
+                      isWeeklyTargetMet
+                        ? 'text-emerald-400 font-medium'
+                        : 'text-zinc-400'
+                    }
+                  >
+                    {weeklyCompletions}/{habit.weeklyTargetDays} this wk{isWeeklyTargetMet ? ' · Goal Met' : ''}
+                  </span>
                 </>
               )}
               {completed && checkIn?.quantity && (
@@ -241,16 +262,37 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   setShowQtyLogger(true);
                 }
               }}
-              aria-label={habit.isQuantitative ? `Log quantity for ${habit.title}` : `${habit.points} points`}
+              aria-label={
+                habit.isQuantitative
+                  ? `Log quantity for ${habit.title}`
+                  : `${habit.points} points`
+              }
               className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                 completed
-                  ? 'bg-white/[0.04] text-zinc-500'
+                  ? checkIn?.pointsEarned === 0
+                    ? 'bg-zinc-800 text-zinc-400'
+                    : 'bg-white/[0.04] text-zinc-500'
+                  : isWeeklyTargetMet
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   : habit.isQuantitative
                   ? 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25'
                   : 'bg-white/[0.08] text-white'
               }`}
+              title={
+                completed && checkIn?.pointsEarned === 0
+                  ? 'Weekly target reached · 0 pts awarded'
+                  : isWeeklyTargetMet && !completed
+                  ? 'Weekly goal met · Target reached'
+                  : undefined
+              }
             >
-              +{completed ? checkIn?.pointsEarned || habit.points : habit.points}
+              {completed
+                ? checkIn && checkIn.pointsEarned === 0
+                  ? '+0 pts (limit)'
+                  : `+${checkIn?.pointsEarned ?? habit.points}`
+                : isWeeklyTargetMet
+                ? 'Goal Met'
+                : `+${habit.points}`}
             </button>
           </div>
         </div>
