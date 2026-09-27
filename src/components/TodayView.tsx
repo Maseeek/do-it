@@ -34,7 +34,10 @@ export function TodayView() {
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
   const [selectedProofIndex, setSelectedProofIndex] = useState<number | null>(null);
 
-  const totalPossible = 240;
+  const totalPossible = Math.max(
+    240,
+    activeHabits.reduce((acc, h) => acc + (h.points || 0), 0)
+  );
 
   // Calculate points specifically for selectedDate
   const currentLogs = checkIns.filter(

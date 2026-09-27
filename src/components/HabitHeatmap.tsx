@@ -107,9 +107,9 @@ export function HabitHeatmap() {
                   setHoveredDay(isHovered ? null : { dateStr: d.dateStr, points: stats.points, count: stats.count });
                 }}
                 aria-label={`${formatFriendlyDate(d.dateStr)}: ${stats.points} points, ${stats.count} habits`}
-                className={`w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-xs transition-all duration-150 focus:outline-none ${getIntensityClass(
+                className={`w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-sm transition-all duration-150 focus:outline-none ${getIntensityClass(
                   stats.points
-                )} ${isHovered ? 'scale-115 ring-2 ring-white shadow-lg z-10' : 'hover:scale-110'}`}
+                )} ${isHovered ? 'scale-110 ring-2 ring-white shadow-lg z-10' : 'hover:scale-110'}`}
                 title={`${formatFriendlyDate(d.dateStr)}: ${stats.points} pts`}
               />
             );
@@ -142,10 +142,10 @@ export function HabitHeatmap() {
 
         <div className="flex items-center gap-1 text-[10px] text-zinc-500 flex-shrink-0">
           <span>Less</span>
-          <span className="w-2 h-2 rounded-xs bg-[#2c2c2e]" />
-          <span className={`w-2 h-2 rounded-xs ${isMaciek ? 'bg-blue-800' : 'bg-pink-800'}`} />
-          <span className={`w-2 h-2 rounded-xs ${isMaciek ? 'bg-blue-600' : 'bg-pink-600'}`} />
-          <span className={`w-2 h-2 rounded-xs ${isMaciek ? 'bg-blue-400' : 'bg-pink-400'}`} />
+          <span className="w-2 h-2 rounded-sm bg-[#2c2c2e]" />
+          <span className={`w-2 h-2 rounded-sm ${isMaciek ? 'bg-blue-800' : 'bg-pink-800'}`} />
+          <span className={`w-2 h-2 rounded-sm ${isMaciek ? 'bg-blue-600' : 'bg-pink-600'}`} />
+          <span className={`w-2 h-2 rounded-sm ${isMaciek ? 'bg-blue-400' : 'bg-pink-400'}`} />
           <span>240 Par</span>
         </div>
       </div>
