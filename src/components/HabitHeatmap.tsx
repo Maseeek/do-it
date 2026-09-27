@@ -129,6 +129,7 @@ export function HabitHeatmap() {
                 soundEngine.playClick();
                 setHoveredDay(null);
               }}
+              aria-label="Clear selection"
               className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors"
               title="Clear selection"
             >
