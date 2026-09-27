@@ -17,14 +17,19 @@ export function ProfileGate() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black px-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-gate-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black px-4"
+    >
       <div className="w-full max-w-sm">
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#1c1c1e] border border-white/[0.1] text-white text-lg font-bold mb-3 shadow-2xl">
             DO
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 id="profile-gate-title" className="text-2xl font-bold tracking-tight text-white">
             Select Profile
           </h1>
         </div>
@@ -34,6 +39,7 @@ export function ProfileGate() {
           {/* Maciek */}
           <button
             onClick={() => handleSelect('maciek')}
+            aria-label={`Select Maciek, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma`}
             className="w-full text-left p-4 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] hover:border-blue-500/50 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
@@ -57,6 +63,7 @@ export function ProfileGate() {
           {/* Myrna */}
           <button
             onClick={() => handleSelect('myrna')}
+            aria-label={`Select Myrna, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma`}
             className="w-full text-left p-4 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] hover:border-pink-500/50 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
