@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isValidSupabaseUrl } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
     const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const playerId = searchParams.get('state') || 'maciek';
 
-    if (sbUrl && sbKey) {
+    if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
       try {
         const supabase = createClient(sbUrl, sbKey);
         const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();

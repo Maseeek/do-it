@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { syncGoogleHealth } from '@/lib/wearables/google-health';
+import { isValidSupabaseUrl } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,7 @@ async function handleCron(request: NextRequest) {
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   let playerIds: string[] = ['maciek'];
 
-  if (sbUrl && sbKey) {
+  if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
     try {
       const client = createClient(sbUrl, sbKey);
       const { data: rows } = await client

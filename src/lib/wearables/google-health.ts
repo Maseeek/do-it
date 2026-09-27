@@ -1,6 +1,7 @@
 import { CheckIn, PlayerId } from '@/lib/types';
 import { createClient } from '@supabase/supabase-js';
 import { checkInToRow } from '@/lib/supabase-sync';
+import { isValidSupabaseUrl } from '@/lib/supabase';
 
 export interface GoogleSession {
   id: string;
@@ -63,7 +64,7 @@ export async function syncGoogleHealth(options: GoogleHealthSyncOptions): Promis
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Retrieve token from Supabase if missing
-  if ((!accessToken || !refreshToken) && sbUrl && sbKey) {
+  if ((!accessToken || !refreshToken) && sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
     try {
       const sbClient = createClient(sbUrl, sbKey);
       const { data: tokenRow } = await sbClient
@@ -489,7 +490,7 @@ async function trySaveToSupabase(checkIns: CheckIn[]) {
   const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (sbUrl && sbKey) {
+  if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
     try {
       const client = createClient(sbUrl, sbKey);
       const rows = checkIns.map(checkInToRow);
