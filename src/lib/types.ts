@@ -155,12 +155,27 @@ export interface WearableConfig {
   googleLastResult?: GoogleHealthSyncResult;
   appleConnected?: boolean;
   appleLastSync?: string;
+  appleLastResult?: {
+    metric?: string;
+    value?: number;
+    hours?: number;
+    date?: string;
+    points?: number;
+    qualified?: boolean;
+    message?: string;
+  };
 }
 
 export interface AppleHealthSyncPayload {
-  player: 'myrna' | 'maciek';
-  metric: 'sleep' | 'running' | 'gym' | 'sport';
-  value: number; // sleep in hours, running in km or mins, gym in mins
+  player?: 'myrna' | 'maciek';
+  metric?: string;
+  value?: number; // sleep in hours, running in km or mins, gym in mins
+  hours?: number;
+  duration?: number;
+  minutes?: number;
+  seconds?: number;
+  qty?: number;
+  unit?: string;
   date?: string; // YYYY-MM-DD
   note?: string;
 }

@@ -76,6 +76,8 @@ export function VaultView() {
   const [googleSyncMsg, setGoogleSyncMsg] = useState<{ text: string; isError?: boolean } | null>(null);
   const [appleSyncMsg, setAppleSyncMsg] = useState<{ text: string; isError?: boolean } | null>(null);
   const [copiedWebhook, setCopiedWebhook] = useState(false);
+  const [copiedSleepUrl, setCopiedSleepUrl] = useState(false);
+  const [customSleepInput, setCustomSleepInput] = useState('8.2');
   const [showAppleGuide, setShowAppleGuide] = useState(false);
 
   React.useEffect(() => {
@@ -314,25 +316,74 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
     hapticLight();
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://do-it-app.vercel.app';
     const config = {
-      name: 'Do It - Apple Health Sync',
-      endpoint: `${origin}/api/sync/apple-health`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer <YOUR_APPLE_HEALTH_SECRET>',
+      name: 'Do It - Apple Health Dynamic Sync Recipe',
+      description:
+        'Connect Apple Health to Do It using native iOS Shortcuts. Queries real sleep & workout data dynamically from Apple HealthKit and logs habits automatically.',
+      architecture: {
+        bridge: 'Apple Shortcuts (iOS)',
+        why: 'Apple Health data is isolated within iOS HealthKit on your iPhone. The Shortcuts app queries HealthKit directly each morning and sends the real hours to Do It.',
+        endpoint: `${origin}/api/sync/apple-health`,
+        supported_methods: ['GET', 'POST'],
       },
-      instructions: [
-        '1. Open Shortcuts app on iOS',
-        '2. Tap Automation > + (New Automation)',
-        '3. Choose "When Waking Up" or "Workout Ends"',
-        '4. Add action: "Get Contents of URL"',
-        '5. Method: POST, URL: the endpoint above',
-        '6. Body: JSON { "player": "myrna", "metric": "sleep", "value": 8.5 }',
-      ],
-      sample_payloads: {
-        sleep: { player: 'myrna', metric: 'sleep', value: 8.5 },
-        running: { player: 'myrna', metric: 'running', value: 5.0 },
-        gym: { player: 'myrna', metric: 'gym', value: 45 },
+      sleep_shortcut_recipe: {
+        trigger: 'Shortcuts > Automation > + > When Waking Up > Run Immediately (No confirmation)',
+        actions: [
+          {
+            step: 1,
+            action: 'Find Health Samples',
+            type: 'Sleep Analysis',
+            filters: ['Start Date is in the last 24 hours', 'Value is Asleep'],
+            notes: 'Pulls all sleep segments recorded by Apple Watch or iPhone.',
+          },
+          {
+            step: 2,
+            action: 'Calculate Statistics',
+            input: 'Health Samples',
+            operation: 'Sum',
+            property: 'Duration (in Hours)',
+            notes: 'Calculates the real total hours slept dynamically (e.g. 7.8, 8.4).',
+          },
+          {
+            step: 3,
+            action: 'Format Number',
+            input: 'Calculation Result',
+            decimals: 1,
+            notes: 'Formats into 1 decimal place.',
+          },
+          {
+            step: 4,
+            action: 'Get Contents of URL',
+            method: 'GET',
+            url: `${origin}/api/sync/apple-health?player=myrna&metric=sleep&value=[Formatted Number]`,
+            notes: 'Notice [Formatted Number] is the dynamic variable from Step 3, NOT hardcoded 8.5.',
+          },
+        ],
+      },
+      workout_shortcut_recipe: {
+        trigger: 'Shortcuts > Automation > + > When Workout Ends',
+        actions: [
+          {
+            step: 1,
+            action: 'Find Workouts',
+            filter: 'Date is Today, Sort by Start Date (Latest First), Limit 1',
+          },
+          {
+            step: 2,
+            action: 'Get Details of Workout',
+            property: 'Distance (in Kilometers) or Duration (in Minutes)',
+          },
+          {
+            step: 3,
+            action: 'Get Contents of URL',
+            method: 'GET',
+            url: `${origin}/api/sync/apple-health?player=myrna&metric=running&value=[Distance]`,
+          },
+        ],
+      },
+      rules: {
+        sleep: 'Target >= 8.0 hours. Awards 50 points to Myrna Sleep habit. Under 8.0 hours is recorded with 0 points.',
+        running: 'Awards 30 points to Myrna Sport habit.',
+        gym: 'Awards 40 points to Myrna Gym habit.',
       },
     };
 
@@ -340,7 +391,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'do-it-apple-health-shortcut-config.json';
+    a.download = 'do-it-apple-health-setup-recipe.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -891,86 +942,156 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
             </div>
 
             {/* Apple Health */}
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-2">
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-white">Myrna · Apple Health (Shortcuts)</span>
-                <span className="text-[10px] font-medium text-pink-400 bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-full">
-                  Ready
-                </span>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-white">Myrna · Apple Health (iOS Shortcuts)</span>
+                    <span className="text-[10px] font-medium text-pink-400 bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-full">
+                      {wearableConfig?.appleConnected ? 'Connected' : 'Ready'}
+                    </span>
+                  </div>
+                  {wearableConfig?.appleLastSync && (
+                    <div className="text-[10px] text-zinc-500 pt-0.5">
+                      Last synced: {wearableConfig.appleLastSync}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={
-                    typeof window !== 'undefined'
-                      ? `${window.location.origin}/api/sync/apple-health`
-                      : 'https://do-it-app.vercel.app/api/sync/apple-health'
-                  }
-                  className="flex-1 px-3 py-1 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-zinc-300 text-[11px] font-mono select-all"
-                />
-                <button
-                  onClick={() => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    const url = `${window.location.origin}/api/sync/apple-health`;
-                    navigator.clipboard.writeText(url).then(() => {
-                      setCopiedWebhook(true);
-                      setTimeout(() => setCopiedWebhook(false), 2000);
-                    });
-                  }}
-                  className="px-3 py-1 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors flex items-center gap-1"
-                >
-                  {copiedWebhook ? <Check className="w-3 h-3 text-emerald-600" /> : <ClipboardCopy className="w-3 h-3" />}
-                  <span>{copiedWebhook ? 'Copied' : 'Copy'}</span>
-                </button>
+              {/* Explainer */}
+              <div className="p-2.5 rounded-xl bg-pink-500/[0.04] border border-pink-500/10 text-[11px] text-zinc-300 leading-relaxed">
+                <span className="font-semibold text-pink-300">How dynamic Apple Health sync works: </span>
+                Apple Health data stays inside iOS HealthKit. An iOS Shortcut acts as your on-device bridge: each morning when waking up, it reads your actual sleep duration from HealthKit and sends the real hours to Do It.
               </div>
 
-              {/* Instant tests */}
-              <div className="grid grid-cols-3 gap-1.5 pt-0.5">
-                <button
-                  onClick={async () => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setAppleSyncMsg(null);
-                    const res = await testAppleHealthSync('sleep', 8.5);
-                    setAppleSyncMsg({ text: res.message, isError: !res.success });
-                  }}
-                  className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
-                >
-                  Sleep 8.5h
-                </button>
-                <button
-                  onClick={async () => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setAppleSyncMsg(null);
-                    const res = await testAppleHealthSync('running', 5.0);
-                    setAppleSyncMsg({ text: res.message, isError: !res.success });
-                  }}
-                  className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
-                >
-                  5km Run
-                </button>
-                <button
-                  onClick={async () => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setAppleSyncMsg(null);
-                    const res = await testAppleHealthSync('gym', 50);
-                    setAppleSyncMsg({ text: res.message, isError: !res.success });
-                  }}
-                  className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
-                >
-                  Gym
-                </button>
+              {/* Dynamic Webhook URL */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-medium text-zinc-400">Dynamic Sleep Sync URL (with variable value)</div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={
+                      typeof window !== 'undefined'
+                        ? `${window.location.origin}/api/sync/apple-health?player=myrna&metric=sleep&value=`
+                        : 'https://do-it-app.vercel.app/api/sync/apple-health?player=myrna&metric=sleep&value='
+                    }
+                    className="flex-1 px-3 py-1 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-zinc-300 text-[11px] font-mono select-all"
+                  />
+                  <button
+                    onClick={() => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      const url = `${window.location.origin}/api/sync/apple-health?player=myrna&metric=sleep&value=`;
+                      navigator.clipboard.writeText(url).then(() => {
+                        setCopiedSleepUrl(true);
+                        setTimeout(() => setCopiedSleepUrl(false), 2000);
+                      });
+                    }}
+                    className="px-3 py-1 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors flex items-center gap-1"
+                  >
+                    {copiedSleepUrl ? <Check className="w-3 h-3 text-emerald-600" /> : <ClipboardCopy className="w-3 h-3" />}
+                    <span>{copiedSleepUrl ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Real-time Simulator */}
+              <div className="space-y-2 pt-1 border-t border-white/[0.04]">
+                <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Test Simulator (Verify Dynamic Logic)</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <button
+                    onClick={async () => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setAppleSyncMsg(null);
+                      const res = await testAppleHealthSync('sleep', 7.2);
+                      setAppleSyncMsg({ text: res.message, isError: !res.qualified });
+                    }}
+                    className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[10px] font-medium text-amber-300 hover:bg-zinc-700 transition-colors text-center"
+                    title="Tests sleep below the 8.0 hr threshold"
+                  >
+                    7.2h (Under Target)
+                  </button>
+                  <button
+                    onClick={async () => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setAppleSyncMsg(null);
+                      const res = await testAppleHealthSync('sleep', 8.2);
+                      setAppleSyncMsg({ text: res.message, isError: !res.qualified });
+                    }}
+                    className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[10px] font-medium text-emerald-400 hover:bg-zinc-700 transition-colors text-center"
+                    title="Tests qualifying sleep that completes the habit"
+                  >
+                    8.2h (Target Met)
+                  </button>
+                  <button
+                    onClick={async () => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setAppleSyncMsg(null);
+                      const res = await testAppleHealthSync('running', 5.0);
+                      setAppleSyncMsg({ text: res.message, isError: !res.success });
+                    }}
+                    className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[10px] font-medium text-white hover:bg-zinc-700 transition-colors text-center"
+                  >
+                    5km Run (+30)
+                  </button>
+                  <button
+                    onClick={async () => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setAppleSyncMsg(null);
+                      const res = await testAppleHealthSync('gym', 45);
+                      setAppleSyncMsg({ text: res.message, isError: !res.success });
+                    }}
+                    className="py-1 px-2 rounded-xl bg-[#2c2c2e] text-[10px] font-medium text-white hover:bg-zinc-700 transition-colors text-center"
+                  >
+                    45m Gym (+40)
+                  </button>
+                </div>
+
+                {/* Custom sleep test input */}
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-[11px] text-zinc-400">Custom sleep:</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="24"
+                    value={customSleepInput}
+                    onChange={(e) => setCustomSleepInput(e.target.value)}
+                    className="w-16 px-2 py-0.5 rounded-lg bg-[#2c2c2e] border border-white/[0.08] text-white text-xs font-mono"
+                    placeholder="8.2"
+                  />
+                  <span className="text-[11px] text-zinc-500">hours</span>
+                  <button
+                    onClick={async () => {
+                      const num = parseFloat(customSleepInput);
+                      if (isNaN(num)) return;
+                      soundEngine.playClick();
+                      hapticLight();
+                      setAppleSyncMsg(null);
+                      const res = await testAppleHealthSync('sleep', num);
+                      setAppleSyncMsg({ text: res.message, isError: !res.qualified });
+                    }}
+                    className="ml-auto px-2.5 py-0.5 rounded-lg bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30 text-xs font-medium transition-colors"
+                  >
+                    Test Sync
+                  </button>
+                </div>
               </div>
 
               {appleSyncMsg && (
-                <div className={`p-2 rounded-xl text-xs ${
-                  appleSyncMsg.isError ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'
-                }`}>
+                <div
+                  className={`p-2 rounded-xl text-xs ${
+                    appleSyncMsg.isError
+                      ? 'bg-amber-500/10 border border-amber-500/20 text-amber-200'
+                      : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                  }`}
+                >
                   {appleSyncMsg.text}
                 </div>
               )}
@@ -981,7 +1102,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   className="flex-1 py-1.5 px-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <Download className="w-3.5 h-3.5 text-pink-400" />
-                  <span>Download Shortcut Config (.json)</span>
+                  <span>Download Shortcut Recipe (.json)</span>
                 </button>
                 <button
                   onClick={() => {
@@ -991,18 +1112,50 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   }}
                   className="py-1.5 px-3 rounded-xl bg-[#2c2c2e] hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors"
                 >
-                  {showAppleGuide ? 'Hide Guide' : 'Setup Guide'}
+                  {showAppleGuide ? 'Hide Recipe' : 'Shortcut Recipe'}
                 </button>
               </div>
 
               {showAppleGuide && (
-                <div className="p-3 rounded-xl bg-[#2c2c2e] text-xs text-zinc-300 space-y-2">
-                  <p className="font-semibold text-white">How to setup iOS Shortcut Automation:</p>
-                  <p>1. Open <strong className="text-white">Shortcuts</strong> on iPhone &rarr; <strong className="text-white">Automation</strong> tab &rarr; <strong className="text-white">New Automation</strong>.</p>
-                  <p>2. Select trigger: &ldquo;When Waking Up&rdquo; (for sleep) or &ldquo;When Workout Ends&rdquo;.</p>
-                  <p>3. Add action: <strong className="text-white">Get Contents of URL</strong>.</p>
-                  <p>4. Set Method to <strong className="text-white">POST</strong>, Headers: <code>Authorization: Bearer &lt;secret&gt;</code>.</p>
-                  <p>5. Request Body (JSON): <code>&#123;&quot;player&quot;: &quot;myrna&quot;, &quot;metric&quot;: &quot;sleep&quot;, &quot;value&quot;: 8.5&#125;</code>.</p>
+                <div className="p-3 rounded-xl bg-[#2c2c2e] text-xs text-zinc-300 space-y-3">
+                  <div className="font-semibold text-white">4-Step iOS Shortcut Setup (Gets Real HealthKit Sleep):</div>
+                  
+                  <div className="space-y-2">
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+                      <div className="font-medium text-white text-[11px]">1. Action: Find Health Samples</div>
+                      <div className="text-[11px] text-zinc-400">Type: <span className="text-white">Sleep Analysis</span></div>
+                      <div className="text-[11px] text-zinc-400">Filter: <span className="text-white">Start Date is in the last 24 hours</span></div>
+                      <div className="text-[11px] text-zinc-400">Filter: <span className="text-white">Value is Asleep</span> (excludes awake time)</div>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+                      <div className="font-medium text-white text-[11px]">2. Action: Calculate Statistics</div>
+                      <div className="text-[11px] text-zinc-400">Input: <span className="text-white">Health Samples</span> (from Step 1)</div>
+                      <div className="text-[11px] text-zinc-400">Operation: <span className="text-white">Sum</span></div>
+                      <div className="text-[11px] text-zinc-400">Property: <span className="text-white">Duration (Hours)</span></div>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+                      <div className="font-medium text-white text-[11px]">3. Action: Format Number</div>
+                      <div className="text-[11px] text-zinc-400">Number: <span className="text-white">Calculation Result</span></div>
+                      <div className="text-[11px] text-zinc-400">Decimal Places: <span className="text-white">1</span> (e.g. 8.2)</div>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/[0.06]">
+                      <div className="font-medium text-white text-[11px]">4. Action: Get Contents of URL</div>
+                      <div className="text-[11px] text-zinc-400">Method: <span className="text-white">GET</span></div>
+                      <div className="text-[11px] text-zinc-400">URL: <span className="font-mono text-[10px] text-pink-300 break-all">{typeof window !== 'undefined' ? window.location.origin : 'https://do-it-app.vercel.app'}/api/sync/apple-health?player=myrna&metric=sleep&value=</span><span className="bg-pink-500/20 text-pink-200 px-1 rounded">[Formatted Number]</span></div>
+                      <div className="text-[10px] text-zinc-500 italic mt-0.5">Tap the URL end in Shortcuts and select the variable [Formatted Number] from Step 3.</div>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="font-medium text-emerald-300 text-[11px]">⏰ Automation Trigger (Zero Manual Work):</div>
+                      <div className="text-[11px] text-zinc-300 mt-0.5">
+                        In Shortcuts &rarr; <strong className="text-white">Automation</strong> tab &rarr; <strong className="text-white">+</strong> &rarr; <strong className="text-white">When Waking Up</strong> &rarr; select <strong className="text-white">Run Immediately</strong> &rarr; select this Shortcut.
+                      </div>
+                      <div className="text-[10px] text-zinc-400 mt-1">Every morning when your alarm stops or Sleep Focus turns off, your real sleep hours automatically sync!</div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

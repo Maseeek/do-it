@@ -112,7 +112,10 @@ interface StoreContextType {
     simulate?: boolean,
     simulateUnder?: boolean
   ) => Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }>;
-  testAppleHealthSync: (metric: 'sleep' | 'running' | 'gym', value: number) => Promise<{ success: boolean; message: string }>;
+  testAppleHealthSync: (
+    metric: 'sleep' | 'running' | 'gym',
+    value: number
+  ) => Promise<{ success: boolean; message: string; qualified?: boolean }>;
   testStravaSync: (player?: string) => Promise<{ success: boolean; message: string }>;
   testHevySync: (workoutTitle?: string, player?: string) => Promise<{ success: boolean; message: string }>;
   disconnectGoogleHealth: () => void;
@@ -831,7 +834,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const testAppleHealthSync = async (
     metric: 'sleep' | 'running' | 'gym',
     value: number
-  ): Promise<{ success: boolean; message: string }> => {
+  ): Promise<{ success: boolean; message: string; qualified?: boolean }> => {
     try {
       const res = await fetch('/api/sync/apple-health', {
         method: 'POST',
@@ -841,12 +844,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           metric,
           value,
           date: selectedDate,
-          note: `Auto-logged from Apple Health (${metric}: ${value})`,
+          note: `Apple Health Test (${metric}: ${value})`,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
         return { success: false, message: data.message || 'Sync failed.' };
       }
 
@@ -861,13 +864,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           } else {
             newCheckIns.push(data.checkIn);
           }
+          const rebalanced = rebalanceAllWeeklyCheckIns(newCheckIns, prev.habits);
           return {
             ...prev,
-            checkIns: newCheckIns,
+            checkIns: rebalanced,
             wearableConfig: {
               ...prev.wearableConfig,
               appleConnected: true,
               appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              appleLastResult: {
+                metric,
+                value,
+                hours: data.hoursLogged ?? value,
+                date: selectedDate,
+                points: data.pointsAwarded ?? 0,
+                qualified: data.qualified !== false,
+                message: data.message,
+              },
             },
           };
         });
@@ -875,14 +888,86 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         soundEngine.playFanfare();
         hapticMedium();
         fireCelebrationConfetti();
+      } else {
+        setState((prev) => ({
+          ...prev,
+          wearableConfig: {
+            ...prev.wearableConfig,
+            appleConnected: true,
+            appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            appleLastResult: {
+              metric,
+              value,
+              hours: data.hoursLogged ?? value,
+              date: selectedDate,
+              points: 0,
+              qualified: false,
+              message: data.message,
+            },
+          },
+        }));
       }
 
-      return { success: true, message: data.message };
+      return {
+        success: data.success,
+        message: data.message || 'Sync processed.',
+        qualified: data.qualified !== false,
+      };
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Network error';
       return { success: false, message: msg };
     }
   };
+
+  // Automatically pull Apple Health check-ins queued by background iOS Shortcuts
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const pullAppleHealthPending = async () => {
+      try {
+        const res = await fetch('/api/sync/apple-health?pending=true&consume=true');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.pendingCheckIns && Array.isArray(data.pendingCheckIns) && data.pendingCheckIns.length > 0) {
+          setState((prev) => {
+            let nextCheckIns = [...prev.checkIns];
+            for (const incoming of data.pendingCheckIns) {
+              if (!incoming || !incoming.habitId) continue;
+              const idx = nextCheckIns.findIndex(
+                (c) => c.habitId === incoming.habitId && c.date === incoming.date
+              );
+              if (idx >= 0) {
+                nextCheckIns[idx] = incoming;
+              } else {
+                nextCheckIns.push(incoming);
+              }
+            }
+            nextCheckIns = rebalanceAllWeeklyCheckIns(nextCheckIns, prev.habits);
+            return {
+              ...prev,
+              checkIns: nextCheckIns,
+              wearableConfig: {
+                ...prev.wearableConfig,
+                appleConnected: true,
+                appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              },
+            };
+          });
+          soundEngine.playFanfare();
+          hapticSuccess();
+        }
+      } catch {
+        // Silent failure in offline/local
+      }
+    };
+
+    pullAppleHealthPending();
+    const handleFocus = () => {
+      pullAppleHealthPending();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isHydrated]);
 
   const testStravaSync = async (
     player: string = 'maciek'
