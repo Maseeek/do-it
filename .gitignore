@@ -40,6 +40,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# audit & scratch
+agent-audit-report.json
+/scripts
+/tests
+/.scratch
+
 # scratch
 .scratch/
 

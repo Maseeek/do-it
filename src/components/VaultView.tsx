@@ -61,6 +61,7 @@ export function VaultView() {
     testStravaSync,
     testHevySync,
     disconnectGoogleHealth,
+    disconnectStrava,
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'stats' | 'habits' | 'settings'>('stats');
@@ -86,10 +87,22 @@ export function VaultView() {
       if (params.get('wearable_connected') === 'google' || params.get('connected') === 'google') {
         setActiveTab('settings');
         setGoogleSyncMsg({ text: 'Google Health connected', isError: false });
+      } else if (params.get('wearable_connected') === 'strava') {
+        setActiveTab('settings');
+        const athlete = params.get('athlete');
+        setStravaSyncMsg({
+          text: `Strava connected successfully${athlete ? ` for ${athlete}` : ''}! ⚡`,
+          isError: false,
+        });
       } else if (params.get('wearable_error')) {
         setActiveTab('settings');
+        const err = params.get('wearable_error');
         setGoogleSyncMsg({
-          text: `Connection notice: ${params.get('wearable_error')}`,
+          text: `Connection notice: ${err}`,
+          isError: true,
+        });
+        setStravaSyncMsg({
+          text: `Connection notice: ${err}`,
           isError: true,
         });
       }
@@ -1160,26 +1173,68 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
               )}
             </div>
 
-            {/* Strava Webhook */}
+            {/* Strava */}
             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-white flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                  Strava · Webhook (Sport & Running)
+                  <Activity className="w-3.5 h-3.5 text-[#FC4C02]" />
+                  Strava · Runs &amp; Sport
                 </span>
-                <span className="text-[10px] font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
-                  Webhook Ready
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
+                  wearableConfig?.stravaConnected
+                    ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                    : 'bg-white/[0.04] text-zinc-400 border-white/[0.06]'
+                }`}>
+                  {wearableConfig?.stravaConnected ? (wearableConfig.stravaAthleteName || 'Connected') : 'Not Connected'}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Action Buttons: Connect Strava or Disconnect */}
+              <div className="flex gap-2">
+                {!wearableConfig?.stravaConnected ? (
+                  <a
+                    href={`/api/auth/strava?player=${activePlayer?.id || 'maciek'}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#FC4C02] text-white text-xs font-semibold hover:bg-orange-600 transition-colors shadow-sm"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Connect Strava</span>
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      disconnectStrava();
+                      setStravaSyncMsg({ text: 'Strava disconnected', isError: false });
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-white/[0.08] text-xs text-zinc-400 hover:text-red-400 transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                )}
+                <button
+                  onClick={async () => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setStravaSyncMsg(null);
+                    const res = await testStravaSync(activePlayer?.id || 'maciek');
+                    setStravaSyncMsg({ text: res.message, isError: !res.success });
+                  }}
+                  className="py-1.5 px-3 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
+                >
+                  Test Simulate (+30 pts)
+                </button>
+              </div>
+
+              {/* Webhook endpoint URL */}
+              <div className="flex items-center gap-2 pt-1">
                 <input
                   type="text"
                   readOnly
                   value={
                     typeof window !== 'undefined'
                       ? `${window.location.origin}/api/sync/strava`
-                      : 'https://do-it-app.vercel.app/api/sync/strava'
+                      : 'https://do-it-plum-seven.vercel.app/api/sync/strava'
                   }
                   className="flex-1 px-3 py-1 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-zinc-300 text-[11px] font-mono select-all"
                 />
@@ -1197,21 +1252,6 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                 >
                   {copiedStravaWebhook ? <Check className="w-3 h-3 text-emerald-600" /> : <ClipboardCopy className="w-3 h-3" />}
                   <span>{copiedStravaWebhook ? 'Copied' : 'Copy'}</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 pt-0.5">
-                <button
-                  onClick={async () => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setStravaSyncMsg(null);
-                    const res = await testStravaSync(activePlayer?.id || 'maciek');
-                    setStravaSyncMsg({ text: res.message, isError: !res.success });
-                  }}
-                  className="flex-1 py-1.5 px-3 rounded-xl bg-[#2c2c2e] text-[11px] font-medium text-white hover:bg-zinc-700 transition-colors"
-                >
-                  Simulate Sport Activity (+30 pts)
                 </button>
               </div>
 
@@ -1243,7 +1283,7 @@ Karma: Maciek ${maciekSummary.karma} | Myrna ${myrnaSummary.karma}`;
                   value={
                     typeof window !== 'undefined'
                       ? `${window.location.origin}/api/sync/hevy`
-                      : 'https://do-it-app.vercel.app/api/sync/hevy'
+                      : 'https://do-it-plum-seven.vercel.app/api/sync/hevy'
                   }
                   className="flex-1 px-3 py-1 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-zinc-300 text-[11px] font-mono select-all"
                 />

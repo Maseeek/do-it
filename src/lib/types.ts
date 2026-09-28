@@ -164,6 +164,9 @@ export interface WearableConfig {
     qualified?: boolean;
     message?: string;
   };
+  stravaConnected?: boolean;
+  stravaAthleteName?: string;
+  stravaLastSync?: string;
 }
 
 export interface AppleHealthSyncPayload {

@@ -119,6 +119,7 @@ interface StoreContextType {
   testStravaSync: (player?: string) => Promise<{ success: boolean; message: string }>;
   testHevySync: (workoutTitle?: string, player?: string) => Promise<{ success: boolean; message: string }>;
   disconnectGoogleHealth: () => void;
+  disconnectStrava: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -165,12 +166,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       if (typeof document !== 'undefined') {
         const hasGoogleCookie = document.cookie.includes('g_fit_connected=true');
-        if (hasGoogleCookie) {
+        const hasStravaCookie = document.cookie.includes('strava_connected=true');
+        let stravaName: string | undefined;
+        if (hasStravaCookie) {
+          const match = document.cookie.match(/strava_athlete_name=([^;]+)/);
+          if (match) stravaName = decodeURIComponent(match[1]);
+        }
+
+        if (hasGoogleCookie || hasStravaCookie) {
           setState((prev) => ({
             ...prev,
             wearableConfig: {
               ...prev.wearableConfig,
-              googleConnected: true,
+              ...(hasGoogleCookie ? { googleConnected: true } : {}),
+              ...(hasStravaCookie ? { stravaConnected: true, stravaAthleteName: stravaName } : {}),
             },
           }));
         }
@@ -1092,6 +1101,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const disconnectStrava = () => {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'strava_connected=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'strava_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'strava_refresh_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'strava_athlete_name=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = 'strava_athlete_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+    setState((prev) => ({
+      ...prev,
+      wearableConfig: {
+        ...prev.wearableConfig,
+        stravaConnected: false,
+        stravaAthleteName: undefined,
+      },
+    }));
+  };
+
   // Summaries
   const maciekSummary = calculatePlayerScores('maciek', state.checkIns, state.habits, state.restDays || []);
   const myrnaSummary = calculatePlayerScores('myrna', state.checkIns, state.habits, state.restDays || []);
@@ -1200,6 +1227,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         testStravaSync,
         testHevySync,
         disconnectGoogleHealth,
+        disconnectStrava,
       }}
     >
       {children}
