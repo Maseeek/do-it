@@ -40,15 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# audit & scratch
+# legacy local audit artifacts; these suites are not part of the committed checks
 agent-audit-report.json
 /scripts
 /tests
-/.scratch
-
-# scratch
-.scratch/
-
 
 # scratch & local cache
-.scratch/
+/.scratch/
