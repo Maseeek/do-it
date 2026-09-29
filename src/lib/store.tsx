@@ -19,7 +19,7 @@ import {
 import { getInitialState } from './seed';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
-import { canImportLegacyDatabase, prepareLegacyImport, readLegacyProgress } from './legacy-import';
+import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, readLegacyProgress, restoreLegacyDuelProgress } from './legacy-import';
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
@@ -364,7 +364,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const sequence = ++reloadSequence;
       try {
         await duelQueueRef.current;
-        const data = await loadDuelData(client, duelId);
+        let data = await loadDuelData(client, duelId);
+        if (multiplayer.slot && canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email)
+          && needsLegacyReplacement(multiplayer.slot, data.habits)) {
+          const slot = multiplayer.slot;
+          const restoration = duelQueueRef.current.then(() => restoreLegacyDuelProgress(client, duelId, slot, data.habits, data.checkIns));
+          duelQueueRef.current = restoration.then(() => {}, () => {});
+          if (await restoration) data = await loadDuelData(client, duelId);
+        }
         if (cancelled || sequence !== reloadSequence) return;
         const initial = getInitialState();
         const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === multiplayer.slot;
@@ -389,7 +396,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
     const poll = setInterval(() => void reload(), 30000);
     return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
-  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, duelOwnerName, duelGuestName]);
+  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.user?.email, duelOwnerName, duelGuestName]);
 
   const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
     const client = getSupabaseClient();
@@ -833,7 +840,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const playerId = multiplayer.slot;
     const client = getSupabaseClient();
     if (!multiplayer.configured || !client || !duelId || !playerId) throw new Error('Sign in to your account first.');
-    if (!source && !canImportLegacyDatabase(playerId, multiplayer.user?.email, multiplayer.duel?.guest_name)) {
+    if (!source && !canImportLegacyDatabase(playerId, multiplayer.user?.email)) {
       throw new Error('The previous database import is not available for this account. You can import a backup file instead.');
     }
     const previous = source || await readLegacyProgress(client, playerId);

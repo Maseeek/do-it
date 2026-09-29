@@ -32,7 +32,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     if (!firstRun || existing.length > 0) return;
     let cancelled = false;
     const client = getSupabaseClient();
-    if (!client || !canImportLegacyDatabase(playerId, multiplayer.user?.email, multiplayer.duel?.guest_name)) {
+    if (!client || !canImportLegacyDatabase(playerId, multiplayer.user?.email)) {
       setCheckingPrevious(false);
       return;
     }
@@ -51,7 +51,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
       setCheckingPrevious(false);
     });
     return () => { cancelled = true; };
-  }, [firstRun, playerId, multiplayer.user?.email, multiplayer.duel?.guest_name, existing.length]);
+  }, [firstRun, playerId, multiplayer.user?.email, existing.length]);
   const total = weeklyPointPotential(plan);
   const difference = partnerTotal - total;
   const activeCount = plan.filter(habit => habit.isActive).length;
@@ -92,7 +92,8 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     setError(null);
     setSaving(true);
     try {
-      await applyHabitPlan(plan);
+      const savedIds = new Set(existing.map(habit => habit.id));
+      await applyHabitPlan(plan.filter(habit => !catalogIds.has(habit.id) || habit.isActive || savedIds.has(habit.id)));
       onDone();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not save your habits. Try again.');

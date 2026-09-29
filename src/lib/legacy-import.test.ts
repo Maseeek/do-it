@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { INITIAL_HABITS } from './seed';
 import type { CheckIn } from './types';
-import { canImportLegacyDatabase, prepareLegacyImport } from './legacy-import';
+import { canImportLegacyDatabase, needsLegacyReplacement, planLegacyReplacement, prepareLegacyImport } from './legacy-import';
+import { catalogHabits } from './habit-catalog';
 
 const oldHabit = INITIAL_HABITS.find(habit => habit.id === 'maciek-sleep')!;
 const extraHabit = { ...INITIAL_HABITS.find(habit => habit.id === 'maciek-gym')!, id: 'old-extra' };
@@ -12,11 +13,11 @@ const oldCheckIns: CheckIn[] = [
 ];
 
 test('previous database import is offered only to the matching account', () => {
-  assert.equal(canImportLegacyDatabase('maciek', 'MaciekGeneja@gmail.com', null), true);
-  assert.equal(canImportLegacyDatabase('maciek', 'maciekgania@gmail.com', null), false);
-  assert.equal(canImportLegacyDatabase('maciek', 'someone@example.com', null), false);
-  assert.equal(canImportLegacyDatabase('myrna', undefined, 'Mina'), true);
-  assert.equal(canImportLegacyDatabase('myrna', undefined, 'Another player'), false);
+  assert.equal(canImportLegacyDatabase('maciek', 'MaciekGeneja@gmail.com'), true);
+  assert.equal(canImportLegacyDatabase('maciek', 'maciekgania@gmail.com'), false);
+  assert.equal(canImportLegacyDatabase('maciek', 'someone@example.com'), false);
+  assert.equal(canImportLegacyDatabase('myrna', 'MyrnaMarsh@icloud.com'), true);
+  assert.equal(canImportLegacyDatabase('myrna', 'someone@example.com'), false);
 });
 
 test('merges missing history without replacing edited habits or existing check-ins', () => {
@@ -39,4 +40,27 @@ test('keeps proof when historical check-ins repeat on the same habit and date', 
   assert.equal(result.duplicatesConsolidated, 1);
   assert.equal(result.missingCheckIns.length, 1);
   assert.equal(result.missingCheckIns[0].proofUrl, 'photo');
+});
+
+test('replaces the catalog plan with restored habits without losing historical check-ins', () => {
+  const previous = INITIAL_HABITS.filter(habit => habit.playerId === 'maciek');
+  const catalog = catalogHabits('maciek').map((habit, index) => ({ ...habit, isActive: index === 0 }));
+  const imported = previous.map(habit => ({ ...habit, isActive: false }));
+  const sourceCheckIn = { id: 'old-check', habitId: previous[0].id, playerId: 'maciek' as const, date: '2026-09-22', pointsEarned: 50, completedAt: '2026-09-22T10:00:00Z' };
+  const result = planLegacyReplacement('maciek', previous, [sourceCheckIn], [...catalog, ...imported], [sourceCheckIn]);
+  assert.equal(result.habitsToSave.filter(habit => habit.isActive).length, previous.length);
+  assert.equal(result.habitIdsToDelete.length, catalog.length);
+  assert.equal(result.missingCheckIns.length, 0);
+  assert.ok(result.habitsToSave.every(habit => !habit.id.startsWith('catalog-')));
+  assert.equal(needsLegacyReplacement('maciek', [...catalog, ...imported]), true);
+  assert.equal(needsLegacyReplacement('maciek', result.habitsToSave), false);
+});
+
+test('keeps a replaced catalog habit paused when it has a check-in', () => {
+  const previous = INITIAL_HABITS.filter(habit => habit.playerId === 'maciek');
+  const catalog = { ...catalogHabits('maciek')[0], isActive: true };
+  const recentCheckIn = { id: 'recent-check', habitId: catalog.id, playerId: 'maciek' as const, date: '2026-09-29', pointsEarned: 20, completedAt: '2026-09-29T10:00:00Z' };
+  const result = planLegacyReplacement('maciek', previous, [], [catalog], [recentCheckIn]);
+  assert.equal(result.habitIdsToDelete.length, 0);
+  assert.equal(result.habitsToSave.find(habit => habit.id === catalog.id)?.isActive, false);
 });

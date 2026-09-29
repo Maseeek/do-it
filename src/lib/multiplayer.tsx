@@ -84,7 +84,8 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code)) {
       throw new Error('This invitation link is invalid. Ask for a new link.');
     }
-    const { error: rpcError } = await client.rpc('accept_duel', { code, display_name: name });
+    const displayName = user?.email?.toLowerCase() === 'myrnamarsh@icloud.com' ? 'Myrna' : name;
+    const { error: rpcError } = await client.rpc('accept_duel', { code, display_name: displayName });
     if (rpcError) throw rpcError;
     await refresh();
   };

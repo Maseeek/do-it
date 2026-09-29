@@ -41,7 +41,7 @@ export function SettingsView({ onOpenHabitPlanner }: { onOpenHabitPlanner: () =>
   const [showRestore, setShowRestore] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const previousBackupInput = useRef<HTMLInputElement>(null);
-  const canImportDatabase = canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email, multiplayer.duel?.guest_name);
+  const canImportDatabase = canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email);
 
   async function refreshSetup() {
     const response = await fetch('/api/setup', { cache: 'no-store' });
