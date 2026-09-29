@@ -7,11 +7,11 @@ GitHub Issues in [`Maseeek/do-it`](https://github.com/Maseeek/do-it/issues) is t
 - Find work: `gh issue list -R Maseeek/do-it --state open --limit 100 --json number,title,labels,assignees,url`.
 - Read the full request and discussion: `gh issue view <number> -R Maseeek/do-it --comments`.
 - Create an issue: `gh issue create -R Maseeek/do-it --title "..." --body-file <path>`. Write multiline Markdown to a file before passing it to `gh`.
-- Update labels or assignment: `gh issue edit <number> -R Maseeek/do-it --add-label <label>` or `--add-assignee @me`.
+- Update labels or assignment: `gh issue edit <number> -R Maseeek/do-it --add-label <label>` or `--add-assignee '@me'`.
 - Leave a progress note: `gh issue comment <number> -R Maseeek/do-it --body-file <path>`.
 - Close completed work: `gh issue close <number> -R Maseeek/do-it --comment "..."`.
 
-Read [triage-labels.md](triage-labels.md) before applying a state label. Select an unassigned `ready-for-agent` issue, read its entire thread, then claim it before editing code. Check again after claiming because another agent may have selected it concurrently. Link the issue in the PR and close it only when its acceptance criteria are met.
+Read [triage-labels.md](triage-labels.md) before applying a state label. Select an unassigned `ready-for-agent` issue, read its entire thread, then claim it before editing code. Recheck the issue after claiming and coordinate ownership through the parent agent when agents share one GitHub account. Link the issue in the PR and close it only when its acceptance criteria are met.
 
 ## Planning and dependencies
 

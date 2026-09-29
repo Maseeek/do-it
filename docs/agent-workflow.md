@@ -5,7 +5,7 @@ GitHub Issues in [`Maseeek/do-it`](https://github.com/Maseeek/do-it/issues) hold
 ## Start a task
 
 1. Read the open issues and choose one marked `ready-for-agent` with no assignee. Read its body and comments, linked issues, and blockers. The repository-specific commands are in [agents/issue-tracker.md](agents/issue-tracker.md). If the GitHub CLI is unavailable, use the connected GitHub app or browser.
-2. Claim it by assigning yourself and leaving a short progress comment. Recheck assignment before editing: another agent may have claimed it at the same time.
+2. Claim it by assigning yourself and leaving a progress comment with your agent or worktree identifier. Tell the parent agent which issue you own. When agents share one GitHub login, the parent coordinates issue ownership because assignment alone cannot distinguish them.
 3. For parallel agents, give each one a distinct file or directory ownership area and a checkable output. Share findings through the parent agent. Use separate worktrees for independent branches; agents in one checkout share a working tree, so concurrent edits to the same file need explicit coordination.
 4. Read `CONTEXT.md`, relevant ADRs, and the relevant guide in `node_modules/next/dist/docs/` before editing Next.js code. Preserve existing uncommitted changes.
 
