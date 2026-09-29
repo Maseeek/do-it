@@ -1,3 +1,4 @@
+import { createOAuthState } from '@/lib/oauth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
       ? process.env.NEXT_PUBLIC_APP_URL
       : (request.nextUrl?.origin && request.nextUrl.origin !== 'null' ? request.nextUrl.origin : 'http://localhost:3000');
   const redirectUri = `${appUrl}/api/auth/strava/callback`;
-  const player = request.nextUrl.searchParams.get('player') || 'maciek';
+  const player = request.nextUrl.searchParams.get('player') === 'myrna' ? 'myrna' : 'maciek';
 
   if (!clientId) {
     return NextResponse.json(
@@ -29,7 +30,9 @@ export async function GET(request: NextRequest) {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('approval_prompt', 'auto');
   authUrl.searchParams.set('scope', scope);
-  authUrl.searchParams.set('state', player);
+  const response = NextResponse.redirect(authUrl.toString());
+  authUrl.searchParams.set('state', createOAuthState(response, 'strava', player));
+  response.headers.set('Location', authUrl.toString());
 
-  return NextResponse.redirect(authUrl.toString());
+  return response;
 }

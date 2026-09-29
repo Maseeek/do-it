@@ -1,3 +1,4 @@
+import { validateOAuthState } from '@/lib/oauth';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isValidSupabaseUrl } from '@/lib/supabase';
@@ -21,6 +22,9 @@ export async function GET(request: NextRequest) {
       new URL('/?tab=vault&wearable_error=missing_code', appUrl)
     );
   }
+
+  const player = validateOAuthState(request, 'google');
+  if (!player) return NextResponse.redirect(new URL('/?tab=vault&section=settings&wearable_error=invalid_oauth_state', appUrl));
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -47,8 +51,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      const errText = await tokenResponse.text();
-      console.error('Failed to exchange code for tokens:', errText);
+      console.error('Google token exchange failed:', tokenResponse.status);
       return NextResponse.redirect(
         new URL(`/?tab=vault&wearable_error=token_exchange_failed`, appUrl)
       );
@@ -93,8 +96,8 @@ export async function GET(request: NextRequest) {
 
     // Persist to Supabase oauth_tokens table for server-side & background cron sync
     const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const playerId = searchParams.get('state') || 'maciek';
+    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const playerId = player;
 
     if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
       try {
@@ -117,6 +120,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    response.cookies.set('google_oauth_state', '', { path: '/', maxAge: 0 });
+    response.cookies.set('g_fit_player', player, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 31536000 });
     return response;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';

@@ -13,16 +13,18 @@ export function parseDate(dateStr: string): Date {
 
 // ISO week number
 export function getISOWeek(date: Date): { year: number; week: number } {
-  const target = new Date(date.valueOf());
-  const dayNr = (date.getDay() + 6) % 7; // Monday = 0, Sunday = 6
-  target.setDate(target.getDate() - dayNr + 3);
-  const firstThursday = target.valueOf();
-  target.setMonth(0, 1);
-  if (target.getDay() !== 4) {
-    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-  }
-  const week = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-  return { year: date.getFullYear(), week };
+  // Calendar arithmetic in UTC avoids daylight-saving offsets at week boundaries.
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  target.setUTCDate(target.getUTCDate() + 4 - (target.getUTCDay() || 7));
+  const year = target.getUTCFullYear();
+  const firstDay = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil(((target.getTime() - firstDay.getTime()) / 86400000 + 1) / 7);
+  return { year, week };
+}
+
+export function isValidDateString(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return formatDateString(parseDate(value)) === value;
 }
 
 export function getWeekKey(dateStr: string = getTodayDateString()): string {

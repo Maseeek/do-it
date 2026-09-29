@@ -19,6 +19,8 @@ async function handleCron(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const querySecret = request.nextUrl.searchParams.get('secret');
 
+  if (!cronSecret || cronSecret.startsWith('your-')) return NextResponse.json({ error: 'Cron is not configured.' }, { status: 503 });
+
   if (cronSecret) {
     const isHeaderValid = authHeader === `Bearer ${cronSecret}`;
     const isQueryValid = querySecret === cronSecret;
@@ -43,7 +45,7 @@ async function handleCron(request: NextRequest) {
 
   // 3. Find registered players with wearable tokens in Supabase
   const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   let playerIds: string[] = ['maciek'];
 
   if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
@@ -70,6 +72,7 @@ async function handleCron(request: NextRequest) {
       try {
         const syncResult = await syncGoogleHealth({
           targetDate: date,
+          allowStoredTokens: true,
           playerId,
         });
 

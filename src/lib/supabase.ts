@@ -31,7 +31,9 @@ export function getSupabaseClient(customUrl?: string, customKey?: string): Supab
   try {
     cachedClient = createClient(url, anonKey, {
       auth: {
-        persistSession: false,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
     });
     lastUrl = url || null;

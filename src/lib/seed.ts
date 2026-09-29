@@ -312,119 +312,13 @@ export function getInitialStakes(): Stake[] {
 }
 
 export function getInitialState(): AppState {
-  const today = getTodayDateString();
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-
   return {
-    activePlayerId: null, // Displays "Who are you?" on initial device load
+    activePlayerId: null,
     players: INITIAL_PLAYERS,
     habits: INITIAL_HABITS,
-    checkIns: [
-      // Maciek's recent check-ins
-      {
-        id: 'c-m1',
-        habitId: 'maciek-sleep',
-        playerId: 'maciek',
-        date: yStr,
-        pointsEarned: 50,
-        completedAt: new Date(Date.now() - 86400000).toISOString(),
-        note: 'Solid 8h 15m deep sleep recorded on Fitbit',
-      },
-      {
-        id: 'c-m2',
-        habitId: 'maciek-gym',
-        playerId: 'maciek',
-        date: yStr,
-        pointsEarned: 40,
-        completedAt: new Date(Date.now() - 80000000).toISOString(),
-        note: 'Push day: Incline bench 85kg 4x8 + tricep dips',
-      },
-      {
-        id: 'c-m3',
-        habitId: 'maciek-reading',
-        playerId: 'maciek',
-        date: yStr,
-        pointsEarned: 20,
-        quantity: 20,
-        completedAt: new Date(Date.now() - 70000000).toISOString(),
-        note: 'Read 20 pages of The Psychology of Money',
-      },
-      {
-        id: 'c-m4',
-        habitId: 'maciek-sleep',
-        playerId: 'maciek',
-        date: today,
-        pointsEarned: 50,
-        completedAt: new Date(Date.now() - 3600000).toISOString(),
-      },
-      // Myrna's recent check-ins
-      {
-        id: 'c-y1',
-        habitId: 'myrna-sleep',
-        playerId: 'myrna',
-        date: yStr,
-        pointsEarned: 50,
-        completedAt: new Date(Date.now() - 86400000).toISOString(),
-        note: 'Restful 8.5 hours tracked on Garmin',
-      },
-      {
-        id: 'c-y2',
-        habitId: 'myrna-sport',
-        playerId: 'myrna',
-        date: yStr,
-        pointsEarned: 30,
-        completedAt: new Date(Date.now() - 75000000).toISOString(),
-        note: '5.2km morning run in the park 🏃‍♀️',
-      },
-      {
-        id: 'c-y3',
-        habitId: 'myrna-reading',
-        playerId: 'myrna',
-        date: yStr,
-        pointsEarned: 25,
-        quantity: 25,
-        completedAt: new Date(Date.now() - 65000000).toISOString(),
-        note: '25 pages completed - loving this book!',
-      },
-      {
-        id: 'c-y4',
-        habitId: 'myrna-sleep',
-        playerId: 'myrna',
-        date: today,
-        pointsEarned: 50,
-        completedAt: new Date(Date.now() - 2500000).toISOString(),
-      },
-      {
-        id: 'c-y5',
-        habitId: 'myrna-mind',
-        playerId: 'myrna',
-        date: today,
-        pointsEarned: 10,
-        completedAt: new Date(Date.now() - 1500000).toISOString(),
-        note: '15m meditation & red light therapy session',
-      },
-    ],
+    checkIns: [],
     stakes: getInitialStakes(),
-    reactions: [
-      {
-        id: 'r-1',
-        fromPlayerId: 'myrna',
-        toPlayerId: 'maciek',
-        emoji: '💪',
-        message: 'Crushing the gym session! Keep it up!',
-        timestamp: new Date(Date.now() - 72000000).toISOString(),
-      },
-      {
-        id: 'r-2',
-        fromPlayerId: 'maciek',
-        toPlayerId: 'myrna',
-        emoji: '🍕',
-        message: 'Sunday dinner stake is looking fierce!',
-        timestamp: new Date(Date.now() - 36000000).toISOString(),
-      },
-    ],
+    reactions: [],
     restDays: [],
     soundEnabled: true,
     hapticsEnabled: true,

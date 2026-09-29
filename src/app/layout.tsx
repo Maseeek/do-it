@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
+import { MultiplayerProvider } from "@/lib/multiplayer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,7 +54,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-black text-[#f5f5f7] font-sans selection:bg-zinc-800 selection:text-white">
         <div className="ambient-mesh" />
-        <StoreProvider>{children}</StoreProvider>
+        <MultiplayerProvider><StoreProvider>{children}</StoreProvider></MultiplayerProvider>
       </body>
     </html>
   );

@@ -1,10 +1,11 @@
+import { validateOAuthState } from '@/lib/oauth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
-  const player = searchParams.get('state') || 'maciek';
+
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL !== 'undefined'
@@ -22,6 +23,9 @@ export async function GET(request: NextRequest) {
       new URL('/?tab=vault&wearable_error=missing_code', appUrl)
     );
   }
+
+  const player = validateOAuthState(request, 'strava');
+  if (!player) return NextResponse.redirect(new URL('/?tab=vault&section=settings&wearable_error=invalid_oauth_state', appUrl));
 
   const clientId = process.env.STRAVA_CLIENT_ID;
   const clientSecret = process.env.STRAVA_CLIENT_SECRET;
@@ -47,8 +51,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      const errText = await tokenResponse.text();
-      console.error('Failed to exchange Strava code for tokens:', errText);
+      console.error('Strava token exchange failed:', tokenResponse.status);
       return NextResponse.redirect(
         new URL('/?tab=vault&wearable_error=token_exchange_failed', appUrl)
       );
@@ -133,6 +136,7 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365,
     });
 
+    response.cookies.set('strava_oauth_state', '', { path: '/', maxAge: 0 });
     return response;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';

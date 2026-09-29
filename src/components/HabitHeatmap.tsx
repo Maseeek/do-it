@@ -9,7 +9,7 @@ import { hapticLight } from '@/lib/haptic-utils';
 import { X } from 'lucide-react';
 
 export function HabitHeatmap() {
-  const { checkIns, activePlayerId } = useStore();
+  const { checkIns, activePlayerId, players } = useStore();
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerId>(activePlayerId || 'maciek');
   const [hoveredDay, setHoveredDay] = useState<{ dateStr: string; points: number; count: number } | null>(null);
 
@@ -68,7 +68,7 @@ export function HabitHeatmap() {
                 : 'text-zinc-400'
             }`}
           >
-            Maciek
+            {players.maciek.name}
           </button>
           <button
             role="tab"
@@ -86,7 +86,7 @@ export function HabitHeatmap() {
                 : 'text-zinc-400'
             }`}
           >
-            Myrna
+            {players.myrna.name}
           </button>
         </div>
       </div>

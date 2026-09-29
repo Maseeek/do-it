@@ -26,15 +26,15 @@ Designed with a sleek **Linear-inspired dark mode aesthetic**, 1-tap manual logg
 - **Desktop Keyboard Shortcuts**: Jump between tabs (`1`, `2`, `3`), toggle shortcuts cheat-sheet (`?`), and dismiss modals (`Esc`).
 - **URL Automation & Deep Linking**: Quick log habits directly via URL query parameters (`?action=checkin&habit=...`) for iOS Shortcuts and Siri.
 - **Full Data Sovereignty**: 1-click JSON backup export & restore, plus shareable weekly text scorecard generator.
-- **Zero-Password Profile Identity**: 1-time "Who are you?" device picker persisted for everyday use.
+- **Private two-player duels**: Create an account, start a duel, and invite one other account with a one-use link. Each player owns their own habits and check-ins.
 - **PWA Ready**: Dynamic app icons (`/icon`, `/apple-icon`, `/manifest.webmanifest`) ready for *"Add to Home Screen"* on iOS & Android.
-- **Cloud Sync Seam**: Runs offline-first with zero setup, with optional Supabase PostgreSQL sync configurable in Settings.
+- **Supabase sync**: Authenticated duel habits, check-ins, notes, cheers, rest days, and stakes sync across devices. Without Supabase configuration, the original local profile mode remains available.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org) (App Router, Turbopack)
+- **Framework**: [Next.js 16](https://nextjs.org) (App Router, Turbopack)
 - **Language**: TypeScript
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com)
 - **Icons**: [Lucide React](https://lucide.dev)
@@ -58,6 +58,15 @@ Designed with a sleek **Linear-inspired dark mode aesthetic**, 1-tap manual logg
    ```
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Enable multiplayer
+
+1. In a Supabase project, run [`supabase/duels.sql`](supabase/duels.sql), then [`supabase/duels-extras.sql`](supabase/duels-extras.sql) in the SQL Editor. These create isolated duel tables, invitation functions, and row level policies.
+2. Configure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` and in your hosting environment. Use the publishable or anon key, never a secret or service role key in `NEXT_PUBLIC_` variables.
+3. Enable email and password sign in in Supabase Authentication. Add your deployed site URL to the Auth redirect URLs if email confirmations are enabled.
+4. Restart the app. The first player signs up and creates a duel, then shares the link from the Duel tab. The invited player signs up or signs in and accepts it.
+
+New duels start with empty habits. Each player creates their own in Vault → Habits. The older public two-profile tables are not used for authenticated duels; legacy progress is not migrated automatically.
 
 ### Mobile Installation (Add to Home Screen)
 

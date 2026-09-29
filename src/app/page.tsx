@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { ProfileGate } from '@/components/ProfileGate';
@@ -14,43 +14,81 @@ import { Check } from 'lucide-react';
 import { DoLogo } from '@/components/DoLogo';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
+import { getTodayDateString } from '@/lib/date-utils';
+import { prepareQuickCheckIn } from '@/lib/quick-checkin';
+import { DesktopSidebar } from '@/components/DesktopSidebar';
+import { useMultiplayer } from '@/lib/multiplayer';
+import { MultiplayerGate } from '@/components/MultiplayerGate';
 
 function AppContent() {
-  const { isHydrated, activePlayerId, toggleHabit, habits, switchProfile, setSelectedDate } = useStore();
+  const multiplayer = useMultiplayer();
+  const { isHydrated, loadedDuelId, syncStatus, activePlayerId, toggleHabit, habits, checkIns, switchProfile, setSelectedDate, storageError } = useStore();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [vaultSection, setVaultSection] = useState<'stats' | 'habits' | 'settings'>('stats');
+  const handledAction = useRef<string | null>(null);
 
   const searchParams = useSearchParams();
+  const pendingDuelId = multiplayer.duel?.id;
+  const pendingGuestId = multiplayer.duel?.guest_id;
+
+  useEffect(() => {
+    if (pendingDuelId && !pendingGuestId) setActiveTab('duel');
+  }, [pendingDuelId, pendingGuestId]);
 
   // Handle URL deep-linking query parameters (?tab=..., ?action=checkin&habit=...)
   useEffect(() => {
-    if (!isHydrated) return;
-
     const tabParam = searchParams.get('tab');
     if (tabParam === 'today' || tabParam === 'duel' || tabParam === 'vault') {
       setActiveTab(tabParam as TabType);
     }
+    if (searchParams.get('section') === 'habits') {
+      setActiveTab('vault');
+      setVaultSection('habits');
+    }
+    if (searchParams.has('wearable_error') || searchParams.has('wearable_connected') || searchParams.get('section') === 'settings') {
+      setActiveTab('vault');
+      setVaultSection('settings');
+    }
+  }, [searchParams]);
 
+  useEffect(() => {
+    if (!isHydrated || !activePlayerId) return;
+    if (multiplayer.configured && (!multiplayer.duel || loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot)) return;
     const action = searchParams.get('action');
     const habitId = searchParams.get('habit');
-    if (action === 'checkin' && habitId) {
-      const targetHabit = habits.find((h) => h.id === habitId);
-      if (targetHabit) {
-        toggleHabit(habitId);
-        setToastMessage(`Quick Logged: ${targetHabit.title} (+${targetHabit.points} pts)`);
-        setTimeout(() => setToastMessage(null), 3500);
-      }
+    const actionKey = searchParams.toString();
+    if (action !== 'checkin' || !habitId || handledAction.current === actionKey) return;
+    handledAction.current = actionKey;
+    const today = getTodayDateString();
+    const result = prepareQuickCheckIn(habitId, activePlayerId, habits, checkIns, today);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('action');
+    url.searchParams.delete('habit');
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    setSelectedDate(today);
+    setActiveTab('today');
+    if (result.habit) {
+      toggleHabit(habitId, undefined, undefined, undefined, today);
     }
-  }, [isHydrated, searchParams, habits, toggleHabit]);
+    setToastMessage(result.message);
+  }, [isHydrated, activePlayerId, multiplayer.configured, multiplayer.duel, multiplayer.slot, loadedDuelId, searchParams, habits, checkIns, toggleHabit, setSelectedDate]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timeout = setTimeout(() => setToastMessage(null), 4500);
+    return () => clearTimeout(timeout);
+  }, [toastMessage]);
 
   // Global Keyboard shortcuts (1, 2, 3, P, T, ?)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement)?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
         return;
       }
+      if (document.querySelector('[role="dialog"]') && e.key !== 'Escape') return;
 
       if (e.key === '1') {
         soundEngine.playClick();
@@ -64,7 +102,7 @@ function AppContent() {
         soundEngine.playClick();
         hapticLight();
         setActiveTab('vault');
-      } else if (e.key === 'p' || e.key === 'P') {
+      } else if ((e.key === 'p' || e.key === 'P') && !multiplayer.configured) {
         soundEngine.playClick();
         hapticLight();
         switchProfile();
@@ -73,7 +111,7 @@ function AppContent() {
       } else if (e.key === 't' || e.key === 'T') {
         soundEngine.playClick();
         hapticLight();
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getTodayDateString();
         setSelectedDate(todayStr);
         setToastMessage('Jumped to Today');
         setTimeout(() => setToastMessage(null), 2000);
@@ -91,16 +129,23 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [switchProfile, setSelectedDate]);
+  }, [switchProfile, setSelectedDate, multiplayer.configured]);
 
   // SSR hydration placeholder
-  if (!isHydrated) {
+  if (multiplayer.configured && multiplayer.duel && syncStatus === 'offline' && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot)) {
+    return <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-3 px-4"><p role="alert">{storageError || 'Could not load your duel.'}</p><button className="rounded-xl bg-white text-black px-4 py-2" onClick={() => window.location.reload()}>Retry</button></div>;
+  }
+  if (!isHydrated || multiplayer.loading || (multiplayer.configured && multiplayer.duel && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot))) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3">
         <DoLogo size="md" className="animate-pulse" />
         <span className="text-xs font-mono text-zinc-500">loading do...</span>
       </div>
     );
+  }
+
+  if (multiplayer.configured && (!multiplayer.user || !multiplayer.duel)) {
+    return <MultiplayerGate inviteCode={searchParams.get('invite')} />;
   }
 
   // First time or logged out: "Who are you?" profile selection
@@ -114,8 +159,10 @@ function AppContent() {
       <div className="ambient-mesh" aria-hidden="true" />
 
       {/* App frame */}
-      <div className="relative z-10 flex flex-col flex-1">
-        <Header onOpenSettings={() => setActiveTab('vault')} />
+      <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
+        <a href="#main-content" className="skip-link">Skip to content</a>
+        <DesktopSidebar activeTab={activeTab} onChangeTab={setActiveTab} onOpenSettings={() => { setVaultSection('settings'); setActiveTab('vault'); }} />
+        <Header onOpenSettings={() => { setVaultSection('settings'); setActiveTab('vault'); }} />
 
         {/* Floating Quick Action Toast */}
         {toastMessage && (
@@ -134,10 +181,11 @@ function AppContent() {
           </div>
         )}
 
-        <main className="flex-1 max-w-md w-full mx-auto px-4 pt-3.5 pb-24">
+        <main id="main-content" className="flex-1 max-w-xl lg:max-w-6xl w-full mx-auto px-4 lg:px-10 pt-5 lg:pt-9 pb-28 lg:pb-12">
+          {storageError && <div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">{storageError}</div>}
           {activeTab === 'today' && <TodayView />}
           {activeTab === 'duel' && <DuelView />}
-          {activeTab === 'vault' && <VaultView />}
+          {activeTab === 'vault' && <VaultView key={vaultSection} initialSection={vaultSection} />}
         </main>
 
         <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />

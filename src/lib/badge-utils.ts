@@ -11,11 +11,11 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     category: 'streak',
   },
   {
-    id: 'perfect_par',
+      id: 'perfect_par',
     title: 'Daily Par Master',
     description: 'Score 240+ points in a single day',
     icon: 'Trophy',
-    targetCount: 1,
+      targetCount: 240,
     category: 'parity',
   },
   {

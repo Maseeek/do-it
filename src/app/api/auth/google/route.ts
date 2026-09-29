@@ -1,3 +1,4 @@
+import { createOAuthState } from '@/lib/oauth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     'https://www.googleapis.com/auth/fitness.activity.read',
   ].join(' ');
 
-  const player = request.nextUrl.searchParams.get('player') || 'maciek';
+  const player = request.nextUrl.searchParams.get('player') === 'myrna' ? 'myrna' : 'maciek';
 
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   authUrl.searchParams.set('client_id', clientId);
@@ -33,7 +34,9 @@ export async function GET(request: NextRequest) {
   authUrl.searchParams.set('scope', scopes);
   authUrl.searchParams.set('access_type', 'offline');
   authUrl.searchParams.set('prompt', 'consent'); // Force refresh_token on consent
-  authUrl.searchParams.set('state', player);
+  const response = NextResponse.redirect(authUrl.toString());
+  authUrl.searchParams.set('state', createOAuthState(response, 'google', player));
+  response.headers.set('Location', authUrl.toString());
 
-  return NextResponse.redirect(authUrl.toString());
+  return response;
 }

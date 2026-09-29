@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { LeaderboardTier, Habit, CheckIn, Player, PlayerId, StakePeriod } from '@/lib/types';
 import { getCategoryBreakdown, getStakesRecord, getWeeklyDailyDuelPoints } from '@/lib/score-calculator';
@@ -22,8 +23,15 @@ import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess, hapticCelebration } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { shareScorecardImage } from '@/lib/scorecard-image';
+import { useMultiplayer } from '@/lib/multiplayer';
 
 export function DuelView() {
+  const multiplayer = useMultiplayer();
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState('');
+  useEffect(() => {
+    setInviteLink(multiplayer.duel ? `${window.location.origin}/?invite=${multiplayer.duel.invite_code}` : '');
+  }, [multiplayer.duel]);
   const [selectedTier, setSelectedTier] = useState<LeaderboardTier>('weekly');
   const [isEditingStake, setIsEditingStake] = useState(false);
   const [isCreatingStake, setIsCreatingStake] = useState(false);
@@ -117,9 +125,9 @@ export function DuelView() {
     const weekKey = getWeekKey(todayStr);
     const leader =
       maciekSummary.weekly > myrnaSummary.weekly
-        ? 'Maciek'
+        ? players.maciek.name
         : myrnaSummary.weekly > maciekSummary.weekly
-        ? 'Myrna'
+        ? players.myrna.name
         : 'Tied';
     const delta = Math.abs(maciekSummary.weekly - myrnaSummary.weekly);
 
@@ -127,6 +135,8 @@ export function DuelView() {
       setShareCardStatus('Generating...');
       const res = await shareScorecardImage({
         weekKey,
+        maciekName: players.maciek.name,
+        myrnaName: players.myrna.name,
         maciekScore: maciekSummary.weekly,
         myrnaScore: myrnaSummary.weekly,
         maciekStreak: maciekSummary.currentStreak,
@@ -149,6 +159,18 @@ export function DuelView() {
 
   return (
     <div className="space-y-4">
+      {multiplayer.duel && !multiplayer.duel.guest_id && <section className="rounded-2xl border border-blue-400/20 bg-blue-400/5 p-4 space-y-3">
+        <h2 className="font-semibold">Invite your opponent</h2>
+        <p className="text-xs text-zinc-400">Share this private link. The first person who accepts it joins your duel.</p>
+        <label className="block text-xs text-zinc-400">Invitation link<input readOnly value={inviteLink} onFocus={event => event.currentTarget.select()} className="mt-1 w-full rounded-lg border border-white/15 bg-black p-2 text-xs text-white" /></label>
+        <button disabled={!inviteLink} className="rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold disabled:opacity-50" onClick={async () => {
+          try { await navigator.clipboard.writeText(inviteLink); setInviteStatus('Invitation link copied'); }
+          catch { setInviteStatus('Select and copy the invitation link above.'); }
+        }}>Copy invitation link</button>
+        {inviteStatus && <p role="status" className="text-xs text-zinc-300">{inviteStatus}</p>}
+      </section>}
+      {multiplayer.duel?.guest_id && <p className="text-xs text-zinc-400">{players.maciek.name} vs {players.myrna.name}</p>}
+      {multiplayer.duel && habits.length === 0 && <section className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4"><h2 className="font-semibold">Start with a habit</h2><p className="text-xs text-zinc-400 mt-1">Each player adds their own habits. Check-ins will appear here as you go.</p><Link className="inline-block mt-3 rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold" href="/?tab=vault&section=habits">Add your first habit</Link></section>}
       {/* Timeframe Segmented Control (Apple 3-Pill) */}
       <div role="tablist" aria-label="Leaderboard timeframe" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
         {(
@@ -221,7 +243,7 @@ export function DuelView() {
           <div>
             <div className="flex items-center gap-1.5 mb-1">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-xs font-semibold text-zinc-300">Maciek</span>
+              <span className="text-xs font-semibold text-zinc-300">{players.maciek.name}</span>
             </div>
             <div className="text-3xl font-bold tracking-tight text-white tabular-nums">
               {comparison.maciekScore.toLocaleString()}
@@ -248,7 +270,7 @@ export function DuelView() {
           {/* Myrna */}
           <div className="text-right">
             <div className="flex items-center justify-end gap-1.5 mb-1">
-              <span className="text-xs font-semibold text-zinc-300">Myrna</span>
+              <span className="text-xs font-semibold text-zinc-300">{players.myrna.name}</span>
               <span className="w-2 h-2 rounded-full bg-pink-500" />
             </div>
             <div className="text-3xl font-bold tracking-tight text-white tabular-nums">
@@ -265,7 +287,7 @@ export function DuelView() {
             aria-valuenow={comparison.maciekPct}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuetext={`Maciek ${comparison.maciekPct}%, Myrna ${comparison.myrnaPct}%`}
+            aria-valuetext={`${players.maciek.name} ${comparison.maciekPct}%, ${players.myrna.name} ${comparison.myrnaPct}%`}
             className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden flex"
           >
             <div
@@ -296,7 +318,7 @@ export function DuelView() {
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-zinc-500 tabular-nums">
-              Wins: Maciek {stakesRecord.maciekWins} · Myrna {stakesRecord.myrnaWins}
+              Wins: {players.maciek.name} {stakesRecord.maciekWins} · {players.myrna.name} {stakesRecord.myrnaWins}
             </span>
             {!activeStake && (
               <button
@@ -383,7 +405,7 @@ export function DuelView() {
           {/* Maciek */}
           <div className="space-y-1.5">
             <div className="text-[11px] font-semibold text-blue-400 pb-1 border-b border-white/[0.06]">
-              Maciek ({maciekSummary.today} pts)
+              {players.maciek.name} ({maciekSummary.today} pts)
             </div>
             {maciekHabits.map((h) => {
               const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
@@ -435,7 +457,7 @@ export function DuelView() {
           {/* Myrna */}
           <div className="space-y-1.5">
             <div className="text-[11px] font-semibold text-pink-400 pb-1 border-b border-white/[0.06]">
-              Myrna ({myrnaSummary.today} pts)
+              {players.myrna.name} ({myrnaSummary.today} pts)
             </div>
             {myrnaHabits.map((h) => {
               const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
@@ -526,7 +548,7 @@ export function DuelView() {
                   aria-valuenow={point.maciekPoints}
                   aria-valuemin={0}
                   aria-valuemax={Math.max(1, total)}
-                  aria-valuetext={`Maciek ${point.maciekPoints}, Myrna ${point.myrnaPoints}`}
+                  aria-valuetext={`${players.maciek.name} ${point.maciekPoints}, ${players.myrna.name} ${point.myrnaPoints}`}
                   className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
                 >
                   <div
@@ -573,7 +595,7 @@ export function DuelView() {
                   aria-valuenow={cat.maciekPoints}
                   aria-valuemin={0}
                   aria-valuemax={Math.max(1, total)}
-                  aria-valuetext={`Maciek ${cat.maciekPoints}, Myrna ${cat.myrnaPoints}`}
+                  aria-valuetext={`${players.maciek.name} ${cat.maciekPoints}, ${players.myrna.name} ${cat.myrnaPoints}`}
                   className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
                 >
                   <div
@@ -635,13 +657,13 @@ export function DuelView() {
                 onClick={() => handleResolveStake('maciek')}
                 className="p-3 rounded-2xl bg-blue-500/15 border border-blue-500/30 hover:bg-blue-500/25 text-blue-300 font-medium text-xs flex flex-col items-center gap-1 transition-colors"
               >
-                <span>⚡ Maciek</span>
+                <span>⚡ {players.maciek.name}</span>
               </button>
               <button
                 onClick={() => handleResolveStake('myrna')}
                 className="p-3 rounded-2xl bg-pink-500/15 border border-pink-500/30 hover:bg-pink-500/25 text-pink-300 font-medium text-xs flex flex-col items-center gap-1 transition-colors"
               >
-                <span>✨ Myrna</span>
+                <span>✨ {players.myrna.name}</span>
               </button>
             </div>
 

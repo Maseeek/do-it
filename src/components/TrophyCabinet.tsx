@@ -22,7 +22,7 @@ import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
 export function TrophyCabinet() {
-  const { maciekBadges, myrnaBadges, activePlayerId } = useStore();
+  const { maciekBadges, myrnaBadges, activePlayerId, players } = useStore();
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerId>(activePlayerId || 'maciek');
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
 
@@ -97,7 +97,7 @@ export function TrophyCabinet() {
                 : 'text-zinc-400'
             }`}
           >
-            Maciek
+            {players.maciek.name}
           </button>
           <button
             role="tab"
@@ -109,7 +109,7 @@ export function TrophyCabinet() {
                 : 'text-zinc-400'
             }`}
           >
-            Myrna
+            {players.myrna.name}
           </button>
         </div>
 

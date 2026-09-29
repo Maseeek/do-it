@@ -1,325 +1,76 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { HabitCard } from './HabitCard';
 import { ProofGalleryModal } from './ProofGalleryModal';
 import { DateNavigator } from './DateNavigator';
 import { ActivityFeed } from './ActivityFeed';
-import {
-  BedDouble,
-  Camera,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-} from 'lucide-react';
+import { BedDouble, Camera, CheckCircle2, Flame, ArrowUpRight, Sparkles } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
-import { hapticLight, hapticCelebration } from '@/lib/haptic-utils';
+import { hapticCelebration } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
+import { formatFriendlyDate, parseDate } from '@/lib/date-utils';
+import { useMultiplayer } from '@/lib/multiplayer';
 
 export function TodayView() {
-  const {
-    activeHabits,
-    isHabitSatisfiedOnDate,
-    selectedDate,
-    checkIns,
-    activePlayer,
-    partnerId,
-    players,
-    partnerCleanSpaceCheckIn,
-    partnerCleanSpaceHabit,
-    isRestDay,
-  } = useStore();
-
+  const multiplayer = useMultiplayer();
+  const { habits, activeHabits, isHabitSatisfiedOnDate, selectedDate, checkIns, activePlayer, activePlayerSummary, partnerId, players, partnerCleanSpaceCheckIn, partnerCleanSpaceHabit, isRestDay } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
-  const [selectedProofIndex, setSelectedProofIndex] = useState<number | null>(null);
-
-  const totalPossible = Math.max(
-    240,
-    activeHabits.reduce((acc, h) => acc + (h.points || 0), 0)
-  );
-
-  // Calculate points specifically for selectedDate
-  const currentLogs = checkIns.filter(
-    (c) => c.playerId === activePlayer?.id && c.date === selectedDate
-  );
-  const selectedDatePoints = currentLogs.reduce((acc, c) => acc + c.pointsEarned, 0);
-
-  const completedCount = activeHabits.filter((h) => isHabitSatisfiedOnDate(h.id, selectedDate)).length;
-  const totalCount = activeHabits.length;
-  const allDone = completedCount === totalCount && totalCount > 0;
-  const pct = Math.min(100, Math.round((selectedDatePoints / totalPossible) * 100));
-
-  const prevPointsRef = React.useRef(selectedDatePoints);
-  const prevAllDoneRef = React.useRef(allDone);
-  React.useEffect(() => {
-    if (
-      (selectedDatePoints >= totalPossible && prevPointsRef.current < totalPossible) ||
-      (allDone && !prevAllDoneRef.current)
-    ) {
-      soundEngine.playFanfare();
-      fireCelebrationConfetti();
-      hapticCelebration();
-    }
-    prevPointsRef.current = selectedDatePoints;
-    prevAllDoneRef.current = allDone;
-  }, [selectedDatePoints, totalPossible, allDone]);
-
-  const pendingHabits = activeHabits.filter((h) => !isHabitSatisfiedOnDate(h.id, selectedDate));
-  const doneHabits = activeHabits.filter((h) => isHabitSatisfiedOnDate(h.id, selectedDate));
-
+  const [proofIndex, setProofIndex] = useState<number | null>(null);
+  const points = checkIns.filter((c) => c.playerId === activePlayer?.id && c.date === selectedDate).reduce((sum, c) => sum + c.pointsEarned, 0);
+  const par = multiplayer.configured ? activeHabits.reduce((sum, habit) => sum + habit.points, 0) : 240;
+  const pct = par > 0 ? Math.min(100, Math.round(points / par * 100)) : 0;
+  const pending = activeHabits.filter((h) => !isHabitSatisfiedOnDate(h.id, selectedDate));
+  const done = activeHabits.filter((h) => isHabitSatisfiedOnDate(h.id, selectedDate));
+  const allDone = activeHabits.length > 0 && !pending.length;
+  const isRest = isRestDay(selectedDate);
   const isMaciek = activePlayer?.id === 'maciek';
   const partner = partnerId ? players[partnerId] : null;
-  const isRest = isRestDay(selectedDate);
+  const partnerPoints = checkIns.filter((c) => c.playerId === partnerId && c.date === selectedDate).reduce((sum, c) => sum + c.pointsEarned, 0);
+  const partnerPar = multiplayer.configured ? habits.filter((h) => h.playerId === partnerId && h.isActive).reduce((sum, h) => sum + h.points, 0) : par;
+  const photos = partnerCleanSpaceCheckIn?.proofUrls?.length ? partnerCleanSpaceCheckIn.proofUrls : partnerCleanSpaceCheckIn?.proofUrl ? [partnerCleanSpaceCheckIn.proofUrl] : [];
+  const context = `${activePlayer?.id}:${selectedDate}`;
+  const previous = useRef({ context, points, allDone });
+  useEffect(() => {
+    if (previous.current.context === context && ((points >= par && previous.current.points < par) || (allDone && !previous.current.allDone))) {
+      soundEngine.playFanfare(); fireCelebrationConfetti(); hapticCelebration();
+    }
+    previous.current = { context, points, allDone };
+  }, [context, points, allDone, par]);
+  const circumference = 2 * Math.PI * 55;
 
-  const partnerProofPhotos = partnerCleanSpaceCheckIn?.proofUrls && partnerCleanSpaceCheckIn.proofUrls.length > 0
-    ? partnerCleanSpaceCheckIn.proofUrls
-    : partnerCleanSpaceCheckIn?.proofUrl
-    ? [partnerCleanSpaceCheckIn.proofUrl]
-    : [];
-
-  // Ring geometry
-  const radius = 24;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (pct / 100) * circumference;
-
-  return (
-    <div className="space-y-4">
-      {/* Apple Segmented Control: Today vs Activity */}
-      <div role="tablist" aria-label="Today views" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
-        <button
-          role="tab"
-          aria-selected={activeSubTab === 'ritual'}
-          onClick={() => {
-            soundEngine.playClick();
-            hapticLight();
-            setActiveSubTab('ritual');
-          }}
-          className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${
-            activeSubTab === 'ritual'
-              ? 'bg-[#2c2c2e] text-white shadow-sm font-semibold'
-              : 'text-zinc-400 hover:text-white'
-          }`}
-        >
-          Daily Ritual
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeSubTab === 'feed'}
-          onClick={() => {
-            soundEngine.playClick();
-            hapticLight();
-            setActiveSubTab('feed');
-          }}
-          className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-all ${
-            activeSubTab === 'feed'
-              ? 'bg-[#2c2c2e] text-white shadow-sm font-semibold'
-              : 'text-zinc-400 hover:text-white'
-          }`}
-        >
-          Activity
-        </button>
+  return <div className="space-y-6">
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div><p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-medium mb-2">{parseDate(selectedDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p><h1 className="text-3xl lg:text-4xl font-semibold tracking-tight">Make a little progress.</h1><p className="text-sm text-zinc-400 mt-2">Your daily rituals. A stronger you, together.</p></div>
+      <div role="tablist" aria-label="Today views" className="flex rounded-xl border border-white/[0.08] bg-[#141518] p-1">
+        {([{ id: 'ritual', label: 'Daily Ritual' }, { id: 'feed', label: 'Activity' }] as const).map((tab) => <button key={tab.id} role="tab" aria-selected={activeSubTab === tab.id} onClick={() => setActiveSubTab(tab.id)} className={`min-h-10 px-4 rounded-lg text-xs font-medium ${activeSubTab === tab.id ? 'bg-white/[0.1] text-white' : 'text-zinc-400'}`}>{tab.label}</button>)}
       </div>
-
-      {activeSubTab === 'feed' ? (
-        <ActivityFeed />
-      ) : (
-        <>
-          {/* Week Date Strip */}
-          <DateNavigator />
-
-          {/* Rest Day Pill Card */}
-          {isRest && (
-            <div className="rounded-2xl bg-indigo-950/30 border border-indigo-500/20 p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300">
-                  <BedDouble className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-indigo-200">Rest & Recovery Day</div>
-                  <div className="text-[11px] text-indigo-300/70">Streak protected</div>
-                </div>
-              </div>
-              <span className="text-[10px] font-medium text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full">
-                Active
-              </span>
-            </div>
-          )}
-
-          {/* Apple Fitness Activity Summary Card */}
-          <div
-            role="progressbar"
-            aria-valuenow={selectedDatePoints}
-            aria-valuemin={0}
-            aria-valuemax={totalPossible}
-            aria-label={`Progress: ${selectedDatePoints} of ${totalPossible} points, ${completedCount} of ${totalCount} habits completed`}
-            className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-4">
-              {/* Circular Progress Ring */}
-              <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
-                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 60 60">
-                  <circle
-                    cx="30"
-                    cy="30"
-                    r={radius}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    className="text-white/[0.08]"
-                  />
-                  <circle
-                    cx="30"
-                    cy="30"
-                    r={radius}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    className={`transition-all duration-700 ${
-                      pct >= 100
-                        ? 'text-emerald-400'
-                        : isRest
-                        ? 'text-indigo-400'
-                        : isMaciek
-                        ? 'text-blue-500'
-                        : 'text-pink-500'
-                    }`}
-                  />
-                </svg>
-                <span className={`absolute text-xs font-bold font-mono ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
-                  {pct}%
-                </span>
-              </div>
-
-              {/* Score metrics */}
-              <div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className={`text-2xl font-bold tracking-tight tabular-nums ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
-                    {selectedDatePoints}
-                  </span>
-                  <span className="text-xs text-zinc-400">/ {totalPossible} pts</span>
-                </div>
-                <div className="text-xs text-zinc-400 mt-0.5">
-                  {completedCount} of {totalCount} completed
-                </div>
-              </div>
-            </div>
-
-            {/* Status Badge */}
-            {pct >= 100 ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {allDone ? 'All Done' : 'Par Met'}
-              </span>
-            ) : (
-              <span className="text-xs text-zinc-400 tabular-nums">
-                {Math.max(0, totalPossible - selectedDatePoints)} left
-              </span>
-            )}
-          </div>
-
-          {/* Partner Clean Space Accountability Card */}
-          {partner && (
-            <div className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{partner.avatar}</span>
-                  <span className="text-xs font-semibold text-white">
-                    {partner.name}&apos;s Clean Space
-                  </span>
-                </div>
-
-                {partnerCleanSpaceCheckIn ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Verified
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/[0.06]">
-                    <Clock className="w-3 h-3 text-zinc-500" />
-                    Pending
-                  </span>
-                )}
-              </div>
-
-              {partnerCleanSpaceCheckIn && partnerProofPhotos.length > 0 && (
-                <div className="flex items-center gap-2 overflow-x-auto py-0.5">
-                  {partnerProofPhotos.map((photo, idx) => (
-                    <button
-                      key={idx}
-                      aria-label={`View ${partner.name}'s clean space proof photo ${idx + 1}`}
-                      onClick={() => {
-                        soundEngine.playClick();
-                        hapticLight();
-                        setSelectedProofIndex(idx);
-                      }}
-                      className="relative rounded-xl overflow-hidden aspect-video w-24 flex-shrink-0 border border-white/[0.1] hover:border-zinc-400 transition-all active:scale-95"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photo}
-                        alt="Proof thumbnail"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                        <Camera className="w-3.5 h-3.5 text-white/90" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Incomplete Habits */}
-          {pendingHabits.length > 0 && (
-            <div className="space-y-2">
-              {pendingHabits.map((habit) => (
-                <HabitCard key={habit.id} habit={habit} />
-              ))}
-            </div>
-          )}
-
-          {/* Completed Habits */}
-          {doneHabits.length > 0 && (
-            <div className="space-y-2 pt-1">
-              <div className="text-[11px] font-medium text-zinc-500 px-1 uppercase tracking-wider">
-                Completed · {doneHabits.length}
-              </div>
-              <div className="space-y-2">
-                {doneHabits.map((habit) => (
-                  <HabitCard key={habit.id} habit={habit} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeHabits.length === 0 && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-8 text-center text-zinc-400">
-              <Sparkles className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-white">No habits configured</p>
-            </div>
-          )}
-
-          {/* Partner Proof Gallery Lightbox */}
-          {selectedProofIndex !== null && partner && partnerProofPhotos.length > 0 && (
-            <ProofGalleryModal
-              isOpen={selectedProofIndex !== null}
-              onClose={() => setSelectedProofIndex(null)}
-              playerName={partner.name}
-              playerAvatar={partner.avatar}
-              habitTitle={partnerCleanSpaceHabit?.title || 'Clean Space'}
-              images={partnerProofPhotos}
-              date={partnerCleanSpaceCheckIn?.date}
-              completedAt={partnerCleanSpaceCheckIn?.completedAt}
-              initialIndex={selectedProofIndex}
-            />
-          )}
-        </>
-      )}
     </div>
-  );
+    {activeSubTab === 'feed' ? <div className="max-w-2xl"><ActivityFeed /></div> : <div className="grid lg:grid-cols-[minmax(240px,0.75fr)_minmax(340px,1.25fr)] gap-5 lg:gap-8 items-start">
+      <div className="space-y-4 lg:sticky lg:top-24">
+        <section className="rounded-2xl border border-white/[0.09] bg-[#141518] p-5 lg:p-6 overflow-hidden relative">
+          <div className="flex items-center justify-between"><h2 className="text-xs font-medium text-zinc-300">{formatFriendlyDate(selectedDate)} at a glance</h2><span className={`w-1.5 h-1.5 rounded-full ${isMaciek ? 'bg-blue-400' : 'bg-pink-400'}`} /></div>
+          <div className="flex items-center gap-5 py-6 lg:flex-col lg:text-center">
+            <div role="progressbar" aria-valuenow={Math.min(points, par)} aria-valuemin={0} aria-valuemax={Math.max(1, par)} aria-label={`${points} of ${par} daily par points`} className="relative w-36 h-36 shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 128 128" className="absolute inset-0 -rotate-90" aria-hidden="true"><circle cx="64" cy="64" r="55" fill="none" stroke="white" strokeOpacity=".06" strokeWidth="7"/><circle cx="64" cy="64" r="55" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - pct / 100)} className={`transition-all duration-700 ${par > 0 && pct >= 100 ? 'text-emerald-400' : isMaciek ? 'text-blue-400' : 'text-pink-400'}`}/></svg><div><p className="text-4xl font-semibold tracking-tight tabular-nums">{points}</p><p className="text-[10px] text-zinc-500 mt-1">of {par} points</p></div>
+            </div>
+            <div><p className="text-base font-medium">{allDone ? 'You showed up. All done.' : isRest ? 'Room to recharge.' : points === 0 ? 'A fresh start.' : pct >= 100 ? 'Daily par, achieved.' : 'Keep your momentum.'}</p><p className="text-xs text-zinc-500 mt-1.5">{done.length} of {activeHabits.length} rituals complete</p></div>
+          </div>
+          <div className="grid grid-cols-2 border-t border-white/[0.07] pt-4 gap-3"><div><p className="text-[10px] text-zinc-500 uppercase tracking-wider">Current streak</p><p className="mt-1 text-sm font-semibold flex items-center gap-1.5"><Flame size={14} className="text-amber-400"/>{activePlayerSummary.currentStreak} days</p></div><div><p className="text-[10px] text-zinc-500 uppercase tracking-wider">To daily par</p><p className="mt-1 text-sm font-semibold tabular-nums">{Math.max(0, par - points)} <span className="font-normal text-zinc-500">points</span></p></div></div>
+        </section>
+        {isRest && <div className="rounded-xl border border-indigo-400/20 bg-indigo-400/[0.06] p-4 flex items-center gap-3 text-indigo-200"><BedDouble size={19}/><div><p className="text-xs font-medium">Rest & recovery day</p><p className="text-[11px] opacity-60 mt-1">Your streak is protected.</p></div></div>}
+        {partner && <section className="rounded-2xl border border-white/[0.08] p-5 bg-[#101113]"><div className="flex justify-between items-center"><div className="flex items-center gap-2 text-xs font-medium"><span className={`w-7 h-7 rounded-full flex items-center justify-center ${isMaciek ? 'bg-pink-400/10 text-pink-300' : 'bg-blue-400/10 text-blue-300'}`}>{partner.name[0]}</span>{partner.name}&apos;s day</div><span className="text-xs text-zinc-400 tabular-nums">{partnerPoints} pts</span></div><div className="h-1 rounded-full bg-white/[0.06] my-4 overflow-hidden"><div style={{ width: `${partnerPar > 0 ? Math.min(100, partnerPoints / partnerPar * 100) : 0}%` }} className={`h-full rounded-full ${isMaciek ? 'bg-pink-400' : 'bg-blue-400'}`}/></div><div className="flex items-center justify-between text-[11px] text-zinc-500"><span className="flex gap-1.5 items-center"><Camera size={13}/>Clean space proof</span><span className={photos.length ? 'text-emerald-400' : ''}>{photos.length ? 'Added' : partnerCleanSpaceCheckIn ? 'Checked in' : 'Not yet'}</span></div>{photos.length > 0 && <button onClick={() => setProofIndex(0)} className="control mt-3 w-full">View proof <ArrowUpRight size={14}/></button>}</section>}
+        <p className="hidden lg:block text-[11px] text-zinc-600 leading-relaxed px-1">Consistency beats perfection. Weekly habits count toward your target across the whole week.</p>
+      </div>
+      <div className="space-y-5 min-w-0">
+        <DateNavigator />
+        <div><div className="flex justify-between items-center mb-3"><h2 className="text-xs font-semibold text-zinc-300">Your rituals</h2><span className="text-[11px] text-zinc-500">{pending.length} remaining</span></div><div className="space-y-2">{pending.map((habit) => <HabitCard key={`${context}:${habit.id}`} habit={habit}/>)}</div></div>
+        {allDone && <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.05] p-5 flex items-center gap-3 text-emerald-300"><CheckCircle2 size={22}/><div><p className="text-sm font-medium">A day well done.</p><p className="text-xs opacity-70 mt-1">Every small effort adds up.</p></div></div>}
+        {!!done.length && <div><h2 className="text-[10px] text-zinc-500 uppercase tracking-wider mb-3">Completed ? {done.length}</h2><div className="space-y-2">{done.map((habit) => <HabitCard key={`${context}:${habit.id}`} habit={habit}/>)}</div></div>}
+        {!activeHabits.length && <div className="settings-panel text-center py-10"><Sparkles size={28} className="mx-auto mb-3 text-zinc-500"/><h2>Your next chapter starts here.</h2><p>Add a habit in Vault ? Habits to start your daily ritual.</p></div>}
+      </div>
+    </div>}
+    {proofIndex !== null && partner && photos.length > 0 && <ProofGalleryModal isOpen onClose={() => setProofIndex(null)} playerName={partner.name} playerAvatar={partner.avatar} habitTitle={partnerCleanSpaceHabit?.title || 'Clean Space'} images={photos} date={partnerCleanSpaceCheckIn?.date} completedAt={partnerCleanSpaceCheckIn?.completedAt} initialIndex={proofIndex}/>}
+  </div>;
 }

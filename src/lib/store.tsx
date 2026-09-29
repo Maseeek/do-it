@@ -17,7 +17,8 @@ import {
   GoogleHealthSyncResult,
 } from './types';
 import { getInitialState } from './seed';
-import { getTodayDateString, getWeekKey, isFutureDate } from './date-utils';
+import { parseBackup } from './backup';
+import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
 import {
@@ -30,6 +31,8 @@ import { fireCelebrationConfetti } from './confetti';
 import { soundEngine } from './sound-utils';
 import { hapticCelebration, hapticLight, hapticMedium, hapticSuccess } from './haptic-utils';
 import { getSupabaseClient } from './supabase';
+import { useMultiplayer } from './multiplayer';
+import { loadDuelData, saveDuelHabit, deleteDuelHabit, saveDuelCheckIn, deleteDuelCheckIn, saveDuelStake, deleteDuelStake, saveDuelReaction, saveDuelRestDay, deleteDuelRestDay } from './duel-sync';
 import {
   deleteCheckInSupabase,
   deleteHabitSupabase,
@@ -49,7 +52,10 @@ export type SyncStatus = 'connected' | 'syncing' | 'offline' | 'local_only';
 
 interface StoreContextType {
   isHydrated: boolean;
+  loadedDuelId: string | null;
   syncStatus: SyncStatus;
+  storageError: string | null;
+  supabaseConfig: AppState['supabaseConfig'];
   activePlayerId: PlayerId | null;
   activePlayer: Player | null;
   players: Record<PlayerId, Player>;
@@ -125,18 +131,27 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const multiplayer = useMultiplayer();
+  const duelId = multiplayer.duel?.id || null;
+  const duelOwnerName = multiplayer.duel?.owner_name || '';
+  const duelGuestName = multiplayer.duel?.guest_name || '';
   const [state, setState] = useState<AppState>(getInitialState);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [loadedDuelId, setLoadedDuelId] = useState<string | null>(null);
+  const [storageError, setStorageError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('local_only');
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
 
   const supabaseRef = useRef(getSupabaseClient());
+  const duelQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const stateDuelRef = useRef<string | null>(null);
+  const stateSlotRef = useRef<PlayerId | null>(null);
 
   // 1. Hydrate from localStorage on client mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = multiplayer.configured ? null : localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.maciek && parsed.players.myrna) {
@@ -189,26 +204,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsHydrated(true);
     }
-  }, []);
+  }, [multiplayer.configured]);
 
   // 2. Persist state changes to localStorage
   useEffect(() => {
-    if (isHydrated) {
+    if (isHydrated && !multiplayer.configured) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setStorageError(null);
       } catch (e) {
         console.error('Error saving state to localStorage', e);
+        setStorageError('Your latest changes could not be saved on this device. Export a backup before closing the app.');
       }
     }
-  }, [state, isHydrated]);
+  }, [state, isHydrated, multiplayer.configured]);
 
   // 3. Supabase Cloud Sync & Realtime Subscription
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || multiplayer.configured) return;
 
     const customUrl = state.supabaseConfig?.enabled ? state.supabaseConfig.url : undefined;
     const customKey = state.supabaseConfig?.enabled ? state.supabaseConfig.anonKey : undefined;
-    const client = getSupabaseClient(customUrl, customKey);
+    const client = state.supabaseConfig?.enabled === false ? null : getSupabaseClient(customUrl, customKey);
+    let cancelled = false;
     supabaseRef.current = client;
 
     if (!client) {
@@ -220,6 +238,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     // Fetch cloud data and seed if needed
     syncInitialDataFromSupabase(client).then((remoteData) => {
+      if (cancelled) return;
       if (remoteData) {
         setState((prev) => {
           const habitsToUse = remoteData.habits && remoteData.habits.length > 0 ? remoteData.habits : prev.habits;
@@ -317,17 +336,74 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
 
     return () => {
+      cancelled = true;
       client.removeChannel(channel);
     };
-  }, [isHydrated, state.supabaseConfig]);
+  }, [isHydrated, state.supabaseConfig, multiplayer.configured]);
+
+  // Authenticated duels use isolated tables and never touch the legacy public schema.
+  useEffect(() => {
+    if (!isHydrated || !multiplayer.configured) return;
+    const client = getSupabaseClient();
+    supabaseRef.current = null;
+    if (!client || !duelId || !multiplayer.slot) {
+      setLoadedDuelId(null);
+      setSyncStatus('local_only');
+      return;
+    }
+    let cancelled = false;
+    let reloadSequence = 0;
+    setLoadedDuelId(null);
+    setSyncStatus('syncing');
+    const reload = async () => {
+      const sequence = ++reloadSequence;
+      try {
+        await duelQueueRef.current;
+        const data = await loadDuelData(client, duelId);
+        if (cancelled || sequence !== reloadSequence) return;
+        const initial = getInitialState();
+        const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === multiplayer.slot;
+        stateDuelRef.current = duelId;
+        stateSlotRef.current = multiplayer.slot;
+        setState(prev => ({ ...(sameDuel ? prev : initial), activePlayerId: multiplayer.slot, habits: data.habits, checkIns: data.checkIns, stakes: data.stakes, reactions: data.reactions, restDays: data.restDays,
+          players: { maciek: { ...initial.players.maciek, name: duelOwnerName }, myrna: { ...initial.players.myrna, name: duelGuestName || 'Invited player' } } }));
+        setLoadedDuelId(duelId);
+        setSyncStatus('connected');
+        setStorageError(null);
+      } catch (error) {
+        if (!cancelled && sequence === reloadSequence) { setSyncStatus('offline'); setStorageError(error instanceof Error ? error.message : 'Could not load duel data.'); }
+      }
+    };
+    void reload();
+    const channel = client.channel(`duel-${duelId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_habits', filter: `duel_id=eq.${duelId}` }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_check_ins', filter: `duel_id=eq.${duelId}` }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_stakes', filter: `duel_id=eq.${duelId}` }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_reactions', filter: `duel_id=eq.${duelId}` }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_rest_days', filter: `duel_id=eq.${duelId}` }, () => void reload())
+      .subscribe();
+    const poll = setInterval(() => void reload(), 30000);
+    return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
+  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, duelOwnerName, duelGuestName]);
+
+  const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
+    const client = getSupabaseClient();
+    if (!multiplayer.configured || !client || !duelId) return;
+    duelQueueRef.current = duelQueueRef.current.then(() => operation(client, duelId)).catch(error => {
+      setSyncStatus('offline');
+      setStorageError(error instanceof Error ? error.message : 'Could not save duel change.');
+    });
+  };
 
   const selectProfile = (id: PlayerId) => {
+    if (multiplayer.configured) return;
     soundEngine.playClick();
     hapticLight();
     setState((prev) => ({ ...prev, activePlayerId: id }));
   };
 
   const switchProfile = () => {
+    if (multiplayer.configured) return;
     soundEngine.playClick();
     hapticLight();
     setState((prev) => ({ ...prev, activePlayerId: null }));
@@ -335,6 +411,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const setSoundEnabled = (enabled: boolean) => {
     setSoundEnabledState(enabled);
+    try { localStorage.setItem('do_it_sound_enabled', String(enabled)); } catch { /* Storage warning is handled by persistence. */ }
+    setState((prev) => ({ ...prev, soundEnabled: enabled }));
     soundEngine.setEnabled(enabled);
     if (enabled) {
       soundEngine.playClick();
@@ -344,7 +422,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const activePlayer = state.activePlayerId ? state.players[state.activePlayerId] : null;
 
   const activeHabits = state.activePlayerId
-    ? state.habits.filter((h) => h.playerId === state.activePlayerId && h.isActive)
+    ? state.habits.filter((h) => h.playerId === state.activePlayerId && h.isActive).sort((a, b) => a.order - b.order)
     : [];
 
   const todayStr = getTodayDateString();
@@ -404,10 +482,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     targetDate = selectedDate
   ) => {
     if (!state.activePlayerId) return;
-    if (isFutureDate(targetDate)) return; // Disallow future date check-ins
+    if (!isValidDateString(targetDate) || isFutureDate(targetDate)) return; // Disallow future date check-ins
 
     const habit = state.habits.find((h) => h.id === habitId);
-    if (!habit) return;
+    if (!habit || !habit.isActive || habit.playerId !== state.activePlayerId) return;
+    if (quantity !== undefined && (!Number.isFinite(quantity) || quantity <= 0)) return;
 
     const targetWeekKey = getWeekKey(targetDate);
     const existingCheckIn = state.checkIns.find(
@@ -415,8 +494,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Calculate base points
-    let basePoints = habit.points;
+    let basePoints = existingCheckIn?.pointsEarned ?? habit.points;
     if (habit.isQuantitative && quantity !== undefined) {
+      quantity = Math.min(habit.maxQuantity || quantity, Math.floor(quantity));
       basePoints = Math.min(
         habit.points,
         Math.max(1, Math.round(quantity * (habit.pointsPerUnit || 1)))
@@ -455,7 +535,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         checkIns: nextCheckIns,
       }));
 
-      if (supabaseRef.current) {
+      if (multiplayer.configured) {
+        syncDuel(async (client, id) => {
+          await deleteDuelCheckIn(client, id, existingCheckIn.id);
+          await Promise.all(syncedCheckIns.map(c => saveDuelCheckIn(client, id, c)));
+        });
+      } else if (supabaseRef.current) {
         deleteCheckInSupabase(supabaseRef.current, habitId, targetDate);
         syncedCheckIns.forEach((c) => {
           insertCheckInSupabase(supabaseRef.current!, c);
@@ -499,7 +584,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         checkIns: nextCheckIns,
       }));
 
-      if (supabaseRef.current) {
+      if (multiplayer.configured) {
+        syncDuel(async (client, id) => {
+          await saveDuelCheckIn(client, id, nextCheckIns.find((c) => c.id === existingCheckIn.id) || updatedCheckIn);
+          await Promise.all(syncedCheckIns.map(c => saveDuelCheckIn(client, id, c)));
+        });
+      } else if (supabaseRef.current) {
         const finalUpdated = nextCheckIns.find((c) => c.id === existingCheckIn.id) || updatedCheckIn;
         insertCheckInSupabase(supabaseRef.current, finalUpdated);
         syncedCheckIns.forEach((c) => {
@@ -566,7 +656,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         checkIns: nextCheckIns,
       }));
 
-      if (supabaseRef.current) {
+      if (multiplayer.configured) {
+        syncDuel(async (client, id) => {
+          await saveDuelCheckIn(client, id, nextCheckIns.find((c) => c.id === newCheckIn.id) || newCheckIn);
+          await Promise.all(syncedCheckIns.map(c => saveDuelCheckIn(client, id, c)));
+        });
+      } else if (supabaseRef.current) {
         const finalNew = nextCheckIns.find((c) => c.id === newCheckIn.id) || newCheckIn;
         insertCheckInSupabase(supabaseRef.current, finalNew);
         syncedCheckIns.forEach((c) => {
@@ -579,15 +674,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateCheckInNote = (checkInId: string, note: string) => {
+    const existing = state.checkIns.find(c => c.id === checkInId);
+    if (!existing || (multiplayer.configured && existing.playerId !== multiplayer.slot)) return;
     soundEngine.playClick();
     setState((prev) => ({
       ...prev,
       checkIns: prev.checkIns.map((c) => (c.id === checkInId ? { ...c, note } : c)),
     }));
+    if (multiplayer.configured) syncDuel((client, id) => saveDuelCheckIn(client, id, { ...existing, note }));
   };
 
   const addReaction = (reaction: { toPlayerId: PlayerId; emoji: string; message: string }) => {
     if (!state.activePlayerId) return;
+    if (multiplayer.configured && (state.activePlayerId !== multiplayer.slot || reaction.toPlayerId === multiplayer.slot)) return;
     soundEngine.playFanfare();
     hapticSuccess();
 
@@ -604,10 +703,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       reactions: [newReaction, ...(prev.reactions || [])],
     }));
+    if (multiplayer.configured) syncDuel((client, id) => saveDuelReaction(client, id, newReaction));
   };
 
   const toggleRestDay = (date: string, reason?: string) => {
     if (!state.activePlayerId) return;
+    if (multiplayer.configured && state.activePlayerId !== multiplayer.slot) return;
     soundEngine.playClick();
     hapticLight();
 
@@ -620,6 +721,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         restDays: (prev.restDays || []).filter((r) => r.id !== existing.id),
       }));
+      if (multiplayer.configured) syncDuel((client, id) => deleteDuelRestDay(client, id, existing.id));
     } else {
       const newRest: RestDay = {
         id: `rd-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -632,6 +734,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         restDays: [...(prev.restDays || []), newRest],
       }));
+      if (multiplayer.configured) syncDuel((client, id) => saveDuelRestDay(client, id, newRest));
     }
   };
 
@@ -644,6 +747,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addHabit = (newHabit: Omit<Habit, 'id'>) => {
+    if (multiplayer.configured && newHabit.playerId !== multiplayer.slot) return;
     soundEngine.playClick();
     const id = `habit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const fullHabit: Habit = { ...newHabit, id };
@@ -652,24 +756,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       habits: [...prev.habits, fullHabit],
     }));
 
-    if (supabaseRef.current) {
+    if (multiplayer.configured) {
+      syncDuel((client, id) => saveDuelHabit(client, id, fullHabit));
+    } else if (supabaseRef.current) {
       upsertHabitSupabase(supabaseRef.current, fullHabit);
     }
   };
 
   const updateHabit = (updatedHabit: Habit) => {
+    if (multiplayer.configured && (updatedHabit.playerId !== multiplayer.slot || state.habits.find(h => h.id === updatedHabit.id)?.playerId !== multiplayer.slot)) return;
     soundEngine.playClick();
     setState((prev) => ({
       ...prev,
       habits: prev.habits.map((h) => (h.id === updatedHabit.id ? updatedHabit : h)),
     }));
 
-    if (supabaseRef.current) {
+    if (multiplayer.configured) {
+      syncDuel((client, id) => saveDuelHabit(client, id, updatedHabit));
+    } else if (supabaseRef.current) {
       upsertHabitSupabase(supabaseRef.current, updatedHabit);
     }
   };
 
   const deleteHabit = (habitId: string) => {
+    if (multiplayer.configured && state.habits.find(h => h.id === habitId)?.playerId !== multiplayer.slot) return;
     soundEngine.playClick();
     setState((prev) => ({
       ...prev,
@@ -677,7 +787,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       checkIns: prev.checkIns.filter((c) => c.habitId !== habitId),
     }));
 
-    if (supabaseRef.current) {
+    if (multiplayer.configured) {
+      syncDuel((client, id) => deleteDuelHabit(client, id, habitId));
+    } else if (supabaseRef.current) {
       deleteHabitSupabase(supabaseRef.current, habitId);
     }
   };
@@ -689,7 +801,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       stakes: prev.stakes.map((s) => (s.id === updatedStake.id ? updatedStake : s)),
     }));
 
-    if (supabaseRef.current) {
+    if (multiplayer.configured) {
+      syncDuel((client, id) => saveDuelStake(client, id, updatedStake));
+    } else if (supabaseRef.current) {
       upsertStakeSupabase(supabaseRef.current, updatedStake);
     }
   };
@@ -703,7 +817,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       stakes: [...prev.stakes, fullStake],
     }));
 
-    if (supabaseRef.current) {
+    if (multiplayer.configured) {
+      syncDuel((client, id) => saveDuelStake(client, id, fullStake));
+    } else if (supabaseRef.current) {
       upsertStakeSupabase(supabaseRef.current, fullStake);
     }
   };
@@ -715,7 +831,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       stakes: prev.stakes.filter((s) => s.id !== stakeId),
     }));
 
-    if (supabaseRef.current) {
+    if (multiplayer.configured) {
+      syncDuel((client, id) => deleteDuelStake(client, id, stakeId));
+    } else if (supabaseRef.current) {
       deleteStakeSupabase(supabaseRef.current, stakeId);
     }
   };
@@ -738,21 +856,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const exportStateToJson = (): string => {
-    return JSON.stringify(state, null, 2);
+    const { supabaseConfig: _connection, wearableConfig: _wearable, ...backup } = state;
+    void _connection; void _wearable;
+    return JSON.stringify(backup, null, 2);
   };
 
   const importStateFromJson = (jsonStr: string): { success: boolean; error?: string } => {
     try {
-      const parsed = JSON.parse(jsonStr);
-      if (!parsed.players || !parsed.habits || !parsed.checkIns) {
-        return { success: false, error: 'Invalid backup file structure' };
-      }
-      setState(parsed);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      const restored = parseBackup(jsonStr);
+      const next = { ...restored, supabaseConfig: state.supabaseConfig, wearableConfig: state.wearableConfig };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      setState(next);
+      setSoundEnabled(restored.soundEnabled !== false);
       soundEngine.playFanfare();
       return { success: true };
-    } catch {
-      return { success: false, error: 'Failed to parse JSON file' };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Could not restore this backup.' };
     }
   };
 
@@ -777,6 +896,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             result: data,
           };
         }
+
+        if (data.simulated) return { success: true, message: `Preview only: ${data.message} Your progress has not changed.`, result: data };
 
         const syncTimeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -930,7 +1051,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Automatically pull Apple Health check-ins queued by background iOS Shortcuts
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || multiplayer.configured) return;
 
     const pullAppleHealthPending = async () => {
       try {
@@ -976,7 +1097,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [isHydrated]);
+  }, [isHydrated, multiplayer.configured]);
 
   const testStravaSync = async (
     player: string = 'maciek'
@@ -1080,11 +1201,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const autoSyncedRef = useRef(false);
   useEffect(() => {
     if (!isHydrated || autoSyncedRef.current) return;
-    if (state.activePlayerId === 'maciek' && state.wearableConfig?.googleConnected) {
+    if (!multiplayer.configured && state.activePlayerId === 'maciek' && state.wearableConfig?.googleConnected) {
       autoSyncedRef.current = true;
       syncGoogleHealth(false).catch(() => {});
     }
-  }, [isHydrated, state.activePlayerId, state.wearableConfig?.googleConnected, syncGoogleHealth]);
+  }, [isHydrated, state.activePlayerId, state.wearableConfig?.googleConnected, syncGoogleHealth, multiplayer.configured]);
 
   const disconnectGoogleHealth = () => {
     if (typeof document !== 'undefined') {
@@ -1169,7 +1290,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreContext.Provider
       value={{
         isHydrated,
+        loadedDuelId,
         syncStatus,
+        storageError,
+        supabaseConfig: state.supabaseConfig,
         activePlayerId: state.activePlayerId,
         activePlayer,
         players: state.players,

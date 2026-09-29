@@ -1,5 +1,7 @@
 export interface ScorecardImageData {
   weekKey: string;
+  maciekName?: string;
+  myrnaName?: string;
   maciekScore: number;
   myrnaScore: number;
   maciekStreak: number;
@@ -81,7 +83,7 @@ export async function generateScorecardBlob(data: ScorecardImageData): Promise<B
   // Maciek Title & Emoji
   ctx.fillStyle = '#60a5fa';
   ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
-  ctx.fillText('Maciek ⚡', 95, cardY + 55);
+  ctx.fillText(`${data.maciekName || 'Maciek'} ⚡`, 95, cardY + 55);
 
   // Maciek Points
   ctx.fillStyle = '#ffffff';
@@ -122,7 +124,7 @@ export async function generateScorecardBlob(data: ScorecardImageData): Promise<B
   // Myrna Title & Emoji
   ctx.fillStyle = '#f472b6';
   ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
-  ctx.fillText('Myrna ✨', myrnaX + 35, cardY + 55);
+  ctx.fillText(`${data.myrnaName || 'Myrna'} ✨`, myrnaX + 35, cardY + 55);
 
   // Myrna Points
   ctx.fillStyle = '#ffffff';

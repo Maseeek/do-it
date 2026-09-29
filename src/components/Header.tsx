@@ -7,8 +7,10 @@ import { Flame, Settings } from 'lucide-react';
 import { DoLogo } from './DoLogo';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
+import { useMultiplayer } from '@/lib/multiplayer';
 
 export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const multiplayer = useMultiplayer();
   const { activePlayer, activePlayerSummary, syncStatus, selectProfile } = useStore();
   const todayStr = getTodayDateString();
   const friendlyDate = formatFriendlyDate(todayStr);
@@ -18,6 +20,7 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   const isMaciek = activePlayer?.id === 'maciek';
 
   const handleProfileSwitch = () => {
+    if (multiplayer.configured) return;
     soundEngine.playClick();
     hapticLight();
     selectProfile(isMaciek ? 'myrna' : 'maciek');
@@ -30,16 +33,17 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
 
   return (
     <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/[0.08] px-4 py-2.5 safe-area-top">
-      <div className="max-w-md mx-auto flex items-center justify-between">
+      <div className="max-w-xl lg:max-w-6xl lg:px-6 mx-auto flex items-center justify-between">
         {/* Left: Brand + Player Profile & Date */}
         <div className="flex items-center gap-2.5">
           <DoLogo size="xs" className="shrink-0 shadow-sm" />
           <div className="w-[1px] h-3.5 bg-white/10 shrink-0" />
           <button
+            disabled={multiplayer.configured}
             onClick={handleProfileSwitch}
-            aria-label={`Switch profile to ${isMaciek ? 'Myrna' : 'Maciek'}`}
-            title={`Switch to ${isMaciek ? 'Myrna' : 'Maciek'}`}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-transform active:scale-95 border ${
+            aria-label={multiplayer.configured ? activePlayer?.name || 'Your profile' : `Switch profile to ${isMaciek ? 'Myrna' : 'Maciek'}`}
+            title={multiplayer.configured ? activePlayer?.name : `Switch to ${isMaciek ? 'Myrna' : 'Maciek'}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-transform active:scale-95 border ${
               isMaciek
                 ? 'bg-blue-500/15 border-blue-500/30 text-blue-400 hover:border-blue-400/50'
                 : 'bg-pink-500/15 border-pink-500/30 text-pink-400 hover:border-pink-400/50'
@@ -133,7 +137,7 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
               onOpenSettings();
             }}
             aria-label="Settings"
-            className="w-8 h-8 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-zinc-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+            className="w-10 h-10 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-zinc-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
           >
             <Settings className="w-4 h-4" />
           </button>

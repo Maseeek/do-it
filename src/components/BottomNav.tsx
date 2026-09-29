@@ -31,7 +31,7 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-2xl border-t border-white/[0.08] py-2 px-6 safe-area-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-2xl border-t border-white/[0.08] py-2 px-6 safe-area-bottom"
     >
       <div className="max-w-md mx-auto flex items-center justify-around">
         {tabs.map((tab) => {

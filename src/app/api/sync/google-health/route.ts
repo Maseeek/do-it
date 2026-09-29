@@ -1,9 +1,10 @@
+import { getTodayDateString, isValidDateString, isFutureDate } from '@/lib/date-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { PlayerId } from '@/lib/types';
 import { syncGoogleHealth } from '@/lib/wearables/google-health';
 
-export async function GET(request: NextRequest) {
-  return handleSync(request);
+export async function GET() {
+  return NextResponse.json({ message: 'Use POST to sync.' }, { status: 405, headers: { Allow: 'POST' } });
 }
 
 export async function POST(request: NextRequest) {
@@ -12,8 +13,9 @@ export async function POST(request: NextRequest) {
 
 async function handleSync(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const targetDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
-  const rawPlayer = searchParams.get('playerId') || searchParams.get('player');
+  const targetDate = searchParams.get('date') || getTodayDateString();
+  if (!isValidDateString(targetDate) || isFutureDate(targetDate)) return NextResponse.json({ success: false, message: 'Choose a valid date up to today.' }, { status: 400 });
+  const rawPlayer = request.cookies.get('g_fit_player')?.value || 'maciek';
   const targetPlayer: PlayerId = rawPlayer === 'myrna' ? 'myrna' : 'maciek';
   const isSimulated = searchParams.get('simulate') === 'true';
   const isSimulatedUnder = searchParams.get('simulateUnder') === 'true';
