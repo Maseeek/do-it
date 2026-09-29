@@ -12,7 +12,8 @@ const oldCheckIns: CheckIn[] = [
 ];
 
 test('previous database import is offered only to the matching account', () => {
-  assert.equal(canImportLegacyDatabase('maciek', 'MaciekGania@gmail.com', null), true);
+  assert.equal(canImportLegacyDatabase('maciek', 'MaciekGeneja@gmail.com', null), true);
+  assert.equal(canImportLegacyDatabase('maciek', 'maciekgania@gmail.com', null), false);
   assert.equal(canImportLegacyDatabase('maciek', 'someone@example.com', null), false);
   assert.equal(canImportLegacyDatabase('myrna', undefined, 'Mina'), true);
   assert.equal(canImportLegacyDatabase('myrna', undefined, 'Another player'), false);

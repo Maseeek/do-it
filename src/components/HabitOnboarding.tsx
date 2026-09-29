@@ -9,6 +9,7 @@ import { HabitIcon } from './HabitIcon';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { getSupabaseClient } from '@/lib/supabase';
 import { rowToHabit } from '@/lib/supabase-sync';
+import { canImportLegacyDatabase } from '@/lib/legacy-import';
 
 export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => void; firstRun?: boolean }) {
   const { activePlayer, habits, applyHabitPlan } = useStore();
@@ -31,10 +32,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     if (!firstRun || existing.length > 0) return;
     let cancelled = false;
     const client = getSupabaseClient();
-    const ownsLegacyPlan = playerId === 'maciek' && multiplayer.user?.email?.toLowerCase() === 'maciekgania@gmail.com';
-    const partnerName = multiplayer.duel?.guest_name?.trim() || '';
-    const partnerPlan = playerId === 'myrna' && /^(mina|myrna)(\s|$)/i.test(partnerName);
-    if (!client || (!ownsLegacyPlan && !partnerPlan)) {
+    if (!client || !canImportLegacyDatabase(playerId, multiplayer.user?.email, multiplayer.duel?.guest_name)) {
       setCheckingPrevious(false);
       return;
     }

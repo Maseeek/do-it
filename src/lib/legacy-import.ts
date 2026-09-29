@@ -4,7 +4,7 @@ import { isValidDateString } from './date-utils';
 import { rowToCheckIn, rowToHabit } from './supabase-sync';
 
 export function canImportLegacyDatabase(playerId: PlayerId | null, email: string | undefined, guestName: string | null | undefined): boolean {
-  if (playerId === 'maciek') return email?.toLowerCase() === 'maciekgania@gmail.com';
+  if (playerId === 'maciek') return email?.toLowerCase() === 'maciekgeneja@gmail.com';
   return playerId === 'myrna' && /^(mina|myrna)(\s|$)/i.test(guestName?.trim() || '');
 }
 
