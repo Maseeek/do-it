@@ -35,6 +35,8 @@ import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 import { shareScorecardImage } from '@/lib/scorecard-image';
 import { useMultiplayer } from '@/lib/multiplayer';
+import { HabitOnboarding } from './HabitOnboarding';
+import { weeklyPointPotential } from '@/lib/habit-catalog';
 
 export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stats' | 'habits' | 'settings' }) {
   const multiplayer = useMultiplayer();
@@ -60,6 +62,8 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
 
   // Habit modal
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
+  const [showPlanner, setShowPlanner] = useState(false);
+  const [habitFormError, setHabitFormError] = useState<string | null>(null);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
   // Form state for habits
@@ -73,27 +77,12 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
   const [isQuantitative, setIsQuantitative] = useState(false);
   const [weeklyTargetDays, setWeeklyTargetDays] = useState<number | undefined>(undefined);
 
-  const openNewHabitModal = () => {
-    soundEngine.playClick();
-    hapticLight();
-    setEditingHabit(null);
-    setTargetPlayer(activePlayer?.id || 'maciek');
-    setHabitTitle('');
-    setHabitDesc('');
-    setHabitCategory('physical');
-    setHabitPoints(25);
-    setHabitIcon('Activity');
-    setRequiresProof(false);
-    setIsQuantitative(false);
-    setWeeklyTargetDays(undefined);
-    setIsHabitModalOpen(true);
-  };
-
   const openEditHabitModal = (h: Habit) => {
     if (multiplayer.configured && h.playerId !== multiplayer.slot) return;
     soundEngine.playClick();
     hapticLight();
     setEditingHabit(h);
+    setHabitFormError(null);
     setTargetPlayer(h.playerId);
     setHabitTitle(h.title);
     setHabitDesc(h.description);
@@ -110,6 +99,17 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
     e.preventDefault();
     if (!habitTitle.trim()) return;
     if (multiplayer.configured && targetPlayer !== multiplayer.slot) return;
+
+    const partnerTotal = weeklyPointPotential(habits.filter(habit => habit.playerId !== targetPlayer));
+    const nextTotal = weeklyPointPotential(habits.filter(habit => habit.playerId === targetPlayer).map(habit => habit.id === editingHabit?.id ? { ...habit, points: Number(habitPoints), weeklyTargetDays, frequency: weeklyTargetDays ? 'weekly' : 'daily' } : habit));
+    if (partnerTotal > 0 && nextTotal !== partnerTotal) {
+      setHabitFormError(`This would change your weekly potential to ${nextTotal} points. Use Edit plan to match your partner’s ${partnerTotal} points.`);
+      return;
+    }
+    if (isQuantitative && Number(habitPoints) > (editingHabit?.maxQuantity || 25) * (editingHabit?.pointsPerUnit || 1)) {
+      setHabitFormError('Quantity habits cannot award more than their configured quantity allows.');
+      return;
+    }
 
     soundEngine.playCheck();
     hapticSuccess();
@@ -150,6 +150,8 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
 
     setIsHabitModalOpen(false);
   };
+
+  if (showPlanner) return <HabitOnboarding onDone={() => setShowPlanner(false)} />;
 
   return (
     <div className="space-y-6">
@@ -372,10 +374,11 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
       {/* 2. HABITS TAB: Configure habits */}
       {activeTab === 'habits' && (
         <div className="space-y-3">
+          <div className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4 flex items-center justify-between gap-3"><div><div className="text-sm font-semibold">Your point plan</div><p className="text-xs text-zinc-400 mt-1">{weeklyPointPotential(habits.filter(habit => habit.playerId === activePlayer?.id))} possible points per week</p></div><button onClick={() => setShowPlanner(true)} className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black whitespace-nowrap">Edit plan</button></div>
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-semibold text-zinc-300">Habits</span>
             <button
-              onClick={openNewHabitModal}
+              onClick={() => setShowPlanner(true)}
               className="flex items-center gap-1 px-3 py-1 rounded-full bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
             >
               <Plus className="w-3 h-3" />
@@ -385,7 +388,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
 
           {(['maciek', 'myrna'] as PlayerId[]).map((pId) => {
             const playerHabits = habits.filter((h) => h.playerId === pId);
-            const totalPoints = playerHabits.reduce((acc, h) => acc + h.points, 0);
+            const totalPoints = weeklyPointPotential(playerHabits);
 
             return (
               <div key={pId} className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 space-y-2">
@@ -396,7 +399,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
                     {players[pId].name}
                   </span>
                   <span className="text-[11px] text-zinc-400 tabular-nums">
-                    {totalPoints} pts total
+                    {totalPoints} pts/week possible
                   </span>
                 </div>
 
@@ -411,7 +414,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
                           <HabitIcon name={h.iconName} className="w-3.5 h-3.5" />
                         </span>
                         <div className="truncate">
-                          <div className="font-medium text-white truncate">{h.title}</div>
+                          <div className={`font-medium truncate ${h.isActive ? 'text-white' : 'text-zinc-500'}`}>{h.title}{!h.isActive ? ' · paused' : ''}</div>
                           <div className="text-[10px] text-zinc-400 capitalize">
                             +{h.points} pts {h.weeklyTargetDays ? `· ${h.weeklyTargetDays}x/wk` : ''}
                           </div>
@@ -428,6 +431,10 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
                         </button>
                         <button
                           onClick={() => {
+                            if (h.isActive && weeklyPointPotential(habits.filter(habit => habit.playerId !== pId)) > 0) {
+                              setShowPlanner(true);
+                              return;
+                            }
                             if (confirm(`Delete habit "${h.title}"?`)) {
                               soundEngine.playClick();
                               hapticLight();
@@ -449,7 +456,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
         </div>
       )}
 
-      {activeTab === 'settings' && <SettingsView />}
+      {activeTab === 'settings' && <SettingsView onOpenHabitPlanner={() => setShowPlanner(true)} />}
 
       {/* Habit Modal */}
       {isHabitModalOpen && (
@@ -486,6 +493,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
             </div>
 
             <form onSubmit={handleSaveHabit} className="space-y-3">
+              {habitFormError && <p role="alert" className="text-xs text-amber-300">{habitFormError}</p>}
               {!multiplayer.configured && <div role="radiogroup" aria-label="Target player" className="flex gap-2">
                 <button
                   type="button"
@@ -571,6 +579,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
                     <option value="language">Language</option>
                     <option value="nutrition">Nutrition</option>
                     <option value="environment">Environment</option>
+                    <option value="finance">Finance</option>
                   </select>
                 </div>
               </div>

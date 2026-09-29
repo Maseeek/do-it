@@ -3,14 +3,14 @@ import { getInitialState } from './seed';
 import { isValidDateString } from './date-utils';
 import { rebalanceAllWeeklyCheckIns } from './weekly-utils';
 
-const categories: HabitCategory[] = ['foundation', 'physical', 'cardio', 'mind', 'intellect', 'skills', 'deep_work', 'language', 'nutrition', 'environment'];
+const categories: HabitCategory[] = ['foundation', 'physical', 'cardio', 'mind', 'intellect', 'skills', 'deep_work', 'language', 'nutrition', 'environment', 'finance'];
 const player = (value: unknown) => value === 'maciek' || value === 'myrna';
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown) => typeof value === 'string';
 const number = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
 /** Validate untrusted backups before they can replace any saved progress. */
-export function parseBackup(json: string): AppState {
+export function parseBackup(json: string, preserveCheckInPoints = false): AppState {
   const data: unknown = JSON.parse(json);
   if (!record(data) || !record(data.players) || !Array.isArray(data.habits) || !Array.isArray(data.checkIns)) throw new Error('Choose a Do It JSON backup with players, habits and check-ins.');
   for (const id of ['maciek', 'myrna']) {
@@ -42,6 +42,6 @@ export function parseBackup(json: string): AppState {
   const defaults = getInitialState();
   // Connection settings belong to this device and are never trusted from an imported file.
   const restored = { ...defaults, ...data, players: defaults.players, supabaseConfig: undefined, wearableConfig: undefined } as AppState;
-  restored.checkIns = rebalanceAllWeeklyCheckIns(restored.checkIns, restored.habits);
+  if (!preserveCheckInPoints) restored.checkIns = rebalanceAllWeeklyCheckIns(restored.checkIns, restored.habits);
   return restored;
 }

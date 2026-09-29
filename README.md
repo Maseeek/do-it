@@ -66,7 +66,13 @@ Designed with a sleek **Linear-inspired dark mode aesthetic**, 1-tap manual logg
 3. Enable email and password sign in in Supabase Authentication. Add your deployed site URL to the Auth redirect URLs if email confirmations are enabled.
 4. Restart the app. The first player signs up and creates a duel, then shares the link from the Duel tab. The invited player signs up or signs in and accepts it.
 
-New duels start with empty habits. Each player creates their own in Vault → Habits. The older public two-profile tables are not used for authenticated duels; legacy progress is not migrated automatically.
+New players choose habits during onboarding. The general catalog starts unselected; each player can use different habits while matching the same possible weekly points.
+
+### Bring previous progress into an account
+
+After signing in and completing habit onboarding, open **Vault → Settings → Bring back previous progress** and choose **Import from previous app**. This reads Maciek's or Myrna's habits and historical check-ins from the older Supabase tables and merges them into the signed-in player's duel. Existing account habits and check-ins are kept. Newly imported habits start paused; open **Choose habits** to activate any you want in your current point plan. The import can be run again safely.
+
+If your older progress is in a Do It JSON backup rather than Supabase, use **Import a backup file** in the same section. The import preserves historical dates, earned points, quantities and proof references. Repeated old check-ins for the same habit and date are consolidated so they do not award points twice.
 
 ### Mobile Installation (Add to Home Screen)
 

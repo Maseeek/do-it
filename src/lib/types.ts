@@ -19,7 +19,8 @@ export type HabitCategory =
   | 'deep_work'
   | 'language'
   | 'nutrition'
-  | 'environment';
+  | 'environment'
+  | 'finance';
 
 export type HabitFrequency = 'daily' | 'weekly';
 

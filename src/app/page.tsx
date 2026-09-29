@@ -19,6 +19,7 @@ import { prepareQuickCheckIn } from '@/lib/quick-checkin';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { MultiplayerGate } from '@/components/MultiplayerGate';
+import { HabitOnboarding } from '@/components/HabitOnboarding';
 
 function AppContent() {
   const multiplayer = useMultiplayer();
@@ -151,6 +152,10 @@ function AppContent() {
   // First time or logged out: "Who are you?" profile selection
   if (!activePlayerId) {
     return <ProfileGate />;
+  }
+
+  if (multiplayer.configured && !habits.some(habit => habit.playerId === activePlayerId)) {
+    return <HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} />;
   }
 
   return (

@@ -17,7 +17,9 @@ import {
   GoogleHealthSyncResult,
 } from './types';
 import { getInitialState } from './seed';
+import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
+import { canImportLegacyDatabase, prepareLegacyImport, readLegacyProgress } from './legacy-import';
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
@@ -34,6 +36,7 @@ import { getSupabaseClient } from './supabase';
 import { useMultiplayer } from './multiplayer';
 import { loadDuelData, saveDuelHabit, deleteDuelHabit, saveDuelCheckIn, deleteDuelCheckIn, saveDuelStake, deleteDuelStake, saveDuelReaction, saveDuelRestDay, deleteDuelRestDay } from './duel-sync';
 import {
+  habitToRow,
   deleteCheckInSupabase,
   deleteHabitSupabase,
   insertCheckInSupabase,
@@ -103,6 +106,8 @@ interface StoreContextType {
   addHabit: (newHabit: Omit<Habit, 'id'>) => void;
   updateHabit: (updatedHabit: Habit) => void;
   deleteHabit: (habitId: string) => void;
+  applyHabitPlan: (plannedHabits: Habit[]) => Promise<void>;
+  importPreviousProgress: (source?: { habits: Habit[]; checkIns: CheckIn[] }) => Promise<{ habits: number; checkIns: number; duplicatesConsolidated: number }>;
   updateStake: (updatedStake: Stake) => void;
   addStake: (newStake: Omit<Stake, 'id'>) => void;
   deleteStake: (stakeId: string) => void;
@@ -794,6 +799,65 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const applyHabitPlan = async (plannedHabits: Habit[]) => {
+    const playerId = state.activePlayerId;
+    if (!playerId || (multiplayer.configured && playerId !== multiplayer.slot)) throw new Error('Choose your own profile first.');
+    if (plannedHabits.some(habit => habit.playerId !== playerId || !Number.isInteger(habit.points) || habit.points < 5 || habit.points > maximumHabitPoints(habit))) {
+      throw new Error('Each habit needs a valid point value. Quantity habits cannot exceed their maximum earned points.');
+    }
+    const total = weeklyPointPotential(plannedHabits);
+    const partnerId = playerId === 'maciek' ? 'myrna' : 'maciek';
+    const partnerTotal = weeklyPointPotential(state.habits.filter(habit => habit.playerId === partnerId));
+    if (total === 0) throw new Error('Choose at least one habit.');
+    if (partnerTotal > 0 && total !== partnerTotal) throw new Error(`Your weekly point potential needs to match your partner’s ${partnerTotal} points.`);
+    const previous = state.habits.filter(habit => habit.playerId === playerId);
+    const plannedIds = new Set(plannedHabits.map(habit => habit.id));
+    const next = [...plannedHabits, ...previous.filter(habit => !plannedIds.has(habit.id)).map(habit => ({ ...habit, isActive: false }))];
+    if (multiplayer.configured) {
+      const client = getSupabaseClient();
+      if (!client || !duelId) throw new Error('Your account is not connected. Try again.');
+      const save = duelQueueRef.current.then(async () => {
+        const { error } = await client.from('duel_habits').upsert(next.map(habit => ({ duel_id: duelId, id: habit.id, player_slot: playerId, data: habit })));
+        if (error) throw error;
+      });
+      duelQueueRef.current = save.catch(() => {});
+      await save;
+    } else if (supabaseRef.current) {
+      const { error } = await supabaseRef.current.from('habits').upsert(next.map(habitToRow));
+      if (error) throw error;
+    }
+    setState(prev => ({ ...prev, habits: [...prev.habits.filter(habit => habit.playerId !== playerId), ...next] }));
+  };
+
+  const importPreviousProgress = async (source?: { habits: Habit[]; checkIns: CheckIn[] }) => {
+    const playerId = multiplayer.slot;
+    const client = getSupabaseClient();
+    if (!multiplayer.configured || !client || !duelId || !playerId) throw new Error('Sign in to your account first.');
+    if (!source && !canImportLegacyDatabase(playerId, multiplayer.user?.email, multiplayer.duel?.guest_name)) {
+      throw new Error('The previous database import is not available for this account. You can import a backup file instead.');
+    }
+    const previous = source || await readLegacyProgress(client, playerId);
+    const save = duelQueueRef.current.then(async () => {
+      const current = await loadDuelData(client, duelId);
+      const { missingHabits, missingCheckIns, duplicatesConsolidated } = prepareLegacyImport(playerId, previous.habits, previous.checkIns, current.habits, current.checkIns);
+      for (let offset = 0; offset < missingHabits.length; offset += 50) {
+        const batch = missingHabits.slice(offset, offset + 50).map(habit => ({ duel_id: duelId, id: habit.id, player_slot: playerId, data: habit }));
+        const { error } = await client.from('duel_habits').upsert(batch, { onConflict: 'duel_id,id', ignoreDuplicates: true });
+        if (error) throw error;
+      }
+      for (let offset = 0; offset < missingCheckIns.length; offset += 10) {
+        const batch = missingCheckIns.slice(offset, offset + 10).map(checkIn => ({ duel_id: duelId, id: checkIn.id, habit_id: checkIn.habitId, player_slot: playerId, data: checkIn }));
+        const { error } = await client.from('duel_check_ins').upsert(batch, { onConflict: 'duel_id,id', ignoreDuplicates: true });
+        if (error) throw error;
+      }
+      const refreshed = await loadDuelData(client, duelId);
+      setState(prev => ({ ...prev, habits: refreshed.habits, checkIns: refreshed.checkIns }));
+      return { habits: missingHabits.length, checkIns: missingCheckIns.length, duplicatesConsolidated };
+    });
+    duelQueueRef.current = save.then(() => {}, () => {});
+    return save;
+  };
+
   const updateStake = (updatedStake: Stake) => {
     soundEngine.playClick();
     setState((prev) => ({
@@ -1335,6 +1399,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         addHabit,
         updateHabit,
         deleteHabit,
+        applyHabitPlan,
+        importPreviousProgress,
         updateStake,
         addStake,
         deleteStake,

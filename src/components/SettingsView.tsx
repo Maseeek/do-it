@@ -7,6 +7,8 @@ import { getSupabaseClient, isValidSupabaseUrl } from '@/lib/supabase';
 import { getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import { shareScorecardImage } from '@/lib/scorecard-image';
 import { useMultiplayer } from '@/lib/multiplayer';
+import { canImportLegacyDatabase } from '@/lib/legacy-import';
+import { parseBackup } from '@/lib/backup';
 
 interface SetupStatus {
   cloud: boolean;
@@ -23,9 +25,14 @@ function Status({ ready, children }: { ready: boolean; children: React.ReactNode
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-medium whitespace-nowrap ${ready ? 'bg-emerald-400/10 text-emerald-300' : 'bg-white/[0.05] text-zinc-400'}`}><span className={`w-1 h-1 rounded-full ${ready ? 'bg-emerald-400' : 'bg-zinc-500'}`}/>{children}</span>;
 }
 
-export function SettingsView() {
+function importSummary(result: { habits: number; checkIns: number; duplicatesConsolidated: number }, source: string) {
+  const repeatNote = result.duplicatesConsolidated ? ` ${result.duplicatesConsolidated} repeated check-ins were consolidated by habit and date.` : '';
+  return `Imported ${result.habits} habits and ${result.checkIns} check-ins ${source}.${repeatNote}${result.habits + result.checkIns === 0 ? ' Everything was already here.' : ''}`;
+}
+
+export function SettingsView({ onOpenHabitPlanner }: { onOpenHabitPlanner: () => void }) {
   const multiplayer = useMultiplayer();
-  const { activePlayer, players, selectProfile, switchProfile, soundEnabled, setSoundEnabled, syncStatus, supabaseConfig, updateSupabaseConfig, exportStateToJson, importStateFromJson, syncGoogleHealth, disconnectGoogleHealth, disconnectStrava, maciekSummary, myrnaSummary, activeWeeklyStake } = useStore();
+  const { activePlayer, players, selectProfile, switchProfile, soundEnabled, setSoundEnabled, syncStatus, supabaseConfig, updateSupabaseConfig, exportStateToJson, importStateFromJson, importPreviousProgress, syncGoogleHealth, disconnectGoogleHealth, disconnectStrava, maciekSummary, myrnaSummary, activeWeeklyStake } = useStore();
   const [setup, setSetup] = useState<SetupStatus | null>(null);
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -33,6 +40,8 @@ export function SettingsView() {
   const [key, setKey] = useState(supabaseConfig?.anonKey || '');
   const [showRestore, setShowRestore] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const previousBackupInput = useRef<HTMLInputElement>(null);
+  const canImportDatabase = canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email, multiplayer.duel?.guest_name);
 
   async function refreshSetup() {
     const response = await fetch('/api/setup', { cache: 'no-store' });
@@ -85,6 +94,8 @@ export function SettingsView() {
     <div className="grid xl:grid-cols-2 gap-5 items-start">
       <div className="space-y-5">
         {multiplayer.configured && <section className="settings-panel"><h2>Your account</h2><p>Signed in as {activePlayer?.name} ({multiplayer.user?.email}).</p><button className="control mt-4" onClick={() => void run('signout', async () => { await multiplayer.signOut(); return 'Signed out.'; })}>Sign out</button></section>}
+        <section className="settings-panel"><h2>Your habit plan</h2><p>Choose from health, education, studying, self-improvement and finance. Give each a weight, then match your partner’s total.</p><button className="control control-primary mt-4" onClick={onOpenHabitPlanner}>Choose habits</button></section>
+        {multiplayer.configured && <section className="settings-panel"><h2>Bring back previous progress</h2><p>Merge your earlier habits and check-in history into this account. Existing habits and check-ins stay as they are; imported habits start paused so your point plan stays balanced.</p><div className="flex flex-wrap gap-2 mt-4">{canImportDatabase && <button className="control control-primary" disabled={!!pending} onClick={() => void run('previous-data', async () => importSummary(await importPreviousProgress(), 'from Supabase'))}>{pending === 'previous-data' ? 'Importing…' : 'Import from previous app'}</button>}<button className="control" disabled={!!pending} onClick={() => previousBackupInput.current?.click()}>Import a backup file</button></div><input ref={previousBackupInput} className="hidden" aria-label="Choose previous Do It backup" type="file" accept=".json,application/json" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; void run('previous-backup', async () => { if (file.size > 50 * 1024 * 1024) throw new Error('Choose a backup smaller than 50 MB.'); const backup = parseBackup(await file.text(), true); return importSummary(await importPreviousProgress({ habits: backup.habits, checkIns: backup.checkIns }), 'from your backup'); }); }}/><p className="mt-3 text-xs">You can run an import again safely. Check-ins already in your account are skipped.</p></section>}
         <section className={multiplayer.configured ? 'hidden' : 'settings-panel'}><h2>Your profile</h2><p>This device is set to {activePlayer?.name}. You can switch at any time.</p><div className="flex flex-wrap gap-2 mt-4">{(['maciek', 'myrna'] as const).map((id) => <button key={id} className={`control ${activePlayer?.id === id ? 'bg-white/[0.08]' : ''}`} aria-pressed={activePlayer?.id === id} onClick={() => selectProfile(id)}>{activePlayer?.id === id && <Check size={13}/>}{id === 'maciek' ? 'Maciek' : 'Myrna'}</button>)}<button className="control text-zinc-400" onClick={switchProfile}>Profile picker</button></div></section>
         <section className="settings-panel"><div className="flex justify-between items-center gap-4"><div><h2 className="flex items-center gap-2"><Volume2 size={15}/>Sound effects</h2><p>Small celebrations for small wins.</p></div><button role="switch" aria-checked={soundEnabled} aria-label="Sound effects" onClick={() => setSoundEnabled(!soundEnabled)} className={`w-12 h-7 p-1 rounded-full shrink-0 transition-colors ${soundEnabled ? 'bg-blue-500' : 'bg-zinc-700'}`}><span className={`block h-5 w-5 rounded-full bg-white transition-transform ${soundEnabled ? 'translate-x-5' : ''}`}/></button></div></section>
         <section className={multiplayer.configured ? "hidden" : "settings-panel space-y-4"}><div className="flex items-center justify-between gap-2"><h2 className="flex items-center gap-2"><Cloud size={15}/>Cloud sync</h2><Status ready={syncStatus === 'connected'}>{syncStatus === 'connected' ? 'Connected' : syncStatus === 'syncing' ? 'Connecting' : syncStatus === 'offline' ? 'Unavailable' : 'This device only'}</Status></div><p>Sync habits, check-ins and stakes between your devices. Rest days and cheers stay on this device; include them in your backup.</p><form onSubmit={connectCloud} className="space-y-3"><label className="block text-xs text-zinc-400">Project URL<input className="field mt-2" type="url" autoComplete="off" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://your-project.supabase.co" required/></label><label className="block text-xs text-zinc-400">Publishable / anon key<input className="field mt-2" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Your public API key" required/></label><div className="flex flex-wrap gap-2"><button className="control control-primary" disabled={!!pending}>{pending === 'cloud' ? 'Checking connection…' : 'Verify & connect'}</button>{(supabaseConfig?.enabled || setup?.cloud) && <button type="button" className="control" onClick={() => { updateSupabaseConfig({ url, anonKey: key, enabled: false }); setMessage({ text: 'Cloud sync paused on this device.' }); }}>Use this device only</button>}</div></form><p className="flex items-center gap-2"><HardDrive size={13}/>Progress is saved locally as you go.</p></section>
