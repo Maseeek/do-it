@@ -21,13 +21,11 @@ export function planLegacyReplacement(
   const missingById = new Map(missingHabits.map(habit => [habit.id, habit]));
   const restored = legacyHabits.filter(habit => habit.playerId === playerId).map(habit => {
     const saved = existingById.get(habit.id) || missingById.get(habit.id) || missingById.get(`legacy-${playerId}-${habit.id}`) || habit;
-    return { ...saved, isActive: habit.isActive };
+    return { ...saved, isActive: habit.isActive, isArchived: false };
   });
-  const usedHabitIds = new Set(currentCheckIns.map(checkIn => checkIn.habitId));
   const catalog = ownHabits.filter(habit => habit.id.startsWith(`catalog-${playerId}-`));
   return {
-    habitsToSave: [...restored, ...catalog.filter(habit => usedHabitIds.has(habit.id)).map(habit => ({ ...habit, isActive: false }))],
-    habitIdsToDelete: catalog.filter(habit => !usedHabitIds.has(habit.id)).map(habit => habit.id),
+    habitsToSave: [...restored, ...catalog.map(habit => ({ ...habit, isActive: false, isArchived: true }))],
     missingCheckIns,
   };
 }
@@ -49,7 +47,7 @@ export async function restoreLegacyDuelProgress(
 ): Promise<boolean> {
   const previous = await readLegacyProgress(client, playerId);
   if (previous.habits.length === 0) return false;
-  const { habitsToSave, habitIdsToDelete, missingCheckIns } = planLegacyReplacement(
+  const { habitsToSave, missingCheckIns } = planLegacyReplacement(
     playerId, previous.habits, previous.checkIns, currentHabits, currentCheckIns,
   );
   for (let offset = 0; offset < habitsToSave.length; offset += 50) {
@@ -61,16 +59,6 @@ export async function restoreLegacyDuelProgress(
     const rows = missingCheckIns.slice(offset, offset + 10).map(checkIn => ({ duel_id: duelId, id: checkIn.id, habit_id: checkIn.habitId, player_slot: playerId, data: checkIn }));
     const { error } = await client.from('duel_check_ins').upsert(rows, { onConflict: 'duel_id,id', ignoreDuplicates: true });
     if (error) throw error;
-  }
-  if (habitIdsToDelete.length > 0) {
-    const { data: recent, error: readError } = await client.from('duel_check_ins').select('habit_id').eq('duel_id', duelId).in('habit_id', habitIdsToDelete);
-    if (readError) throw readError;
-    const usedIds = new Set((recent || []).map(row => row.habit_id));
-    const unusedIds = habitIdsToDelete.filter(id => !usedIds.has(id));
-    if (unusedIds.length > 0) {
-      const { error } = await client.from('duel_habits').delete().eq('duel_id', duelId).eq('player_slot', playerId).in('id', unusedIds);
-      if (error) throw error;
-    }
   }
   return true;
 }

@@ -387,7 +387,7 @@ export function VaultView({ initialSection = 'stats' }: { initialSection?: 'stat
           </div>
 
           {(['maciek', 'myrna'] as PlayerId[]).map((pId) => {
-            const playerHabits = habits.filter((h) => h.playerId === pId);
+            const playerHabits = habits.filter((h) => h.playerId === pId && !h.isArchived);
             const totalPoints = weeklyPointPotential(playerHabits);
 
             return (

@@ -15,7 +15,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
   const { activePlayer, habits, applyHabitPlan } = useStore();
   const multiplayer = useMultiplayer();
   const playerId = activePlayer?.id || 'maciek';
-  const existing = habits.filter(habit => habit.playerId === playerId);
+  const existing = habits.filter(habit => habit.playerId === playerId && !habit.isArchived);
   const partnerTotal = weeklyPointPotential(habits.filter(habit => habit.playerId !== playerId));
   const [plan, setPlan] = useState<Habit[]>(() => {
     const catalog = catalogHabits(playerId);

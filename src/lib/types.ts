@@ -41,6 +41,7 @@ export interface Habit {
   requiresProof?: boolean;
   order: number;
   isActive: boolean;
+  isArchived?: boolean;
 }
 
 export interface CheckIn {

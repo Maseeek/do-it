@@ -49,9 +49,9 @@ test('replaces the catalog plan with restored habits without losing historical c
   const sourceCheckIn = { id: 'old-check', habitId: previous[0].id, playerId: 'maciek' as const, date: '2026-09-22', pointsEarned: 50, completedAt: '2026-09-22T10:00:00Z' };
   const result = planLegacyReplacement('maciek', previous, [sourceCheckIn], [...catalog, ...imported], [sourceCheckIn]);
   assert.equal(result.habitsToSave.filter(habit => habit.isActive).length, previous.length);
-  assert.equal(result.habitIdsToDelete.length, catalog.length);
+  assert.equal(result.habitsToSave.filter(habit => habit.isArchived).length, catalog.length);
   assert.equal(result.missingCheckIns.length, 0);
-  assert.ok(result.habitsToSave.every(habit => !habit.id.startsWith('catalog-')));
+  assert.ok(result.habitsToSave.filter(habit => habit.isActive).every(habit => !habit.id.startsWith('catalog-')));
   assert.equal(needsLegacyReplacement('maciek', [...catalog, ...imported]), true);
   assert.equal(needsLegacyReplacement('maciek', result.habitsToSave), false);
 });
@@ -61,6 +61,6 @@ test('keeps a replaced catalog habit paused when it has a check-in', () => {
   const catalog = { ...catalogHabits('maciek')[0], isActive: true };
   const recentCheckIn = { id: 'recent-check', habitId: catalog.id, playerId: 'maciek' as const, date: '2026-09-29', pointsEarned: 20, completedAt: '2026-09-29T10:00:00Z' };
   const result = planLegacyReplacement('maciek', previous, [], [catalog], [recentCheckIn]);
-  assert.equal(result.habitIdsToDelete.length, 0);
+  assert.equal(result.habitsToSave.find(habit => habit.id === catalog.id)?.isArchived, true);
   assert.equal(result.habitsToSave.find(habit => habit.id === catalog.id)?.isActive, false);
 });
