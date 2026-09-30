@@ -59,6 +59,8 @@ Designed with a sleek **Linear-inspired dark mode aesthetic**, 1-tap manual logg
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+Run `npm run check` before a pull request; it runs typecheck, lint, and the committed tests.
+
 ### Enable multiplayer
 
 1. In a Supabase project, run [`supabase/duels.sql`](supabase/duels.sql), then [`supabase/duels-extras.sql`](supabase/duels-extras.sql) in the SQL Editor. These create isolated duel tables, invitation functions, and row level policies.
@@ -87,4 +89,5 @@ If your older progress is in a Do It JSON backup rather than Supabase, use **Imp
 
 - Domain glossary: [`CONTEXT.md`](CONTEXT.md)
 - Architectural Decision Records: [`docs/adr/`](docs/adr/)
-- Wayfinder planning map: [`.scratch/do-it-app/map.md`](.scratch/do-it-app/map.md)
+- Agent issue-to-PR workflow: [`docs/agent-workflow.md`](docs/agent-workflow.md)
+- Agent skill setup: [`docs/agents/`](docs/agents/)
