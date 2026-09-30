@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Flame, SlidersHorizontal } from 'lucide-react';
+import { CheckCircle2, Flame, ChartNoAxesColumn } from 'lucide-react';
 
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
-export type TabType = 'today' | 'duel' | 'vault';
+export type TabType = 'today' | 'duel' | 'progress';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -17,7 +17,7 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
   const tabs = [
     { id: 'today' as TabType, label: 'Today', icon: CheckCircle2 },
     { id: 'duel' as TabType, label: 'Duel', icon: Flame },
-    { id: 'vault' as TabType, label: 'Vault', icon: SlidersHorizontal },
+    { id: 'progress' as TabType, label: 'Progress', icon: ChartNoAxesColumn },
   ];
 
   const handleTabClick = (tabId: TabType) => {
@@ -44,7 +44,7 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
               onClick={() => handleTabClick(tab.id)}
               aria-label={tab.label}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 py-1 px-5 rounded-2xl transition-all active:scale-95 ${
+              className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 py-1 px-3 rounded-2xl transition-all active:scale-95 ${
                 isActive
                   ? 'text-white'
                   : 'text-zinc-500 hover:text-zinc-300'

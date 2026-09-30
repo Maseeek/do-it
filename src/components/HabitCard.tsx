@@ -6,11 +6,9 @@ import { useStore } from '@/lib/store';
 import { HabitIcon } from './HabitIcon';
 import { ProofModal } from './ProofModal';
 import { ProofGalleryModal } from './ProofGalleryModal';
-import { calculateHabitStreak } from '@/lib/score-calculator';
 import {
   Camera,
   Check,
-  Flame,
   MessageSquare,
   Minus,
   Plus,
@@ -27,13 +25,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
     getHabitCheckInOnDate,
     getWeeklyHabitCompletions,
     selectedDate,
-    checkIns,
     activePlayer,
     partnerId,
     players,
     partnerCleanSpaceCheckIn,
     partnerCleanSpaceHabit,
-    restDays,
   } = useStore();
 
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
@@ -67,7 +63,6 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const isCleanSpace = habit.category === 'environment' && habit.requiresProof;
   const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);
-  const habitStreak = calculateHabitStreak(habit, checkIns, restDays);
 
   const handleToggle = () => {
     if (habit.isQuantitative) {
@@ -151,7 +146,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
                 : `Mark ${habit.title} completed`
             }
-            className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ${
+            className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ${
               completed
                 ? isMaciek
                   ? 'bg-blue-500 text-white'
@@ -179,19 +174,11 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 {habit.title}
               </span>
 
-              {habitStreak >= (isWeeklyHabit ? 1 : 2) && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-400 bg-amber-400/10 px-1.5 py-0.2 rounded-full">
-                  <Flame className="w-2.5 h-2.5" />
-                  {habitStreak}{isWeeklyHabit ? 'w' : 'd'}
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-400">
-              <span className="capitalize">{habit.category.replace('_', ' ')}</span>
               {isWeeklyHabit && (
                 <>
-                  <span>•</span>
                   <span
                     className={
                       isWeeklyTargetMet
@@ -226,7 +213,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
             <button
               onClick={openNoteEditor}
               aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
-              className={`p-1.5 rounded-full transition-colors ${
+              className={`flex size-11 items-center justify-center rounded-full transition-colors ${
                 checkIn?.note
                   ? 'text-blue-400 bg-blue-500/10'
                   : 'text-zinc-500 hover:text-zinc-300'

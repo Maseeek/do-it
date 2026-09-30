@@ -4,6 +4,7 @@ import React from 'react';
 import { Keyboard, X } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
+import { useModalFocus } from '@/lib/use-modal-focus';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -11,12 +12,13 @@ interface KeyboardShortcutsModalProps {
 }
 
 export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsModalProps) {
+  const dialogRef = useModalFocus(isOpen, onClose);
   if (!isOpen) return null;
 
   const SHORTCUTS = [
     { key: '1', desc: 'Today' },
     { key: '2', desc: 'Duel' },
-    { key: '3', desc: 'Vault' },
+    { key: '3', desc: 'Progress' },
     { key: 'P', desc: 'Switch Player' },
     { key: 'T', desc: 'Jump to Today' },
     { key: '?', desc: 'Shortcuts' },
@@ -33,6 +35,8 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
       }}
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="shortcuts-modal-title"

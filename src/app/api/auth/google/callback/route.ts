@@ -1,133 +1,41 @@
-import { validateOAuthState } from '@/lib/oauth';
+import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { isValidSupabaseUrl } from '@/lib/supabase';
+import { encryptToken, healthDatabase, healthEnabled } from '@/lib/health-server';
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const code = searchParams.get('code');
-  const error = searchParams.get('error');
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-  const redirectUri = `${appUrl}/api/auth/google/callback`;
-
-  if (error) {
-    return NextResponse.redirect(
-      new URL(`/?tab=vault&wearable_error=${encodeURIComponent(error)}`, appUrl)
-    );
-  }
-
-  if (!code) {
-    return NextResponse.redirect(
-      new URL('/?tab=vault&wearable_error=missing_code', appUrl)
-    );
-  }
-
-  const player = validateOAuthState(request, 'google');
-  if (!player) return NextResponse.redirect(new URL('/?tab=vault&section=settings&wearable_error=invalid_oauth_state', appUrl));
-
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    return NextResponse.redirect(
-      new URL('/?tab=vault&wearable_error=missing_server_credentials', appUrl)
-    );
-  }
-
-  try {
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-      }),
-    });
-
-    if (!tokenResponse.ok) {
-      console.error('Google token exchange failed:', tokenResponse.status);
-      return NextResponse.redirect(
-        new URL(`/?tab=vault&wearable_error=token_exchange_failed`, appUrl)
-      );
-    }
-
-    const tokenData = await tokenResponse.json();
-    const { access_token, refresh_token, expires_in } = tokenData;
-
-    // Successful exchange: set cookies and redirect to Vault
-    const response = NextResponse.redirect(
-      new URL('/?tab=vault&wearable_connected=google', appUrl)
-    );
-
-    if (refresh_token) {
-      response.cookies.set('g_fit_refresh_token', refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-      });
-    }
-
-    if (access_token) {
-      response.cookies.set('g_fit_access_token', access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: expires_in || 3600,
-      });
-    }
-
-    // Also set a client-readable status cookie
-    response.cookies.set('g_fit_connected', 'true', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365,
-    });
-
-    // Persist to Supabase oauth_tokens table for server-side & background cron sync
-    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const playerId = player;
-
-    if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
-      try {
-        const supabase = createClient(sbUrl, sbKey);
-        const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
-        const rowPayload: Record<string, string | undefined> = {
-          player_id: playerId,
-          provider: 'google',
-          access_token,
-          expires_at: expiresAt,
-          updated_at: new Date().toISOString(),
-        };
-        if (refresh_token) {
-          rowPayload.refresh_token = refresh_token;
-        }
-
-        await supabase.from('oauth_tokens').upsert(rowPayload, { onConflict: 'player_id' });
-      } catch (sbErr) {
-        console.warn('Failed to persist OAuth tokens in Supabase:', sbErr);
-      }
-    }
-
-    response.cookies.set('google_oauth_state', '', { path: '/', maxAge: 0 });
-    response.cookies.set('g_fit_player', player, { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 31536000 });
+  const redirect = (reason?: string) => {
+    const url = new URL('/', appUrl);
+    url.searchParams.set('section', 'settings');
+    url.searchParams.set(reason ? 'wearable_error' : 'wearable_connected', reason || 'google');
+    const response = NextResponse.redirect(url);
+    response.cookies.delete('health_oauth_state');
+    for (const name of ['g_fit_access_token', 'g_fit_refresh_token', 'g_fit_connected', 'g_fit_player', 'google_oauth_state']) response.cookies.delete(name);
     return response;
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('OAuth callback exception:', message);
-    return NextResponse.redirect(
-      new URL(`/?tab=vault&wearable_error=${encodeURIComponent(message)}`, appUrl)
-    );
+  };
+  if (!healthEnabled()) return redirect('health_unavailable');
+  try {
+    const raw = request.cookies.get('health_oauth_state')?.value;
+    if (!raw) return redirect('expired_connection');
+    const stored = JSON.parse(raw) as { state: string; userId: string; scopes: string[]; timeZone: string };
+    const state = request.nextUrl.searchParams.get('state') || '';
+    if (!state || state.length !== stored.state.length || !timingSafeEqual(Buffer.from(state), Buffer.from(stored.state))) return redirect('invalid_connection');
+    if (request.nextUrl.searchParams.has('error')) return redirect('permission_denied');
+    const code = request.nextUrl.searchParams.get('code');
+    if (!code) return redirect('missing_code');
+    const db = healthDatabase();
+    const { data: duel, error: duelError } = await db.from('duels').select('id').or(`owner_id.eq.${stored.userId},guest_id.eq.${stored.userId}`).limit(1).maybeSingle();
+    if (duelError || !duel) return redirect('account_unavailable');
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ code, client_id: process.env.GOOGLE_CLIENT_ID || '', client_secret: process.env.GOOGLE_CLIENT_SECRET || '', redirect_uri: `${appUrl}/api/auth/google/callback`, grant_type: 'authorization_code' }), cache: 'no-store' });
+    if (!tokenResponse.ok) return redirect('connection_failed');
+    const tokens = await tokenResponse.json();
+    if (!tokens.refresh_token) return redirect('missing_refresh_permission');
+    const granted = typeof tokens.scope === 'string' ? tokens.scope.split(' ') : [];
+    const scopes = stored.scopes.filter(scope => granted.includes(scope));
+    const { error } = await db.from('health_connections').upsert({ user_id: stored.userId, encrypted_refresh_token: encryptToken(tokens.refresh_token), scopes, time_zone: stored.timeZone, last_checked_at: null, last_error: null, updated_at: new Date().toISOString() });
+    if (error) throw error;
+    return redirect();
+  } catch {
+    return redirect('connection_failed');
   }
 }

@@ -1268,16 +1268,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auto-sync Google Health in background on load for Maciek if connected
-  const autoSyncedRef = useRef(false);
-  useEffect(() => {
-    if (!isHydrated || autoSyncedRef.current) return;
-    if (!multiplayer.configured && state.activePlayerId === 'maciek' && state.wearableConfig?.googleConnected) {
-      autoSyncedRef.current = true;
-      syncGoogleHealth(false).catch(() => {});
-    }
-  }, [isHydrated, state.activePlayerId, state.wearableConfig?.googleConnected, syncGoogleHealth, multiplayer.configured]);
-
   const disconnectGoogleHealth = () => {
     if (typeof document !== 'undefined') {
       document.cookie = 'g_fit_connected=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';

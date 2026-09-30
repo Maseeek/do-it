@@ -23,6 +23,7 @@ export type HabitCategory =
   | 'finance';
 
 export type HabitFrequency = 'daily' | 'weekly';
+export type HealthMetric = 'sleep' | 'workout' | 'cardio' | 'steps';
 
 export interface Habit {
   id: string;
@@ -42,6 +43,7 @@ export interface Habit {
   order: number;
   isActive: boolean;
   isArchived?: boolean;
+  automation?: { metric: HealthMetric; target: number };
 }
 
 export interface CheckIn {
@@ -57,6 +59,7 @@ export interface CheckIn {
   note?: string; // optional micro-note or reflection
   isRetroactive?: boolean; // true if logged for past date
   loggedAt?: string; // timestamp when the check-in was registered
+  source?: 'google_health';
 }
 
 export interface CouplesReaction {

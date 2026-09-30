@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { MultiplayerProvider } from "@/lib/multiplayer";
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: './fonts/geist-latin.woff2',
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: '100 900',
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: './fonts/geist-mono-latin.woff2',
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: '100 900',
 });
 
 export const metadata: Metadata = {
@@ -38,8 +40,6 @@ export const viewport: Viewport = {
   themeColor: "#08090a",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({

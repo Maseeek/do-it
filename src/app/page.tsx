@@ -8,7 +8,8 @@ import { Header } from '@/components/Header';
 import { BottomNav, TabType } from '@/components/BottomNav';
 import { TodayView } from '@/components/TodayView';
 import { DuelView } from '@/components/DuelView';
-import { VaultView } from '@/components/VaultView';
+import { ProgressView } from '@/components/ProgressView';
+import { SettingsView } from '@/components/SettingsView';
 import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
 import { Check } from 'lucide-react';
 import { DoLogo } from '@/components/DoLogo';
@@ -27,7 +28,8 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [vaultSection, setVaultSection] = useState<'stats' | 'habits' | 'settings'>('stats');
+  const [showSettings, setShowSettings] = useState(false);
+  const [openPlanner, setOpenPlanner] = useState(false);
   const handledAction = useRef<string | null>(null);
 
   const searchParams = useSearchParams();
@@ -38,19 +40,22 @@ function AppContent() {
     if (pendingDuelId && !pendingGuestId) setActiveTab('duel');
   }, [pendingDuelId, pendingGuestId]);
 
+  useEffect(() => {
+    if (activeTab === 'today') setSelectedDate(getTodayDateString());
+  }, [activeTab, setSelectedDate]);
+
   // Handle URL deep-linking query parameters (?tab=..., ?action=checkin&habit=...)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'today' || tabParam === 'duel' || tabParam === 'vault') {
-      setActiveTab(tabParam as TabType);
+    if (tabParam === 'today' || tabParam === 'duel' || tabParam === 'progress' || tabParam === 'vault') {
+      setActiveTab(tabParam === 'vault' ? 'progress' : tabParam as TabType);
     }
     if (searchParams.get('section') === 'habits') {
-      setActiveTab('vault');
-      setVaultSection('habits');
+      setActiveTab('progress');
+      setOpenPlanner(true);
     }
     if (searchParams.has('wearable_error') || searchParams.has('wearable_connected') || searchParams.get('section') === 'settings') {
-      setActiveTab('vault');
-      setVaultSection('settings');
+      setShowSettings(true);
     }
   }, [searchParams]);
 
@@ -102,7 +107,7 @@ function AppContent() {
       } else if (e.key === '3') {
         soundEngine.playClick();
         hapticLight();
-        setActiveTab('vault');
+        setActiveTab('progress');
       } else if ((e.key === 'p' || e.key === 'P') && !multiplayer.configured) {
         soundEngine.playClick();
         hapticLight();
@@ -166,8 +171,8 @@ function AppContent() {
       {/* App frame */}
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
-        <DesktopSidebar activeTab={activeTab} onChangeTab={setActiveTab} onOpenSettings={() => { setVaultSection('settings'); setActiveTab('vault'); }} />
-        <Header onOpenSettings={() => { setVaultSection('settings'); setActiveTab('vault'); }} />
+        <DesktopSidebar activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setActiveTab(tab); }} />
+        <Header onOpenSettings={() => setShowSettings(true)} />
 
         {/* Floating Quick Action Toast */}
         {toastMessage && (
@@ -188,12 +193,14 @@ function AppContent() {
 
         <main id="main-content" className="flex-1 max-w-xl lg:max-w-6xl w-full mx-auto px-4 lg:px-10 pt-5 lg:pt-9 pb-28 lg:pb-12">
           {storageError && <div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">{storageError}</div>}
-          {activeTab === 'today' && <TodayView onOpenHabits={() => { setVaultSection('habits'); setActiveTab('vault'); }} />}
-          {activeTab === 'duel' && <DuelView />}
-          {activeTab === 'vault' && <VaultView key={vaultSection} initialSection={vaultSection} />}
+          {showSettings ? <SettingsView onBack={() => setShowSettings(false)} onChooseHabits={() => { setShowSettings(false); setOpenPlanner(true); setActiveTab('progress'); }} /> : <>
+            {activeTab === 'today' && <TodayView onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} />}
+            {activeTab === 'duel' && <DuelView />}
+            {activeTab === 'progress' && <ProgressView key={openPlanner ? 'planner' : 'progress'} openPlanner={openPlanner} />}
+          </>}
         </main>
 
-        <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
+        <BottomNav activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); setActiveTab(tab); }} />
 
         <KeyboardShortcutsModal
           isOpen={isShortcutsModalOpen}

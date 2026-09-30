@@ -1,53 +1,46 @@
-import { getTodayDateString, isValidDateString, isFutureDate } from '@/lib/date-utils';
 import { NextRequest, NextResponse } from 'next/server';
-import { PlayerId } from '@/lib/types';
-import { syncGoogleHealth } from '@/lib/wearables/google-health';
+import { authenticatedDuel, healthEnabled } from '@/lib/health-server';
+import { syncUserHealth } from '@/lib/health-sync';
+import { healthScopes } from '@/lib/health-sync';
+import type { Habit } from '@/lib/types';
 
-export async function GET() {
-  return NextResponse.json({ message: 'Use POST to sync.' }, { status: 405, headers: { Allow: 'POST' } });
+export async function GET(request: NextRequest) {
+  if (!healthEnabled()) return NextResponse.json({ available: false, connected: false, scopes: [], message: 'Automatic health check-ins are not available yet. You can keep checking off habits manually.' });
+  try {
+    const context = await authenticatedDuel(request);
+    if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+    const { data, error } = await context.db.from('health_connections').select('scopes,time_zone,last_checked_at,last_error').eq('user_id', context.user.id).maybeSingle();
+    if (error) throw error;
+    const { data: rows, error: habitsError } = await context.db.from('duel_habits').select('data').eq('duel_id', context.duel.id).eq('player_slot', context.slot);
+    if (habitsError) throw habitsError;
+    const habits = (rows || []).map(row => row.data as Habit).filter(habit => habit.isActive && habit.automation);
+    const missing = !!data && habits.some(habit => !data.scopes.includes(habit.automation?.metric === 'sleep' ? healthScopes.sleep : healthScopes.activity));
+    return NextResponse.json({ connected: !!data, scopes: data?.scopes || [], timeZone: data?.time_zone, lastCheckedAt: data?.last_checked_at, needsAttention: !!data?.last_error || missing, message: data?.last_error || (missing ? 'New automatic habits need Google Health permission. Reconnect from Settings.' : null) });
+  } catch {
+    return NextResponse.json({ error: 'Connection status is unavailable.' }, { status: 503 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  return handleSync(request);
+  if (!healthEnabled()) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
+  try {
+    const context = await authenticatedDuel(request);
+    if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+    return NextResponse.json(await syncUserHealth(context.user.id));
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Health sync failed.' }, { status: 502 });
+  }
 }
 
-async function handleSync(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const targetDate = searchParams.get('date') || getTodayDateString();
-  if (!isValidDateString(targetDate) || isFutureDate(targetDate)) return NextResponse.json({ success: false, message: 'Choose a valid date up to today.' }, { status: 400 });
-  const rawPlayer = request.cookies.get('g_fit_player')?.value || 'maciek';
-  const targetPlayer: PlayerId = rawPlayer === 'myrna' ? 'myrna' : 'maciek';
-  const isSimulated = searchParams.get('simulate') === 'true';
-  const isSimulatedUnder = searchParams.get('simulateUnder') === 'true';
-
-  let accessToken = request.cookies.get('g_fit_access_token')?.value;
-  const refreshToken = request.cookies.get('g_fit_refresh_token')?.value;
-
-  const authHeader = request.headers.get('authorization');
-  if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
-    accessToken = authHeader.substring(7).trim();
+export async function DELETE(request: NextRequest) {
+  if (request.headers.get('origin') !== request.nextUrl.origin) return NextResponse.json({ error: 'Invalid origin.' }, { status: 403 });
+  try {
+    const context = await authenticatedDuel(request);
+    if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+    const { error } = await context.db.from('duel_check_ins').delete().eq('duel_id', context.duel.id).eq('player_slot', context.slot).eq('data->>source', 'google_health');
+    if (error) throw error;
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Could not delete imported history.' }, { status: 502 });
   }
-
-  const result = await syncGoogleHealth({
-    targetDate,
-    playerId: targetPlayer,
-    isSimulated,
-    isSimulatedUnder,
-    accessToken,
-    refreshToken,
-  });
-
-  if (!result.success && result.error === 'not_authenticated') {
-    return NextResponse.json(result, { status: 401 });
-  }
-
-  if (!result.success && result.error === 'google_api_query_failed') {
-    return NextResponse.json(result, { status: 502 });
-  }
-
-  if (!result.success && result.error === 'sync_exception') {
-    return NextResponse.json(result, { status: 500 });
-  }
-
-  return NextResponse.json(result);
 }

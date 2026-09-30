@@ -42,7 +42,8 @@ next-env.d.ts
 
 # legacy local audit artifacts; these suites are not part of the committed checks
 agent-audit-report.json
-/scripts
+/scripts/*
+!/scripts/revoke-legacy-health-tokens.mjs
 /tests
 
 # scratch & local cache
