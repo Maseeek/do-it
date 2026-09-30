@@ -1,109 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { syncGoogleHealth } from '@/lib/wearables/google-health';
-import { isValidSupabaseUrl } from '@/lib/supabase';
+import { healthDatabase, healthEnabled, localDate } from '@/lib/health-server';
+import { syncUserHealth } from '@/lib/health-sync';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  return handleCron(request);
-}
-
-export async function POST(request: NextRequest) {
-  return handleCron(request);
-}
-
-async function handleCron(request: NextRequest) {
-  // 1. Authenticate Cron Request
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  const querySecret = request.nextUrl.searchParams.get('secret');
-
-  if (!cronSecret || cronSecret.startsWith('your-')) return NextResponse.json({ error: 'Cron is not configured.' }, { status: 503 });
-
-  if (cronSecret) {
-    const isHeaderValid = authHeader === `Bearer ${cronSecret}`;
-    const isQueryValid = querySecret === cronSecret;
-
-    if (!isHeaderValid && !isQueryValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'unauthorized',
-          message: 'Invalid or missing CRON_SECRET authorization.',
-        },
-        { status: 401 }
-      );
-    }
-  }
-
-  // 2. Identify target dates: yesterday and today (UTC)
-  const today = new Date().toISOString().split('T')[0];
-  const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const yesterday = yesterdayDate.toISOString().split('T')[0];
-  const targetDates = [yesterday, today];
-
-  // 3. Find registered players with wearable tokens in Supabase
-  const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  let playerIds: string[] = ['maciek'];
-
-  if (sbUrl && isValidSupabaseUrl(sbUrl) && sbKey) {
-    try {
-      const client = createClient(sbUrl, sbKey);
-      const { data: rows } = await client
-        .from('oauth_tokens')
-        .select('player_id')
-        .eq('provider', 'google');
-
-      if (rows && rows.length > 0) {
-        playerIds = Array.from(new Set(rows.map((r: { player_id: string }) => r.player_id)));
-      }
-    } catch (sbErr) {
-      console.warn('Could not query registered oauth_tokens for cron:', sbErr);
-    }
-  }
-
-  // 4. Run sync for each player across both target dates
-  const results = [];
-
-  for (const playerId of playerIds) {
-    for (const date of targetDates) {
-      try {
-        const syncResult = await syncGoogleHealth({
-          targetDate: date,
-          allowStoredTokens: true,
-          playerId,
-        });
-
-        results.push({
-          playerId,
-          date,
-          success: syncResult.success,
-          checkInsCreated: syncResult.checkInsCreated?.length || 0,
-          sleepHours: syncResult.sleepHours,
-          gymDetected: syncResult.gymDetected,
-          sportDetected: syncResult.sportDetected,
-          message: syncResult.message,
-        });
-      } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : 'Unknown sync error';
-        results.push({
-          playerId,
-          date,
-          success: false,
-          checkInsCreated: 0,
-          error: errMsg,
-        });
+  if (!healthEnabled()) return NextResponse.json({ checked: 0, failed: 0, skipped: true });
+  const secret = process.env.CRON_SECRET;
+  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const db = healthDatabase();
+    const { data: connections, error } = await db.from('health_connections').select('user_id,time_zone');
+    if (error) throw error;
+    const results = [];
+    for (const connection of connections || []) {
+      const today = localDate(connection.time_zone);
+      const yesterday = new Date(Date.parse(`${today}T12:00:00Z`) - 86400000).toISOString().slice(0, 10);
+      for (const date of [yesterday, today]) {
+        try { results.push({ userId: connection.user_id, ...(await syncUserHealth(connection.user_id, date)) }); }
+        catch { results.push({ userId: connection.user_id, date, success: false }); }
       }
     }
+    return NextResponse.json({ checked: results.length, failed: results.filter(result => !result.success).length });
+  } catch {
+    return NextResponse.json({ error: 'Scheduled health check failed.' }, { status: 503 });
   }
-
-  return NextResponse.json({
-    success: true,
-    triggeredAt: new Date().toISOString(),
-    datesSynced: targetDates,
-    playersSynced: playerIds,
-    results,
-  });
 }

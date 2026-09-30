@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "test": "tsc --project tsconfig.test.json && node --test .scratch/test-build/*.test.js",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",

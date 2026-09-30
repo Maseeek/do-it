@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { authenticatedDuel, decryptToken } from '@/lib/health-server';
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  if (origin && origin !== request.nextUrl.origin) return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
-  const provider = request.nextUrl.searchParams.get('provider');
-  if (provider !== 'google' && provider !== 'strava') return NextResponse.json({ error: 'Unknown provider' }, { status: 400 });
-  if (provider === 'google') {
-    const player = request.cookies.get('g_fit_player')?.value;
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (url && key && (player === 'maciek' || player === 'myrna')) {
-      const { error } = await createClient(url, key).from('oauth_tokens').delete().eq('player_id', player).eq('provider', 'google');
-      if (error) return NextResponse.json({ error: 'Could not stop background sync. Please try again.' }, { status: 502 });
-    }
+  if (request.headers.get('origin') !== request.nextUrl.origin) return NextResponse.json({ error: 'Invalid origin.' }, { status: 403 });
+  const context = await authenticatedDuel(request).catch(() => null);
+  if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+  const { data: connection } = await context.db.from('health_connections').select('encrypted_refresh_token').eq('user_id', context.user.id).maybeSingle();
+  let revoked = !connection;
+  if (connection) {
+    try {
+      const response = await fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: decryptToken(connection.encrypted_refresh_token) }), cache: 'no-store' });
+      revoked = response.ok || response.status === 400;
+    } catch { revoked = false; }
   }
-  const response = NextResponse.json({ success: true });
-  const names = provider === 'google' ? ['g_fit_access_token', 'g_fit_refresh_token', 'g_fit_connected', 'g_fit_player', 'google_oauth_state'] : ['strava_access_token', 'strava_refresh_token', 'strava_connected', 'strava_athlete_name', 'strava_athlete_id', 'strava_expires_at', 'strava_player', 'strava_oauth_state'];
-  names.forEach((name) => response.cookies.set(name, '', { path: '/', maxAge: 0 }));
-  return response;
+  const { error } = await context.db.from('health_connections').delete().eq('user_id', context.user.id);
+  if (error) return NextResponse.json({ error: 'Could not disconnect.' }, { status: 502 });
+  return NextResponse.json({ success: true, revoked });
 }

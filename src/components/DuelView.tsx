@@ -24,6 +24,7 @@ import { hapticLight, hapticSuccess, hapticCelebration } from '@/lib/haptic-util
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { shareScorecardImage } from '@/lib/scorecard-image';
 import { useMultiplayer } from '@/lib/multiplayer';
+import { ActivityFeed } from './ActivityFeed';
 
 export function DuelView() {
   const multiplayer = useMultiplayer();
@@ -170,7 +171,7 @@ export function DuelView() {
         {inviteStatus && <p role="status" className="text-xs text-zinc-300">{inviteStatus}</p>}
       </section>}
       {multiplayer.duel?.guest_id && <p className="text-xs text-zinc-400">{players.maciek.name} vs {players.myrna.name}</p>}
-      {multiplayer.duel && habits.length === 0 && <section className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4"><h2 className="font-semibold">Start with a habit</h2><p className="text-xs text-zinc-400 mt-1">Each player adds their own habits. Check-ins will appear here as you go.</p><Link className="inline-block mt-3 rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold" href="/?tab=vault&section=habits">Add your first habit</Link></section>}
+      {multiplayer.duel && habits.length === 0 && <section className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4"><h2 className="font-semibold">Start with a habit</h2><p className="text-xs text-zinc-400 mt-1">Each player adds their own habits. Check-ins will appear here as you go.</p><Link className="inline-block mt-3 rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold" href="/?tab=progress&section=habits">Add your first habit</Link></section>}
       {/* Timeframe Segmented Control (Apple 3-Pill) */}
       <div role="tablist" aria-label="Leaderboard timeframe" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
         {(
@@ -813,6 +814,14 @@ export function DuelView() {
         </div>
       )}
 
+      <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4">
+        <h2 className="mb-3 text-sm font-semibold">Recent activity</h2>
+        <div className="space-y-2">{[...checkIns].sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(0, 4).map(entry => {
+          const habit = habits.find(item => item.id === entry.habitId);
+          return <div key={entry.id} className="flex justify-between gap-3 text-xs text-zinc-400"><span className="truncate">{players[entry.playerId]?.name} · {habit?.title || 'Habit'}{entry.note ? ` · ${entry.note}` : ''}</span><span className="shrink-0">{entry.date}</span></div>;
+        })}</div>
+        <details className="mt-3 border-t border-white/[0.07] pt-3"><summary className="min-h-11 cursor-pointer text-xs text-zinc-400">Full history</summary><ActivityFeed /></details>
+      </section>
       {/* Proof Gallery Modal */}
       {activeProofView && (
         <ProofGalleryModal

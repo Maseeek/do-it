@@ -22,6 +22,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     return [...catalog.map(habit => existing.find(item => item.id === habit.id) || habit), ...existing.filter(habit => !catalog.some(item => item.id === habit.id))];
   });
   const [customTitle, setCustomTitle] = useState('');
+  const [showMore, setShowMore] = useState(false);
   const [customCategory, setCustomCategory] = useState<HabitCategory>('skills');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -60,6 +61,10 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     { title: 'Your habits', entries: plan.filter(habit => !catalogIds.has(habit.id)) },
     ...HABIT_SECTIONS.map(section => ({ title: section.title, entries: plan.filter(habit => catalogIds.has(habit.id) && section.categories.includes(habit.category)) })),
   ];
+  const starterTitles = new Set(['Sleep 8 hours', 'Step goal', 'Workout', 'Cardio session', 'Move your body', 'Read for learning']);
+  const visibleSections = firstRun && !showMore
+    ? [{ title: 'Start here', entries: plan.filter(habit => habit.isActive || starterTitles.has(habit.title)) }]
+    : sections;
 
   function changeHabit(id: string, changes: Partial<Habit>) {
     setError(null);
@@ -107,28 +112,29 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
       <div className="flex items-start justify-between gap-4">
         <div><p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">{firstRun ? 'Welcome to do' : 'Your habits'}</p>
           <h1 className="text-3xl font-semibold tracking-tight">Choose your habits.</h1>
-          <p className="text-sm text-zinc-400 mt-2">Pick what fits your life. Suggested points are a starting weight; adjust them to match the effort.</p></div>
+          <p className="text-sm text-zinc-400 mt-2">Start with one habit. You can add more later.</p></div>
         {!firstRun && <button aria-label="Close habit planner" onClick={onDone} className="p-2 rounded-full bg-white/5 text-zinc-400 hover:text-white"><X size={18}/></button>}
       </div>
       {importedCount > 0 && <p role="status" className="text-xs text-emerald-300">Found {importedCount} of your previous habits. Review them below, then save to your account.</p>}
 
-      <div className="sticky top-0 z-10 rounded-2xl border border-white/10 bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
+      {(!firstRun || partnerTotal > 0) && <div className="sticky top-0 z-10 rounded-2xl border border-white/10 bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
         <div><div className="text-xs text-zinc-400">Weekly potential · {activeCount} habits</div><div className="text-2xl font-semibold tabular-nums">{total} <span className="text-sm text-zinc-500">pts</span></div></div>
         <div className={`text-right text-xs font-medium tabular-nums ${partnerTotal > 0 && difference === 0 ? 'text-emerald-300' : 'text-zinc-300'}`}>{partnerTotal > 0 ? <>{difference === 0 ? 'Matched' : difference > 0 ? `${difference} pts below` : `${-difference} pts above`}<span className="block text-zinc-500 font-normal">Partner: {partnerTotal} pts</span></> : <span className="text-zinc-400">You set the first total</span>}</div>
-      </div>
+      </div>}
       {partnerTotal > 0 && difference !== 0 && activeCount > 0 && <button type="button" onClick={balance} className="w-full rounded-xl border border-white/20 bg-white/[0.06] py-2.5 text-sm font-medium">Balance points for me</button>}
 
-      {sections.filter(section => section.entries.length > 0).map(section => {
+      {visibleSections.filter(section => section.entries.length > 0).map(section => {
         return <section key={section.title} className="space-y-2" aria-labelledby={`section-${section.title.replaceAll(' ', '-')}`}>
           <h2 id={`section-${section.title.replaceAll(' ', '-')}`} className="text-xs font-semibold uppercase tracking-widest text-zinc-400 px-1">{section.title}</h2>
           <div className="space-y-2">{section.entries.map(habit => <div key={habit.id} className={`rounded-xl border p-3 flex items-center gap-3 ${habit.isActive ? 'border-white/20 bg-[#1c1c1e]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
-            <button type="button" aria-label={`${habit.isActive ? 'Remove' : 'Select'} ${habit.title}`} aria-pressed={habit.isActive} onClick={() => changeHabit(habit.id, { isActive: !habit.isActive })} className={`w-8 h-8 shrink-0 rounded-lg border flex items-center justify-center ${habit.isActive ? 'bg-white text-black border-white' : 'border-white/20 text-zinc-500'}`}>{habit.isActive ? <Check size={16}/> : <Plus size={16}/>}</button>
+            <button type="button" aria-label={`${habit.isActive ? 'Remove' : 'Select'} ${habit.title}`} aria-pressed={habit.isActive} onClick={() => changeHabit(habit.id, { isActive: !habit.isActive })} className={`w-11 h-11 shrink-0 rounded-lg border flex items-center justify-center ${habit.isActive ? 'bg-white text-black border-white' : 'border-white/20 text-zinc-500'}`}>{habit.isActive ? <Check size={16}/> : <Plus size={16}/>}</button>
             <HabitIcon name={habit.iconName} className="w-4 h-4 text-zinc-400 shrink-0"/>
-            <div className="min-w-0 flex-1"><div className="text-sm font-medium truncate">{habit.title}</div><div className="flex items-center gap-1.5 min-w-0"><select aria-label={`Frequency for ${habit.title}`} disabled={!habit.isActive} value={habit.weeklyTargetDays || 7} onChange={event => { const days = Number(event.target.value); changeHabit(habit.id, { weeklyTargetDays: days === 7 ? undefined : days, frequency: days === 7 ? 'daily' : 'weekly' }); }} className="max-w-20 shrink-0 bg-transparent text-[11px] text-zinc-400 disabled:opacity-60"><option value={7}>Daily</option>{[1, 2, 3, 4, 5, 6].map(days => <option key={days} value={days}>{days}×/week</option>)}</select>{habit.description && <span className="text-[11px] text-zinc-500 truncate">· {habit.description}</span>}</div></div>
-            {habit.isActive && <label className="flex items-center gap-1 shrink-0 text-xs text-zinc-400"><span className="sr-only">Points for {habit.title}</span><input type="number" min={5} max={maximumHabitPoints(habit)} step={1} value={habit.points} onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })} className="w-14 rounded-lg border border-white/15 bg-black px-2 py-1.5 text-right text-white tabular-nums"/><span>pts</span></label>}
+            <div className="min-w-0 flex-1"><div className="text-sm font-medium truncate">{habit.title}</div><div className="flex items-center gap-1.5 min-w-0">{!firstRun && <select aria-label={`Frequency for ${habit.title}`} disabled={!habit.isActive} value={habit.weeklyTargetDays || 7} onChange={event => { const days = Number(event.target.value); changeHabit(habit.id, { weeklyTargetDays: days === 7 ? undefined : days, frequency: days === 7 ? 'daily' : 'weekly' }); }} className="max-w-20 shrink-0 bg-transparent text-[11px] text-zinc-400 disabled:opacity-60"><option value={7}>Daily</option>{[1, 2, 3, 4, 5, 6].map(days => <option key={days} value={days}>{days}×/week</option>)}</select>}{habit.description && <span className="text-[11px] text-zinc-500 truncate">{habit.description}</span>}</div>{habit.automation?.metric === 'steps' && habit.isActive && <div className="mt-1 flex gap-1" aria-label="Daily step goal">{[6000, 10000, 14000].map(target => <button key={target} type="button" onClick={() => changeHabit(habit.id, { automation: { metric: 'steps', target } })} aria-pressed={habit.automation?.target === target} className={`min-h-11 rounded-full px-3 text-xs ${habit.automation?.target === target ? 'bg-white text-black' : 'bg-white/10 text-zinc-300'}`}>{target / 1000}k</button>)}</div>}</div>
+            {habit.isActive && !firstRun && <label className="flex items-center gap-1 shrink-0 text-xs text-zinc-400"><span className="sr-only">Points for {habit.title}</span><input type="number" min={5} max={maximumHabitPoints(habit)} step={1} value={habit.points} onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })} className="w-14 rounded-lg border border-white/15 bg-black px-2 py-1.5 text-right text-white tabular-nums"/><span>pts</span></label>}
           </div>)}</div>
         </section>;
       })}
+      {firstRun && !showMore && <button type="button" onClick={() => setShowMore(true)} className="min-h-11 w-full rounded-xl border border-white/15 text-sm text-zinc-300">See more habits</button>}
 
       <form onSubmit={addCustom} className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4 space-y-3">
         <h2 className="text-sm font-semibold">Add your own</h2>

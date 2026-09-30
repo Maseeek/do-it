@@ -10,9 +10,11 @@ export const HABIT_SECTIONS: { title: string; categories: HabitCategory[] }[] = 
 
 const CATALOG: Omit<Habit, 'id' | 'playerId' | 'order' | 'isActive'>[] = [
   { title: 'Consistent bedtime', description: 'Follow a sleep schedule', category: 'foundation', points: 25, iconName: 'Moon' },
+  { title: 'Sleep 8 hours', description: 'Time asleep, recorded by Google Health', category: 'foundation', points: 25, iconName: 'Moon', automation: { metric: 'sleep', target: 8 } },
+  { title: 'Step goal', description: 'Choose 6k, 10k or 14k steps', category: 'physical', points: 20, iconName: 'Footprints', automation: { metric: 'steps', target: 10000 } },
   { title: 'Move your body', description: 'Walk, cycle, dance or stretch', category: 'physical', points: 20, iconName: 'Activity' },
-  { title: 'Workout', description: 'Complete a planned workout', category: 'physical', points: 35, iconName: 'Dumbbell', frequency: 'weekly', weeklyTargetDays: 3 },
-  { title: 'Cardio session', description: 'Raise your heart rate on purpose', category: 'cardio', points: 30, iconName: 'Heart', frequency: 'weekly', weeklyTargetDays: 3 },
+  { title: 'Workout', description: 'Record a strength workout of 20+ minutes', category: 'physical', points: 35, iconName: 'Dumbbell', frequency: 'weekly', weeklyTargetDays: 3, automation: { metric: 'workout', target: 20 } },
+  { title: 'Cardio session', description: 'Record cardio of 20+ minutes', category: 'cardio', points: 30, iconName: 'Heart', frequency: 'weekly', weeklyTargetDays: 3, automation: { metric: 'cardio', target: 20 } },
   { title: 'Eat a balanced meal', description: 'Make one nourishing choice', category: 'nutrition', points: 15, iconName: 'Apple' },
   { title: 'Read for learning', description: 'Read a book or long-form article', category: 'intellect', points: 20, iconName: 'BookOpen' },
   { title: 'Take a lesson', description: 'Complete a structured lesson', category: 'intellect', points: 20, iconName: 'BookOpen' },

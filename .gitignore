@@ -42,7 +42,8 @@ next-env.d.ts
 
 # audit & scratch
 agent-audit-report.json
-/scripts
+/scripts/*
+!/scripts/revoke-legacy-health-tokens.mjs
 /tests
 /.scratch
 

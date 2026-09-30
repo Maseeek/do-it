@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatFriendlyDate } from '@/lib/date-utils';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
+import { useModalFocus } from '@/lib/use-modal-focus';
 
 interface ProofGalleryModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function ProofGalleryModal({
   completedAt,
   initialIndex = 0,
 }: ProofGalleryModalProps) {
+  const dialogRef = useModalFocus(isOpen && images.length > 0, onClose);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [prevProps, setPrevProps] = useState({ initialIndex, isOpen });
 
@@ -41,9 +43,7 @@ export function ProofGalleryModal({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === 'ArrowLeft' && images.length > 1) {
+      if (e.key === 'ArrowLeft' && images.length > 1) {
         soundEngine.playClick();
         setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
       } else if (e.key === 'ArrowRight' && images.length > 1) {
@@ -54,7 +54,7 @@ export function ProofGalleryModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, images.length, onClose]);
+  }, [isOpen, images.length]);
 
   if (!isOpen || images.length === 0) return null;
 
@@ -88,6 +88,8 @@ export function ProofGalleryModal({
       }}
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Proof photo gallery"
@@ -163,6 +165,8 @@ export function ProofGalleryModal({
             {images.map((img, idx) => (
               <button
                 key={idx}
+                aria-label={`View proof photo ${idx + 1}`}
+                aria-pressed={currentIndex === idx}
                 onClick={() => {
                   soundEngine.playClick();
                   hapticLight();
