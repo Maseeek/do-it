@@ -188,7 +188,7 @@ function AppContent() {
 
         <main id="main-content" className="flex-1 max-w-xl lg:max-w-6xl w-full mx-auto px-4 lg:px-10 pt-5 lg:pt-9 pb-28 lg:pb-12">
           {storageError && <div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">{storageError}</div>}
-          {activeTab === 'today' && <TodayView />}
+          {activeTab === 'today' && <TodayView onOpenHabits={() => { setVaultSection('habits'); setActiveTab('vault'); }} />}
           {activeTab === 'duel' && <DuelView />}
           {activeTab === 'vault' && <VaultView key={vaultSection} initialSection={vaultSection} />}
         </main>
