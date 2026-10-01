@@ -10,7 +10,7 @@ import { hapticSuccess } from '@/lib/haptic-utils';
 import { DoLogo } from './DoLogo';
 
 export function ProfileGate() {
-  const { selectProfile, maciekSummary, myrnaSummary } = useStore();
+  const { selectProfile, players, maciekSummary, myrnaSummary } = useStore();
 
   const handleSelect = (id: PlayerId) => {
     soundEngine.playCheck();
@@ -42,17 +42,17 @@ export function ProfileGate() {
           {/* Maciek */}
           <button
             onClick={() => handleSelect('maciek')}
-            aria-label={`Select Maciek, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma`}
+            aria-label={`Select ${players.maciek.name}, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma`}
             className="w-full text-left p-4 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] hover:border-blue-500/50 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-base">
-                  M
+                  {players.maciek.name[0]?.toUpperCase()}
                 </div>
                 <div>
                   <div className="text-base font-semibold text-white">
-                    Maciek
+                    {players.maciek.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
                     {maciekSummary.weekly} pts this week · {maciekSummary.karma} karma
@@ -66,17 +66,17 @@ export function ProfileGate() {
           {/* Myrna */}
           <button
             onClick={() => handleSelect('myrna')}
-            aria-label={`Select Myrna, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma`}
+            aria-label={`Select ${players.myrna.name}, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma`}
             className="w-full text-left p-4 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] hover:border-pink-500/50 transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 font-bold text-base">
-                  M
+                  {players.myrna.name[0]?.toUpperCase()}
                 </div>
                 <div>
                   <div className="text-base font-semibold text-white">
-                    Myrna
+                    {players.myrna.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
                     {myrnaSummary.weekly} pts this week · {myrnaSummary.karma} karma

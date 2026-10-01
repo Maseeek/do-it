@@ -24,6 +24,7 @@ interface MultiplayerContextValue {
   refresh: () => Promise<void>;
   createDuel: (name: string) => Promise<void>;
   acceptInvite: (code: string, name: string) => Promise<void>;
+  updatePlayerName: (name: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -91,6 +92,12 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     if (rpcError) throw rpcError;
     await refresh();
   };
+  const updatePlayerName = async (name: string) => {
+    if (!client || !duel || !slot) throw new Error('Join a duel before changing your name.');
+    const { error: rpcError } = await client.rpc('update_duel_player_name', { display_name: name });
+    if (rpcError) throw rpcError;
+    await refresh();
+  };
   const signOut = async () => {
     if (!client) return;
     refreshSequence.current++;
@@ -102,7 +109,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   };
   const slot = duel && user ? (duel.owner_id === user.id ? 'maciek' : duel.guest_id === user.id ? 'myrna' : null) : null;
 
-  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, error, refresh, createDuel, acceptInvite, signOut }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, error, refresh, createDuel, acceptInvite, updatePlayerName, signOut }}>{children}</Context.Provider>;
 }
 
 export function useMultiplayer() {

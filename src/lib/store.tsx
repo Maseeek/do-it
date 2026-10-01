@@ -81,6 +81,7 @@ interface StoreContextType {
   setSoundEnabled: (enabled: boolean) => void;
   selectProfile: (id: PlayerId) => void;
   switchProfile: () => void;
+  updateLocalPlayerName: (name: string) => void;
   toggleHabit: (
     habitId: string,
     proofUrl?: string | string[],
@@ -806,6 +807,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateLocalPlayerName = (name: string) => {
+    if (multiplayer.configured || !state.activePlayerId) throw new Error('Choose a profile first.');
+    const trimmed = name.trim();
+    if (trimmed.length < 1 || trimmed.length > 40) throw new Error('Name must be 1 to 40 characters.');
+    const id = state.activePlayerId;
+    setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], name: trimmed } } }));
+  };
+
   const applyHabitPlan = async (plannedHabits: Habit[]) => {
     const playerId = state.activePlayerId;
     if (!playerId || (multiplayer.configured && playerId !== multiplayer.slot)) throw new Error('Choose your own profile first.');
@@ -1377,6 +1386,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSoundEnabled,
         selectProfile,
         switchProfile,
+        updateLocalPlayerName,
         toggleHabit,
         updateCheckInNote,
         isHabitCompletedToday,
