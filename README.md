@@ -64,6 +64,7 @@ Run `npm run check` before a pull request; it runs typecheck, lint, and the comm
 ### Enable multiplayer
 
 1. In a Supabase project, run [`supabase/duels.sql`](supabase/duels.sql), then [`supabase/duels-extras.sql`](supabase/duels-extras.sql) in the SQL Editor. These create isolated duel tables, invitation functions, and row level policies.
+   For an existing deployment that already ran `duels.sql`, apply [`supabase/replace-solo-duel.sql`](supabase/replace-solo-duel.sql) to enable switching from an unpaired solo duel to an invitation.
 2. Configure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` and in your hosting environment. Use the publishable or anon key, never a secret or service role key in `NEXT_PUBLIC_` variables.
 3. Enable email and password sign in in Supabase Authentication. Add your deployed site URL to the Auth redirect URLs if email confirmations are enabled.
 4. Restart the app. The first player signs up and creates a duel, then shares the link from the Duel tab. The invited player signs up or signs in and accepts it.

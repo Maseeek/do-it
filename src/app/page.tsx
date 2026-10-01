@@ -20,6 +20,8 @@ import { prepareQuickCheckIn } from '@/lib/quick-checkin';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { MultiplayerGate } from '@/components/MultiplayerGate';
+import { ExistingDuelInviteGate } from '@/components/ExistingDuelInviteGate';
+import { getMultiplayerEntry } from '@/lib/invite-navigation';
 import { HabitOnboarding } from '@/components/HabitOnboarding';
 
 function AppContent() {
@@ -33,6 +35,8 @@ function AppContent() {
   const handledAction = useRef<string | null>(null);
 
   const searchParams = useSearchParams();
+  const inviteCode = searchParams.get('invite');
+  const multiplayerEntry = getMultiplayerEntry(multiplayer.configured, !!multiplayer.user, !!multiplayer.duel, inviteCode);
   const pendingDuelId = multiplayer.duel?.id;
   const pendingGuestId = multiplayer.duel?.guest_id;
 
@@ -137,6 +141,10 @@ function AppContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [switchProfile, setSelectedDate, multiplayer.configured]);
 
+  if (!multiplayer.loading && multiplayerEntry === 'invite-conflict' && inviteCode) {
+    return <ExistingDuelInviteGate inviteCode={inviteCode} />;
+  }
+
   // SSR hydration placeholder
   if (multiplayer.configured && multiplayer.duel && syncStatus === 'offline' && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot)) {
     return <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-3 px-4"><p role="alert">{storageError || 'Could not load your duel.'}</p><button className="rounded-xl bg-white text-black px-4 py-2" onClick={() => window.location.reload()}>Retry</button></div>;
@@ -150,8 +158,8 @@ function AppContent() {
     );
   }
 
-  if (multiplayer.configured && (!multiplayer.user || !multiplayer.duel)) {
-    return <MultiplayerGate inviteCode={searchParams.get('invite')} />;
+  if (multiplayerEntry === 'gate') {
+    return <MultiplayerGate inviteCode={inviteCode} />;
   }
 
   // First time or logged out: "Who are you?" profile selection
