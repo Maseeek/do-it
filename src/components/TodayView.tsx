@@ -10,7 +10,6 @@ import { hapticCelebration } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
-import { HealthConnection } from './HealthConnection';
 
 export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
   const multiplayer = useMultiplayer();
@@ -25,6 +24,7 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
   const pending = activeHabits.filter((habit) => !isHabitSatisfiedOnDate(habit.id, selectedDate));
   const done = activeHabits.filter((habit) => isHabitSatisfiedOnDate(habit.id, selectedDate));
   const allDone = activeHabits.length > 0 && pending.length === 0;
+  const progress = par > 0 ? Math.min(100, Math.round((points / par) * 100)) : 0;
   const isRest = isRestDay(selectedDate);
   const context = `${activePlayer?.id}:${selectedDate}`;
   const previous = useRef({ context, points, allDone });
@@ -41,7 +41,25 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-end justify-between gap-4"><h1 className="text-3xl font-semibold tracking-tight">{selectedDate === getTodayDateString() ? 'Today' : formatFriendlyDate(selectedDate)}</h1><span className="text-xs tabular-nums text-zinc-500">{done.length}/{activeHabits.length}</span></div>
-      <HealthConnection compact />
+      <div className="space-y-2" aria-label="Today progress">
+        <div className="flex items-center justify-between text-xs text-zinc-500">
+          <span>{done.length} of {activeHabits.length} habits</span>
+          <span className="tabular-nums">{points} / {par} pts</span>
+        </div>
+        <div
+          role="progressbar"
+          aria-label={`Today's progress: ${points} of ${par} points`}
+          aria-valuenow={points}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(1, par)}
+          className="h-2 overflow-hidden rounded-full bg-white/[0.08]"
+        >
+          <div
+            className={`h-full rounded-full transition-[width] duration-500 ${progress >= 100 ? 'bg-emerald-400' : 'bg-white/80'}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
       <div className="space-y-5">
 
           {isRest && (
