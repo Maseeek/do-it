@@ -41,10 +41,12 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     if (!client) return;
     const sequence = ++refreshSequence.current;
     try {
-      const { data: sessionData, error: authError } = await client.auth.getUser();
+      // The session is already persisted locally by Supabase. Reading it avoids
+      // a blocking network round trip before the app can render the dashboard.
+      const { data: sessionData, error: authError } = await client.auth.getSession();
       if (sequence !== refreshSequence.current) return;
       if (authError && authError.name !== 'AuthSessionMissingError') throw authError;
-      const currentUser = sessionData.user;
+      const currentUser = sessionData.session?.user ?? null;
       setUser(currentUser);
       if (!currentUser) { setDuel(null); setError(null); return; }
       const { data, error: queryError } = await client.from('duels').select('*')
