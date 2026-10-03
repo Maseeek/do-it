@@ -151,7 +151,7 @@ function AppContent() {
   }
   if (!isHydrated || multiplayer.loading || (multiplayer.configured && multiplayer.duel && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot))) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-[#f2f2f7] dark:bg-black flex flex-col items-center justify-center gap-3">
         <DoLogo size="md" className="animate-pulse" />
         <span className="text-xs font-mono text-zinc-500">loading do...</span>
       </div>
@@ -172,7 +172,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col font-sans relative selection:bg-zinc-800 selection:text-white">
+    <div className="min-h-screen bg-[#f2f2f7] dark:bg-black text-[#1c1c1e] dark:text-[#f5f5f7] flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white">
       {/* Ambient background glow mesh */}
       <div className="ambient-mesh" aria-hidden="true" />
 
@@ -223,7 +223,7 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="min-h-screen bg-[#f2f2f7] dark:bg-black flex items-center justify-center">
           <DoLogo size="md" className="animate-pulse" />
         </div>
       }

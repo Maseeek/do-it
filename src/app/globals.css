@@ -1,7 +1,28 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  color-scheme: dark;
+  --background: #f2f2f7;
+  --foreground: #1c1c1e;
+  --surface-0: #f2f2f7;
+  --surface-1: #ffffff;
+  --surface-2: #e5e5ea;
+  --surface-3: #d1d1d6;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.16);
+  --maciek-blue: #007aff;
+  --maciek-blue-glow: rgba(0, 122, 255, 0.2);
+  --myrna-pink: #ff2d55;
+  --myrna-pink-glow: rgba(255, 45, 85, 0.2);
+  --par-emerald: #30d158;
+  --par-emerald-glow: rgba(48, 209, 88, 0.2);
+  --stake-amber: #ff9500;
+  color-scheme: light dark;
+}
+
+:root.dark,
+.dark {
   --background: #000000;
   --foreground: #f5f5f7;
   --surface-0: #000000;
@@ -43,8 +64,8 @@ button:disabled { cursor: not-allowed; }
 }
 
 body {
-  background: #000000;
-  color: #f5f5f7;
+  background: var(--background);
+  color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -58,9 +79,132 @@ body {
   pointer-events: none;
   z-index: 0;
   background: 
+    radial-gradient(circle at 20% 0%, rgba(0, 122, 255, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(255, 45, 85, 0.05) 0%, transparent 45%),
+    #f2f2f7;
+  transition: background 0.3s ease;
+}
+
+.dark .ambient-mesh {
+  background: 
     radial-gradient(circle at 20% 0%, rgba(0, 122, 255, 0.05) 0%, transparent 40%),
     radial-gradient(circle at 80% 0%, rgba(255, 45, 85, 0.05) 0%, transparent 40%),
     #000000;
+}
+
+/* Light mode overrides for existing utility classes when dark mode is not active */
+html:not(.dark) .bg-\[\#1c1c1e\] {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+}
+
+html:not(.dark) .bg-\[\#1c1c1e\]\/60 {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+html:not(.dark) .bg-\[\#1c1c1e\]\/40 {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+html:not(.dark) .bg-\[\#2c2c2e\] {
+  background-color: #e5e5ea;
+}
+
+html:not(.dark) .bg-\[\#3a3a3c\] {
+  background-color: #d1d1d6;
+}
+
+html:not(.dark) .border-white\/\[0\.08\],
+html:not(.dark) .border-white\/\[0\.04\],
+html:not(.dark) .border-white\/\[0\.06\],
+html:not(.dark) .border-white\/\[0\.1\],
+html:not(.dark) .border-white\/\[0\.12\],
+html:not(.dark) .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+html:not(.dark) .hover\:border-white\/\[0\.16\]:hover {
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+html:not(.dark) .bg-black\/80,
+html:not(.dark) .bg-black\/85 {
+  background-color: rgba(242, 242, 247, 0.85);
+}
+
+html:not(.dark) .bg-white\/\[0\.02\],
+html:not(.dark) .bg-white\/\[0\.04\],
+html:not(.dark) .bg-white\/\[0\.06\] {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+html:not(.dark) .bg-white\/\[0\.08\] {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover,
+html:not(.dark) .hover\:bg-white\/\[0\.1\]:hover,
+html:not(.dark) .hover\:bg-white\/\[0\.12\]:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .text-white:not(
+  button.bg-blue-500,
+  button.bg-pink-500,
+  button.bg-black,
+  button.bg-zinc-900,
+  .bg-blue-500 *,
+  .bg-pink-500 *,
+  .bg-black *,
+  .bg-zinc-900 *
+) {
+  color: #1c1c1e;
+}
+
+html:not(.dark) .text-\[\#f5f5f7\] {
+  color: #1c1c1e;
+}
+
+html:not(.dark) .hover\:text-white:hover:not(
+  button.bg-blue-500,
+  button.bg-pink-500,
+  .bg-blue-500 *,
+  .bg-pink-500 *
+) {
+  color: #000000;
+}
+
+html:not(.dark) .text-zinc-300 {
+  color: #3a3a3c;
+}
+
+html:not(.dark) .text-zinc-400 {
+  color: #636366;
+}
+
+html:not(.dark) .text-zinc-500 {
+  color: #8e8e93;
+}
+
+html:not(.dark) circle.text-white\/\[0\.08\] {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) kbd {
+  background-color: #e5e5ea;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1c1c1e;
+}
+
+html:not(.dark) input,
+html:not(.dark) textarea,
+html:not(.dark) select {
+  color: #1c1c1e;
 }
 
 /* Glassmorphism primitives */

@@ -1,5 +1,8 @@
 export type PlayerId = 'maciek' | 'myrna';
 
+export type ThemePreference = 'system' | 'light' | 'dark';
+export type EffectiveTheme = 'light' | 'dark';
+
 export interface Player {
   id: PlayerId;
   name: string;
@@ -198,6 +201,7 @@ export interface AppState {
   restDays?: RestDay[];
   soundEnabled?: boolean;
   hapticsEnabled?: boolean;
+  themePreference?: ThemePreference;
   supabaseConfig?: {
     url: string;
     anonKey: string;
