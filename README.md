@@ -111,6 +111,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. Without Sup
 
 1. In your Supabase project's SQL Editor, execute the schema migrations in order:
    - [`supabase/duels.sql`](supabase/duels.sql) — Core multi-tenant tables (`duels`, `duel_habits`, `duel_check_ins`, `duel_stakes`), RLS policies, and `SECURITY DEFINER` invitation RPCs.
+     - *Existing deployments*: If you have already executed `duels.sql`, apply [`supabase/replace-solo-duel.sql`](supabase/replace-solo-duel.sql) to enable switching from an unpaired solo duel to an invitation.
    - [`supabase/duels-extras.sql`](supabase/duels-extras.sql) — Realtime reactions, rest-day streak protection, and the idempotent daily check-in unique index.
    - [`supabase/health.sql`](supabase/health.sql) — Isolated `health_connections` vault restricted to `service_role`.
 2. Copy `.env.example` to `.env.local` and configure your environment variables:

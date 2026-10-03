@@ -24,6 +24,7 @@ interface MultiplayerContextValue {
   refresh: () => Promise<void>;
   createDuel: (name: string) => Promise<void>;
   acceptInvite: (code: string, name: string) => Promise<void>;
+  replaceSoloDuelWithInvite: (code: string, name: string) => Promise<void>;
   updatePlayerName: (name: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -92,6 +93,16 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     if (rpcError) throw rpcError;
     await refresh();
   };
+  const replaceSoloDuelWithInvite = async (code: string, name: string) => {
+    if (!client) throw new Error('Supabase is not configured');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code)) {
+      throw new Error('This invitation link is invalid. Ask for a new link.');
+    }
+    const displayName = user?.email?.toLowerCase() === 'myrnamarsh@icloud.com' ? 'Myrna' : name;
+    const { error: rpcError } = await client.rpc('replace_solo_duel_with_invite', { code, display_name: displayName });
+    if (rpcError) throw rpcError;
+    await refresh();
+  };
   const updatePlayerName = async (name: string) => {
     if (!client || !duel || !slot) throw new Error('Join a duel before changing your name.');
     const { error: rpcError } = await client.rpc('update_duel_player_name', { display_name: name });
@@ -109,7 +120,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   };
   const slot = duel && user ? (duel.owner_id === user.id ? 'maciek' : duel.guest_id === user.id ? 'myrna' : null) : null;
 
-  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, error, refresh, createDuel, acceptInvite, updatePlayerName, signOut }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, signOut }}>{children}</Context.Provider>;
 }
 
 export function useMultiplayer() {
