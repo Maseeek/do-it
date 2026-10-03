@@ -15,6 +15,8 @@ import {
   Stake,
   WearableConfig,
   GoogleHealthSyncResult,
+  ThemePreference,
+  EffectiveTheme,
 } from './types';
 import { getInitialState } from './seed';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
@@ -132,6 +134,10 @@ interface StoreContextType {
   testHevySync: (workoutTitle?: string, player?: string) => Promise<{ success: boolean; message: string }>;
   disconnectGoogleHealth: () => void;
   disconnectStrava: () => void;
+  themePreference: ThemePreference;
+  effectiveTheme: EffectiveTheme;
+  setThemePreference: (pref: ThemePreference) => void;
+  toggleTheme: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -148,6 +154,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('local_only');
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
+  const [themePreference, setThemePreferenceState] = useState<ThemePreference>('system');
+  const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('dark');
 
   const supabaseRef = useRef(getSupabaseClient());
   const duelQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -183,6 +191,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const isSnd = savedSound === 'true';
         setSoundEnabledState(isSnd);
         soundEngine.setEnabled(isSnd);
+      }
+
+      const savedTheme = localStorage.getItem('theme_preference') as ThemePreference | null;
+      if (savedTheme && ['system', 'light', 'dark'].includes(savedTheme)) {
+        setThemePreferenceState(savedTheme);
       }
 
       if (typeof document !== 'undefined') {
@@ -224,6 +237,72 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [state, isHydrated, multiplayer.configured]);
+
+  // Theme synchronization and system mode detection
+  const applyThemeToDocument = useCallback((effective: EffectiveTheme) => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    if (effective === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.style.colorScheme = 'light';
+    }
+
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', effective === 'dark' ? '#08090a' : '#f2f2f7');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const resolveAndApplyTheme = () => {
+      const resolved: EffectiveTheme =
+        themePreference === 'system'
+          ? (mediaQuery.matches ? 'dark' : 'light')
+          : themePreference;
+      setEffectiveTheme(resolved);
+      applyThemeToDocument(resolved);
+    };
+
+    resolveAndApplyTheme();
+
+    const handleSystemChange = () => {
+      if (themePreference === 'system') {
+        resolveAndApplyTheme();
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemChange);
+  }, [themePreference, applyThemeToDocument]);
+
+  const setThemePreference = useCallback((pref: ThemePreference) => {
+    setThemePreferenceState(pref);
+    try {
+      localStorage.setItem('theme_preference', pref);
+    } catch (e) {
+      console.error('Error saving theme preference to localStorage', e);
+    }
+    setState((prev) => ({ ...prev, themePreference: pref }));
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    if (themePreference === 'system') {
+      setThemePreference(effectiveTheme === 'dark' ? 'light' : 'dark');
+    } else if (themePreference === 'light') {
+      setThemePreference('dark');
+    } else {
+      setThemePreference('system');
+    }
+  }, [themePreference, effectiveTheme, setThemePreference]);
 
   // 3. Supabase Cloud Sync & Realtime Subscription
   useEffect(() => {
@@ -1425,6 +1504,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         testHevySync,
         disconnectGoogleHealth,
         disconnectStrava,
+        themePreference,
+        effectiveTheme,
+        setThemePreference,
+        toggleTheme,
       }}
     >
       {children}

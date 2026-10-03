@@ -37,7 +37,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08090a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#08090a" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
@@ -50,10 +53,36 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-black text-[#f5f5f7] font-sans selection:bg-zinc-800 selection:text-white">
-        <MultiplayerProvider><StoreProvider>{children}</StoreProvider></MultiplayerProvider>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var pref = localStorage.getItem('theme_preference') || 'system';
+                var isDark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                var doc = document.documentElement;
+                if (isDark) {
+                  doc.classList.add('dark');
+                  doc.classList.remove('light');
+                  doc.style.colorScheme = 'dark';
+                } else {
+                  doc.classList.remove('dark');
+                  doc.classList.add('light');
+                  doc.style.colorScheme = 'light';
+                }
+              } catch(e) {}
+            })();`,
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-sans transition-colors duration-150">
+        <div className="ambient-mesh" />
+        <MultiplayerProvider>
+          <StoreProvider>{children}</StoreProvider>
+        </MultiplayerProvider>
       </body>
     </html>
   );
