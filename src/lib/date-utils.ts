@@ -105,8 +105,17 @@ export function isFutureDate(dateStr: string): boolean {
   return dateStr > getTodayDateString();
 }
 
+export interface CalendarWeekDay {
+  dateStr: string;
+  dayName: string;
+  dayNumber: number;
+  isToday: boolean;
+  isSelected: boolean;
+  isFuture: boolean;
+}
+
 // Generate the 7 days of the current calendar week (Monday to Sunday)
-export function getCurrentWeekDays(selectedDateStr: string = getTodayDateString()) {
+export function getCurrentWeekDays(selectedDateStr: string = getTodayDateString()): CalendarWeekDay[] {
   const ref = parseDate(selectedDateStr);
   const day = ref.getDay(); // 0 is Sunday
   const mondayOffset = day === 0 ? -6 : 1 - day;
@@ -114,15 +123,7 @@ export function getCurrentWeekDays(selectedDateStr: string = getTodayDateString(
   const monday = new Date(ref);
   monday.setDate(ref.getDate() + mondayOffset);
 
-  const days: {
-    dateStr: string;
-    dayName: string;
-    dayNumber: number;
-    isToday: boolean;
-    isSelected: boolean;
-    isFuture: boolean;
-  }[] = [];
-
+  const days: CalendarWeekDay[] = [];
   const today = getTodayDateString();
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
