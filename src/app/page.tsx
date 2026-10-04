@@ -35,7 +35,9 @@ function AppContent() {
   const handledAction = useRef<string | null>(null);
 
   const searchParams = useSearchParams();
-  const inviteCode = searchParams.get('invite');
+  const rawInviteCode = searchParams.get('invite');
+  const [dismissedInvite, setDismissedInvite] = useState<string | null>(null);
+  const inviteCode = rawInviteCode === dismissedInvite ? null : rawInviteCode;
   const multiplayerEntry = getMultiplayerEntry(multiplayer.configured, !!multiplayer.user, !!multiplayer.duel, inviteCode);
   const pendingDuelId = multiplayer.duel?.id;
   const pendingGuestId = multiplayer.duel?.guest_id;
@@ -142,7 +144,7 @@ function AppContent() {
   }, [switchProfile, setSelectedDate, multiplayer.configured]);
 
   if (!multiplayer.loading && multiplayerEntry === 'invite-conflict' && inviteCode) {
-    return <ExistingDuelInviteGate inviteCode={inviteCode} />;
+    return <ExistingDuelInviteGate inviteCode={inviteCode} onDismiss={() => setDismissedInvite(rawInviteCode)} />;
   }
 
   // SSR hydration placeholder

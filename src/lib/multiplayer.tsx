@@ -100,7 +100,12 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     }
     const displayName = user?.email?.toLowerCase() === 'myrnamarsh@icloud.com' ? 'Myrna' : name;
     const { error: rpcError } = await client.rpc('replace_solo_duel_with_invite', { code, display_name: displayName });
-    if (rpcError) throw rpcError;
+    if (rpcError) {
+      if (rpcError.code === 'PGRST202' || rpcError.message?.includes('replace_solo_duel_with_invite')) {
+        throw new Error('Solo duel replacement is not enabled in this database yet. Apply supabase/replace-solo-duel.sql in the Supabase SQL editor.');
+      }
+      throw rpcError;
+    }
     await refresh();
   };
   const updatePlayerName = async (name: string) => {
