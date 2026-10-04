@@ -153,7 +153,7 @@ function AppContent() {
   }
   if (!isHydrated || multiplayer.loading || (multiplayer.configured && multiplayer.duel && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot))) {
     return (
-      <div className="min-h-screen bg-[#f2f2f7] dark:bg-black flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-[#f7f8f9] dark:bg-[#08090a] flex flex-col items-center justify-center gap-3">
         <DoLogo size="md" className="animate-pulse" />
         <span className="text-xs font-mono text-zinc-500">loading do...</span>
       </div>
@@ -174,7 +174,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f2f2f7] dark:bg-black text-[#1c1c1e] dark:text-[#f5f5f7] flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white">
+    <div className="min-h-screen bg-[#f7f8f9] dark:bg-[#08090a] text-[#111315] dark:text-zinc-100 flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white">
       {/* Ambient background glow mesh */}
       <div className="ambient-mesh" aria-hidden="true" />
 
@@ -194,7 +194,7 @@ function AppContent() {
               hapticLight();
               setToastMessage(null);
             }}
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#1c1c1e] border border-white/[0.12] text-white px-4 py-2 rounded-2xl text-xs font-medium shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200 cursor-pointer active:scale-95"
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#0e1013] border border-zinc-800 text-white px-3.5 py-2 rounded-lg text-xs font-mono font-medium shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200 cursor-pointer active:scale-95"
           >
             <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
             <span>{toastMessage}</span>
@@ -225,7 +225,7 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f2f2f7] dark:bg-black flex items-center justify-center">
+        <div className="min-h-screen bg-[#f7f8f9] dark:bg-[#08090a] flex items-center justify-center">
           <DoLogo size="md" className="animate-pulse" />
         </div>
       }

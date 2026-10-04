@@ -6,12 +6,17 @@ import { useStore } from '@/lib/store';
 import { HabitIcon } from './HabitIcon';
 import { ProofModal } from './ProofModal';
 import { ProofGalleryModal } from './ProofGalleryModal';
+import { calculateHabitStreak } from '@/lib/score-calculator';
 import {
+  BookOpen,
   Camera,
   Check,
+  Flame,
   MessageSquare,
+  MessageSquarePlus,
   Minus,
   Plus,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
@@ -25,6 +30,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
     getHabitCheckInOnDate,
     getWeeklyHabitCompletions,
     selectedDate,
+    checkIns,
+    restDays,
     activePlayer,
     partnerId,
     players,
@@ -45,6 +52,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
   const weeklyCompletions = getWeeklyHabitCompletions(habit.id, selectedDate);
   const isWeeklyTargetMet = isWeeklyHabit && weeklyCompletions >= habit.weeklyTargetDays!;
   const satisfied = completed || isWeeklyTargetMet;
+  const habitStreak = calculateHabitStreak(habit, checkIns, restDays);
 
   const isMaciek = activePlayer?.id === 'maciek';
   const partnerPlayer = partnerId ? players[partnerId] : null;
@@ -129,14 +137,14 @@ export function HabitCard({ habit }: { habit: Habit }) {
   return (
     <>
       <div
-        className={`group relative rounded-2xl p-3.5 transition-all duration-200 border ${
+        className={`group relative rounded-xl p-3.5 transition-all duration-150 border ${
           satisfied
-            ? 'bg-[#1c1c1e]/60 border-white/[0.04] opacity-80'
-            : 'bg-[#1c1c1e] border-white/[0.08] hover:border-white/[0.16]'
+            ? 'bg-zinc-900/30 border-zinc-800/50 opacity-75'
+            : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-xs'
         }`}
       >
         <div className="flex items-center gap-3">
-          {/* Apple Reminders style circular checkbox */}
+          {/* Sharp Linear-style square checkbox with 44px touch target */}
           <button
             onClick={handleToggle}
             aria-label={
@@ -146,101 +154,91 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
                 : `Mark ${habit.title} completed`
             }
-            className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-90 ${
+            className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 active:scale-95 ${
               completed
                 ? isMaciek
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-pink-500 text-white'
+                  ? 'bg-blue-500 border border-blue-400 text-white shadow-xs'
+                  : 'bg-pink-500 border border-pink-400 text-white shadow-xs'
                 : isWeeklyTargetMet
-                ? 'border-2 border-emerald-500/60 text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25'
-                : 'border-2 border-zinc-600 hover:border-zinc-400 text-transparent'
+                ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
+                : 'border border-zinc-700 bg-zinc-900/80 hover:border-zinc-500 text-transparent hover:text-zinc-600'
             }`}
           >
-            <Check className={`w-3.5 h-3.5 stroke-[3] ${!completed && !isWeeklyTargetMet ? 'hidden' : ''}`} />
+            <Check className={`w-4 h-4 stroke-[3] ${!completed && !isWeeklyTargetMet ? ' opacity-0 group-hover:opacity-40' : ''}`} />
           </button>
 
-          {/* Middle: Icon + Title + Metadata */}
+          {/* Middle: Metadata + Title + Description */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className={`w-3.5 h-3.5 ${satisfied ? 'text-zinc-600' : 'text-zinc-400'}`}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={`w-3.5 h-3.5 ${satisfied ? 'text-zinc-500' : 'text-zinc-400'}`}>
                 <HabitIcon name={habit.iconName} className="w-3.5 h-3.5" />
               </span>
 
               <span
-                className={`text-sm font-semibold tracking-tight truncate ${
-                  satisfied ? 'line-through text-zinc-500' : 'text-white'
+                className={`text-[10px] uppercase font-mono font-medium tracking-wider ${
+                  satisfied ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              >
+                {habit.category.replace('_', ' ')}
+              </span>
+
+              {isWeeklyHabit && (
+                <span
+                  className={`inline-flex items-center text-[9px] font-mono px-1.5 py-0.2 rounded border ${
+                    isWeeklyTargetMet
+                      ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25 font-semibold'
+                      : 'text-zinc-400 bg-zinc-900 border-zinc-800'
+                  }`}
+                >
+                  {weeklyCompletions}/{habit.weeklyTargetDays} wk{isWeeklyTargetMet ? ' · met' : ''}
+                </span>
+              )}
+
+              {habitStreak >= 2 && (
+                <span
+                  className="inline-flex items-center gap-0.5 text-[9px] font-mono font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20"
+                  title={`${habitStreak}-day habit streak`}
+                >
+                  <Flame className="w-2.5 h-2.5 text-amber-400" />
+                  {habitStreak}d
+                </span>
+              )}
+
+              {habit.points >= 40 && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-amber-400/90 bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  Key
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 mt-0.5">
+              <span
+                className={`text-sm font-medium tracking-tight truncate ${
+                  satisfied ? 'line-through text-zinc-500' : 'text-zinc-100'
                 }`}
               >
                 {habit.title}
               </span>
-
             </div>
 
-            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-400">
-              {isWeeklyHabit && (
-                <>
-                  <span
-                    className={
-                      isWeeklyTargetMet
-                        ? 'text-emerald-400 font-medium'
-                        : 'text-zinc-400'
-                    }
-                  >
-                    {weeklyCompletions}/{habit.weeklyTargetDays} this wk{isWeeklyTargetMet ? ' · Goal Met' : ''}
-                  </span>
-                </>
-              )}
-              {completed && checkIn?.quantity && (
-                <>
-                  <span>•</span>
-                  <span>{checkIn.quantity} {habit.quantityUnit || 'units'}</span>
-                </>
-              )}
-            </div>
+            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+              {completed && checkIn?.quantity
+                ? `Logged ${checkIn.quantity} ${habit.quantityUnit || 'units'} (+${checkIn.pointsEarned} pts)`
+                : habit.description}
+            </p>
 
             {/* Micro-note preview */}
             {checkIn?.note && (
-              <div className="mt-1 flex items-center gap-1 text-[11px] text-zinc-300 italic">
-                <MessageSquare className="w-2.5 h-2.5 text-zinc-500 flex-shrink-0" />
+              <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-zinc-300 italic bg-zinc-900/70 border border-zinc-800/80 rounded-md px-2 py-0.5 max-w-full">
+                <MessageSquare className="w-2.5 h-2.5 text-blue-400 shrink-0" />
                 <span className="truncate">{checkIn.note}</span>
               </div>
             )}
           </div>
 
-          {/* Right: Points & Quick Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Note icon button */}
-            <button
-              onClick={openNoteEditor}
-              aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
-              className={`flex size-11 items-center justify-center rounded-full transition-colors ${
-                checkIn?.note
-                  ? 'text-blue-400 bg-blue-500/10'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title={checkIn?.note ? 'Edit note' : 'Add note'}
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Proof icon if exists */}
-            {proofPhotos.length > 0 && (
-              <button
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setShowFullProof(true);
-                }}
-                aria-label={`View ${proofPhotos.length} proof photos for ${habit.title}`}
-                className="flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/20 transition-colors"
-                title="View proof photos"
-              >
-                <Camera className="w-3 h-3" />
-                <span>{proofPhotos.length}</span>
-              </button>
-            )}
-
-            {/* Points pill */}
+          {/* Right: Rectangular Points Badge & Compact Quick Actions */}
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
             <button
               onClick={() => {
                 if (habit.isQuantitative) {
@@ -254,16 +252,16 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   ? `Log quantity for ${habit.title}`
                   : `${habit.points} points`
               }
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-colors ${
                 completed
                   ? checkIn?.pointsEarned === 0
-                    ? 'bg-zinc-800 text-zinc-400'
-                    : 'bg-white/[0.04] text-zinc-500'
+                    ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                    : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-500'
                   : isWeeklyTargetMet
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                   : habit.isQuantitative
-                  ? 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25'
-                  : 'bg-white/[0.08] text-white'
+                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-100 hover:border-zinc-700'
               }`}
               title={
                 completed && checkIn?.pointsEarned === 0
@@ -281,12 +279,62 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 ? 'Goal Met'
                 : `+${habit.points}`}
             </button>
+
+            <div className="flex items-center gap-1">
+              {/* Note icon button */}
+              <button
+                onClick={openNoteEditor}
+                aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
+                className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${
+                  checkIn?.note
+                    ? 'text-blue-400 bg-blue-500/10 border-blue-500/25'
+                    : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-zinc-900 hover:border-zinc-800'
+                }`}
+                title={checkIn?.note ? 'Edit note' : 'Add note'}
+              >
+                {checkIn?.note ? (
+                  <MessageSquare className="w-3.5 h-3.5" />
+                ) : (
+                  <MessageSquarePlus className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              {/* Proof icon if exists */}
+              {proofPhotos.length > 0 && (
+                <button
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setShowFullProof(true);
+                  }}
+                  aria-label={`View ${proofPhotos.length} proof photos for ${habit.title}`}
+                  className="flex items-center gap-1 text-[10px] font-mono font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/25 transition-colors"
+                  title="View proof photos"
+                >
+                  <Camera className="w-3 h-3" />
+                  <span>{proofPhotos.length}</span>
+                </button>
+              )}
+            </div>
+
+            {habit.isQuantitative && completed && (
+              <button
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setShowQtyLogger(true);
+                }}
+                className="text-[10px] font-mono text-zinc-400 hover:text-white"
+              >
+                Edit pages
+              </button>
+            )}
           </div>
         </div>
 
         {/* Inline Micro-Note Editor */}
         {isEditingNote && (
-          <form onSubmit={handleSaveNote} className="mt-2.5 pt-2 border-t border-white/[0.06] flex gap-1.5">
+          <form onSubmit={handleSaveNote} className="mt-2.5 pt-2.5 border-t border-zinc-800/80 flex gap-1.5">
             <input
               type="text"
               value={noteText}
@@ -294,13 +342,13 @@ export function HabitCard({ habit }: { habit: Habit }) {
               placeholder="Add reflection or workout details..."
               aria-label={`Reflection note for ${habit.title}`}
               autoFocus
-              className="flex-1 px-3 py-1.5 rounded-xl bg-[#2c2c2e] border border-white/[0.08] text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400"
+              className="flex-1 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600"
             />
             <button
               type="submit"
-              className="px-3 py-1.5 rounded-xl bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition-colors"
             >
-              Done
+              Save
             </button>
             <button
               type="button"
@@ -310,7 +358,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 setIsEditingNote(false);
               }}
               aria-label="Cancel note edit"
-              className="p-1.5 rounded-xl text-zinc-400 hover:text-white"
+              className="p-1.5 rounded-lg border border-zinc-800 text-zinc-400 hover:text-white"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -319,10 +367,10 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
         {/* Clean Space Partner Proof Quick Link */}
         {isCleanSpace && partnerCleanSpaceCheckIn && partnerProofPhotos.length > 0 && (
-          <div className="mt-2.5 pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs">
+          <div className="mt-2.5 pt-2 border-t border-zinc-800/70 flex items-center justify-between text-[11px] font-mono">
             <span className="text-zinc-400 flex items-center gap-1.5">
               <span>{partnerPlayer?.avatar}</span>
-              <span>{partnerPlayer?.name}&apos;s clean space</span>
+              <span>{partnerPlayer?.name} checked in Clean Space</span>
             </span>
             <button
               type="button"
@@ -331,7 +379,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                 hapticLight();
                 setShowPartnerProof(true);
               }}
-              className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-1 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20 transition-colors"
+              className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-1 bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20 transition-colors"
             >
               <Camera className="w-3 h-3" />
               <span>Photos ({partnerProofPhotos.length})</span>
@@ -341,26 +389,27 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
         {/* Inline Quantitative Stepper Logger */}
         {showQtyLogger && habit.isQuantitative && (
-          <div className="mt-3 pt-3 border-t border-white/[0.08] space-y-2.5">
+          <div className="mt-3 pt-3 border-t border-zinc-800/80 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-zinc-300 font-medium">
-                Pages read
+              <span className="text-zinc-300 font-medium flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                How many pages did you read?
               </span>
-              <span className="font-semibold text-blue-400">
+              <span className="font-mono font-bold text-blue-400">
                 {quantity} {habit.quantityUnit} = +{Math.min(habit.points, quantity)} pts
               </span>
             </div>
 
-            {/* Preset Pills */}
+            {/* Preset Buttons */}
             <div className="flex items-center gap-1.5">
               {[10, 15, 20, 25].map((pages) => (
                 <button
                   key={pages}
                   onClick={() => handleLogQuantity(pages)}
-                  className={`flex-1 py-1 rounded-xl text-xs font-medium border transition-colors ${
+                  className={`flex-1 py-1 rounded-lg text-xs font-mono border transition-colors ${
                     quantity === pages
                       ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 font-bold'
-                      : 'bg-[#2c2c2e] border-white/[0.08] text-zinc-400 hover:text-white'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                   }`}
                 >
                   {pages}p
@@ -370,7 +419,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
             {/* Stepper + Custom */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center rounded-xl border border-white/[0.08] bg-[#2c2c2e]">
+              <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900/80">
                 <button
                   type="button"
                   onClick={() => {
@@ -390,7 +439,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
                   aria-label="Quantity value"
-                  className="w-10 text-center text-xs font-semibold bg-transparent text-white focus:outline-none"
+                  className="w-12 text-center text-xs font-mono font-bold bg-transparent text-white focus:outline-none"
                 />
                 <button
                   type="button"
@@ -408,7 +457,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
               <button
                 onClick={() => handleLogQuantity(quantity)}
-                className="flex-1 py-1.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
+                className="flex-1 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
               >
                 Log {quantity} Pages
               </button>
@@ -419,7 +468,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   hapticLight();
                   setShowQtyLogger(false);
                 }}
-                className="px-2.5 py-1.5 rounded-xl border border-white/[0.08] text-xs text-zinc-400 hover:text-white"
+                className="px-2.5 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-white"
               >
                 Cancel
               </button>
