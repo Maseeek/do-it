@@ -1,3 +1,4 @@
+import type { PlayerId } from './types';
 export type MultiplayerEntry = 'app' | 'gate' | 'invite-conflict';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -92,4 +93,16 @@ export function getInviteOutcome(params: InviteOutcomeParams): InviteOutcome {
     return 'paired-conflict';
   }
   return 'solo-replaceable';
+}
+
+export function shouldHoldDuelLoadingScreen(
+  configured: boolean,
+  hasDuel: boolean,
+  slot: PlayerId | null | undefined,
+  loadedDuelId: string | null | undefined,
+  activePlayerId: PlayerId | null | undefined,
+  currentDuelId: string | null | undefined,
+): boolean {
+  if (!configured || !hasDuel || !slot || !currentDuelId) return false;
+  return loadedDuelId !== currentDuelId || activePlayerId !== slot;
 }

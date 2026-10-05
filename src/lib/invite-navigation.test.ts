@@ -7,6 +7,7 @@ import {
   hasMatchedAccount,
   hasMatchedDuelPartner,
   isValidInviteCode,
+  shouldHoldDuelLoadingScreen,
 } from './invite-navigation';
 
 describe('invite navigation', () => {
@@ -129,6 +130,19 @@ describe('invite navigation', () => {
       assert.equal(extractInviteCode(ownCode), ownCode);
       assert.equal(isValidInviteCode(ownCode), true);
       assert.equal(isValidInviteCode('bad'), false);
+    });
+
+    it('determines when the app should hold the loading screen without locking indefinitely', () => {
+      // Unconfigured or no duel should never hold duel loading screen
+      assert.equal(shouldHoldDuelLoadingScreen(false, true, 'maciek', 'd1', 'maciek', 'd1'), false);
+      assert.equal(shouldHoldDuelLoadingScreen(true, false, 'maciek', 'd1', 'maciek', 'd1'), false);
+      // Slot is null (account not matched to duel) must not hang on loading screen
+      assert.equal(shouldHoldDuelLoadingScreen(true, true, null, null, null, 'd1'), false);
+      // Duel mismatch while slot exists should hold loading screen until loaded
+      assert.equal(shouldHoldDuelLoadingScreen(true, true, 'myrna', 'old-duel', 'maciek', 'new-duel'), true);
+      assert.equal(shouldHoldDuelLoadingScreen(true, true, 'myrna', null, 'maciek', 'new-duel'), true);
+      // Once duel and slot match, release loading screen
+      assert.equal(shouldHoldDuelLoadingScreen(true, true, 'myrna', 'new-duel', 'myrna', 'new-duel'), false);
     });
   });
 });

@@ -100,6 +100,7 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
       if (candidateInvite !== null) {
         try {
           await multiplayer.acceptInvite(candidateInvite, displayName);
+          dismissInvite();
         } catch (joinErr) {
           const reason = joinErr instanceof Error ? joinErr.message : 'Could not join this invitation.';
           setInviteJoinFailure(reason);
