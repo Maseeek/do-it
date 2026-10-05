@@ -172,23 +172,6 @@ export interface WearableConfig {
     qualified?: boolean;
     message?: string;
   };
-  stravaConnected?: boolean;
-  stravaAthleteName?: string;
-  stravaLastSync?: string;
-}
-
-export interface AppleHealthSyncPayload {
-  player?: 'myrna' | 'maciek';
-  metric?: string;
-  value?: number; // sleep in hours, running in km or mins, gym in mins
-  hours?: number;
-  duration?: number;
-  minutes?: number;
-  seconds?: number;
-  qty?: number;
-  unit?: string;
-  date?: string; // YYYY-MM-DD
-  note?: string;
 }
 
 export interface AppState {
