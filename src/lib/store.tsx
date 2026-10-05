@@ -561,40 +561,47 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const todayStr = getTodayDateString();
   const isTodaySelected = selectedDate === todayStr;
 
-  const isHabitCompletedToday = useStableCallback((habitId: string): boolean => {
-    return state.checkIns.some((c) => c.habitId === habitId && c.date === todayStr);
-  });
+  const isHabitCompletedToday = useCallback(
+    (habitId: string): boolean => state.checkIns.some((c) => c.habitId === habitId && c.date === todayStr),
+    [state.checkIns, todayStr]
+  );
 
-  const getHabitCheckInToday = useStableCallback((habitId: string): CheckIn | undefined => {
-    return state.checkIns.find((c) => c.habitId === habitId && c.date === todayStr);
-  });
+  const getHabitCheckInToday = useCallback(
+    (habitId: string): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === todayStr),
+    [state.checkIns, todayStr]
+  );
 
-  const isHabitCompletedOnDate = useStableCallback((habitId: string, date: string): boolean => {
-    return state.checkIns.some((c) => c.habitId === habitId && c.date === date);
-  });
+  const isHabitCompletedOnDate = useCallback(
+    (habitId: string, date: string): boolean => state.checkIns.some((c) => c.habitId === habitId && c.date === date),
+    [state.checkIns]
+  );
 
-  const getHabitCheckInOnDate = useStableCallback((habitId: string, date: string): CheckIn | undefined => {
-    return state.checkIns.find((c) => c.habitId === habitId && c.date === date);
-  });
+  const getHabitCheckInOnDate = useCallback(
+    (habitId: string, date: string): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === date),
+    [state.checkIns]
+  );
 
-  const getCheckInForHabit = useStableCallback((habitId: string, date = selectedDate): CheckIn | undefined => {
-    return state.checkIns.find((c) => c.habitId === habitId && c.date === date);
-  });
+  const getCheckInForHabit = useCallback(
+    (habitId: string, date = selectedDate): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === date),
+    [state.checkIns, selectedDate]
+  );
 
-  const getWeeklyHabitCompletions = useStableCallback((habitId: string, date = selectedDate): number => {
-    return getWeeklyHabitCompletionsCount(habitId, date, state.checkIns);
-  });
+  const getWeeklyHabitCompletions = useCallback(
+    (habitId: string, date = selectedDate): number => getWeeklyHabitCompletionsCount(habitId, date, state.checkIns),
+    [state.checkIns, selectedDate]
+  );
 
-  const isHabitWeeklyTargetMet = useStableCallback((habitId: string, date = selectedDate): boolean => {
+  const isHabitWeeklyTargetMet = useCallback((habitId: string, date = selectedDate): boolean => {
     const habit = state.habits.find((h) => h.id === habitId);
     if (!habit) return false;
     return isWeeklyHabitTargetMet(habit, date, state.checkIns);
-  });
+  }, [state.habits, state.checkIns, selectedDate]);
 
-  const isHabitSatisfiedOnDate = useStableCallback((habitId: string, date = selectedDate): boolean => {
-    if (isHabitCompletedOnDate(habitId, date)) return true;
-    return isHabitWeeklyTargetMet(habitId, date);
-  });
+  const isHabitSatisfiedOnDate = useCallback(
+    (habitId: string, date = selectedDate): boolean =>
+      isHabitCompletedOnDate(habitId, date) || isHabitWeeklyTargetMet(habitId, date),
+    [isHabitCompletedOnDate, isHabitWeeklyTargetMet, selectedDate]
+  );
 
   const isPartnerConnected = multiplayer.configured ? multiplayer.hasPairedPartner : true;
   const partnerId: PlayerId | null =
@@ -867,11 +874,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (multiplayer.configured) syncDuel((client, id) => saveDuelRestDay(client, id, newRest));
   } });
 
-  const isRestDay = useStableCallback((date: string, playerId?: PlayerId): boolean => {
-    const targetPlayerId = playerId || state.activePlayerId;
-    if (!targetPlayerId) return false;
-    return (state.restDays || []).some((r) => r.playerId === targetPlayerId && r.date === date);
-  });
+  const isRestDay = useCallback(
+    (date: string, playerId?: PlayerId): boolean => {
+      const targetPlayerId = playerId || state.activePlayerId;
+      if (!targetPlayerId) return false;
+      return (state.restDays || []).some((r) => r.playerId === targetPlayerId && r.date === date);
+    },
+    [state.activePlayerId, state.restDays]
+  );
 
   const addHabit = useStableCallback((newHabit: Omit<Habit, 'id'>) => { if (multiplayer.configured && newHabit.playerId !== multiplayer.slot) return;
   soundEngine.playClick();
