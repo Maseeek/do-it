@@ -162,6 +162,17 @@ export function HabitHeatmap({
     }
     if (isMaciek) {
       if (points >= dailyPar) {
+        return 'bg-blue-400 border border-blue-300/80 hover:bg-blue-300 shadow-[0_0_8px_rgba(96,165,250,0.55)]';
+      }
+      if (points >= highThreshold) {
+        return 'bg-blue-600 border border-blue-500/80 hover:bg-blue-500';
+      }
+      if (points >= midThreshold) {
+        return 'bg-blue-800 border border-blue-700/70 hover:bg-blue-700';
+      }
+      return 'bg-blue-950 border border-blue-900/70 hover:bg-blue-900';
+    } else {
+      if (points >= dailyPar) {
         return 'bg-purple-400 border border-purple-300/80 hover:bg-purple-300 shadow-[0_0_8px_rgba(192,132,252,0.55)]';
       }
       if (points >= highThreshold) {
@@ -171,17 +182,6 @@ export function HabitHeatmap({
         return 'bg-purple-800 border border-purple-700/70 hover:bg-purple-700';
       }
       return 'bg-purple-950 border border-purple-900/70 hover:bg-purple-900';
-    } else {
-      if (points >= dailyPar) {
-        return 'bg-red-400 border border-red-300/80 hover:bg-red-300 shadow-[0_0_8px_rgba(248,113,113,0.55)]';
-      }
-      if (points >= highThreshold) {
-        return 'bg-red-600 border border-red-500/80 hover:bg-red-500';
-      }
-      if (points >= midThreshold) {
-        return 'bg-red-800 border border-red-700/70 hover:bg-red-700';
-      }
-      return 'bg-red-950 border border-red-900/70 hover:bg-red-900';
     }
   };
 
@@ -200,7 +200,7 @@ export function HabitHeatmap({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Calendar className={`w-4 h-4 shrink-0 ${isMaciek ? 'text-purple-400' : 'text-red-400'}`} />
+            <Calendar className={`w-4 h-4 shrink-0 ${isMaciek ? 'text-blue-400' : 'text-purple-400'}`} />
             <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-200 truncate">
               {filteredHabit ? filteredHabit.title : 'Consistency Graph'}
             </h2>
@@ -262,7 +262,7 @@ export function HabitHeatmap({
                 }}
                 className={`px-2.5 py-0.5 rounded-md border transition-colors ${
                   selectedPlayer === 'maciek'
-                    ? 'bg-purple-500/20 border-purple-500/35 text-purple-300 font-semibold'
+                    ? 'bg-blue-500/20 border-blue-500/35 text-blue-300 font-semibold'
                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -281,7 +281,7 @@ export function HabitHeatmap({
                 }}
                 className={`px-2.5 py-0.5 rounded-md border transition-colors ${
                   selectedPlayer === 'myrna'
-                    ? 'bg-red-500/20 border-red-500/35 text-red-300 font-semibold'
+                    ? 'bg-purple-500/20 border-purple-500/35 text-purple-300 font-semibold'
                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -310,8 +310,8 @@ export function HabitHeatmap({
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
               activeHabitFilter === null
                 ? isMaciek
-                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-200 font-semibold'
-                  : 'bg-red-500/20 border-red-500/40 text-red-200 font-semibold'
+                  ? 'bg-blue-500/20 border-blue-500/40 text-blue-200 font-semibold'
+                  : 'bg-purple-500/20 border-purple-500/40 text-purple-200 font-semibold'
                 : 'bg-[#08090a] border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -332,8 +332,8 @@ export function HabitHeatmap({
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
                   isSelected
                     ? isMaciek
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-200 font-semibold'
-                      : 'bg-red-500/20 border-red-500/40 text-red-200 font-semibold'
+                      ? 'bg-blue-500/20 border-blue-500/40 text-blue-200 font-semibold'
+                      : 'bg-purple-500/20 border-purple-500/40 text-purple-200 font-semibold'
                     : 'bg-[#08090a] border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -342,8 +342,8 @@ export function HabitHeatmap({
                   className={`w-3 h-3 ${
                     isSelected
                       ? isMaciek
-                        ? 'text-purple-300'
-                        : 'text-red-300'
+                        ? 'text-blue-300'
+                        : 'text-purple-300'
                       : 'text-zinc-500'
                   }`}
                 />
@@ -371,7 +371,7 @@ export function HabitHeatmap({
           </div>
           <div
             className={`mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums ${
-              isMaciek ? 'text-purple-300' : 'text-red-300'
+              isMaciek ? 'text-blue-300' : 'text-purple-300'
             }`}
           >
             {parDaysCount}
@@ -513,23 +513,23 @@ export function HabitHeatmap({
           <span
             className={`w-2.5 h-2.5 rounded-[2px] ${
               isMaciek
-                ? 'bg-purple-950 border border-purple-900/70'
-                : 'bg-red-950 border border-red-900/70'
+                ? 'bg-blue-950 border border-blue-900/70'
+                : 'bg-purple-950 border border-purple-900/70'
             }`}
           />
           <span
             className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek ? 'bg-purple-800' : 'bg-red-800'
+              isMaciek ? 'bg-blue-800' : 'bg-purple-800'
             }`}
           />
           <span
             className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek ? 'bg-purple-600' : 'bg-red-600'
+              isMaciek ? 'bg-blue-600' : 'bg-purple-600'
             }`}
           />
           <span
             className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek ? 'bg-purple-400' : 'bg-red-400'
+              isMaciek ? 'bg-blue-400' : 'bg-purple-400'
             }`}
           />
           <span>{dailyPar} Par</span>
@@ -550,7 +550,7 @@ export function HabitHeatmap({
             )}
             <span
               className={`text-xs font-mono font-bold tabular-nums ${
-                isMaciek ? 'text-purple-300' : 'text-red-300'
+                isMaciek ? 'text-blue-300' : 'text-purple-300'
               }`}
             >
               {inspectedStats.points} / {dailyPar} pts
@@ -559,8 +559,8 @@ export function HabitHeatmap({
               <span
                 className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${
                   isMaciek
-                    ? 'bg-purple-500/15 border-purple-500/35 text-purple-300'
-                    : 'bg-red-500/15 border-red-500/35 text-red-300'
+                    ? 'bg-blue-500/15 border-blue-500/35 text-blue-300'
+                    : 'bg-purple-500/15 border-purple-500/35 text-purple-300'
                 }`}
               >
                 <Sparkles className="w-2.5 h-2.5" />
@@ -620,7 +620,7 @@ export function HabitHeatmap({
                 >
                   <CheckCircle2
                     className={`w-3 h-3 shrink-0 ${
-                      isMaciek ? 'text-purple-400' : 'text-red-400'
+                      isMaciek ? 'text-blue-400' : 'text-purple-400'
                     }`}
                   />
                   <span className="truncate max-w-44">{habit.title}</span>
@@ -631,7 +631,7 @@ export function HabitHeatmap({
                   )}
                   <span
                     className={`font-semibold tabular-nums ${
-                      isMaciek ? 'text-purple-300' : 'text-red-300'
+                      isMaciek ? 'text-blue-300' : 'text-purple-300'
                     }`}
                   >
                     +{item.pointsEarned}

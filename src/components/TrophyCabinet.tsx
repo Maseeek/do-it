@@ -105,7 +105,7 @@ export function TrophyCabinet() {
             onClick={() => handlePlayerChange('myrna')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'myrna'
-                ? 'bg-pink-500/20 text-pink-300 font-semibold'
+                ? 'bg-purple-500/20 text-purple-300 font-semibold'
                 : 'text-zinc-400'
             }`}
           >
@@ -169,7 +169,7 @@ export function TrophyCabinet() {
                   isUnlocked
                     ? isMaciek
                       ? 'bg-blue-500/15 border-blue-500/30 text-blue-400'
-                      : 'bg-pink-500/15 border-pink-500/30 text-pink-400'
+                      : 'bg-purple-500/15 border-purple-500/30 text-purple-400'
                     : 'bg-[#2c2c2e] border-white/[0.06] text-zinc-600'
                 }`}
               >
@@ -203,7 +203,7 @@ export function TrophyCabinet() {
                   >
                     <div className="h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${isMaciek ? 'bg-blue-500' : 'bg-pink-500'}`}
+                        className={`h-full rounded-full ${isMaciek ? 'bg-blue-500' : 'bg-purple-500'}`}
                         style={{ width: `${progress}%` }}
                       />
                     </div>

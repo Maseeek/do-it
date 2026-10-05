@@ -60,7 +60,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
               className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-mono font-bold border transition-colors shrink-0 ${
                 isMaciek
                   ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 group-hover:border-blue-400/60'
-                  : 'bg-pink-500/10 border-pink-500/30 text-pink-400 group-hover:border-pink-400/60'
+                  : 'bg-purple-500/10 border-purple-500/30 text-purple-400 group-hover:border-purple-400/60'
               }`}
             >
               {activePlayer?.name[0] || 'D'}
@@ -114,7 +114,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
             <div className="w-16 h-1 rounded-full bg-zinc-800 mt-1 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  pct >= 100 ? 'bg-emerald-400' : isMaciek ? 'bg-blue-400' : 'bg-pink-400'
+                  pct >= 100 ? 'bg-emerald-400' : isMaciek ? 'bg-blue-400' : 'bg-purple-400'
                 }`}
                 style={{ width: `${pct}%` }}
               />

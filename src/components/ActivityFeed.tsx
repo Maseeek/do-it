@@ -162,7 +162,7 @@ export function ActivityFeed() {
       <section className="rounded-3xl border border-white/[0.09] bg-gradient-to-br from-[#1b1d25] via-[#141518] to-[#1d1820] p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div><div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400"><Sparkles className="h-3.5 w-3.5 text-amber-300" /> The shared story</div><h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">Activity, together.</h2><p className="mt-1 text-xs leading-relaxed text-zinc-400">See the little wins. Give each other a boost.</p></div>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/[0.07] text-pink-300"><Heart className="h-5 w-5" /></div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/[0.07] text-purple-300"><Heart className="h-5 w-5" /></div>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-2 border-t border-white/[0.08] pt-4">
           <div className="rounded-xl bg-white/[0.04] p-3"><p className="text-xl font-semibold tabular-nums text-white">{checkInCount}</p><p className="mt-0.5 text-[11px] text-zinc-400">Check-ins</p></div>
@@ -236,7 +236,7 @@ export function ActivityFeed() {
               return (
                 <React.Fragment key={`reaction:${item.id}`}>{dateHeading}<article
                   className={`rounded-2xl bg-[#1c1c1e] border p-3 ${
-                    isMaciekSender ? 'border-blue-500/20' : 'border-pink-500/20'
+                    isMaciekSender ? 'border-blue-500/20' : 'border-purple-500/20'
                   }`}
                 >
                   <div className="flex items-start gap-3"><span className="text-xl flex-shrink-0">{item.emoji}</span>
@@ -253,7 +253,7 @@ export function ActivityFeed() {
                       &ldquo;{item.message}&rdquo;
                     </p>
                   </div></div>
-                  {item.fromPlayer.id === partnerId && <div className="mt-3 border-t border-white/[0.06] pt-2"><button type="button" aria-expanded={replyTo === item.id} onClick={() => { setReplyTo(replyTo === item.id ? null : item.id); setReplyMsg(''); }} className="inline-flex items-center gap-1.5 text-[11px] text-pink-300 hover:text-pink-200"><Heart className="h-3.5 w-3.5" />Cheer back</button>{inlineReply(item.id)}</div>}
+                  {item.fromPlayer.id === partnerId && <div className="mt-3 border-t border-white/[0.06] pt-2"><button type="button" aria-expanded={replyTo === item.id} onClick={() => { setReplyTo(replyTo === item.id ? null : item.id); setReplyMsg(''); }} className="inline-flex items-center gap-1.5 text-[11px] text-purple-300 hover:text-purple-200"><Heart className="h-3.5 w-3.5" />Cheer back</button>{inlineReply(item.id)}</div>}
                 </article></React.Fragment>
               );
             }
@@ -277,7 +277,7 @@ export function ActivityFeed() {
                       className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                         isMaciek
                           ? 'bg-blue-500/15 text-blue-400'
-                          : 'bg-pink-500/15 text-pink-400'
+                          : 'bg-purple-500/15 text-purple-400'
                       }`}
                     >
                       <HabitIcon name={item.habit.iconName} className="w-3.5 h-3.5" />
@@ -303,7 +303,7 @@ export function ActivityFeed() {
                     className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
                       isMaciek
                         ? 'bg-blue-500/15 text-blue-400'
-                        : 'bg-pink-500/15 text-pink-400'
+                        : 'bg-purple-500/15 text-purple-400'
                     }`}
                   >
                     +{item.checkIn.pointsEarned} pts
@@ -347,7 +347,7 @@ export function ActivityFeed() {
                     ))}
                   </div>
                 )}
-                {item.player.id === partnerId && <div className="border-t border-white/[0.06] pt-2"><button type="button" aria-expanded={replyTo === item.id} onClick={() => { setReplyTo(replyTo === item.id ? null : item.id); setReplyMsg(''); }} className="inline-flex items-center gap-1.5 text-[11px] text-pink-300 hover:text-pink-200"><Heart className="h-3.5 w-3.5" />Cheer this on</button>{inlineReply(item.id)}</div>}
+                {item.player.id === partnerId && <div className="border-t border-white/[0.06] pt-2"><button type="button" aria-expanded={replyTo === item.id} onClick={() => { setReplyTo(replyTo === item.id ? null : item.id); setReplyMsg(''); }} className="inline-flex items-center gap-1.5 text-[11px] text-purple-300 hover:text-purple-200"><Heart className="h-3.5 w-3.5" />Cheer this on</button>{inlineReply(item.id)}</div>}
               </article></React.Fragment>
             );
           })

@@ -229,24 +229,30 @@ export function DuelView() {
       {/* Top Header Row + Segmented Timeframe Switcher */}
       <div className="flex items-end justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-              {multiplayer.duel && isPartnerConnected
-                ? `${players.maciek.name} vs ${players.myrna.name}`
-                : 'Head to Head'}
+              {isPartnerConnected ? 'Head to Head Duel' : 'Head to Head'}
             </p>
-            {multiplayer.duel && isPartnerConnected && !showInvitePanel && (
+            {multiplayer.duel && isPartnerConnected && (
               <button
                 type="button"
-                onClick={() => setShowInvitePanel(true)}
-                className="text-[10px] font-mono text-purple-400 hover:text-purple-300 underline underline-offset-2"
+                onClick={() => setShowInvitePanel((prev) => !prev)}
+                className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-2 transition-colors"
               >
-                Invite options
+                {showInvitePanel ? 'Hide invite' : 'Invite details'}
               </button>
             )}
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-white mt-0.5">
-            Duel
+            {isPartnerConnected ? (
+              <span className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-blue-400">{players.maciek.name}</span>
+                <span className="text-zinc-500 font-normal text-lg">vs</span>
+                <span className="text-purple-400">{players.myrna.name}</span>
+              </span>
+            ) : (
+              'Duel'
+            )}
           </h1>
         </div>
 
@@ -257,7 +263,7 @@ export function DuelView() {
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0e1013] hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-mono transition-colors border border-zinc-800"
               title="Export & Share Scorecard"
             >
-              <Share2 className="w-3.5 h-3.5 text-purple-400" />
+              <Share2 className="w-3.5 h-3.5 text-blue-400" />
               <span className="hidden sm:inline">{shareCardStatus || 'Share'}</span>
             </button>
           )}
@@ -294,10 +300,10 @@ export function DuelView() {
 
       {/* Invite Panel (when requested or unpaired) */}
       {multiplayer.duel && (!isPartnerConnected || showInvitePanel) && (
-        <section className="rounded-xl border border-purple-500/30 bg-[#0e1013] p-4 space-y-3">
+        <section className="rounded-xl border border-blue-500/25 bg-[#0e1013] p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">Invite your opponent</h2>
+              <h2 className="text-sm font-semibold text-white">Duel Invite: {players.maciek.name} vs {players.myrna.name}</h2>
               <p className="text-xs text-zinc-400 mt-0.5">
                 {isPartnerConnected
                   ? `Paired with ${players.myrna.name}. You can also join a different invitation link below.`
@@ -350,7 +356,7 @@ export function DuelView() {
                 className="rounded-lg border border-zinc-800 px-3.5 py-1.5 text-xs font-mono font-medium text-white hover:bg-zinc-800 transition-colors"
                 onClick={async () => {
                   try {
-                    await navigator.share({ title: 'Join my duel on do', url: inviteLink });
+                    await navigator.share({ title: `${players.maciek.name} vs ${players.myrna.name} Duel on do`, url: inviteLink });
                   } catch {
                     // user cancelled
                   }
@@ -360,7 +366,7 @@ export function DuelView() {
               </button>
             )}
           </div>
-          {inviteStatus && <p role="status" className="text-xs font-mono text-purple-300">{inviteStatus}</p>}
+          {inviteStatus && <p role="status" className="text-xs font-mono text-blue-300">{inviteStatus}</p>}
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -434,15 +440,15 @@ export function DuelView() {
 
         {/* Head-to-Head Scores */}
         <div className="flex items-center justify-between">
-          {/* Maciek (Purple) */}
+          {/* Maciek (Blue) */}
           <div>
             <div className="flex items-center gap-1.5 mb-1">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
               <span className="text-xs font-mono font-semibold text-zinc-300">
                 {players.maciek.name}
               </span>
             </div>
-            <div className="text-3xl font-bold font-mono tracking-tight text-purple-300 tabular-nums">
+            <div className="text-3xl font-bold font-mono tracking-tight text-blue-400 tabular-nums">
               {comparison.maciekScore.toLocaleString()}
             </div>
           </div>
@@ -452,9 +458,9 @@ export function DuelView() {
             <span
               className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-semibold border ${
                 comparison.leader === 'maciek'
-                  ? 'bg-purple-500/15 border-purple-500/30 text-purple-300'
+                  ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
                   : comparison.leader === 'myrna'
-                  ? 'bg-red-500/15 border-red-500/30 text-red-300'
+                  ? 'bg-purple-500/15 border-purple-500/30 text-purple-300'
                   : 'bg-zinc-800 border-zinc-700 text-zinc-400'
               }`}
             >
@@ -464,15 +470,15 @@ export function DuelView() {
             </span>
           </div>
 
-          {/* Myrna (Red) */}
+          {/* Myrna (Purple) */}
           <div className="text-right">
             <div className="flex items-center justify-end gap-1.5 mb-1">
               <span className="text-xs font-mono font-semibold text-zinc-300">
                 {players.myrna.name}
               </span>
-              <span className="w-2 h-2 rounded-full bg-red-500" />
+              <span className="w-2 h-2 rounded-full bg-purple-500" />
             </div>
-            <div className="text-3xl font-bold font-mono tracking-tight text-red-300 tabular-nums">
+            <div className="text-3xl font-bold font-mono tracking-tight text-purple-400 tabular-nums">
               {comparison.myrnaScore.toLocaleString()}
             </div>
           </div>
@@ -490,11 +496,11 @@ export function DuelView() {
             className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden flex"
           >
             <div
-              className="h-full bg-purple-500 transition-all duration-500"
+              className="h-full bg-blue-500 transition-all duration-500"
               style={{ width: `${comparison.maciekPct}%` }}
             />
             <div
-              className="h-full bg-red-500 transition-all duration-500"
+              className="h-full bg-purple-500 transition-all duration-500"
               style={{ width: `${comparison.myrnaPct}%` }}
             />
           </div>
@@ -642,7 +648,7 @@ export function DuelView() {
             {/* Maciek */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800 text-[11px] font-mono">
-                <span className="font-semibold text-purple-400">{players.maciek.name}</span>
+                <span className="font-semibold text-blue-400">{players.maciek.name}</span>
                 <span className="text-zinc-400 tabular-nums">
                   {maciekDoneHabitsCount}/{maciekHabits.length} · {maciekSummary.today} pts
                 </span>
@@ -662,13 +668,13 @@ export function DuelView() {
                     key={h.id}
                     className={`flex items-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
                       done
-                        ? 'bg-purple-500/10 border-purple-500/25 text-white'
+                        ? 'bg-blue-500/10 border-blue-500/25 text-white'
                         : 'bg-zinc-900/30 border-zinc-800/60 text-zinc-400'
                     }`}
                   >
                     <div
                       className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
-                        done ? 'bg-purple-500 text-white' : 'border border-zinc-700'
+                        done ? 'bg-blue-500 text-white' : 'border border-zinc-700'
                       }`}
                     >
                       {done && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -703,7 +709,7 @@ export function DuelView() {
             {/* Myrna */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800 text-[11px] font-mono">
-                <span className="font-semibold text-red-400">{players.myrna.name}</span>
+                <span className="font-semibold text-purple-400">{players.myrna.name}</span>
                 <span className="text-zinc-400 tabular-nums">
                   {myrnaDoneHabitsCount}/{myrnaHabits.length} · {myrnaSummary.today} pts
                 </span>
@@ -723,13 +729,13 @@ export function DuelView() {
                     key={h.id}
                     className={`flex items-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
                       done
-                        ? 'bg-red-500/10 border-red-500/25 text-white'
+                        ? 'bg-purple-500/10 border-purple-500/25 text-white'
                         : 'bg-zinc-900/30 border-zinc-800/60 text-zinc-400'
                     }`}
                   >
                     <div
                       className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
-                        done ? 'bg-red-500 text-white' : 'border border-zinc-700'
+                        done ? 'bg-purple-500 text-white' : 'border border-zinc-700'
                       }`}
                     >
                       {done && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -817,9 +823,9 @@ export function DuelView() {
                     ) : total === 0 ? (
                       <span className="w-2 h-2 rounded-full bg-zinc-600" />
                     ) : maciekWon ? (
-                      <span className="w-2 h-2 rounded-full bg-purple-500 shadow-xs shadow-purple-500/50" />
+                      <span className="w-2 h-2 rounded-full bg-blue-500 shadow-xs shadow-blue-500/50" />
                     ) : myrnaWon ? (
-                      <span className="w-2 h-2 rounded-full bg-red-500 shadow-xs shadow-red-500/50" />
+                      <span className="w-2 h-2 rounded-full bg-purple-500 shadow-xs shadow-purple-500/50" />
                     ) : (
                       <span className="w-2 h-2 rounded-full bg-zinc-400" />
                     )}
@@ -842,16 +848,16 @@ export function DuelView() {
                   {selectedBattleDay.isToday && ' (Today)'}
                 </span>
                 <div className="flex items-center gap-2 tabular-nums">
-                  <span className="text-purple-400 font-semibold">{selectedBattleDay.maciekPoints} pts</span>
+                  <span className="text-blue-400 font-semibold">{selectedBattleDay.maciekPoints} pts</span>
                   <span className="text-zinc-600">:</span>
-                  <span className="text-red-400 font-semibold">{selectedBattleDay.myrnaPoints} pts</span>
+                  <span className="text-purple-400 font-semibold">{selectedBattleDay.myrnaPoints} pts</span>
                 </div>
               </div>
 
               {selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints > 0 ? (
                 <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex">
                   <div
-                    className="h-full bg-purple-500 transition-all duration-300"
+                    className="h-full bg-blue-500 transition-all duration-300"
                     style={{
                       width: `${Math.round(
                         (selectedBattleDay.maciekPoints /
@@ -861,7 +867,7 @@ export function DuelView() {
                     }}
                   />
                   <div
-                    className="h-full bg-red-500 transition-all duration-300"
+                    className="h-full bg-purple-500 transition-all duration-300"
                     style={{
                       width: `${
                         100 -
@@ -911,9 +917,9 @@ export function DuelView() {
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-white">{cat.label}</span>
                       <div className="flex items-center gap-2 font-mono tabular-nums text-xs">
-                        <span className="text-purple-400 font-semibold">{cat.maciekPoints}</span>
+                        <span className="text-blue-400 font-semibold">{cat.maciekPoints}</span>
                         <span className="text-zinc-600">:</span>
-                        <span className="text-red-400 font-semibold">{cat.myrnaPoints}</span>
+                        <span className="text-purple-400 font-semibold">{cat.myrnaPoints}</span>
                       </div>
                     </div>
 
@@ -926,11 +932,11 @@ export function DuelView() {
                       className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
                     >
                       <div
-                        className="h-full bg-purple-500 transition-all duration-300"
+                        className="h-full bg-blue-500 transition-all duration-300"
                         style={{ width: `${mPct}%` }}
                       />
                       <div
-                        className="h-full bg-red-500 transition-all duration-300"
+                        className="h-full bg-purple-500 transition-all duration-300"
                         style={{ width: `${yPct}%` }}
                       />
                     </div>
@@ -1032,13 +1038,13 @@ export function DuelView() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleResolveStake('maciek')}
-                className="py-2.5 px-3 rounded-xl bg-purple-500/15 border border-purple-500/30 hover:bg-purple-500/25 text-purple-300 text-xs font-mono font-semibold transition-colors"
+                className="py-2.5 px-3 rounded-xl bg-blue-500/15 border border-blue-500/30 hover:bg-blue-500/25 text-blue-300 text-xs font-mono font-semibold transition-colors"
               >
                 {players.maciek.name} Won
               </button>
               <button
                 onClick={() => handleResolveStake('myrna')}
-                className="py-2.5 px-3 rounded-xl bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 text-red-300 text-xs font-mono font-semibold transition-colors"
+                className="py-2.5 px-3 rounded-xl bg-purple-500/15 border border-purple-500/30 hover:bg-purple-500/25 text-purple-300 text-xs font-mono font-semibold transition-colors"
               >
                 {players.myrna.name} Won
               </button>

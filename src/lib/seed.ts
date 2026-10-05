@@ -14,9 +14,9 @@ export const INITIAL_PLAYERS: Record<'maciek' | 'myrna', Player> = {
     id: 'myrna',
     name: 'Myrna',
     avatar: '✨',
-    color: '#f472b6', // Linear rose pink
-    accentBg: 'rgba(244, 114, 182, 0.1)',
-    accentBorder: 'rgba(244, 114, 182, 0.25)',
+    color: '#c084fc', // Linear purple
+    accentBg: 'rgba(192, 132, 252, 0.1)',
+    accentBorder: 'rgba(192, 132, 252, 0.25)',
   },
 };
 

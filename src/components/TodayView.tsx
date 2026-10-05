@@ -267,7 +267,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                   ? 'animate-target-pulse-emerald'
                   : isMaciek
                   ? 'animate-target-pulse-blue'
-                  : 'animate-target-pulse-pink'
+                  : 'animate-target-pulse-purple'
                 : ''
             }`}
           >
@@ -293,7 +293,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                           ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                           : isMaciek
                           ? 'bg-blue-500/15 text-blue-300 border-blue-400/40 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-                          : 'bg-pink-500/15 text-pink-300 border-pink-400/40 shadow-[0_0_12px_rgba(236,72,153,0.3)]'
+                          : 'bg-purple-500/15 text-purple-300 border-purple-400/40 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
                       }`}
                     >
                       +{activeTargetPulse.delta} PTS
@@ -312,7 +312,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                       activeTargetPulse
                         ? isMaciek
                           ? 'text-blue-200 bg-blue-500/15 border-blue-400/40'
-                          : 'text-pink-200 bg-pink-500/15 border-pink-400/40'
+                          : 'text-purple-200 bg-purple-500/15 border-purple-400/40'
                         : 'text-white bg-zinc-900/90 border-zinc-800'
                     }`}
                   >
@@ -337,7 +337,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                     ? 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]'
                     : isMaciek
                     ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 shadow-[0_0_12px_rgba(59,130,246,0.45)]'
-                    : 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-400 shadow-[0_0_12px_rgba(236,72,153,0.45)]'
+                    : 'bg-gradient-to-r from-purple-600 via-purple-500 to-fuchsia-400 shadow-[0_0_12px_rgba(168,85,247,0.45)]'
                 }`}
                 style={{ width: `${progress}%` }}
               >
@@ -382,7 +382,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                   <span
                     className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-mono font-bold border shrink-0 ${
                       isMaciek
-                        ? 'bg-pink-500/10 border-pink-500/25 text-pink-300'
+                        ? 'bg-purple-500/10 border-purple-500/25 text-purple-300'
                         : 'bg-blue-500/10 border-blue-500/25 text-blue-300'
                     }`}
                   >
