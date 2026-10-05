@@ -127,14 +127,7 @@ interface StoreContextType {
     simulate?: boolean,
     simulateUnder?: boolean
   ) => Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }>;
-  testAppleHealthSync: (
-    metric: 'sleep' | 'running' | 'gym',
-    value: number
-  ) => Promise<{ success: boolean; message: string; qualified?: boolean }>;
-  testStravaSync: (player?: string) => Promise<{ success: boolean; message: string }>;
-  testHevySync: (workoutTitle?: string, player?: string) => Promise<{ success: boolean; message: string }>;
   disconnectGoogleHealth: () => void;
-  disconnectStrava: () => void;
   themePreference: ThemePreference;
   effectiveTheme: EffectiveTheme;
   setThemePreference: (pref: ThemePreference) => void;
@@ -203,20 +196,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       if (typeof document !== 'undefined') {
         const hasGoogleCookie = document.cookie.includes('g_fit_connected=true');
-        const hasStravaCookie = document.cookie.includes('strava_connected=true');
-        let stravaName: string | undefined;
-        if (hasStravaCookie) {
-          const match = document.cookie.match(/strava_athlete_name=([^;]+)/);
-          if (match) stravaName = decodeURIComponent(match[1]);
-        }
-
-        if (hasGoogleCookie || hasStravaCookie) {
+        if (hasGoogleCookie) {
           setState((prev) => ({
             ...prev,
             wearableConfig: {
               ...prev.wearableConfig,
-              ...(hasGoogleCookie ? { googleConnected: true } : {}),
-              ...(hasStravaCookie ? { stravaConnected: true, stravaAthleteName: stravaName } : {}),
+              googleConnected: true,
             },
           }));
         }
@@ -503,14 +488,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void reload();
+    let isSubscribed = false;
     const channel = client.channel(`duel-${duelId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_habits', filter: `duel_id=eq.${duelId}` }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_check_ins', filter: `duel_id=eq.${duelId}` }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_stakes', filter: `duel_id=eq.${duelId}` }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_reactions', filter: `duel_id=eq.${duelId}` }, () => void reload())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_rest_days', filter: `duel_id=eq.${duelId}` }, () => void reload())
-      .subscribe();
-    const poll = setInterval(() => void reload(), 30000);
+      .subscribe((status) => {
+        isSubscribed = status === 'SUBSCRIBED';
+      });
+    const poll = setInterval(() => {
+      if (!isSubscribed) {
+        void reload();
+      }
+    }, 30000);
     return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
   }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName]);
 
@@ -1164,93 +1156,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [selectedDate]
   );
 
-  const testAppleHealthSync = async (
-    metric: 'sleep' | 'running' | 'gym',
-    value: number
-  ): Promise<{ success: boolean; message: string; qualified?: boolean }> => {
-    try {
-      const res = await fetch('/api/sync/apple-health', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          player: 'myrna',
-          metric,
-          value,
-          date: selectedDate,
-          note: `Apple Health Test (${metric}: ${value})`,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, message: data.message || 'Sync failed.' };
-      }
-
-      if (data.checkIn) {
-        setState((prev) => {
-          const newCheckIns = [...prev.checkIns];
-          const idx = newCheckIns.findIndex(
-            (c) => c.habitId === data.checkIn.habitId && c.date === data.checkIn.date
-          );
-          if (idx >= 0) {
-            newCheckIns[idx] = data.checkIn;
-          } else {
-            newCheckIns.push(data.checkIn);
-          }
-          const rebalanced = rebalanceAllWeeklyCheckIns(newCheckIns, prev.habits);
-          return {
-            ...prev,
-            checkIns: rebalanced,
-            wearableConfig: {
-              ...prev.wearableConfig,
-              appleConnected: true,
-              appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              appleLastResult: {
-                metric,
-                value,
-                hours: data.hoursLogged ?? value,
-                date: selectedDate,
-                points: data.pointsAwarded ?? 0,
-                qualified: data.qualified !== false,
-                message: data.message,
-              },
-            },
-          };
-        });
-
-        soundEngine.playFanfare();
-        hapticMedium();
-        fireCelebrationConfetti();
-      } else {
-        setState((prev) => ({
-          ...prev,
-          wearableConfig: {
-            ...prev.wearableConfig,
-            appleConnected: true,
-            appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            appleLastResult: {
-              metric,
-              value,
-              hours: data.hoursLogged ?? value,
-              date: selectedDate,
-              points: 0,
-              qualified: false,
-              message: data.message,
-            },
-          },
-        }));
-      }
-
-      return {
-        success: data.success,
-        message: data.message || 'Sync processed.',
-        qualified: data.qualified !== false,
-      };
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Network error';
-      return { success: false, message: msg };
-    }
-  };
 
   // Automatically pull Apple Health check-ins queued by background iOS Shortcuts
   useEffect(() => {
@@ -1302,103 +1207,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('focus', handleFocus);
   }, [isHydrated, multiplayer.configured]);
 
-  const testStravaSync = async (
-    player: string = 'maciek'
-  ): Promise<{ success: boolean; message: string }> => {
-    try {
-      const res = await fetch(`/api/sync/strava?player=${player}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          object_type: 'activity',
-          aspect_type: 'create',
-          object_id: Math.floor(Math.random() * 899999 + 100000),
-          event_time: Math.floor(new Date(`${selectedDate}T12:00:00Z`).getTime() / 1000),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, message: data.message || 'Strava sync failed.' };
-      }
-
-      if (data.checkIn) {
-        setState((prev) => {
-          const newCheckIns = [...prev.checkIns];
-          const idx = newCheckIns.findIndex(
-            (c) => c.habitId === data.checkIn.habitId && c.date === data.checkIn.date
-          );
-          if (idx >= 0) {
-            newCheckIns[idx] = data.checkIn;
-          } else {
-            newCheckIns.push(data.checkIn);
-          }
-          return {
-            ...prev,
-            checkIns: newCheckIns,
-          };
-        });
-
-        soundEngine.playFanfare();
-        hapticMedium();
-        fireCelebrationConfetti();
-      }
-
-      return { success: true, message: data.message };
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Network error';
-      return { success: false, message: msg };
-    }
-  };
-
-  const testHevySync = async (
-    workoutTitle: string = 'Strength Workout (Bench & Squat)',
-    player: string = 'maciek'
-  ): Promise<{ success: boolean; message: string }> => {
-    try {
-      const res = await fetch(`/api/sync/hevy?player=${player}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          player,
-          title: workoutTitle,
-          date: selectedDate,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, message: data.message || 'Hevy sync failed.' };
-      }
-
-      if (data.checkIn) {
-        setState((prev) => {
-          const newCheckIns = [...prev.checkIns];
-          const idx = newCheckIns.findIndex(
-            (c) => c.habitId === data.checkIn.habitId && c.date === data.checkIn.date
-          );
-          if (idx >= 0) {
-            newCheckIns[idx] = data.checkIn;
-          } else {
-            newCheckIns.push(data.checkIn);
-          }
-          return {
-            ...prev,
-            checkIns: newCheckIns,
-          };
-        });
-
-        soundEngine.playFanfare();
-        hapticMedium();
-        fireCelebrationConfetti();
-      }
-
-      return { success: true, message: data.message };
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Network error';
-      return { success: false, message: msg };
-    }
-  };
 
   const disconnectGoogleHealth = () => {
     if (typeof document !== 'undefined') {
@@ -1415,23 +1223,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  const disconnectStrava = () => {
-    if (typeof document !== 'undefined') {
-      document.cookie = 'strava_connected=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      document.cookie = 'strava_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      document.cookie = 'strava_refresh_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      document.cookie = 'strava_athlete_name=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      document.cookie = 'strava_athlete_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    }
-    setState((prev) => ({
-      ...prev,
-      wearableConfig: {
-        ...prev.wearableConfig,
-        stravaConnected: false,
-        stravaAthleteName: undefined,
-      },
-    }));
-  };
 
   // Summaries
   const maciekSummary = calculatePlayerScores('maciek', state.checkIns, state.habits, state.restDays || []);
@@ -1544,11 +1335,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         importStateFromJson,
         wearableConfig: state.wearableConfig,
         syncGoogleHealth,
-        testAppleHealthSync,
-        testStravaSync,
-        testHevySync,
         disconnectGoogleHealth,
-        disconnectStrava,
         themePreference,
         effectiveTheme,
         setThemePreference,

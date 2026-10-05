@@ -54,6 +54,12 @@ export function isDateInCurrentYear(dateStr: string): boolean {
   return getYearKey(dateStr) === getYearKey(getTodayDateString());
 }
 
+const friendlyDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+
 export function formatFriendlyDate(dateStr: string): string {
   const date = parseDate(dateStr);
   const today = getTodayDateString();
@@ -64,11 +70,7 @@ export function formatFriendlyDate(dateStr: string): string {
   const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
   if (dateStr === yStr) return 'Yesterday';
 
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  return friendlyDateFormatter.format(date);
 }
 
 export function getDaysRemainingInWeek(): { days: number; hours: number } {
@@ -162,6 +164,8 @@ export function getHeatmapDays(totalDays: number = 84): { dateStr: string; date:
   return result;
 }
 
+const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export interface HeatmapCalendarDay {
   dateStr: string;
   dayOfWeek: number; // 0 = Mon .. 6 = Sun
@@ -216,7 +220,7 @@ export function getHeatmapCalendarWeeks(
         dateStr: dStr,
         dayOfWeek: dayIdx,
         dayNumber: cur.getDate(),
-        monthShort: cur.toLocaleDateString('en-US', { month: 'short' }),
+        monthShort: MONTH_NAMES_SHORT[cur.getMonth()],
         isToday: dStr === todayDateStr,
         isFuture: dStr > todayDateStr,
       });
