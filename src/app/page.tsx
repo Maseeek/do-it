@@ -21,7 +21,7 @@ import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { MultiplayerGate } from '@/components/MultiplayerGate';
 import { ExistingDuelInviteGate } from '@/components/ExistingDuelInviteGate';
-import { getMultiplayerEntry } from '@/lib/invite-navigation';
+import { getMultiplayerEntry, shouldHoldDuelLoadingScreen } from '@/lib/invite-navigation';
 import { HabitOnboarding } from '@/components/HabitOnboarding';
 
 function AppContent() {
@@ -145,7 +145,17 @@ function AppContent() {
   }
 
   // SSR hydration placeholder
-  if (multiplayer.configured && multiplayer.duel && syncStatus === 'offline' && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot)) {
+  const isDuelSyncing = shouldHoldDuelLoadingScreen(
+    multiplayer.configured,
+    Boolean(multiplayer.duel),
+    multiplayer.slot,
+    loadedDuelId,
+    activePlayerId,
+    multiplayer.duel?.id
+  );
+
+  // SSR hydration placeholder
+  if (multiplayer.configured && multiplayer.duel && syncStatus === 'offline' && isDuelSyncing) {
     return (
       <div className="relative z-10 min-h-screen bg-black text-white flex flex-col items-center justify-center gap-3 px-4">
         {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
@@ -154,7 +164,7 @@ function AppContent() {
       </div>
     );
   }
-  if (!isHydrated || multiplayer.loading || (multiplayer.configured && multiplayer.duel && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot))) {
+  if (!isHydrated || multiplayer.loading || isDuelSyncing) {
     return (
       <div className="relative z-10 min-h-screen bg-[#f7f8f9] dark:bg-[#08090a] flex flex-col items-center justify-center gap-3">
         {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}

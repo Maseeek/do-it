@@ -69,7 +69,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       setDuel(null);
       setError(caught instanceof Error ? caught.message : 'Could not load your account.');
     } finally {
-      if (sequence === refreshSequence.current) setLoading(false);
+      if (sequence >= refreshSequence.current) setLoading(false);
     }
   }, []);
 

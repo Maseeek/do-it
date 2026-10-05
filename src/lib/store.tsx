@@ -162,6 +162,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const duelQueueRef = useRef<Promise<void>>(Promise.resolve());
   const stateDuelRef = useRef<string | null>(null);
   const stateSlotRef = useRef<PlayerId | null>(null);
+  const restorationInProgressRef = useRef<Record<string, boolean>>({});
+  const latestAppliedSequenceRef = useRef(0);
 
   // 1. Hydrate from localStorage on client mount
   useEffect(() => {
@@ -439,21 +441,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
     let cancelled = false;
     let reloadSequence = 0;
-    setLoadedDuelId(null);
-    setSyncStatus('syncing');
+    if (stateDuelRef.current !== duelId) {
+      setLoadedDuelId(null);
+      setSyncStatus('syncing');
+    }
     const reload = async () => {
       const sequence = ++reloadSequence;
       try {
         await duelQueueRef.current;
         let data = await loadDuelData(client, duelId);
-        if (multiplayer.slot && canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email)
-          && needsLegacyReplacement(multiplayer.slot, data.habits)) {
+        const restoreKey = `${duelId}:${multiplayer.slot}`;
+        if (
+          multiplayer.slot &&
+          canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email) &&
+          needsLegacyReplacement(multiplayer.slot, data.habits) &&
+          !restorationInProgressRef.current[restoreKey]
+        ) {
+          restorationInProgressRef.current[restoreKey] = true;
           const slot = multiplayer.slot;
-          const restoration = duelQueueRef.current.then(() => restoreLegacyDuelProgress(client, duelId, slot, data.habits, data.checkIns));
+          const restoration = duelQueueRef.current
+            .then(() => restoreLegacyDuelProgress(client, duelId, slot, data.habits, data.checkIns))
+            .finally(() => {
+              delete restorationInProgressRef.current[restoreKey];
+            });
           duelQueueRef.current = restoration.then(() => {}, () => {});
           if (await restoration) data = await loadDuelData(client, duelId);
         }
-        if (cancelled || sequence !== reloadSequence) return;
+        if (cancelled) return;
+        if (sequence < latestAppliedSequenceRef.current) return;
+        latestAppliedSequenceRef.current = sequence;
         const initial = getInitialState();
         const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === multiplayer.slot;
         stateDuelRef.current = duelId;
@@ -463,13 +479,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const visibleCheckIns = partnerPaired ? data.checkIns : data.checkIns.filter(c => c.playerId === multiplayer.slot);
         const visibleReactions = partnerPaired ? data.reactions : data.reactions.filter(r => r.fromPlayerId === multiplayer.slot && r.toPlayerId === multiplayer.slot);
         const visibleRestDays = partnerPaired ? data.restDays : data.restDays.filter(r => r.playerId === multiplayer.slot);
-        setState(prev => ({ ...(sameDuel ? prev : initial), activePlayerId: multiplayer.slot, habits: visibleHabits, checkIns: visibleCheckIns, stakes: data.stakes, reactions: visibleReactions, restDays: visibleRestDays,
-          players: { maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name }, myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent' } } }));
+        setState(prev => ({
+          ...(sameDuel ? prev : initial),
+          activePlayerId: multiplayer.slot,
+          habits: visibleHabits,
+          checkIns: visibleCheckIns,
+          stakes: data.stakes,
+          reactions: visibleReactions,
+          restDays: visibleRestDays,
+          players: {
+            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name },
+            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent' },
+          },
+        }));
         setLoadedDuelId(duelId);
         setSyncStatus('connected');
         setStorageError(null);
       } catch (error) {
-        if (!cancelled && sequence === reloadSequence) { setSyncStatus('offline'); setStorageError(error instanceof Error ? error.message : 'Could not load duel data.'); }
+        if (!cancelled) {
+          setSyncStatus('offline');
+          setStorageError(error instanceof Error ? error.message : 'Could not load duel data.');
+        }
       }
     };
     void reload();
