@@ -1,19 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, LogOut, UserRound, Volume2 } from 'lucide-react';
+import { ArrowLeft, Copy, LogOut, Share2, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { HealthConnection } from './HealthConnection';
 
 export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; onChooseHabits?: () => void }) {
   const multiplayer = useMultiplayer();
-  const { activePlayer, soundEnabled, setSoundEnabled, updateLocalPlayerName } = useStore();
+  const { activePlayer, isPartnerConnected, players, soundEnabled, setSoundEnabled, updateLocalPlayerName } = useStore();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(activePlayer?.name || '');
   const [savingName, setSavingName] = useState(false);
   const [nameMessage, setNameMessage] = useState<string | null>(null);
-  useEffect(() => { setName(activePlayer?.name || ''); }, [activePlayer?.name]);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteUrl = typeof window !== 'undefined' && multiplayer.duel
+    ? `${window.location.origin}/?invite=${multiplayer.duel.invite_code}`
+    : '';
   useEffect(() => {
     const reason = new URLSearchParams(window.location.search).get('wearable_error');
     if (reason) setError(`Google Health connection was not completed (${reason.replaceAll('_', ' ')}). Try again below.`);
@@ -51,6 +54,53 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
         {nameMessage && <p role="status" className="text-xs text-zinc-300">{nameMessage}</p>}
       </form>
     </section>}
+    {multiplayer.configured && multiplayer.user && (
+      <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold"><Share2 size={17}/>Account &amp; Duel Invitation</h2>
+        <div className="space-y-1 text-xs text-zinc-400">
+          <p>Signed-in account: <span className="font-mono text-zinc-200">{multiplayer.user.email}</span></p>
+          <p>
+            Opponent status:{' '}
+            <span className={isPartnerConnected ? 'text-emerald-400 font-medium' : 'text-amber-300 font-medium'}>
+              {isPartnerConnected
+                ? `Paired with ${multiplayer.slot === 'maciek' ? players.myrna.name : players.maciek.name}`
+                : 'No opponent account matched yet — waiting for partner to accept invite'}
+            </span>
+          </p>
+        </div>
+        {multiplayer.duel && (
+          <div className="space-y-2 pt-1">
+            <label htmlFor="settings-invite-link" className="block text-xs text-zinc-400">Invitation link</label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                id="settings-invite-link"
+                readOnly
+                value={inviteUrl}
+                onFocus={event => event.currentTarget.select()}
+                className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-xs text-white outline-none"
+              />
+              <button
+                type="button"
+                className="control control-primary min-h-11"
+                onClick={async () => {
+                  if (!inviteUrl) return;
+                  try {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2500);
+                  } catch {
+                    setError('Select and copy the invitation link above.');
+                  }
+                }}
+              >
+                <Copy size={15} />
+                {inviteCopied ? 'Copied!' : 'Copy invite link'}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+    )}
     <HealthConnection onChooseHabits={onChooseHabits} />
     <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
       <div className="flex items-center justify-between gap-3"><span className="flex items-center gap-2 text-sm"><Volume2 size={17}/>Sounds</span><button role="switch" aria-checked={!!soundEnabled} onClick={() => setSoundEnabled(!soundEnabled)} className={`min-h-11 min-w-16 rounded-full px-3 text-xs ${soundEnabled ? 'bg-emerald-400 text-black' : 'bg-zinc-700 text-white'}`}>{soundEnabled ? 'On' : 'Off'}</button></div>

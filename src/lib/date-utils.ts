@@ -162,6 +162,93 @@ export function getHeatmapDays(totalDays: number = 84): { dateStr: string; date:
   return result;
 }
 
+export interface HeatmapCalendarDay {
+  dateStr: string;
+  dayOfWeek: number; // 0 = Mon .. 6 = Sun
+  dayNumber: number;
+  monthShort: string;
+  isToday: boolean;
+  isFuture: boolean;
+}
+
+export interface HeatmapCalendarWeek {
+  weekKey: string;
+  startDateStr: string;
+  monthLabel: string | null;
+  days: HeatmapCalendarDay[];
+}
+
+// GitHub-style Monday-to-Sunday aligned calendar weeks ending on the current week
+export function getHeatmapCalendarWeeks(
+  weekCount: number = 16,
+  todayDateStr: string = getTodayDateString()
+): HeatmapCalendarWeek[] {
+  const safeWeeks = Math.max(1, Math.min(53, Math.floor(weekCount)));
+  const ref = parseDate(todayDateStr);
+  const jsDay = ref.getDay(); // 0 is Sunday
+  const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay;
+
+  const currentWeekMonday = new Date(
+    ref.getFullYear(),
+    ref.getMonth(),
+    ref.getDate() + mondayOffset
+  );
+
+  const rawWeeks: Omit<HeatmapCalendarWeek, 'monthLabel'>[] = [];
+
+  for (let w = safeWeeks - 1; w >= 0; w--) {
+    const weekMonday = new Date(
+      currentWeekMonday.getFullYear(),
+      currentWeekMonday.getMonth(),
+      currentWeekMonday.getDate() - w * 7
+    );
+    const startDateStr = formatDateString(weekMonday);
+    const days: HeatmapCalendarDay[] = [];
+
+    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+      const cur = new Date(
+        weekMonday.getFullYear(),
+        weekMonday.getMonth(),
+        weekMonday.getDate() + dayIdx
+      );
+      const dStr = formatDateString(cur);
+      days.push({
+        dateStr: dStr,
+        dayOfWeek: dayIdx,
+        dayNumber: cur.getDate(),
+        monthShort: cur.toLocaleDateString('en-US', { month: 'short' }),
+        isToday: dStr === todayDateStr,
+        isFuture: dStr > todayDateStr,
+      });
+    }
+
+    rawWeeks.push({
+      weekKey: getWeekKey(startDateStr),
+      startDateStr,
+      days,
+    });
+  }
+
+  return rawWeeks.map((week, idx) => {
+    const firstOfMonth = week.days.find((d) => d.dayNumber === 1 && !d.isFuture);
+    let monthLabel: string | null = null;
+
+    if (firstOfMonth) {
+      monthLabel = firstOfMonth.monthShort;
+    } else if (idx === 0) {
+      const nextHasFirst = rawWeeks[1]?.days.some((d) => d.dayNumber === 1 && !d.isFuture);
+      if (!nextHasFirst) {
+        monthLabel = week.days[0].monthShort;
+      }
+    }
+
+    return {
+      ...week,
+      monthLabel,
+    };
+  });
+}
+
 // Time-ago relative string (e.g. "Just now", "5m ago", "2h ago", "Yesterday")
 export function formatTimeAgo(isoString: string): string {
   try {

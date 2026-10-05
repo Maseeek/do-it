@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Habit } from '@/lib/types';
 import { useStore } from '@/lib/store';
 import { HabitIcon } from './HabitIcon';
@@ -10,7 +10,6 @@ import { calculateHabitStreak } from '@/lib/score-calculator';
 import {
   BookOpen,
   Camera,
-  Check,
   Flame,
   MessageSquare,
   MessageSquarePlus,
@@ -22,7 +21,21 @@ import {
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
-export function HabitCard({ habit }: { habit: Habit }) {
+interface HabitCardProps {
+  habit: Habit;
+  isLocking?: boolean;
+  justSettled?: boolean;
+  onCheckIn?: (habitId: string, pointsEarned: number) => void;
+  onUncheck?: (habitId: string) => void;
+}
+
+export function HabitCard({
+  habit,
+  isLocking = false,
+  justSettled = false,
+  onCheckIn,
+  onUncheck,
+}: HabitCardProps) {
   const {
     toggleHabit,
     updateCheckInNote,
@@ -45,6 +58,14 @@ export function HabitCard({ habit }: { habit: Habit }) {
   const [showQtyLogger, setShowQtyLogger] = useState(false);
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [localPulse, setLocalPulse] = useState<{ points: number; token: number } | null>(null);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    };
+  }, []);
 
   const completed = isHabitCompletedOnDate(habit.id, selectedDate);
   const checkIn = getHabitCheckInOnDate(habit.id, selectedDate);
@@ -56,6 +77,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
   const isMaciek = activePlayer?.id === 'maciek';
   const partnerPlayer = partnerId ? players[partnerId] : null;
+  const isPulsing = Boolean(isLocking || localPulse);
+  const pulsePoints = localPulse?.points ?? checkIn?.pointsEarned ?? (isWeeklyTargetMet ? 0 : habit.points);
 
   const proofPhotos = checkIn?.proofUrls && checkIn.proofUrls.length > 0
     ? checkIn.proofUrls
@@ -72,11 +95,27 @@ export function HabitCard({ habit }: { habit: Habit }) {
   const isCleanSpace = habit.category === 'environment' && habit.requiresProof;
   const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);
 
+  const triggerKineticPulse = (earnedPts: number) => {
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    setLocalPulse((prev) => ({ points: earnedPts, token: (prev?.token ?? 0) + 1 }));
+    onCheckIn?.(habit.id, earnedPts);
+    pulseTimerRef.current = setTimeout(() => {
+      setLocalPulse(null);
+    }, 520);
+  };
+
+  const clearKineticPulse = () => {
+    if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    setLocalPulse(null);
+    onUncheck?.(habit.id);
+  };
+
   const handleToggle = () => {
     if (habit.isQuantitative) {
       soundEngine.playClick();
       hapticLight();
       if (completed) {
+        clearKineticPulse();
         toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
       } else {
         setShowQtyLogger(true);
@@ -87,6 +126,7 @@ export function HabitCard({ habit }: { habit: Habit }) {
     if (completed) {
       soundEngine.playUncheck();
       hapticLight();
+      clearKineticPulse();
       toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
     } else {
       if (habit.requiresProof && proofPhotos.length === 0) {
@@ -94,23 +134,35 @@ export function HabitCard({ habit }: { habit: Habit }) {
         hapticLight();
         setIsProofModalOpen(true);
       } else {
+        const earnedPts = isWeeklyTargetMet ? 0 : habit.points;
         soundEngine.playCheck();
         hapticSuccess();
+        triggerKineticPulse(earnedPts);
         toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
       }
     }
   };
 
   const handleProofConfirmed = (proofUrls?: string[]) => {
+    const earnedPts = completed ? 0 : isWeeklyTargetMet ? 0 : habit.points;
     soundEngine.playCheck();
     hapticSuccess();
+    triggerKineticPulse(earnedPts);
     toggleHabit(habit.id, proofUrls, undefined, undefined, selectedDate);
   };
 
   const handleLogQuantity = (qty: number) => {
+    const clampedQty = Math.min(habit.maxQuantity || qty, Math.max(1, Math.floor(qty)));
+    const newPts = isWeeklyTargetMet
+      ? 0
+      : Math.min(habit.points, Math.max(1, Math.round(clampedQty * (habit.pointsPerUnit || 1))));
+    const prevPts = completed ? (checkIn?.pointsEarned ?? 0) : 0;
+    const earnedPts = Math.max(0, newPts - prevPts) || newPts;
+
     soundEngine.playCheck();
     hapticSuccess();
     setQuantity(qty);
+    triggerKineticPulse(earnedPts);
     toggleHabit(habit.id, undefined, qty, undefined, selectedDate);
     setShowQtyLogger(false);
   };
@@ -122,6 +174,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
     if (checkIn) {
       updateCheckInNote(checkIn.id, noteText.trim());
     } else {
+      const earnedPts = isWeeklyTargetMet ? 0 : habit.points;
+      triggerKineticPulse(earnedPts);
       toggleHabit(habit.id, undefined, undefined, noteText.trim(), selectedDate);
     }
     setIsEditingNote(false);
@@ -137,46 +191,138 @@ export function HabitCard({ habit }: { habit: Habit }) {
   return (
     <>
       <div
-        className={`group relative rounded-xl p-3.5 transition-all duration-150 border ${
-          satisfied
-            ? 'bg-zinc-900/30 border-zinc-800/50 opacity-75'
+        className={`group relative rounded-xl p-3.5 transition-all duration-200 border ${
+          isPulsing
+            ? isMaciek
+              ? 'bg-[#10141f] border-blue-400/90 animate-kinetic-card-blue z-10'
+              : 'bg-[#181019] border-pink-400/90 animate-kinetic-card-pink z-10'
+            : satisfied
+            ? `bg-[#0b0c0f]/90 border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
             : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-xs'
         }`}
       >
-        <div className="flex items-center gap-3">
-          {/* Sharp Linear-style square checkbox with 44px touch target */}
-          <button
-            onClick={handleToggle}
-            aria-label={
-              completed
-                ? `Mark ${habit.title} uncompleted for today`
-                : isWeeklyTargetMet
-                ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
-                : `Mark ${habit.title} completed`
-            }
-            className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 active:scale-95 ${
+        {/* Recessed Left-Edge Telemetry Channel Bar for Completed State */}
+        {satisfied && !isPulsing && (
+          <div
+            aria-hidden="true"
+            className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${
               completed
                 ? isMaciek
-                  ? 'bg-blue-500 border border-blue-400 text-white shadow-xs'
-                  : 'bg-pink-500 border border-pink-400 text-white shadow-xs'
-                : isWeeklyTargetMet
-                ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-                : 'border border-zinc-700 bg-zinc-900/80 hover:border-zinc-500 text-transparent hover:text-zinc-600'
+                  ? 'bg-blue-500/50'
+                  : 'bg-pink-500/50'
+                : 'bg-emerald-500/50'
             }`}
+          />
+        )}
+
+        {/* Kinetic Score Pulse Surface Overlay (Laser Sweep + Edge Highlight) */}
+        {isPulsing && (
+          <div
+            key={localPulse?.token ?? 'locking'}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
           >
-            <Check className={`w-4 h-4 stroke-[3] ${!completed && !isWeeklyTargetMet ? ' opacity-0 group-hover:opacity-40' : ''}`} />
-          </button>
+            {/* Horizontal laser sweep from checkbox to points counter */}
+            <div
+              className={`absolute inset-y-0 w-1/2 animate-kinetic-laser-sweep bg-gradient-to-r ${
+                isMaciek
+                  ? 'from-transparent via-blue-400/22 to-transparent'
+                  : 'from-transparent via-pink-400/22 to-transparent'
+              }`}
+            />
+            {/* Top perimeter ignition filament */}
+            <div
+              className={`absolute inset-x-4 top-0 h-[1.5px] bg-gradient-to-r ${
+                isMaciek
+                  ? 'from-transparent via-blue-300/90 to-transparent'
+                  : 'from-transparent via-pink-300/90 to-transparent'
+              }`}
+            />
+          </div>
+        )}
+
+        <div className="relative flex items-center gap-3">
+          {/* Precision Telemetry Checkbox with Shockwave Ring & Custom SVG Stroke Draw */}
+          <div className="relative shrink-0">
+            {isPulsing && (
+              <span
+                key={`ring-${localPulse?.token ?? 'lock'}`}
+                aria-hidden="true"
+                className={`pointer-events-none absolute inset-0 rounded-lg border-2 animate-kinetic-ring ${
+                  isMaciek ? 'border-blue-400' : 'border-pink-400'
+                }`}
+              />
+            )}
+
+            <button
+              onClick={handleToggle}
+              aria-label={
+                completed
+                  ? `Mark ${habit.title} uncompleted for today`
+                  : isWeeklyTargetMet
+                  ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
+                  : `Mark ${habit.title} completed`
+              }
+              className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 active:scale-90 ${
+                isPulsing ? 'animate-kinetic-box-snap ' : ''
+              }${
+                completed
+                  ? isMaciek
+                    ? 'bg-blue-500 border border-blue-300/90 text-white shadow-[0_0_14px_-2px_rgba(59,130,246,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
+                    : 'bg-pink-500 border border-pink-300/90 text-white shadow-[0_0_14px_-2px_rgba(236,72,153,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
+                  : isWeeklyTargetMet
+                  ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
+                  : 'border border-zinc-700/90 bg-[#090a0d] hover:border-zinc-500 text-transparent hover:text-zinc-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
+              }`}
+            >
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                aria-hidden="true"
+                className={`w-4 h-4 ${
+                  !completed && !isWeeklyTargetMet
+                    ? 'opacity-0 group-hover:opacity-40 transition-opacity duration-150'
+                    : 'opacity-100'
+                }`}
+              >
+                <path
+                  d="M4.5 10.5L8.25 14.25L15.5 6.25"
+                  stroke="currentColor"
+                  strokeWidth="2.6"
+                  strokeLinecap="square"
+                  strokeLinejoin="miter"
+                  className={isPulsing ? 'animate-kinetic-check-draw' : ''}
+                />
+              </svg>
+            </button>
+          </div>
 
           {/* Middle: Metadata + Title + Description */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className={`w-3.5 h-3.5 ${satisfied ? 'text-zinc-500' : 'text-zinc-400'}`}>
+              <span
+                className={`w-3.5 h-3.5 transition-colors ${
+                  isPulsing
+                    ? isMaciek
+                      ? 'text-blue-400'
+                      : 'text-pink-400'
+                    : satisfied
+                    ? 'text-zinc-500'
+                    : 'text-zinc-400'
+                }`}
+              >
                 <HabitIcon name={habit.iconName} className="w-3.5 h-3.5" />
               </span>
 
               <span
-                className={`text-[10px] uppercase font-mono font-medium tracking-wider ${
-                  satisfied ? 'text-zinc-500' : 'text-zinc-400'
+                className={`text-[10px] uppercase font-mono font-medium tracking-wider transition-colors ${
+                  isPulsing
+                    ? isMaciek
+                      ? 'text-blue-300'
+                      : 'text-pink-300'
+                    : satisfied
+                    ? 'text-zinc-500'
+                    : 'text-zinc-400'
                 }`}
               >
                 {habit.category.replace('_', ' ')}
@@ -214,15 +360,29 @@ export function HabitCard({ habit }: { habit: Habit }) {
 
             <div className="flex items-center gap-2 mt-0.5">
               <span
-                className={`text-sm font-medium tracking-tight truncate ${
-                  satisfied ? 'line-through text-zinc-500' : 'text-zinc-100'
+                className={`relative inline-block max-w-full text-sm font-medium tracking-tight truncate transition-colors ${
+                  isPulsing
+                    ? 'text-white'
+                    : satisfied
+                    ? 'line-through decoration-zinc-600/80 text-zinc-400'
+                    : 'text-zinc-100'
                 }`}
               >
                 {habit.title}
+                {isPulsing && (
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1.5px] rounded-full animate-kinetic-strike bg-gradient-to-r ${
+                      isMaciek
+                        ? 'from-blue-400 via-blue-200 to-white shadow-[0_0_8px_rgba(96,165,250,0.9)]'
+                        : 'from-pink-400 via-pink-200 to-white shadow-[0_0_8px_rgba(244,114,182,0.9)]'
+                    }`}
+                  />
+                )}
               </span>
             </div>
 
-            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+            <p className={`text-[11px] truncate mt-0.5 ${satisfied && !isPulsing ? 'text-zinc-500' : 'text-zinc-400'}`}>
               {completed && checkIn?.quantity
                 ? `Logged ${checkIn.quantity} ${habit.quantityUnit || 'units'} (+${checkIn.pointsEarned} pts)`
                 : habit.description}
@@ -237,8 +397,23 @@ export function HabitCard({ habit }: { habit: Habit }) {
             )}
           </div>
 
-          {/* Right: Rectangular Points Badge & Compact Quick Actions */}
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
+          {/* Right: Rectangular Points Badge & Kinetic +PTS Counter Pop */}
+          <div className="relative flex flex-col items-end gap-1.5 shrink-0">
+            {isPulsing && pulsePoints > 0 && (
+              <span
+                key={`pts-${localPulse?.token ?? 'lock'}`}
+                aria-hidden="true"
+                className={`pointer-events-none absolute -top-2 right-0 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-extrabold tracking-tight whitespace-nowrap border shadow-lg animate-kinetic-pts-launch ${
+                  isMaciek
+                    ? 'bg-blue-500 text-white border-blue-300 shadow-blue-500/40'
+                    : 'bg-pink-500 text-white border-pink-300 shadow-pink-500/40'
+                }`}
+              >
+                <span>↑</span>
+                <span>+{pulsePoints} PTS</span>
+              </span>
+            )}
+
             <button
               onClick={() => {
                 if (habit.isQuantitative) {
@@ -252,11 +427,17 @@ export function HabitCard({ habit }: { habit: Habit }) {
                   ? `Log quantity for ${habit.title}`
                   : `${habit.points} points`
               }
-              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-colors ${
-                completed
+              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-all tabular-nums ${
+                isPulsing
+                  ? isMaciek
+                    ? 'bg-blue-500/20 border-blue-400 text-blue-200 shadow-[0_0_14px_-2px_rgba(59,130,246,0.5)] animate-kinetic-badge-ignite'
+                    : 'bg-pink-500/20 border-pink-400 text-pink-200 shadow-[0_0_14px_-2px_rgba(236,72,153,0.5)] animate-kinetic-badge-ignite'
+                  : completed
                   ? checkIn?.pointsEarned === 0
                     ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
-                    : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-500'
+                    : isMaciek
+                    ? 'bg-blue-500/10 border-blue-500/25 text-blue-300/90'
+                    : 'bg-pink-500/10 border-pink-500/25 text-pink-300/90'
                   : isWeeklyTargetMet
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                   : habit.isQuantitative

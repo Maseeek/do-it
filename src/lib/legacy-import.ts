@@ -4,8 +4,9 @@ import { isValidDateString } from './date-utils';
 import { rowToCheckIn, rowToHabit } from './supabase-sync';
 
 export function canImportLegacyDatabase(playerId: PlayerId | null, email: string | undefined): boolean {
-  if (playerId === 'maciek') return email?.toLowerCase() === 'maciekgeneja@gmail.com';
-  return playerId === 'myrna' && email?.toLowerCase() === 'myrnamarsh@icloud.com';
+  const normalized = email?.trim().toLowerCase();
+  if (playerId === 'maciek') return normalized === 'maciekgeneja@gmail.com' || normalized === 'maseeekyt@gmail.com';
+  return playerId === 'myrna' && normalized === 'myrnamarsh@icloud.com';
 }
 
 export function planLegacyReplacement(
