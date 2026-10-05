@@ -135,6 +135,24 @@ describe('Domain: Score Calculator & Leaderboard Engine', () => {
       assert.strictEqual(myrnaScore.today, 50);
       assert.strictEqual(myrnaScore.karma, 50);
     });
+    it('recalculates today score and streak for an explicit date', () => {
+      const checkIns: CheckIn[] = [{
+        id: 'previous-day',
+        habitId: 'maciek-sleep',
+        playerId: 'maciek',
+        date: '2026-10-04',
+        pointsEarned: 50,
+        completedAt: '2026-10-04T12:00:00Z',
+      }];
+
+      const sunday = calculatePlayerScores('maciek', checkIns, mockHabits, [], '2026-10-04');
+      const monday = calculatePlayerScores('maciek', checkIns, mockHabits, [], '2026-10-05');
+
+      assert.equal(sunday.today, 50);
+      assert.equal(monday.today, 0);
+      assert.equal(sunday.currentStreak, 1);
+      assert.equal(monday.currentStreak, 1);
+    });
 
     it('calculates weekly completion rate correctly', () => {
       const checkIns: CheckIn[] = [

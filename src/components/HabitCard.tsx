@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Habit } from '@/lib/types';
-import { useStore } from '@/lib/store';
+import { CheckIn, Habit, Player } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 import { ProofModal } from './ProofModal';
 import { ProofGalleryModal } from './ProofGalleryModal';
-import { calculateHabitStreak } from '@/lib/score-calculator';
+
 import {
   BookOpen,
   Camera,
@@ -23,34 +22,41 @@ import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
 interface HabitCardProps {
   habit: Habit;
+  selectedDate: string;
+  completed: boolean;
+  checkIn: CheckIn | undefined;
+  weeklyCompletions: number;
+  habitStreak: number;
+  activePlayer: Player | null;
+  partnerPlayer: Player | null;
+  partnerCleanSpaceCheckIn: CheckIn | undefined;
+  partnerCleanSpaceHabit: Habit | undefined;
+  toggleHabit: (habitId: string, proofUrl?: string | string[], quantity?: number, note?: string, targetDate?: string) => void;
+  updateCheckInNote: (checkInId: string, note: string) => void;
   isLocking?: boolean;
   justSettled?: boolean;
-  onCheckIn?: (habitId: string, pointsEarned: number) => void;
+  onCheckIn?: (habitId: string, pointsEarned: number, wasAlreadySatisfied: boolean) => void;
   onUncheck?: (habitId: string) => void;
 }
 
-export function HabitCard({
+export const HabitCard = React.memo(function HabitCard({
   habit,
+  selectedDate,
+  completed,
+  checkIn,
+  weeklyCompletions,
+  habitStreak,
+  activePlayer,
+  partnerPlayer,
+  partnerCleanSpaceCheckIn,
+  partnerCleanSpaceHabit,
+  toggleHabit,
+  updateCheckInNote,
   isLocking = false,
   justSettled = false,
   onCheckIn,
   onUncheck,
 }: HabitCardProps) {
-  const {
-    toggleHabit,
-    updateCheckInNote,
-    isHabitCompletedOnDate,
-    getHabitCheckInOnDate,
-    getWeeklyHabitCompletions,
-    selectedDate,
-    checkIns,
-    restDays,
-    activePlayer,
-    partnerId,
-    players,
-    partnerCleanSpaceCheckIn,
-    partnerCleanSpaceHabit,
-  } = useStore();
 
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [showFullProof, setShowFullProof] = useState(false);
@@ -67,16 +73,10 @@ export function HabitCard({
     };
   }, []);
 
-  const completed = isHabitCompletedOnDate(habit.id, selectedDate);
-  const checkIn = getHabitCheckInOnDate(habit.id, selectedDate);
   const isWeeklyHabit = Boolean(habit.weeklyTargetDays && habit.weeklyTargetDays > 0);
-  const weeklyCompletions = getWeeklyHabitCompletions(habit.id, selectedDate);
   const isWeeklyTargetMet = isWeeklyHabit && weeklyCompletions >= habit.weeklyTargetDays!;
   const satisfied = completed || isWeeklyTargetMet;
-  const habitStreak = calculateHabitStreak(habit, checkIns, restDays);
-
   const isMaciek = activePlayer?.id === 'maciek';
-  const partnerPlayer = partnerId ? players[partnerId] : null;
   const isPulsing = Boolean(isLocking || localPulse);
   const pulsePoints = localPulse?.points ?? checkIn?.pointsEarned ?? (isWeeklyTargetMet ? 0 : habit.points);
 
@@ -98,7 +98,7 @@ export function HabitCard({
   const triggerKineticPulse = (earnedPts: number) => {
     if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
     setLocalPulse((prev) => ({ points: earnedPts, token: (prev?.token ?? 0) + 1 }));
-    onCheckIn?.(habit.id, earnedPts);
+    onCheckIn?.(habit.id, earnedPts, satisfied);
     pulseTimerRef.current = setTimeout(() => {
       setLocalPulse(null);
     }, 520);
@@ -696,4 +696,4 @@ export function HabitCard({
       )}
     </>
   );
-}
+});

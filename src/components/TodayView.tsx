@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowUpRight,
   BedDouble,
@@ -20,6 +20,8 @@ import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
 import { ActivityFeed } from './ActivityFeed';
 import { ProofGalleryModal } from './ProofGalleryModal';
+import { Habit } from '@/lib/types';
+import { calculateHabitStreak } from '@/lib/score-calculator';
 
 export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
@@ -27,9 +29,15 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     habits,
     activeHabits,
     isHabitSatisfiedOnDate,
+    isHabitCompletedOnDate,
+    getHabitCheckInOnDate,
+    getWeeklyHabitCompletions,
+    toggleHabit,
+    updateCheckInNote,
     selectedDate,
     isTodaySelected,
     checkIns,
+    restDays,
     activePlayer,
     isPartnerConnected,
     partnerId,
@@ -38,7 +46,6 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     partnerCleanSpaceHabit,
     isRestDay,
   } = useStore();
-
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
   const [proofIndex, setProofIndex] = useState<number | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -90,12 +97,10 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   const activeTargetPulse =
     targetPulse && targetPulse.context === context ? targetPulse : null;
 
-  const handleHabitCheckIn = (habitId: string, pointsEarned: number) => {
+  const handleHabitCheckIn = useCallback((habitId: string, pointsEarned: number, wasAlreadySatisfied: boolean) => {
     const reducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const wasAlreadySatisfied = isHabitSatisfiedOnDate(habitId, selectedDate);
 
     if (pointsEarned > 0) {
       if (targetPulseTimerRef.current) clearTimeout(targetPulseTimerRef.current);
@@ -132,9 +137,9 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
         }, 320);
       }, 480);
     }
-  };
+  }, [context]);
 
-  const handleHabitUncheck = (habitId: string) => {
+  const handleHabitUncheck = useCallback((habitId: string) => {
     if (lockTimersRef.current[habitId]) clearTimeout(lockTimersRef.current[habitId]);
     if (settleTimersRef.current[habitId]) clearTimeout(settleTimersRef.current[habitId]);
     setLockingMap((prev) => {
@@ -149,7 +154,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
       delete next[habitId];
       return next;
     });
-  };
+  }, []);
 
   const partner = partnerId ? players[partnerId] : null;
   const partnerPoints = checkIns
@@ -164,6 +169,20 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     : partnerCleanSpaceCheckIn?.proofUrl
     ? [partnerCleanSpaceCheckIn.proofUrl]
     : [];
+  const getHabitCardProps = (habit: Habit) => ({
+    habit,
+    selectedDate,
+    completed: isHabitCompletedOnDate(habit.id, selectedDate),
+    checkIn: getHabitCheckInOnDate(habit.id, selectedDate),
+    weeklyCompletions: getWeeklyHabitCompletions(habit.id, selectedDate),
+    habitStreak: calculateHabitStreak(habit, checkIns, restDays),
+    activePlayer,
+    partnerPlayer: habit.category === 'environment' && habit.requiresProof ? partner : null,
+    partnerCleanSpaceCheckIn: habit.category === 'environment' && habit.requiresProof ? partnerCleanSpaceCheckIn : undefined,
+    partnerCleanSpaceHabit: habit.category === 'environment' && habit.requiresProof ? partnerCleanSpaceHabit : undefined,
+    toggleHabit,
+    updateCheckInNote,
+  });
 
   const previous = useRef({ context, points, allDone });
 
@@ -498,7 +517,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                     {pending.map((habit) => (
                       <HabitCard
                         key={`${context}:${habit.id}`}
-                        habit={habit}
+                        {...getHabitCardProps(habit)}
                         isLocking={lockingMap[habit.id] === context}
                         onCheckIn={handleHabitCheckIn}
                         onUncheck={handleHabitUncheck}
@@ -528,7 +547,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                     {done.map((habit) => (
                       <HabitCard
                         key={`${context}:${habit.id}`}
-                        habit={habit}
+                        {...getHabitCardProps(habit)}
                         justSettled={settledMap[habit.id] === context}
                         onCheckIn={handleHabitCheckIn}
                         onUncheck={handleHabitUncheck}

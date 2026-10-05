@@ -23,9 +23,9 @@ export function calculatePlayerScores(
   playerId: PlayerId,
   checkIns: CheckIn[],
   habits: Habit[],
-  restDays: RestDay[] = []
+  restDays: RestDay[] = [],
+  today = getTodayDateString()
 ): PlayerScoreSummary {
-  const today = getTodayDateString();
   const playerLogs = checkIns.filter((c) => c.playerId === playerId);
   const playerRestDays = new Set<string>();
   let restDaysUsed = 0;
