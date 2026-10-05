@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   CheckIn,
@@ -66,7 +66,7 @@ const EMPTY_PLAYER_SUMMARY: PlayerScoreSummary = {
 export type SyncStatus = 'connected' | 'syncing' | 'offline' | 'local_only';
 function useStableCallback<T extends (...args: never[]) => unknown>(callback: T): T {
   const callbackRef = useRef(callback);
-  useEffect(() => {
+  useLayoutEffect(() => {
     callbackRef.current = callback;
   }, [callback]);
   return useCallback((...args: Parameters<T>) => callbackRef.current(...args), []) as unknown as T;
@@ -1214,12 +1214,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Summaries
   const restDays = state.restDays ?? EMPTY_REST_DAYS;
   const maciekSummary = useMemo(
-    () => calculatePlayerScores('maciek', state.checkIns, state.habits, restDays),
-    [state.checkIns, state.habits, restDays]
+    () => calculatePlayerScores('maciek', state.checkIns, state.habits, restDays, todayStr),
+    [state.checkIns, state.habits, restDays, todayStr]
   );
   const myrnaSummary = useMemo(
-    () => calculatePlayerScores('myrna', state.checkIns, state.habits, restDays),
-    [state.checkIns, state.habits, restDays]
+    () => calculatePlayerScores('myrna', state.checkIns, state.habits, restDays, todayStr),
+    [state.checkIns, state.habits, restDays, todayStr]
   );
   const activePlayerSummary = useMemo(
     () => state.activePlayerId === 'maciek'
