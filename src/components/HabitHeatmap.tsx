@@ -34,6 +34,12 @@ const WEEKDAY_LABELS: { row: number; label: string }[] = [
   { row: 6, label: 'Sun' },
 ];
 
+const heatmapDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+
 export function HabitHeatmap({
   selectedHabitId: controlledHabitId,
   onSelectHabitId,
@@ -183,11 +189,7 @@ export function HabitHeatmap({
   const inspectedDateStr = selectedDayStr || todayStr;
   const inspectedStats = dayStatsMap[inspectedDateStr] || { points: 0, count: 0, items: [] };
   const inspectedIsRest = restDaySet.has(inspectedDateStr);
-  const inspectedCalendarDate = parseDate(inspectedDateStr).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  const inspectedCalendarDate = heatmapDateFormatter.format(parseDate(inspectedDateStr));
 
   return (
     <section
