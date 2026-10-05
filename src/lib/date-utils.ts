@@ -54,6 +54,12 @@ export function isDateInCurrentYear(dateStr: string): boolean {
   return getYearKey(dateStr) === getYearKey(getTodayDateString());
 }
 
+const friendlyDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+
 export function formatFriendlyDate(dateStr: string): string {
   const date = parseDate(dateStr);
   const today = getTodayDateString();
@@ -64,11 +70,7 @@ export function formatFriendlyDate(dateStr: string): string {
   const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
   if (dateStr === yStr) return 'Yesterday';
 
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  return friendlyDateFormatter.format(date);
 }
 
 export function getDaysRemainingInWeek(): { days: number; hours: number } {

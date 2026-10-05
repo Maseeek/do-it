@@ -89,6 +89,7 @@ flowchart LR
 ### 4. High-Contrast UI Engineering & Tactile UX
 - **Linear-Inspired Dark Interface**: Built on a `#08090a` canvas with `#27272a` hairline borders, responsive desktop sidebar / mobile bottom navigation, and full keyboard navigation (`1`/`2`/`3` tab switching, `?` shortcut modal, `Esc` focus-trapped dialogs).
 - **Visual Analytics & Social Proof**: Real-time tug-of-war differential bar, Monday–Sunday daily battle charts, 10-category dominance matrix, 12-week GitHub/Linear-style consistency heatmaps (`HabitHeatmap.tsx`), 12 dynamically evaluated milestone trophies (`TrophyCabinet.tsx`), client-side compressed photo proofs (`image-utils.ts`), and 1-tap cheer reactions (`⚡`, `💪`, `🍕`, `☕`).
+- **Indexed Streaks & Calendar Rendering**: Daily streaks use date sets, and weekly streaks index distinct completion dates by ISO week in one history pass before checking consecutive weeks. Rest-day protection and partial-current-week behavior are unchanged. Calendar month labels use static English names, and date labels reuse cached formatters instead of creating one per calendar cell.
 - **Synthesized Web Audio & PWA Support**: Zero-asset Web Audio API synthesizer (`sound-utils.ts`) generating tactile check-in clicks and completion fanfare chimes, paired with dynamic PWA manifest generation and URL deep-linking (`?action=checkin&habit=...`) for iOS Shortcuts automation.
 
 ---
