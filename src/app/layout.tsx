@@ -79,7 +79,6 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans transition-colors duration-150">
-        <div className="ambient-mesh" />
         <MultiplayerProvider>
           <StoreProvider>{children}</StoreProvider>
         </MultiplayerProvider>

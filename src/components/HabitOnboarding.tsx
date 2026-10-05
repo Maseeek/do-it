@@ -12,11 +12,11 @@ import { rowToHabit } from '@/lib/supabase-sync';
 import { canImportLegacyDatabase } from '@/lib/legacy-import';
 
 export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => void; firstRun?: boolean }) {
-  const { activePlayer, habits, applyHabitPlan } = useStore();
+  const { activePlayer, habits, applyHabitPlan, isPartnerConnected } = useStore();
   const multiplayer = useMultiplayer();
   const playerId = activePlayer?.id || 'maciek';
   const existing = habits.filter(habit => habit.playerId === playerId && !habit.isArchived);
-  const partnerTotal = weeklyPointPotential(habits.filter(habit => habit.playerId !== playerId));
+  const partnerTotal = isPartnerConnected ? weeklyPointPotential(habits.filter(habit => habit.playerId !== playerId)) : 0;
   const [plan, setPlan] = useState<Habit[]>(() => {
     const catalog = catalogHabits(playerId);
     return [...catalog.map(habit => existing.find(item => item.id === habit.id) || habit), ...existing.filter(habit => !catalog.some(item => item.id === habit.id))];
@@ -107,7 +107,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     }
   }
 
-  return <main className="min-h-screen bg-black text-white px-4 py-8 lg:py-12">
+  return <main className="relative z-10 min-h-screen bg-black text-white px-4 py-8 lg:py-12">
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div><p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">{firstRun ? 'Welcome to do' : 'Your habits'}</p>

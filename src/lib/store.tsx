@@ -100,6 +100,7 @@ interface StoreContextType {
   getWeeklyHabitCompletions: (habitId: string, date?: string) => number;
   isHabitWeeklyTargetMet: (habitId: string, date?: string) => boolean;
   isHabitSatisfiedOnDate: (habitId: string, date?: string) => boolean;
+  isPartnerConnected: boolean;
   partnerId: PlayerId | null;
   partnerCleanSpaceHabit: Habit | undefined;
   partnerCleanSpaceCheckIn: CheckIn | undefined;
@@ -457,8 +458,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === multiplayer.slot;
         stateDuelRef.current = duelId;
         stateSlotRef.current = multiplayer.slot;
-        setState(prev => ({ ...(sameDuel ? prev : initial), activePlayerId: multiplayer.slot, habits: data.habits, checkIns: data.checkIns, stakes: data.stakes, reactions: data.reactions, restDays: data.restDays,
-          players: { maciek: { ...initial.players.maciek, name: duelOwnerName }, myrna: { ...initial.players.myrna, name: duelGuestName || 'Invited player' } } }));
+        const partnerPaired = multiplayer.hasPairedPartner;
+        const visibleHabits = partnerPaired ? data.habits : data.habits.filter(h => h.playerId === multiplayer.slot);
+        const visibleCheckIns = partnerPaired ? data.checkIns : data.checkIns.filter(c => c.playerId === multiplayer.slot);
+        const visibleReactions = partnerPaired ? data.reactions : data.reactions.filter(r => r.fromPlayerId === multiplayer.slot && r.toPlayerId === multiplayer.slot);
+        const visibleRestDays = partnerPaired ? data.restDays : data.restDays.filter(r => r.playerId === multiplayer.slot);
+        setState(prev => ({ ...(sameDuel ? prev : initial), activePlayerId: multiplayer.slot, habits: visibleHabits, checkIns: visibleCheckIns, stakes: data.stakes, reactions: visibleReactions, restDays: visibleRestDays,
+          players: { maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name }, myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent' } } }));
         setLoadedDuelId(duelId);
         setSyncStatus('connected');
         setStorageError(null);
@@ -476,7 +482,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
     const poll = setInterval(() => void reload(), 30000);
     return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
-  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.user?.email, duelOwnerName, duelGuestName]);
+  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName]);
 
   const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
     const client = getSupabaseClient();
@@ -555,9 +561,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return isHabitWeeklyTargetMet(habitId, date);
   };
 
+  const isPartnerConnected = multiplayer.configured ? multiplayer.hasPairedPartner : true;
   const partnerId: PlayerId | null =
-    state.activePlayerId === 'maciek' ? 'myrna' : state.activePlayerId === 'myrna' ? 'maciek' : null;
-
+    !isPartnerConnected
+      ? null
+      : state.activePlayerId === 'maciek'
+      ? 'myrna'
+      : state.activePlayerId === 'myrna'
+      ? 'maciek'
+      : null;
   const partnerCleanSpaceHabit = state.habits.find(
     (h) => h.playerId === partnerId && h.category === 'environment' && h.requiresProof
   );
@@ -901,8 +913,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Each habit needs a valid point value. Quantity habits cannot exceed their maximum earned points.');
     }
     const total = weeklyPointPotential(plannedHabits);
-    const partnerId = playerId === 'maciek' ? 'myrna' : 'maciek';
-    const partnerTotal = weeklyPointPotential(state.habits.filter(habit => habit.playerId === partnerId));
+    const partnerSlot = playerId === 'maciek' ? 'myrna' : 'maciek';
+    const partnerTotal = (!multiplayer.configured || multiplayer.hasPairedPartner)
+      ? weeklyPointPotential(state.habits.filter(habit => habit.playerId === partnerSlot))
+      : 0;
     if (total === 0) throw new Error('Choose at least one habit.');
     if (partnerTotal > 0 && total !== partnerTotal) throw new Error(`Your weekly point potential needs to match your partner’s ${partnerTotal} points.`);
     const previous = state.habits.filter(habit => habit.playerId === playerId);
@@ -1476,6 +1490,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         getWeeklyHabitCompletions,
         isHabitWeeklyTargetMet,
         isHabitSatisfiedOnDate,
+        isPartnerConnected,
         partnerId,
         partnerCleanSpaceHabit,
         partnerCleanSpaceCheckIn,

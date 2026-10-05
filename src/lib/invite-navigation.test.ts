@@ -1,10 +1,18 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { getMultiplayerEntry, getInviteOutcome } from './invite-navigation';
+import {
+  extractInviteCode,
+  getInviteOutcome,
+  getMultiplayerEntry,
+  hasMatchedAccount,
+  hasMatchedDuelPartner,
+  isValidInviteCode,
+} from './invite-navigation';
 
 describe('invite navigation', () => {
   it('shows an invitation outcome to a signed-in player who already has a duel', () => {
     assert.equal(getMultiplayerEntry(true, true, true, '00000000-0000-0000-0000-000000000000'), 'invite-conflict');
+    assert.equal(getMultiplayerEntry(true, true, true, ''), 'invite-conflict');
   });
 
   it('sends a player without a duel to the join gate', () => {
@@ -14,7 +22,6 @@ describe('invite navigation', () => {
   it('keeps the dashboard for a signed-in player without an invite', () => {
     assert.equal(getMultiplayerEntry(true, true, true, null), 'app');
   });
-
   describe('getInviteOutcome', () => {
     const ownCode = '11111111-1111-1111-1111-111111111111';
     const otherCode = '22222222-2222-2222-2222-222222222222';
@@ -72,6 +79,56 @@ describe('invite navigation', () => {
         hasGuest: false,
       });
       assert.equal(outcome, 'solo-replaceable');
+    });
+
+    it('identifies empty or malformed invitation codes', () => {
+      assert.equal(
+        getInviteOutcome({
+          inviteCode: '   ',
+          duelInviteCode: ownCode,
+          userId,
+          ownerId: userId,
+          hasGuest: false,
+        }),
+        'empty-invite'
+      );
+      assert.equal(
+        getInviteOutcome({
+          inviteCode: 'not-a-valid-uuid',
+          duelInviteCode: ownCode,
+          userId,
+          ownerId: userId,
+          hasGuest: false,
+        }),
+        'invalid-invite'
+      );
+    });
+
+    it('validates account emails and paired duel opponents', () => {
+      assert.equal(hasMatchedAccount({ id: userId, email: 'maciekgeneja@gmail.com' }), true);
+      assert.equal(hasMatchedAccount({ id: userId, email: '' }), false);
+      assert.equal(hasMatchedAccount(null), false);
+      assert.equal(
+        hasMatchedDuelPartner(
+          { owner_id: ownCode, guest_id: null, owner_name: 'Maciek', guest_name: 'Myrna' },
+          { id: ownCode, email: 'maciekgeneja@gmail.com' }
+        ),
+        false
+      );
+      assert.equal(
+        hasMatchedDuelPartner(
+          { owner_id: ownCode, guest_id: otherCode, owner_name: 'Maciek', guest_name: 'Myrna' },
+          { id: ownCode, email: 'maciekgeneja@gmail.com' }
+        ),
+        true
+      );
+    });
+
+    it('extracts invite codes from full URLs or raw codes', () => {
+      assert.equal(extractInviteCode(`https://example.com/?invite=${ownCode}`), ownCode);
+      assert.equal(extractInviteCode(ownCode), ownCode);
+      assert.equal(isValidInviteCode(ownCode), true);
+      assert.equal(isValidInviteCode('bad'), false);
     });
   });
 });

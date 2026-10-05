@@ -21,7 +21,7 @@ import { DateNavigator } from './DateNavigator';
 import { ActivityFeed } from './ActivityFeed';
 import { ProofGalleryModal } from './ProofGalleryModal';
 
-export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
+export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
   const {
     habits,
@@ -31,6 +31,7 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
     isTodaySelected,
     checkIns,
     activePlayer,
+    isPartnerConnected,
     partnerId,
     players,
     partnerCleanSpaceCheckIn,
@@ -40,7 +41,30 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
 
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
   const [proofIndex, setProofIndex] = useState<number | null>(null);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [lockingMap, setLockingMap] = useState<Record<string, string>>({});
+  const [settledMap, setSettledMap] = useState<Record<string, string>>({});
+  const [targetPulse, setTargetPulse] = useState<{
+    context: string;
+    token: number;
+    delta: number;
+  } | null>(null);
 
+  const lockTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const settleTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const targetPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const lockTimers = lockTimersRef.current;
+    const settleTimers = settleTimersRef.current;
+    return () => {
+      Object.values(lockTimers).forEach(clearTimeout);
+      Object.values(settleTimers).forEach(clearTimeout);
+      if (targetPulseTimerRef.current) clearTimeout(targetPulseTimerRef.current);
+    };
+  }, []);
+
+  const context = `${activePlayer?.id}:${selectedDate}`;
   const points = checkIns
     .filter((checkIn) => checkIn.playerId === activePlayer?.id && checkIn.date === selectedDate)
     .reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
@@ -48,12 +72,84 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
     ? activeHabits.reduce((sum, habit) => sum + habit.points, 0)
     : 240;
   const par = rawPar > 0 ? rawPar : 240;
-  const pending = activeHabits.filter((habit) => !isHabitSatisfiedOnDate(habit.id, selectedDate));
-  const done = activeHabits.filter((habit) => isHabitSatisfiedOnDate(habit.id, selectedDate));
-  const allDone = activeHabits.length > 0 && pending.length === 0;
+  const satisfiedHabits = activeHabits.filter((habit) =>
+    isHabitSatisfiedOnDate(habit.id, selectedDate)
+  );
+  const pending = activeHabits.filter(
+    (habit) =>
+      !isHabitSatisfiedOnDate(habit.id, selectedDate) || lockingMap[habit.id] === context
+  );
+  const done = activeHabits.filter(
+    (habit) =>
+      isHabitSatisfiedOnDate(habit.id, selectedDate) && lockingMap[habit.id] !== context
+  );
+  const allDone = activeHabits.length > 0 && satisfiedHabits.length === activeHabits.length;
   const progress = par > 0 ? Math.min(100, Math.round((points / par) * 100)) : 0;
   const isRest = isRestDay(selectedDate);
   const isMaciek = activePlayer?.id === 'maciek';
+  const activeTargetPulse =
+    targetPulse && targetPulse.context === context ? targetPulse : null;
+
+  const handleHabitCheckIn = (habitId: string, pointsEarned: number) => {
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const wasAlreadySatisfied = isHabitSatisfiedOnDate(habitId, selectedDate);
+
+    if (pointsEarned > 0) {
+      if (targetPulseTimerRef.current) clearTimeout(targetPulseTimerRef.current);
+      setTargetPulse((prev) => ({
+        context,
+        token: (prev?.token ?? 0) + 1,
+        delta: pointsEarned,
+      }));
+      targetPulseTimerRef.current = setTimeout(() => {
+        setTargetPulse(null);
+      }, 720);
+    }
+
+    if (!reducedMotion && !wasAlreadySatisfied) {
+      if (lockTimersRef.current[habitId]) clearTimeout(lockTimersRef.current[habitId]);
+      if (settleTimersRef.current[habitId]) clearTimeout(settleTimersRef.current[habitId]);
+
+      setLockingMap((prev) => ({ ...prev, [habitId]: context }));
+
+      lockTimersRef.current[habitId] = setTimeout(() => {
+        setLockingMap((prev) => {
+          const next = { ...prev };
+          delete next[habitId];
+          return next;
+        });
+        setSettledMap((prev) => ({ ...prev, [habitId]: context }));
+
+        settleTimersRef.current[habitId] = setTimeout(() => {
+          setSettledMap((prev) => {
+            const next = { ...prev };
+            delete next[habitId];
+            return next;
+          });
+        }, 320);
+      }, 480);
+    }
+  };
+
+  const handleHabitUncheck = (habitId: string) => {
+    if (lockTimersRef.current[habitId]) clearTimeout(lockTimersRef.current[habitId]);
+    if (settleTimersRef.current[habitId]) clearTimeout(settleTimersRef.current[habitId]);
+    setLockingMap((prev) => {
+      if (!prev[habitId]) return prev;
+      const next = { ...prev };
+      delete next[habitId];
+      return next;
+    });
+    setSettledMap((prev) => {
+      if (!prev[habitId]) return prev;
+      const next = { ...prev };
+      delete next[habitId];
+      return next;
+    });
+  };
 
   const partner = partnerId ? players[partnerId] : null;
   const partnerPoints = checkIns
@@ -69,7 +165,6 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
     ? [partnerCleanSpaceCheckIn.proofUrl]
     : [];
 
-  const context = `${activePlayer?.id}:${selectedDate}`;
   const previous = useRef({ context, points, allDone });
 
   useEffect(() => {
@@ -162,21 +257,48 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
             </div>
           )}
 
-          {/* Daily Target Overview Card (Linear / Initial Framing) */}
+          {/* Daily Target Overview Card (Linear / Kinetic Telemetry Framing) */}
           <section
+            key={activeTargetPulse ? `target-${activeTargetPulse.token}` : 'target-idle'}
             aria-label="Today progress"
-            className="rounded-xl bg-gradient-to-b from-[#12141a] to-[#0c0d10] border border-zinc-800/90 p-4 shadow-xs"
+            className={`relative rounded-xl bg-gradient-to-b from-[#12141a] to-[#0c0d10] border border-zinc-800/90 p-4 shadow-xs transition-colors ${
+              activeTargetPulse
+                ? progress >= 100
+                  ? 'animate-target-pulse-emerald'
+                  : isMaciek
+                  ? 'animate-target-pulse-blue'
+                  : 'animate-target-pulse-pink'
+                : ''
+            }`}
           >
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
                   {isTodaySelected ? 'Daily Target' : `Score · ${formatFriendlyDate(selectedDate)}`}
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-3xl font-bold font-mono tracking-tight tabular-nums text-white">
+                <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
+                  <span
+                    className={`text-3xl font-bold font-mono tracking-tight tabular-nums text-white ${
+                      activeTargetPulse ? 'animate-target-score-bump' : ''
+                    }`}
+                  >
                     {points}
                   </span>
                   <span className="text-xs font-mono text-zinc-400">/ {par} pts</span>
+                  {activeTargetPulse && activeTargetPulse.delta > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className={`inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold tracking-tight border animate-target-delta-flare ${
+                        progress >= 100
+                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                          : isMaciek
+                          ? 'bg-blue-500/15 text-blue-300 border-blue-400/40 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+                          : 'bg-pink-500/15 text-pink-300 border-pink-400/40 shadow-[0_0_12px_rgba(236,72,153,0.3)]'
+                      }`}
+                    >
+                      +{activeTargetPulse.delta} PTS
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -185,32 +307,53 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
                   Habits Done
                 </span>
                 <div className="mt-1">
-                  <span className="inline-flex items-center text-xs font-mono font-semibold text-white bg-zinc-900/90 px-2 py-0.5 rounded border border-zinc-800 tabular-nums">
-                    {done.length} / {activeHabits.length}
+                  <span
+                    className={`inline-flex items-center text-xs font-mono font-semibold px-2 py-0.5 rounded border tabular-nums transition-colors ${
+                      activeTargetPulse
+                        ? isMaciek
+                          ? 'text-blue-200 bg-blue-500/15 border-blue-400/40'
+                          : 'text-pink-200 bg-pink-500/15 border-pink-400/40'
+                        : 'text-white bg-zinc-900/90 border-zinc-800'
+                    }`}
+                  >
+                    {satisfiedHabits.length} / {activeHabits.length}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Linear progress bar */}
+            {/* Linear progress bar with Kinetic Energy Surge */}
             <div
               role="progressbar"
               aria-label={`Today's progress: ${points} of ${par} points`}
               aria-valuenow={points}
               aria-valuemin={0}
               aria-valuemax={Math.max(1, par)}
-              className="w-full h-1.5 rounded-full bg-zinc-800/90 overflow-hidden"
+              className="relative w-full h-2 rounded-full bg-zinc-800/90 overflow-hidden"
             >
               <div
-                className={`h-full rounded-full transition-[width] duration-500 ${
+                className={`relative h-full rounded-full transition-[width] duration-500 ease-out ${
                   progress >= 100
-                    ? 'bg-emerald-400'
+                    ? 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]'
                     : isMaciek
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-400'
-                    : 'bg-gradient-to-r from-pink-500 to-rose-400'
+                    ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 shadow-[0_0_12px_rgba(59,130,246,0.45)]'
+                    : 'bg-gradient-to-r from-pink-600 via-pink-500 to-rose-400 shadow-[0_0_12px_rgba(236,72,153,0.45)]'
                 }`}
                 style={{ width: `${progress}%` }}
-              />
+              >
+                {activeTargetPulse && progress > 0 && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent animate-target-bar-surge"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_2px_rgba(255,255,255,0.95)]"
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
             {allDone || progress >= 100 ? (
@@ -233,7 +376,7 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
             )}
 
             {/* Integrated Partner Accountability Row */}
-            {partner && (
+            {partner ? (
               <div className="mt-3.5 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
@@ -283,7 +426,51 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
                   )}
                 </div>
               </div>
-            )}
+            ) : multiplayer.configured && multiplayer.duel && !isPartnerConnected ? (
+              <div className="mt-3.5 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-zinc-200">
+                    No opponent account matched yet
+                  </div>
+                  <div className="text-[11px] font-mono text-zinc-400">
+                    Invite someone with an account to join your duel
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      const url = `${window.location.origin}/?invite=${multiplayer.duel?.invite_code}`;
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        setInviteCopied(true);
+                        setTimeout(() => setInviteCopied(false), 2500);
+                      } catch {
+                        if (onOpenDuel) onOpenDuel();
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-black bg-white hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    <span>{inviteCopied ? 'Invite copied!' : 'Copy invite link'}</span>
+                  </button>
+                  {onOpenDuel && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEngine.playClick();
+                        hapticLight();
+                        onOpenDuel();
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-300 bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-800 transition-colors"
+                    >
+                      <span>Invite options</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : null}
           </section>
 
           {/* Habits Lists */}
@@ -309,7 +496,13 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
                 {pending.length > 0 ? (
                   <div className="space-y-2">
                     {pending.map((habit) => (
-                      <HabitCard key={`${context}:${habit.id}`} habit={habit} />
+                      <HabitCard
+                        key={`${context}:${habit.id}`}
+                        habit={habit}
+                        isLocking={lockingMap[habit.id] === context}
+                        onCheckIn={handleHabitCheckIn}
+                        onUncheck={handleHabitUncheck}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -333,7 +526,13 @@ export function TodayView({ onOpenHabits }: { onOpenHabits: () => void }) {
                   </div>
                   <div className="space-y-2">
                     {done.map((habit) => (
-                      <HabitCard key={`${context}:${habit.id}`} habit={habit} />
+                      <HabitCard
+                        key={`${context}:${habit.id}`}
+                        habit={habit}
+                        justSettled={settledMap[habit.id] === context}
+                        onCheckIn={handleHabitCheckIn}
+                        onUncheck={handleHabitUncheck}
+                      />
                     ))}
                   </div>
                 </section>

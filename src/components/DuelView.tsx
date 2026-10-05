@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { extractInviteCode } from '@/lib/invite-navigation';
 import { LeaderboardTier, Habit, CheckIn, Player, PlayerId, StakePeriod } from '@/lib/types';
 import { getCategoryBreakdown, getStakesRecord, getWeeklyDailyDuelPoints } from '@/lib/score-calculator';
 import { getDaysRemainingInMonth, getDaysRemainingInWeek, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
@@ -28,8 +30,11 @@ import { ActivityFeed } from './ActivityFeed';
 
 export function DuelView() {
   const multiplayer = useMultiplayer();
+  const router = useRouter();
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState('');
+  const [joinLinkInput, setJoinLinkInput] = useState('');
+  const [showInvitePanel, setShowInvitePanel] = useState(false);
   useEffect(() => {
     setInviteLink(multiplayer.duel ? `${window.location.origin}/?invite=${multiplayer.duel.invite_code}` : '');
   }, [multiplayer.duel]);
@@ -59,6 +64,7 @@ export function DuelView() {
     checkIns,
     stakes,
     players,
+    isPartnerConnected,
   } = useStore();
 
   const comparison = getComparison(selectedTier);
@@ -160,17 +166,117 @@ export function DuelView() {
 
   return (
     <div className="space-y-4">
-      {multiplayer.duel && !multiplayer.duel.guest_id && <section className="rounded-2xl border border-blue-400/20 bg-blue-400/5 p-4 space-y-3">
-        <h2 className="font-semibold">Invite your opponent</h2>
-        <p className="text-xs text-zinc-400">Share this private link. The first person who accepts it joins your duel.</p>
-        <label className="block text-xs text-zinc-400">Invitation link<input readOnly value={inviteLink} onFocus={event => event.currentTarget.select()} className="mt-1 w-full rounded-lg border border-white/15 bg-black p-2 text-xs text-white" /></label>
-        <button disabled={!inviteLink} className="rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold disabled:opacity-50" onClick={async () => {
-          try { await navigator.clipboard.writeText(inviteLink); setInviteStatus('Invitation link copied'); }
-          catch { setInviteStatus('Select and copy the invitation link above.'); }
-        }}>Copy invitation link</button>
-        {inviteStatus && <p role="status" className="text-xs text-zinc-300">{inviteStatus}</p>}
-      </section>}
-      {multiplayer.duel?.guest_id && <p className="text-xs text-zinc-400">{players.maciek.name} vs {players.myrna.name}</p>}
+      {multiplayer.duel && (!isPartnerConnected || showInvitePanel) && (
+        <section className="rounded-2xl border border-blue-400/20 bg-blue-400/5 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold">Invite your opponent</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {isPartnerConnected
+                  ? `Paired with ${players.myrna.name}. You can also join a different invitation link below.`
+                  : 'No opponent account is matched to this duel yet. Share your private invitation link so your partner can sign in with their email and join.'}
+              </p>
+              {multiplayer.user?.email && (
+                <p className="text-[11px] font-mono text-zinc-400 mt-1">
+                  Your matched account: <span className="text-zinc-200">{multiplayer.user.email}</span>
+                </p>
+              )}
+            </div>
+            {isPartnerConnected && (
+              <button
+                type="button"
+                onClick={() => setShowInvitePanel(false)}
+                className="text-xs text-zinc-400 hover:text-white"
+              >
+                Close
+              </button>
+            )}
+          </div>
+          <label className="block text-xs text-zinc-400">
+            Invitation link
+            <input
+              readOnly
+              value={inviteLink}
+              onFocus={event => event.currentTarget.select()}
+              className="mt-1 w-full rounded-lg border border-white/15 bg-black p-2 text-xs text-white"
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!inviteLink}
+              className="rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold disabled:opacity-50"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(inviteLink);
+                  setInviteStatus('Invitation link copied');
+                } catch {
+                  setInviteStatus('Select and copy the invitation link above.');
+                }
+              }}
+            >
+              Copy invitation link
+            </button>
+            {typeof navigator !== 'undefined' && 'share' in navigator && inviteLink && (
+              <button
+                type="button"
+                className="rounded-xl border border-white/20 px-4 py-2 text-xs font-medium text-white hover:bg-white/5"
+                onClick={async () => {
+                  try {
+                    await navigator.share({ title: 'Join my duel on do', url: inviteLink });
+                  } catch {
+                    // user cancelled native share sheet
+                  }
+                }}
+              >
+                Share link
+              </button>
+            )}
+          </div>
+          {inviteStatus && <p role="status" className="text-xs text-zinc-300">{inviteStatus}</p>}
+          <form
+            onSubmit={event => {
+              event.preventDefault();
+              const code = extractInviteCode(joinLinkInput);
+              router.push(`/?invite=${encodeURIComponent(code ?? '')}`);
+            }}
+            className="pt-2 border-t border-white/10 space-y-2"
+          >
+            <label className="block text-xs text-zinc-400">
+              Have an opponent&apos;s invitation link or code? Paste it to join their duel
+              <div className="mt-1 flex flex-wrap gap-2">
+                <input
+                  type="text"
+                  placeholder="Paste invite link or code…"
+                  value={joinLinkInput}
+                  onChange={event => setJoinLinkInput(event.target.value)}
+                  className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black p-2 text-xs text-white"
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl border border-white/20 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10"
+                >
+                  Open invite
+                </button>
+              </div>
+            </label>
+          </form>
+        </section>
+      )}
+      {multiplayer.duel && isPartnerConnected && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-zinc-400">{players.maciek.name} vs {players.myrna.name}</p>
+          {!showInvitePanel && (
+            <button
+              type="button"
+              onClick={() => setShowInvitePanel(true)}
+              className="text-xs font-mono text-blue-400 hover:text-blue-300"
+            >
+              Invite link &amp; options
+            </button>
+          )}
+        </div>
+      )}
       {multiplayer.duel && habits.length === 0 && <section className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4"><h2 className="font-semibold">Start with a habit</h2><p className="text-xs text-zinc-400 mt-1">Each player adds their own habits. Check-ins will appear here as you go.</p><Link className="inline-block mt-3 rounded-xl bg-white text-black px-4 py-2 text-xs font-semibold" href="/?tab=progress&section=habits">Add your first habit</Link></section>}
       {/* Timeframe Segmented Control (Apple 3-Pill) */}
       <div role="tablist" aria-label="Leaderboard timeframe" className="flex p-1 rounded-full bg-[#1c1c1e] border border-white/[0.08]">
@@ -505,6 +611,13 @@ export function DuelView() {
                 </div>
               );
             })}
+            {myrnaHabits.length === 0 && (
+              <div className="p-2 rounded-xl border border-white/[0.04] bg-white/[0.02] text-[11px] text-zinc-500">
+                {isPartnerConnected
+                  ? 'No active habits added yet.'
+                  : 'Waiting for opponent account to join via your invitation link.'}
+              </div>
+            )}
           </div>
         </div>
       </div>

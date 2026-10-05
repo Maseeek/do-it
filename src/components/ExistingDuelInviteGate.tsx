@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { getInviteOutcome } from '@/lib/invite-navigation';
+import { useModalFocus } from '@/lib/use-modal-focus';
 import { DoLogo } from './DoLogo';
 
 export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: string; onDismiss?: () => void }) {
@@ -14,6 +15,17 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
   const [error, setError] = useState<string | null>(null);
   const duel = multiplayer.duel;
   const user = multiplayer.user;
+
+  const continueToCurrentDuel = () => {
+    if (onDismiss) onDismiss();
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('invite');
+      router.replace(url.pathname + (url.search ? url.search : '') + url.hash);
+    }
+  };
+
+  const modalRef = useModalFocus(Boolean(duel && user), continueToCurrentDuel);
   if (!duel || !user) return null;
 
   const partnerName = duel.owner_id === user.id
@@ -25,19 +37,16 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
     duelInviteCode: duel.invite_code,
     userId: user.id,
     ownerId: duel.owner_id,
-    hasGuest: !!duel.guest_id,
+    hasGuest: multiplayer.hasPairedPartner,
   });
 
-  const continueToCurrentDuel = () => {
-    if (onDismiss) onDismiss();
-    const url = new URL(window.location.href);
-    url.searchParams.delete('invite');
-    router.replace(url.pathname + (url.search ? url.search : '') + url.hash);
-  };
+  const ownInviteUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/?invite=${duel.invite_code}`
+    : `/?invite=${duel.invite_code}`;
 
   const copyInvite = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(ownInviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -48,13 +57,16 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
   const switchAccount = async () => {
     setBusy(true);
     setError(null);
-    try { await multiplayer.signOut(); }
-    catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not sign out.'); }
-    finally { setBusy(false); }
+    try {
+      await multiplayer.signOut();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not sign out.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const replaceDuel = async () => {
-    if (!window.confirm('Joining this invitation will permanently delete your current solo duel, including its habits, check-ins, and stakes. Continue?')) return;
     setBusy(true);
     setError(null);
     try {
@@ -63,91 +75,159 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
       continueToCurrentDuel();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not join the duel.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
-  return <main className="min-h-screen bg-black text-white flex items-center justify-center px-4">
-    <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1c1c1e] p-6 space-y-5">
-      <div className="text-center">
-        <DoLogo size="lg" className="mx-auto mb-4" />
-        <h1 className="text-2xl font-bold">
-          {outcome === 'own-invite' ? 'Your invitation link' :
-           outcome === 'already-joined' ? 'Already joined' :
-           outcome === 'paired-conflict' ? 'Active duel in progress' : 'Join the duel'}
-        </h1>
-      </div>
+  const handlePrimaryOk = () => {
+    if (outcome === 'solo-replaceable') {
+      void replaceDuel();
+      return;
+    }
+    if (outcome === 'paired-conflict') {
+      void switchAccount();
+      return;
+    }
+    continueToCurrentDuel();
+  };
 
-      {outcome === 'own-invite' && (
-        <div className="space-y-4">
-          <p className="text-sm text-zinc-300">
-            This is your active invitation link. Share it with someone signed in to a different account so they can join your duel.
-          </p>
+  const title =
+    outcome === 'empty-invite' || outcome === 'invalid-invite'
+      ? 'Invalid invitation link'
+      : outcome === 'own-invite'
+      ? 'Your invitation link'
+      : outcome === 'already-joined'
+      ? 'Already joined this duel'
+      : outcome === 'paired-conflict'
+      ? 'Cannot join — active duel in progress'
+      : 'Replace solo duel and join?';
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="invite-dialog-title"
+      ref={modalRef}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6"
+    >
+      <div className="w-full max-w-md rounded-3xl border border-white/15 bg-[#16181d] text-white p-6 space-y-5 shadow-2xl">
+        <div className="text-center">
+          <DoLogo size="lg" className="mx-auto mb-3" />
+          <h1 id="invite-dialog-title" className="text-xl font-bold tracking-tight text-white">
+            {title}
+          </h1>
+          {user.email && (
+            <p className="text-xs font-mono text-zinc-400 mt-1">
+              Signed in as {user.email}
+            </p>
+          )}
+        </div>
+
+        {(outcome === 'empty-invite' || outcome === 'invalid-invite') && (
+          <div className="space-y-3 text-sm text-zinc-300">
+            <p>
+              {outcome === 'empty-invite'
+                ? 'This invitation link does not contain an invitation code. It may have been cut off when copied or shared.'
+                : 'This invitation link is invalid or incomplete. It does not match a valid duel invitation token.'}
+            </p>
+            <p className="text-xs text-zinc-400">
+              Ask your opponent to copy a fresh invitation link from their Duel tab, or press Cancel to return to your duel.
+            </p>
+          </div>
+        )}
+
+        {outcome === 'own-invite' && (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-300">
+              You cannot join your own invitation link. This link belongs to your duel ({user.email}). Share it with your opponent on a separate account so they can join you.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                className="w-full rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 p-2.5 text-xs font-semibold text-white disabled:opacity-50"
+                onClick={() => void copyInvite()}
+              >
+                {copied ? 'Link copied!' : 'Copy invitation link'}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                className="w-full rounded-xl border border-white/15 p-2.5 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-50"
+                onClick={() => void switchAccount()}
+              >
+                Sign out and use another account
+              </button>
+            </div>
+          </div>
+        )}
+
+        {outcome === 'already-joined' && (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-300">
+              You cannot re-join this invitation because your account ({user.email}) is already connected to this duel with {partnerName}.
+            </p>
+          </div>
+        )}
+
+        {outcome === 'paired-conflict' && (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-300">
+              You cannot join this invitation on {user.email} because you are already competing in an active duel with {partnerName}. Each account can belong to one duel at a time.
+            </p>
+            <p className="text-xs text-zinc-400">
+              Press <strong className="text-white">OK</strong> to sign out and accept this invitation with another account, or press <strong className="text-white">Cancel</strong> to stay in your current duel.
+            </p>
+          </div>
+        )}
+
+        {outcome === 'solo-replaceable' && (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-300">
+              Your account ({user.email}) currently has an unpaired solo duel. Press <strong className="text-white">OK</strong> to replace your solo duel and join this invitation, or <strong className="text-white">Cancel</strong> to keep your current duel.
+            </p>
+            <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+              Joining will permanently delete your unpaired solo duel and any solo habits, check-ins, and wagers on it. To keep a copy, press Cancel and export a backup first.
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              className="w-full rounded-xl border border-white/15 p-2.5 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-50"
+              onClick={() => void switchAccount()}
+            >
+              Sign out and use another account instead
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200 space-y-1">
+            <p className="font-semibold">Why joining failed:</p>
+            <p>{error}</p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 pt-1">
           <button
             type="button"
             disabled={busy}
-            className="w-full rounded-xl bg-white text-black p-3 font-semibold disabled:opacity-50"
-            onClick={() => void copyInvite()}
+            className="flex-1 rounded-xl border border-white/20 bg-transparent hover:bg-white/5 p-3 text-sm font-semibold text-zinc-200 disabled:opacity-50"
+            onClick={continueToCurrentDuel}
           >
-            {copied ? 'Link copied!' : 'Copy invitation link'}
+            Cancel
           </button>
-        </div>
-      )}
-
-      {outcome === 'already-joined' && (
-        <div className="space-y-4">
-          <p className="text-sm text-zinc-300">
-            You have already joined this duel with {partnerName}.
-          </p>
-        </div>
-      )}
-
-      {outcome === 'paired-conflict' && (
-        <div className="space-y-2">
-          <p className="text-sm text-zinc-300">
-            You are already competing in an active duel with {partnerName}. Each account can belong to one duel at a time.
-          </p>
-          <p className="text-xs text-zinc-400">
-            To join this invitation, sign out and use a different account.
-          </p>
-        </div>
-      )}
-
-      {outcome === 'solo-replaceable' && (
-        <div className="space-y-3">
-          <p className="text-sm text-zinc-300">
-            This account has an unpaired solo duel. You can replace it to join this new duel.
-          </p>
-          <p className="text-sm text-amber-300">
-            Joining will permanently delete your current solo duel and its habits, check-ins, and stakes.
-          </p>
-          <p className="text-xs text-zinc-400">
-            To keep a copy, continue to your duel and export a backup from Settings first.
-          </p>
           <button
+            type="button"
             disabled={busy}
-            className="w-full rounded-xl bg-white text-black p-3 font-semibold disabled:opacity-50"
-            onClick={() => void replaceDuel()}
+            className="flex-1 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-black hover:opacity-90 p-3 text-sm font-semibold disabled:opacity-50"
+            onClick={handlePrimaryOk}
           >
-            {busy ? 'Please wait…' : 'Replace solo duel and join'}
+            {busy ? 'Please wait…' : 'OK'}
           </button>
         </div>
-      )}
-
-      <button
-        disabled={busy}
-        className="w-full rounded-xl border border-white/20 p-3 text-sm disabled:opacity-50"
-        onClick={() => void switchAccount()}
-      >
-        Sign out and use another account
-      </button>
-      <button
-        disabled={busy}
-        className="w-full text-xs text-zinc-400 disabled:opacity-50"
-        onClick={continueToCurrentDuel}
-      >
-        Continue to my current duel
-      </button>
-      {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
+      </div>
     </div>
-  </main>;
+  );
 }

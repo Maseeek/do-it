@@ -1,18 +1,19 @@
 'use client';
 
-import { Flame, Monitor, Moon, Settings, Sun } from 'lucide-react';
+import { Flame, Monitor, Moon, Settings, Share2, Sun } from 'lucide-react';
 import { DoLogo } from './DoLogo';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
-export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
   const {
     activePlayer,
     activePlayerSummary,
     activeHabits,
+    isPartnerConnected,
     syncStatus,
     selectProfile,
     themePreference,
@@ -89,6 +90,20 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
 
         {/* Right: Score Telemetry + Theme & Settings Controls */}
         <div className="flex items-center gap-2 shrink-0">
+          {multiplayer.configured && multiplayer.duel && !isPartnerConnected && onOpenDuel && (
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playClick();
+                hapticLight();
+                onOpenDuel();
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-2.5 py-1.5 text-xs font-mono font-medium text-blue-300 hover:bg-blue-500/20 transition-colors"
+            >
+              <Share2 size={13} />
+              <span>Invite</span>
+            </button>
+          )}
           <div className="hidden sm:flex flex-col items-end mr-1">
             <div className="flex items-baseline gap-1 font-mono">
               <span className={`text-xs font-bold tabular-nums ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
