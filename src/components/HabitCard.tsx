@@ -195,7 +195,7 @@ export function HabitCard({
           isPulsing
             ? isMaciek
               ? 'bg-[#10141f] border-blue-400/90 animate-kinetic-card-blue z-10'
-              : 'bg-[#181019] border-pink-400/90 animate-kinetic-card-pink z-10'
+              : 'bg-[#16101f] border-purple-400/90 animate-kinetic-card-purple z-10'
             : satisfied
             ? `bg-[#0b0c0f]/90 border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
             : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-xs'
@@ -209,7 +209,7 @@ export function HabitCard({
               completed
                 ? isMaciek
                   ? 'bg-blue-500/50'
-                  : 'bg-pink-500/50'
+                  : 'bg-purple-500/50'
                 : 'bg-emerald-500/50'
             }`}
           />
@@ -227,7 +227,7 @@ export function HabitCard({
               className={`absolute inset-y-0 w-1/2 animate-kinetic-laser-sweep bg-gradient-to-r ${
                 isMaciek
                   ? 'from-transparent via-blue-400/22 to-transparent'
-                  : 'from-transparent via-pink-400/22 to-transparent'
+                  : 'from-transparent via-purple-400/22 to-transparent'
               }`}
             />
             {/* Top perimeter ignition filament */}
@@ -235,7 +235,7 @@ export function HabitCard({
               className={`absolute inset-x-4 top-0 h-[1.5px] bg-gradient-to-r ${
                 isMaciek
                   ? 'from-transparent via-blue-300/90 to-transparent'
-                  : 'from-transparent via-pink-300/90 to-transparent'
+                  : 'from-transparent via-purple-300/90 to-transparent'
               }`}
             />
           </div>
@@ -249,7 +249,7 @@ export function HabitCard({
                 key={`ring-${localPulse?.token ?? 'lock'}`}
                 aria-hidden="true"
                 className={`pointer-events-none absolute inset-0 rounded-lg border-2 animate-kinetic-ring ${
-                  isMaciek ? 'border-blue-400' : 'border-pink-400'
+                  isMaciek ? 'border-blue-400' : 'border-purple-400'
                 }`}
               />
             )}
@@ -269,7 +269,7 @@ export function HabitCard({
                 completed
                   ? isMaciek
                     ? 'bg-blue-500 border border-blue-300/90 text-white shadow-[0_0_14px_-2px_rgba(59,130,246,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
-                    : 'bg-pink-500 border border-pink-300/90 text-white shadow-[0_0_14px_-2px_rgba(236,72,153,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
+                    : 'bg-purple-500 border border-purple-300/90 text-white shadow-[0_0_14px_-2px_rgba(168,85,247,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
                   : isWeeklyTargetMet
                   ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
                   : 'border border-zinc-700/90 bg-[#090a0d] hover:border-zinc-500 text-transparent hover:text-zinc-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
@@ -305,7 +305,7 @@ export function HabitCard({
                   isPulsing
                     ? isMaciek
                       ? 'text-blue-400'
-                      : 'text-pink-400'
+                      : 'text-purple-400'
                     : satisfied
                     ? 'text-zinc-500'
                     : 'text-zinc-400'
@@ -319,7 +319,7 @@ export function HabitCard({
                   isPulsing
                     ? isMaciek
                       ? 'text-blue-300'
-                      : 'text-pink-300'
+                      : 'text-purple-300'
                     : satisfied
                     ? 'text-zinc-500'
                     : 'text-zinc-400'
@@ -375,7 +375,7 @@ export function HabitCard({
                     className={`pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1.5px] rounded-full animate-kinetic-strike bg-gradient-to-r ${
                       isMaciek
                         ? 'from-blue-400 via-blue-200 to-white shadow-[0_0_8px_rgba(96,165,250,0.9)]'
-                        : 'from-pink-400 via-pink-200 to-white shadow-[0_0_8px_rgba(244,114,182,0.9)]'
+                        : 'from-purple-400 via-purple-200 to-white shadow-[0_0_8px_rgba(192,132,252,0.9)]'
                     }`}
                   />
                 )}
@@ -406,7 +406,7 @@ export function HabitCard({
                 className={`pointer-events-none absolute -top-2 right-0 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-extrabold tracking-tight whitespace-nowrap border shadow-lg animate-kinetic-pts-launch ${
                   isMaciek
                     ? 'bg-blue-500 text-white border-blue-300 shadow-blue-500/40'
-                    : 'bg-pink-500 text-white border-pink-300 shadow-pink-500/40'
+                    : 'bg-purple-500 text-white border-purple-300 shadow-purple-500/40'
                 }`}
               >
                 <span>↑</span>
@@ -431,13 +431,13 @@ export function HabitCard({
                 isPulsing
                   ? isMaciek
                     ? 'bg-blue-500/20 border-blue-400 text-blue-200 shadow-[0_0_14px_-2px_rgba(59,130,246,0.5)] animate-kinetic-badge-ignite'
-                    : 'bg-pink-500/20 border-pink-400 text-pink-200 shadow-[0_0_14px_-2px_rgba(236,72,153,0.5)] animate-kinetic-badge-ignite'
+                    : 'bg-purple-500/20 border-purple-400 text-purple-200 shadow-[0_0_14px_-2px_rgba(168,85,247,0.5)] animate-kinetic-badge-ignite'
                   : completed
                   ? checkIn?.pointsEarned === 0
                     ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
                     : isMaciek
                     ? 'bg-blue-500/10 border-blue-500/25 text-blue-300/90'
-                    : 'bg-pink-500/10 border-pink-500/25 text-pink-300/90'
+                    : 'bg-purple-500/10 border-purple-500/25 text-purple-300/90'
                   : isWeeklyTargetMet
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                   : habit.isQuantitative
@@ -560,7 +560,7 @@ export function HabitCard({
                 hapticLight();
                 setShowPartnerProof(true);
               }}
-              className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-1 bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20 transition-colors"
+              className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 transition-colors"
             >
               <Camera className="w-3 h-3" />
               <span>Photos ({partnerProofPhotos.length})</span>

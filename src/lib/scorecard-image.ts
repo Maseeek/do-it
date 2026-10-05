@@ -112,17 +112,17 @@ export async function generateScorecardBlob(data: ScorecardImageData): Promise<B
   ctx.fillText('VS', width / 2, cardY + cardH / 2 + 10);
   ctx.textAlign = 'left';
 
-  // 5. Player 2: Myrna (Pink card)
+  // 5. Player 2: Myrna (Purple card)
   const myrnaX = width - 60 - cardW;
   ctx.fillStyle = 'rgba(28, 28, 30, 0.75)';
   roundRect(ctx, myrnaX, cardY, cardW, cardH, 24);
   ctx.fill();
-  ctx.strokeStyle = data.myrnaScore > data.maciekScore ? 'rgba(244, 114, 182, 0.45)' : 'rgba(255, 255, 255, 0.08)';
+  ctx.strokeStyle = data.myrnaScore > data.maciekScore ? 'rgba(192, 132, 252, 0.45)' : 'rgba(255, 255, 255, 0.08)';
   ctx.lineWidth = data.myrnaScore > data.maciekScore ? 2.5 : 1.5;
   ctx.stroke();
 
   // Myrna Title & Emoji
-  ctx.fillStyle = '#f472b6';
+  ctx.fillStyle = '#c084fc';
   ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
   ctx.fillText(`${data.myrnaName || 'Myrna'} ✨`, myrnaX + 35, cardY + 55);
 
@@ -136,13 +136,13 @@ export async function generateScorecardBlob(data: ScorecardImageData): Promise<B
   ctx.fillText('pts this week', myrnaX + 35, cardY + 205);
 
   // Myrna Streak pill
-  ctx.fillStyle = 'rgba(244, 114, 182, 0.12)';
+  ctx.fillStyle = 'rgba(168, 85, 247, 0.12)';
   roundRect(ctx, myrnaX + 35, cardY + 245, 180, 44, 22);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(244, 114, 182, 0.3)';
+  ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
   ctx.stroke();
 
-  ctx.fillStyle = '#fbcfe8';
+  ctx.fillStyle = '#e9d5ff';
   ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
   ctx.fillText(`🔥 ${data.myrnaStreak}d Streak`, myrnaX + 55, cardY + 273);
 

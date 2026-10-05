@@ -143,7 +143,7 @@ export function DateNavigator() {
                 className={`text-[9px] font-mono uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border ${
                   isMaciek
                     ? 'text-blue-400 bg-blue-500/10 border-blue-500/25'
-                    : 'text-pink-400 bg-pink-500/10 border-pink-500/25'
+                    : 'text-purple-400 bg-purple-500/10 border-purple-500/25'
                 }`}
               >
                 Today
@@ -187,7 +187,7 @@ export function DateNavigator() {
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-colors active:scale-95 border ${
                 isMaciek
                   ? 'bg-blue-500/15 border-blue-500/30 text-blue-300 hover:bg-blue-500/25'
-                  : 'bg-pink-500/15 border-pink-500/30 text-pink-300 hover:bg-pink-500/25'
+                  : 'bg-purple-500/15 border-purple-500/30 text-purple-300 hover:bg-purple-500/25'
               }`}
               title="Return to today (Shortcut: T)"
             >
@@ -252,7 +252,7 @@ export function DateNavigator() {
                   isToday
                     ? isMaciek
                       ? 'font-extrabold text-blue-400'
-                      : 'font-extrabold text-pink-400'
+                      : 'font-extrabold text-purple-400'
                     : isSelected
                     ? 'font-bold text-white'
                     : 'font-medium text-zinc-300'
@@ -276,7 +276,7 @@ export function DateNavigator() {
                 ) : completedCount > 0 ? (
                   <span
                     className={`w-2 h-1 rounded-xs ${
-                      isMaciek ? 'bg-blue-400/80' : 'bg-pink-400/80'
+                      isMaciek ? 'bg-blue-400/80' : 'bg-purple-400/80'
                     }`}
                     title={`${completedCount} logged (${totalPoints} pts)`}
                   />
