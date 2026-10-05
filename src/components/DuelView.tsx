@@ -76,6 +76,9 @@ export function DuelView() {
     isPartnerConnected,
   } = useStore();
 
+  const ownerDisplayName = multiplayer.duel?.owner_name ?? players.maciek.name;
+  const guestDisplayName = multiplayer.duel?.guest_name ?? players.myrna.name;
+  const partnerDisplayName = multiplayer.slot === 'maciek' ? guestDisplayName : ownerDisplayName;
   const comparison = getComparison(selectedTier);
   const weekRemaining = getDaysRemainingInWeek();
   const monthRemainingDays = getDaysRemainingInMonth();
@@ -246,9 +249,9 @@ export function DuelView() {
           <h1 className="text-2xl font-semibold tracking-tight text-white mt-0.5">
             {isPartnerConnected ? (
               <span className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-blue-400">{players.maciek.name}</span>
+                <span className="text-blue-400">{ownerDisplayName}</span>
                 <span className="text-zinc-500 font-normal text-lg">vs</span>
-                <span className="text-purple-400">{players.myrna.name}</span>
+                <span className="text-purple-400">{guestDisplayName}</span>
               </span>
             ) : (
               'Duel'
@@ -303,10 +306,10 @@ export function DuelView() {
         <section className="rounded-xl border border-blue-500/25 bg-[#0e1013] p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">Duel Invite: {players.maciek.name} vs {players.myrna.name}</h2>
+              <h2 className="text-sm font-semibold text-white">{isPartnerConnected ? `${ownerDisplayName} vs ${guestDisplayName}` : `Duel invite for ${ownerDisplayName}`}</h2>
               <p className="text-xs text-zinc-400 mt-0.5">
                 {isPartnerConnected
-                  ? `Paired with ${players.myrna.name}. You can also join a different invitation link below.`
+                  ? `Paired with ${partnerDisplayName}. You can also join a different invitation link below.`
                   : 'No opponent account is matched to this duel yet. Share your private invitation link so your partner can sign in and join.'}
               </p>
               {multiplayer.user?.email && (
@@ -356,7 +359,7 @@ export function DuelView() {
                 className="rounded-lg border border-zinc-800 px-3.5 py-1.5 text-xs font-mono font-medium text-white hover:bg-zinc-800 transition-colors"
                 onClick={async () => {
                   try {
-                    await navigator.share({ title: `${players.maciek.name} vs ${players.myrna.name} Duel on do`, url: inviteLink });
+                    await navigator.share({ title: multiplayer.duel?.guest_name ? `${ownerDisplayName} vs ${guestDisplayName} Duel on do` : `Join ${ownerDisplayName}'s duel on do`, url: inviteLink });
                   } catch {
                     // user cancelled
                   }
