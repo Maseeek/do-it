@@ -29,7 +29,7 @@ interface HabitCardProps {
   onUncheck?: (habitId: string) => void;
 }
 
-export function HabitCard({
+export const HabitCard = React.memo(function HabitCard({
   habit,
   isLocking = false,
   justSettled = false,
@@ -696,4 +696,4 @@ export function HabitCard({
       )}
     </>
   );
-}
+});
