@@ -10,6 +10,7 @@ import {
 } from './types';
 import {
   getCurrentWeekDays,
+  getWeekKey,
   getTodayDateString,
   isDateInCurrentMonth,
   isDateInCurrentWeek,
@@ -26,7 +27,14 @@ export function calculatePlayerScores(
 ): PlayerScoreSummary {
   const today = getTodayDateString();
   const playerLogs = checkIns.filter((c) => c.playerId === playerId);
-  const playerRestDays = restDays.filter((r) => r.playerId === playerId).map((r) => r.date);
+  const playerRestDays = new Set<string>();
+  let restDaysUsed = 0;
+  for (const restDay of restDays) {
+    if (restDay.playerId === playerId) {
+      playerRestDays.add(restDay.date);
+      restDaysUsed++;
+    }
+  }
 
   let todayPoints = 0;
   let weeklyPoints = 0;
@@ -51,12 +59,13 @@ export function calculatePlayerScores(
   });
 
   // Calculate streak with rest-day protection
-  const uniqueDates = Array.from(new Set(playerLogs.map((l) => l.date)));
+  const uniqueDates = new Set<string>();
+  for (const log of playerLogs) uniqueDates.add(log.date);
   let currentStreak = 0;
   const checkDate = parseDate(today);
 
   // If today isn't completed and not a rest day, start checking from yesterday
-  const todayCovered = uniqueDates.includes(today) || playerRestDays.includes(today);
+  const todayCovered = uniqueDates.has(today) || playerRestDays.has(today);
   if (!todayCovered) {
     checkDate.setDate(checkDate.getDate() - 1);
   }
@@ -67,8 +76,8 @@ export function calculatePlayerScores(
     const d = String(checkDate.getDate()).padStart(2, '0');
     const dateStr = `${y}-${m}-${d}`;
 
-    const isCheckInDay = uniqueDates.includes(dateStr);
-    const isRest = playerRestDays.includes(dateStr);
+    const isCheckInDay = uniqueDates.has(dateStr);
+    const isRest = playerRestDays.has(dateStr);
 
     if (isCheckInDay) {
       currentStreak++;
@@ -114,7 +123,7 @@ export function calculatePlayerScores(
     karma: karmaPoints,
     currentStreak,
     completionRateWeekly,
-    restDaysUsed: playerRestDays.length,
+    restDaysUsed,
   };
 }
 
@@ -300,25 +309,27 @@ export function calculateWeeklyHabitStreak(
   const todayDays = getCurrentWeekDays(today);
   const currentWeekMondayStr = todayDays[0].dateStr;
 
-  const countWeekCompletions = (mondayStr: string): number => {
-    const weekDays = getCurrentWeekDays(mondayStr).map((d) => d.dateStr);
-    const completedDates = new Set(
-      checkIns
-        .filter((c) => c.habitId === habit.id && weekDays.includes(c.date))
-        .map((c) => c.date)
-    );
-    return completedDates.size;
-  };
+  const weekCompletions = new Map<string, Set<string>>();
+  for (const checkIn of checkIns) {
+    if (checkIn.habitId !== habit.id) continue;
+    const weekKey = getWeekKey(checkIn.date);
+    let completedDates = weekCompletions.get(weekKey);
+    if (!completedDates) {
+      completedDates = new Set<string>();
+      weekCompletions.set(weekKey, completedDates);
+    }
+    completedDates.add(checkIn.date);
+  }
 
   let streak = 0;
-  const currentWeekCompletions = countWeekCompletions(currentWeekMondayStr);
+  const currentWeekCompletions = weekCompletions.get(getWeekKey(currentWeekMondayStr))?.size ?? 0;
   if (currentWeekCompletions >= target) {
     streak++;
   }
 
   for (let i = 1; i <= 52; i++) {
     const prevMondayStr = addDays(currentWeekMondayStr, -7 * i);
-    const prevCompletions = countWeekCompletions(prevMondayStr);
+    const prevCompletions = weekCompletions.get(getWeekKey(prevMondayStr))?.size ?? 0;
     if (prevCompletions >= target) {
       streak++;
     } else {
@@ -339,20 +350,23 @@ export function calculateHabitStreak(
     return calculateWeeklyHabitStreak(habit, checkIns);
   }
 
-  const habitLogs = checkIns.filter((c) => c.habitId === habit.id);
-  if (habitLogs.length === 0) return 0;
+  const uniqueDates = new Set<string>();
+  for (const checkIn of checkIns) {
+    if (checkIn.habitId === habit.id) uniqueDates.add(checkIn.date);
+  }
+  if (uniqueDates.size === 0) return 0;
 
   const today = getTodayDateString();
-  const uniqueDates = Array.from(new Set(habitLogs.map((l) => l.date)));
-  const playerRestDays = restDays
-    .filter((r) => r.playerId === habit.playerId)
-    .map((r) => r.date);
+  const playerRestDays = new Set<string>();
+  for (const restDay of restDays) {
+    if (restDay.playerId === habit.playerId) playerRestDays.add(restDay.date);
+  }
 
   let streak = 0;
   const checkDate = parseDate(today);
 
   // If not completed today and not a rest day, check from yesterday
-  const todayCovered = uniqueDates.includes(today) || playerRestDays.includes(today);
+  const todayCovered = uniqueDates.has(today) || playerRestDays.has(today);
   if (!todayCovered) {
     checkDate.setDate(checkDate.getDate() - 1);
   }
@@ -363,10 +377,10 @@ export function calculateHabitStreak(
     const d = String(checkDate.getDate()).padStart(2, '0');
     const dateStr = `${y}-${m}-${d}`;
 
-    if (uniqueDates.includes(dateStr)) {
+    if (uniqueDates.has(dateStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
-    } else if (playerRestDays.includes(dateStr)) {
+    } else if (playerRestDays.has(dateStr)) {
       // Rest day preserves the habit streak without penalizing
       checkDate.setDate(checkDate.getDate() - 1);
     } else {

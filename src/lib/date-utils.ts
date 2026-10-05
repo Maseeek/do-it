@@ -162,6 +162,8 @@ export function getHeatmapDays(totalDays: number = 84): { dateStr: string; date:
   return result;
 }
 
+const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export interface HeatmapCalendarDay {
   dateStr: string;
   dayOfWeek: number; // 0 = Mon .. 6 = Sun
@@ -216,7 +218,7 @@ export function getHeatmapCalendarWeeks(
         dateStr: dStr,
         dayOfWeek: dayIdx,
         dayNumber: cur.getDate(),
-        monthShort: cur.toLocaleDateString('en-US', { month: 'short' }),
+        monthShort: MONTH_NAMES_SHORT[cur.getMonth()],
         isToday: dStr === todayDateStr,
         isFuture: dStr > todayDateStr,
       });
