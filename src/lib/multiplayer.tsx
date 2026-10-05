@@ -80,8 +80,25 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       // Defer Supabase queries until the auth event has released its lock.
       setTimeout(() => void refresh(), 0);
     });
-    const timer = setInterval(() => void refresh(), 15000);
-    return () => { subscription.unsubscribe(); clearInterval(timer); };
+    let isSubscribed = false;
+    const channel = client
+      .channel('multiplayer-duels')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duels' }, () => {
+        void refresh();
+      })
+      .subscribe((status) => {
+        isSubscribed = status === 'SUBSCRIBED';
+      });
+    const timer = setInterval(() => {
+      if (!isSubscribed) {
+        void refresh();
+      }
+    }, 15000);
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(timer);
+      void client.removeChannel(channel);
+    };
   }, [refresh]);
 
   const createDuel = async (name: string) => {
