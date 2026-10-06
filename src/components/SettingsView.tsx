@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PLAYER_COLORS } from '@/lib/types';
+import { isPlayerColorUnlocked } from '@/lib/player-colors';
 import { ArrowLeft, Copy, LogOut, Share2, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -14,6 +15,8 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   const [name, setName] = useState(activePlayer?.name || '');
   const [savingName, setSavingName] = useState(false);
   const [nameMessage, setNameMessage] = useState<string | null>(null);
+  const [savingColor, setSavingColor] = useState(false);
+  const [colorMessage, setColorMessage] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteUrl = typeof window !== 'undefined' && multiplayer.duel
     ? `${window.location.origin}/?invite=${multiplayer.duel.invite_code}`
@@ -42,6 +45,18 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       setSavingName(false);
     }
   };
+  const savePlayerColor = async (colorId: typeof PLAYER_COLORS[number]['id']) => {
+    setSavingColor(true);
+    setColorMessage(null);
+    try {
+      await updatePlayerColor(colorId);
+      setColorMessage('Player color updated.');
+    } catch (caught) {
+      setColorMessage(caught instanceof Error ? caught.message : 'Could not update your player color.');
+    } finally {
+      setSavingColor(false);
+    }
+  };
   return <div className="mx-auto max-w-2xl space-y-5">
     <div className="flex items-center gap-3"><button className="flex size-11 items-center justify-center rounded-xl text-zinc-400 hover:text-white" onClick={onBack} aria-label="Back"><ArrowLeft size={20}/></button><h1 className="text-2xl font-semibold">Settings</h1></div>
     {activePlayer && <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
@@ -58,15 +73,15 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
         <div className="flex items-baseline justify-between"><span className="text-xs text-zinc-400">Player color</span><span className="text-[11px] text-zinc-500">{activePlayerSummary.karma.toLocaleString()} lifetime points</span></div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {PLAYER_COLORS.map(option => {
-            const unlocked = activePlayerSummary.karma >= option.unlockAt;
+            const unlocked = isPlayerColorUnlocked(option.id, activePlayerSummary.karma);
             const selected = activePlayer.color === option.color;
-            return <button key={option.id} type="button" disabled={!unlocked || multiplayer.configured} onClick={() => updatePlayerColor(option.id)} aria-pressed={selected} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${selected ? 'border-white/40 bg-white/[0.08]' : 'border-white/[0.08]'} disabled:cursor-not-allowed disabled:opacity-45`}>
-              <span className="size-3.5 rounded-full border border-white/20" style={{ backgroundColor: option.color }} />
+            return <button key={option.id} type="button" disabled={!unlocked || savingColor} onClick={() => { void savePlayerColor(option.id); }} aria-pressed={selected} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${selected ? 'border-white/40 bg-white/[0.08]' : 'border-white/[0.08]'} disabled:cursor-not-allowed disabled:opacity-45`}>
+              <span className="size-3.5 rounded-full border border-white/20" style={{ backgroundColor: option.color, ...(option.id === 'rainbow' ? { backgroundImage: 'linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#60a5fa,#c084fc)' } : {}) }} />
               <span className="min-w-0"><span className="block">{option.name}</span><span className="text-[10px] text-zinc-500">{unlocked ? (selected ? 'Selected' : 'Unlocked') : `${option.unlockAt.toLocaleString()} points`}</span></span>
             </button>;
           })}
         </div>
-        {multiplayer.configured && <p className="text-[11px] text-zinc-500">Color changes are available for local profiles.</p>}
+        {colorMessage && <p role="status" className="text-xs text-zinc-300">{colorMessage}</p>}
       </div>
     </section>}
     {multiplayer.configured && multiplayer.user && (

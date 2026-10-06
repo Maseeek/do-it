@@ -20,6 +20,7 @@ import {
   PlayerColorId,
   PLAYER_COLORS,
 } from './types';
+import { isPlayerColorUnlocked } from './player-colors';
 import { getInitialState } from './seed';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
@@ -103,7 +104,7 @@ interface StoreContextType {
   selectProfile: (id: PlayerId) => void;
   switchProfile: () => void;
   updateLocalPlayerName: (name: string) => void;
-  updatePlayerColor: (colorId: PlayerColorId) => void;
+  updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
   toggleHabit: (
     habitId: string,
     proofUrl?: string | string[],
@@ -161,6 +162,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const duelId = multiplayer.duel?.id || null;
   const duelOwnerName = multiplayer.duel?.owner_name || '';
   const duelGuestName = multiplayer.duel?.guest_name || '';
+  const duelOwnerColor = multiplayer.duel?.owner_color || 'blue';
+  const duelGuestColor = multiplayer.duel?.guest_color || 'purple';
   const [state, setState] = useState<AppState>(getInitialState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [loadedDuelId, setLoadedDuelId] = useState<string | null>(null);
@@ -484,6 +487,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const visibleCheckIns = partnerPaired ? data.checkIns : data.checkIns.filter(c => c.playerId === multiplayer.slot);
         const visibleReactions = partnerPaired ? data.reactions : data.reactions.filter(r => r.fromPlayerId === multiplayer.slot && r.toPlayerId === multiplayer.slot);
         const visibleRestDays = partnerPaired ? data.restDays : data.restDays.filter(r => r.playerId === multiplayer.slot);
+        const ownerColor = PLAYER_COLORS.find(color => color.id === duelOwnerColor) || PLAYER_COLORS[0];
+        const guestColor = PLAYER_COLORS.find(color => color.id === duelGuestColor) || PLAYER_COLORS[1];
         setState(prev => ({
           ...(sameDuel ? prev : initial),
           activePlayerId: multiplayer.slot,
@@ -493,8 +498,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           reactions: visibleReactions,
           restDays: visibleRestDays,
           players: {
-            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name },
-            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent' },
+            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: ownerColor.color, accentBg: ownerColor.accentBg, accentBorder: ownerColor.accentBorder },
+            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guestColor.color, accentBg: guestColor.accentBg, accentBorder: guestColor.accentBorder },
           },
         }));
         setLoadedDuelId(duelId);
@@ -524,7 +529,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     }, 30000);
     return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
-  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName]);
+  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName, duelOwnerColor, duelGuestColor]);
 
   const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
     const client = getSupabaseClient();
@@ -933,11 +938,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (trimmed.length < 1 || trimmed.length > 40) throw new Error('Name must be 1 to 40 characters.');
   const id = state.activePlayerId;
   setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], name: trimmed } } })); });
-  const updatePlayerColor = useStableCallback((colorId: PlayerColorId) => {
-    if (multiplayer.configured || !state.activePlayerId) throw new Error('Choose a local profile first.');
+  const updatePlayerColor = useStableCallback(async (colorId: PlayerColorId) => {
+    if (!state.activePlayerId) throw new Error('Choose a profile first.');
     const color = PLAYER_COLORS.find(option => option.id === colorId);
     const karma = state.checkIns.filter(checkIn => checkIn.playerId === state.activePlayerId).reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
-    if (!color || color.unlockAt > karma) throw new Error('That color is still locked.');
+    if (!color || !isPlayerColorUnlocked(colorId, karma)) throw new Error('That color is still locked.');
+    if (multiplayer.configured) {
+      if (state.activePlayerId !== multiplayer.slot) throw new Error('Choose your own profile first.');
+      await multiplayer.updatePlayerColor(colorId);
+      return;
+    }
     const id = state.activePlayerId;
     setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], color: color.color, accentBg: color.accentBg, accentBorder: color.accentBorder } } }));
   });

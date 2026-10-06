@@ -58,7 +58,16 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
           >
             <span
               className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-mono font-bold border transition-colors shrink-0 group-hover:brightness-125"
-              style={{ color: activePlayer?.color, backgroundColor: activePlayer?.accentBg, borderColor: activePlayer?.accentBorder }}
+              style={{
+                color: activePlayer?.color,
+                backgroundColor: activePlayer?.accentBg,
+                borderColor: activePlayer?.accentBorder,
+                ...(activePlayer?.color === '#f0abfc' ? {
+                  color: '#fff',
+                  backgroundImage: 'linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#60a5fa,#c084fc)',
+                  borderColor: 'rgba(255,255,255,.45)',
+                } : {}),
+              }}
             >
               {activePlayer?.name[0] || 'D'}
             </span>

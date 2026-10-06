@@ -74,7 +74,7 @@ flowchart LR
 ### 1. Multi-Tenant Duel Isolation via PostgreSQL Row-Level Security
 - **Strict Tenant Boundaries (`supabase/duels.sql`, `supabase/duels-extras.sql`)**: Every competitive entity (`duels`, `duel_habits`, `duel_check_ins`, `duel_stakes`, `duel_reactions`, `duel_rest_days`) is partitioned by `duel_id` with PostgreSQL Row-Level Security enabled.
 - **Slot-Level Write Enforcement**: Both participants (`owner_id` and `guest_id`) hold `SELECT` visibility across their shared duel to power live head-to-head analytics, while `INSERT`, `UPDATE`, and `DELETE` policies verify `auth.uid()` against the specific `player_slot` (`owner` vs. `guest`) so neither player can mutate their opponent's habits or check-ins.
-- **Cryptographic One-Use Invitation Handshake**: Duels are provisioned and joined exclusively via `SECURITY DEFINER` PostgreSQL RPC functions (`public.create_duel`, `public.accept_duel`, `public.update_duel_player_name`) with `search_path = ''`, atomic `invite_code` consumption, and self-join guards (`guest_id <> owner_id`).
+- **Cryptographic One-Use Invitation Handshake and Profile RPCs**: Duels are provisioned and updated through `SECURITY DEFINER` PostgreSQL functions (`public.create_duel`, `public.accept_duel`, `public.update_duel_player_name`, `public.set_player_color`) with `search_path = ''`; the color RPC validates the caller's slot and Karma threshold before saving.
 - **Database-Enforced Idempotency**: A composite unique expression index `duel_check_ins_one_per_habit_day` on `(duel_id, habit_id, (data->>'date'))` prevents rapid repeat taps, network retries, or concurrent wearable sync jobs from awarding duplicate daily points.
 
 ### 2. Multi-Provider Wearable & Fitness Sync Pipeline
@@ -114,6 +114,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. Without Sup
    - [`supabase/duels.sql`](supabase/duels.sql) — Core multi-tenant tables (`duels`, `duel_habits`, `duel_check_ins`, `duel_stakes`), RLS policies, and `SECURITY DEFINER` invitation RPCs.
      - *Existing deployments*: If you have already executed `duels.sql`, apply [`supabase/replace-solo-duel.sql`](supabase/replace-solo-duel.sql) to enable switching from an unpaired solo duel to an invitation.
    - [`supabase/duels-extras.sql`](supabase/duels-extras.sql) — Realtime reactions, rest-day streak protection, and the idempotent daily check-in unique index.
+   - [`supabase/player-colors.sql`](supabase/player-colors.sql) — adds per-player colors to existing and new duels, with an authenticated RPC that enforces lifetime-point unlock thresholds. Apply once after `duels.sql`; existing deployments must run it before players can save colors.
    - [`supabase/health.sql`](supabase/health.sql) — Isolated `health_connections` vault restricted to `service_role`.
 2. Copy `.env.example` to `.env.local` and configure your environment variables:
    ```env
