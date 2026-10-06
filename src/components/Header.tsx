@@ -6,6 +6,7 @@ import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
+import { getPlayerColorStyles } from '@/lib/player-colors';
 
 export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
@@ -58,7 +59,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
           >
             <span
               className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-mono font-bold border transition-colors shrink-0 group-hover:brightness-125"
-              style={{ color: activePlayer?.color, backgroundColor: activePlayer?.accentBg, borderColor: activePlayer?.accentBorder }}
+              style={activePlayer ? getPlayerColorStyles(activePlayer) : undefined}
             >
               {activePlayer?.name[0] || 'D'}
             </span>
