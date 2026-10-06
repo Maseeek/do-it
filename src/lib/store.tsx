@@ -17,6 +17,8 @@ import {
   GoogleHealthSyncResult,
   ThemePreference,
   EffectiveTheme,
+  PlayerColorId,
+  PLAYER_COLORS,
 } from './types';
 import { getInitialState } from './seed';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
@@ -101,6 +103,7 @@ interface StoreContextType {
   selectProfile: (id: PlayerId) => void;
   switchProfile: () => void;
   updateLocalPlayerName: (name: string) => void;
+  updatePlayerColor: (colorId: PlayerColorId) => void;
   toggleHabit: (
     habitId: string,
     proofUrl?: string | string[],
@@ -930,6 +933,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (trimmed.length < 1 || trimmed.length > 40) throw new Error('Name must be 1 to 40 characters.');
   const id = state.activePlayerId;
   setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], name: trimmed } } })); });
+  const updatePlayerColor = useStableCallback((colorId: PlayerColorId) => {
+    if (multiplayer.configured || !state.activePlayerId) throw new Error('Choose a local profile first.');
+    const color = PLAYER_COLORS.find(option => option.id === colorId);
+    const karma = state.checkIns.filter(checkIn => checkIn.playerId === state.activePlayerId).reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
+    if (!color || color.unlockAt > karma) throw new Error('That color is still locked.');
+    const id = state.activePlayerId;
+    setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], color: color.color, accentBg: color.accentBg, accentBorder: color.accentBorder } } }));
+  });
 
   const applyHabitPlan = useStableCallback(async (plannedHabits: Habit[]) => { const playerId = state.activePlayerId;
   if (!playerId || (multiplayer.configured && playerId !== multiplayer.slot)) throw new Error('Choose your own profile first.');
@@ -1259,7 +1270,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     stakes: state.stakes, reactions: state.reactions || [], restDays: state.restDays || [],
     selectedDate, isTodaySelected, setSelectedDate, maciekSummary, myrnaSummary,
     activePlayerSummary, maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled,
-    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, toggleHabit,
+    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit,
     updateCheckInNote, isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate,
     getHabitCheckInOnDate, getCheckInForHabit, getWeeklyHabitCompletions,
     isHabitWeeklyTargetMet, isHabitSatisfiedOnDate, isPartnerConnected, partnerId,
@@ -1273,7 +1284,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     isHydrated, loadedDuelId, syncStatus, storageError, state, activePlayer, activeHabits,
     selectedDate, isTodaySelected, maciekSummary, myrnaSummary, activePlayerSummary,
     maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled, setSoundEnabled,
-    selectProfile, switchProfile, updateLocalPlayerName, toggleHabit, updateCheckInNote,
+    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit, updateCheckInNote,
     isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate, getHabitCheckInOnDate,
     getCheckInForHabit, getWeeklyHabitCompletions, isHabitWeeklyTargetMet, isHabitSatisfiedOnDate,
     isPartnerConnected, partnerId, partnerCleanSpaceHabit, partnerCleanSpaceCheckIn, addReaction,

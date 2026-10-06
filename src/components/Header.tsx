@@ -57,11 +57,8 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
             className="flex items-center gap-2 min-w-0 group"
           >
             <span
-              className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-mono font-bold border transition-colors shrink-0 ${
-                isMaciek
-                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 group-hover:border-blue-400/60'
-                  : 'bg-purple-500/10 border-purple-500/30 text-purple-400 group-hover:border-purple-400/60'
-              }`}
+              className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-mono font-bold border transition-colors shrink-0 group-hover:brightness-125"
+              style={{ color: activePlayer?.color, backgroundColor: activePlayer?.accentBg, borderColor: activePlayer?.accentBorder }}
             >
               {activePlayer?.name[0] || 'D'}
             </span>
