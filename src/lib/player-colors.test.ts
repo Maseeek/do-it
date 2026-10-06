@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { isPlayerColorUnlocked } from './player-colors';
+import { getPlayerColorStyles, isPlayerColorUnlocked } from './player-colors';
 
 describe('Domain: Karma-gated player colors', () => {
   it('keeps colors locked immediately below each lifetime-point threshold', () => {
@@ -22,5 +22,20 @@ describe('Domain: Karma-gated player colors', () => {
   it('keeps the default blue and purple colors available from the start', () => {
     assert.equal(isPlayerColorUnlocked('blue', 0), true);
     assert.equal(isPlayerColorUnlocked('purple', 0), true);
+  });
+});
+
+describe('Player color identity styles', () => {
+  it('uses a high-contrast rainbow gradient for the Rainbow identity', () => {
+    assert.deepEqual(getPlayerColorStyles({
+      color: '#f0abfc',
+      accentBg: 'rgba(232, 121, 249, 0.1)',
+      accentBorder: 'rgba(232, 121, 249, 0.3)',
+    }), {
+      color: '#fff',
+      backgroundColor: 'rgba(232, 121, 249, 0.1)',
+      borderColor: 'rgba(255,255,255,.45)',
+      backgroundImage: 'linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#60a5fa,#c084fc)',
+    });
   });
 });

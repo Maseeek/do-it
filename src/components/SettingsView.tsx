@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PLAYER_COLORS } from '@/lib/types';
-import { isPlayerColorUnlocked } from '@/lib/player-colors';
+import { getPlayerColorStyles, isPlayerColorUnlocked } from '@/lib/player-colors';
 import { ArrowLeft, Copy, LogOut, Share2, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -76,7 +76,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
             const unlocked = isPlayerColorUnlocked(option.id, activePlayerSummary.karma);
             const selected = activePlayer.color === option.color;
             return <button key={option.id} type="button" disabled={!unlocked || savingColor} onClick={() => { void savePlayerColor(option.id); }} aria-pressed={selected} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${selected ? 'border-white/40 bg-white/[0.08]' : 'border-white/[0.08]'} disabled:cursor-not-allowed disabled:opacity-45`}>
-              <span className="size-3.5 rounded-full border border-white/20" style={{ backgroundColor: option.color, ...(option.id === 'rainbow' ? { backgroundImage: 'linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#60a5fa,#c084fc)' } : {}) }} />
+              <span className="size-3.5 rounded-full border border-white/20" style={getPlayerColorStyles(option)} />
               <span className="min-w-0"><span className="block">{option.name}</span><span className="text-[10px] text-zinc-500">{unlocked ? (selected ? 'Selected' : 'Unlocked') : `${option.unlockAt.toLocaleString()} points`}</span></span>
             </button>;
           })}

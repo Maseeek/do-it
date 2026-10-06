@@ -180,6 +180,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const stateSlotRef = useRef<PlayerId | null>(null);
   const restorationInProgressRef = useRef<Record<string, boolean>>({});
   const latestAppliedSequenceRef = useRef(0);
+  const reloadSequenceRef = useRef(0);
 
   // 1. Hydrate from localStorage on client mount
   useEffect(() => {
@@ -448,13 +449,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     let cancelled = false;
-    let reloadSequence = 0;
     if (stateDuelRef.current !== duelId) {
       setLoadedDuelId(null);
       setSyncStatus('syncing');
     }
     const reload = async () => {
-      const sequence = ++reloadSequence;
+      const sequence = ++reloadSequenceRef.current;
       try {
         await duelQueueRef.current;
         let data = await loadDuelData(client, duelId);

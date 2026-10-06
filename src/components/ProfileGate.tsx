@@ -6,6 +6,7 @@ import { PlayerId } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticSuccess } from '@/lib/haptic-utils';
+import { getPlayerColorStyles } from '@/lib/player-colors';
 
 import { DoLogo } from './DoLogo';
 
@@ -48,7 +49,7 @@ export function ProfileGate() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={{ color: players.maciek.color, backgroundColor: players.maciek.accentBg, borderColor: players.maciek.accentBorder, ...(players.maciek.color === '#f0abfc' ? { color: '#fff', backgroundImage: 'linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#60a5fa,#c084fc)' } : {}) }}>
+                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={getPlayerColorStyles(players.maciek)}>
                   {players.maciek.name[0]?.toUpperCase()}
                 </div>
                 <div>
@@ -73,7 +74,7 @@ export function ProfileGate() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={{ color: players.myrna.color, backgroundColor: players.myrna.accentBg, borderColor: players.myrna.accentBorder, ...(players.myrna.color === '#f0abfc' ? { color: '#fff', backgroundImage: 'linear-gradient(135deg,#f87171,#fbbf24,#4ade80,#60a5fa,#c084fc)' } : {}) }}>
+                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={getPlayerColorStyles(players.myrna)}>
                   {players.myrna.name[0]?.toUpperCase()}
                 </div>
                 <div>
