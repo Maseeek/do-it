@@ -199,7 +199,7 @@ function AppContent() {
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
         <DesktopSidebar activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setActiveTab(tab); }} />
-        <Header onOpenSettings={() => setShowSettings(true)} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />
+        <Header onOpenSettings={() => setShowSettings(true)} />
         {/* Floating Quick Action Toast */}
         {toastMessage && (
           <div

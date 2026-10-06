@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Copy, LogOut, Share2, UserRound, Volume2 } from 'lucide-react';
+import { ArrowLeft, Copy, LogOut, Monitor, Moon, Share2, Sun, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { HealthConnection } from './HealthConnection';
 
 export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; onChooseHabits?: () => void }) {
   const multiplayer = useMultiplayer();
-  const { activePlayer, isPartnerConnected, players, soundEnabled, setSoundEnabled, updateLocalPlayerName } = useStore();
+  const { activePlayer, isPartnerConnected, players, soundEnabled, setSoundEnabled, updateLocalPlayerName, themePreference, effectiveTheme, toggleTheme } = useStore();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(activePlayer?.name || '');
   const [savingName, setSavingName] = useState(false);
@@ -54,6 +54,22 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
         {nameMessage && <p role="status" className="text-xs text-zinc-300">{nameMessage}</p>}
       </form>
     </section>}
+    <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
+      <h2 className="text-sm font-semibold">Appearance</h2>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-zinc-300">Theme</span>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={`Theme: ${themePreference}. Change theme`}
+          title={`Current theme: ${themePreference}`}
+          className="flex min-h-11 min-w-28 items-center justify-center gap-2 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-sm text-white transition-colors hover:border-white/30"
+        >
+          {themePreference === 'system' ? <Monitor size={16} /> : effectiveTheme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+          <span>{themePreference[0].toUpperCase() + themePreference.slice(1)}</span>
+        </button>
+      </div>
+    </section>
     {multiplayer.configured && multiplayer.user && (
       <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold"><Share2 size={17}/>Account &amp; Duel Invitation</h2>
