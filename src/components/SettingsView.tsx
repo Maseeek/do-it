@@ -57,7 +57,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       setSavingColor(false);
     }
   };
-  return <div className="mx-auto max-w-2xl space-y-5">
+  return <div className="w-full space-y-5">
     <div className="flex items-center gap-3"><button className="flex size-11 items-center justify-center rounded-xl text-zinc-400 hover:text-white" onClick={onBack} aria-label="Back"><ArrowLeft size={20}/></button><h1 className="text-2xl font-semibold">Settings</h1></div>
     {activePlayer && <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
       <h2 className="flex items-center gap-2 text-sm font-semibold"><UserRound size={17}/>Profile</h2>
