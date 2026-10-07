@@ -24,7 +24,7 @@ export function ProgressView({
   const isMaciek = (activePlayerId || 'maciek') === 'maciek';
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold tracking-tight">Progress</h1>
         <button className="control min-h-11" onClick={() => setPlanner(true)}>

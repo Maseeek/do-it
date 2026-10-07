@@ -228,9 +228,9 @@ export function DuelView() {
   ).length;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      {/* Top Header Row + Segmented Timeframe Switcher */}
-      <div className="flex items-end justify-between gap-3">
+    <div className="w-full space-y-4">
+      {/* Player names span the row; timeframe controls sit beneath them. */}
+      <div className="space-y-3">
         <div>
           <div className="flex items-center gap-2">
             <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
@@ -246,35 +246,24 @@ export function DuelView() {
               </button>
             )}
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white mt-0.5">
+          <h1 className="mt-0.5 grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-2 text-2xl font-semibold tracking-tight text-white">
             {isPartnerConnected ? (
-              <span className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-blue-400">{ownerDisplayName}</span>
+              <>
+                <span className="min-w-0 truncate text-center text-blue-400">{ownerDisplayName}</span>
                 <span className="text-zinc-500 font-normal text-lg">vs</span>
-                <span className="text-purple-400">{guestDisplayName}</span>
-              </span>
+                <span className="min-w-0 truncate text-center text-purple-400">{guestDisplayName}</span>
+              </>
             ) : (
-              'Duel'
+              <span className="col-span-3">Duel</span>
             )}
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          {selectedTier === 'weekly' && (
-            <button
-              onClick={handleShareScorecardCard}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0e1013] hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-mono transition-colors border border-zinc-800"
-              title="Export & Share Scorecard"
-            >
-              <Share2 className="w-3.5 h-3.5 text-blue-400" />
-              <span className="hidden sm:inline">{shareCardStatus || 'Share'}</span>
-            </button>
-          )}
-
+        <div className="flex w-full items-center gap-2">
           <div
             role="tablist"
             aria-label="Leaderboard timeframe"
-            className="flex p-0.5 rounded-lg bg-[#0e1013] border border-zinc-800"
+            className="flex min-w-0 flex-1 p-0.5 rounded-lg bg-[#0e1013] border border-zinc-800"
           >
             {(
               [
@@ -288,7 +277,7 @@ export function DuelView() {
                 role="tab"
                 aria-selected={selectedTier === t.id}
                 onClick={() => handleSelectTier(t.id)}
-                className={`px-3 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
+                className={`flex-1 px-2 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
                   selectedTier === t.id
                     ? 'bg-zinc-800/90 text-white shadow-xs font-semibold'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -298,6 +287,17 @@ export function DuelView() {
               </button>
             ))}
           </div>
+
+          {selectedTier === 'weekly' && (
+            <button
+              onClick={handleShareScorecardCard}
+              className="flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0e1013] hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-mono transition-colors border border-zinc-800"
+              title="Export & Share Scorecard"
+            >
+              <Share2 className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">{shareCardStatus || 'Share'}</span>
+            </button>
+          )}
         </div>
       </div>
 

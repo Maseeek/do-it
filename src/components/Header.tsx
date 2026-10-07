@@ -41,7 +41,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-[#08090a]/90 px-4 py-2.5 backdrop-blur-xl safe-area-top">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+      <div className="flex w-full items-center justify-between gap-3">
         {/* Left: Brand + Player Identity + Streak & Live Status */}
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex lg:hidden items-center gap-2 shrink-0">

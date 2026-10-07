@@ -205,7 +205,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   });
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="w-full space-y-4">
       {/* Top Header Row + Segmented View Switcher */}
       <div className="flex items-end justify-between gap-3">
         <div>
