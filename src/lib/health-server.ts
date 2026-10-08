@@ -6,10 +6,6 @@ import type { DuelSession } from './multiplayer';
 import type { PlayerId } from './types';
 import { isValidSupabaseUrl } from './supabase';
 
-export function healthEnabled() {
-  return process.env.GOOGLE_HEALTH_ENABLED === 'true';
-}
-
 export function healthDatabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

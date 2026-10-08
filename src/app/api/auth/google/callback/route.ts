@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { encryptToken, healthDatabase, healthEnabled } from '@/lib/health-server';
+import { decryptToken, encryptToken, healthDatabase } from '@/lib/health-server';
+import { healthEnabled } from '@/lib/health-access';
 
 export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
@@ -17,9 +18,10 @@ export async function GET(request: NextRequest) {
   try {
     const raw = request.cookies.get('health_oauth_state')?.value;
     if (!raw) return redirect('expired_connection');
-    const stored = JSON.parse(raw) as { state: string; userId: string; scopes: string[]; timeZone: string };
+    const stored = JSON.parse(decryptToken(raw)) as { state: string; userId: string; scopes: string[]; timeZone: string };
     const state = request.nextUrl.searchParams.get('state') || '';
     if (!state || state.length !== stored.state.length || !timingSafeEqual(Buffer.from(state), Buffer.from(stored.state))) return redirect('invalid_connection');
+    if (!healthEnabled(stored.userId)) return redirect('health_unavailable');
     if (request.nextUrl.searchParams.has('error')) return redirect('permission_denied');
     const code = request.nextUrl.searchParams.get('code');
     if (!code) return redirect('missing_code');

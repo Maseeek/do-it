@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticatedDuel, healthEnabled } from '@/lib/health-server';
+import { authenticatedDuel } from '@/lib/health-server';
+import { healthEnabled } from '@/lib/health-access';
 import { syncUserHealth } from '@/lib/health-sync';
 import { healthScopes } from '@/lib/health-sync';
 import type { Habit } from '@/lib/types';
 
+function unavailable() {
+  return NextResponse.json({ available: false, connected: false, scopes: [], message: 'Automatic health check-ins are not available yet. You can keep checking off habits manually.' });
+}
+
 export async function GET(request: NextRequest) {
-  if (!healthEnabled()) return NextResponse.json({ available: false, connected: false, scopes: [], message: 'Automatic health check-ins are not available yet. You can keep checking off habits manually.' });
+  if (!healthEnabled()) return unavailable();
   try {
     const context = await authenticatedDuel(request);
     if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+    if (!healthEnabled(context.user.id)) return unavailable();
     const { data, error } = await context.db.from('health_connections').select('scopes,time_zone,last_checked_at,last_error').eq('user_id', context.user.id).maybeSingle();
     if (error) throw error;
     const { data: rows, error: habitsError } = await context.db.from('duel_habits').select('data').eq('duel_id', context.duel.id).eq('player_slot', context.slot);
@@ -26,6 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const context = await authenticatedDuel(request);
     if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+    if (!healthEnabled(context.user.id)) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
     return NextResponse.json(await syncUserHealth(context.user.id));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Health sync failed.' }, { status: 502 });

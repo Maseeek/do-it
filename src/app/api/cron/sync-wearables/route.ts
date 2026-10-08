@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { healthDatabase, healthEnabled, localDate } from '@/lib/health-server';
+import { healthDatabase, localDate } from '@/lib/health-server';
+import { healthEnabled } from '@/lib/health-access';
 import { syncUserHealth } from '@/lib/health-sync';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     const { data: connections, error } = await db.from('health_connections').select('user_id,time_zone');
     if (error) throw error;
     const results = [];
-    const connectionList = connections || [];
+    const connectionList = (connections || []).filter(connection => healthEnabled(connection.user_id));
     for (let i = 0; i < connectionList.length; i += BATCH_SIZE) {
       const batch = connectionList.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
