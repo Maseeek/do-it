@@ -229,10 +229,9 @@ export function DuelView() {
 
   return (
     <div className="w-full space-y-4">
-      {/* Player names span the row; timeframe controls sit beneath them. */}
       <div className="space-y-3">
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
               {isPartnerConnected ? 'Head to Head Duel' : 'Head to Head'}
             </p>
@@ -246,58 +245,68 @@ export function DuelView() {
               </button>
             )}
           </div>
-          <h1 className="mt-0.5 grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-2 text-2xl font-semibold tracking-tight text-white">
-            {isPartnerConnected ? (
-              <>
-                <span className="min-w-0 truncate text-center text-blue-400">{ownerDisplayName}</span>
-                <span className="text-zinc-500 font-normal text-lg">vs</span>
-                <span className="min-w-0 truncate text-center text-purple-400">{guestDisplayName}</span>
-              </>
-            ) : (
-              <span className="col-span-3">Duel</span>
-            )}
-          </h1>
-        </div>
-
-        <div className="flex w-full items-center gap-2">
-          <div
-            role="tablist"
-            aria-label="Leaderboard timeframe"
-            className="flex min-w-0 flex-1 p-0.5 rounded-lg bg-[#0e1013] border border-zinc-800"
-          >
-            {(
-              [
-                { id: 'weekly', label: 'Week' },
-                { id: 'monthly', label: 'Month' },
-                { id: 'karma', label: 'All-Time' },
-              ] as { id: LeaderboardTier; label: string }[]
-            ).map((t) => (
-              <button
-                key={t.id}
-                role="tab"
-                aria-selected={selectedTier === t.id}
-                onClick={() => handleSelectTier(t.id)}
-                className={`flex-1 px-2 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
-                  selectedTier === t.id
-                    ? 'bg-zinc-800/90 text-white shadow-xs font-semibold'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {selectedTier === 'weekly' && (
             <button
               onClick={handleShareScorecardCard}
-              className="flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0e1013] hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-mono transition-colors border border-zinc-800"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-[#0e1013] text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white sm:w-auto sm:px-2.5"
+              aria-label={shareCardStatus || 'Share scorecard'}
               title="Export & Share Scorecard"
             >
-              <Share2 className="w-3.5 h-3.5 text-blue-400" />
+              <Share2 className="h-3.5 w-3.5 text-blue-400" />
               <span className="hidden sm:inline">{shareCardStatus || 'Share'}</span>
             </button>
           )}
+        </div>
+
+        {isPartnerConnected ? (
+          <h1 className="grid min-h-[82px] w-full grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-center px-1">
+            <span className="min-w-0">
+              <span aria-hidden="true" className="mb-2.5 block h-0.5 w-[26px] rounded bg-blue-500" />
+              <span className="block truncate text-[clamp(21px,6.3vw,26px)] font-bold tracking-[-0.045em] text-blue-400">
+                {ownerDisplayName}
+              </span>
+            </span>
+            <span className="relative flex h-full items-center justify-center font-mono text-[9px] text-zinc-400">
+              <span aria-hidden="true" className="absolute inset-y-[15px] left-1/2 w-px -translate-x-1/2 bg-zinc-800" />
+              <span className="relative bg-[#08090a] px-1 py-1">VS</span>
+            </span>
+            <span className="min-w-0 text-right">
+              <span aria-hidden="true" className="mb-2.5 ml-auto block h-0.5 w-[26px] rounded bg-purple-500" />
+              <span className="block truncate text-[clamp(21px,6.3vw,26px)] font-bold tracking-[-0.045em] text-purple-400">
+                {guestDisplayName}
+              </span>
+            </span>
+          </h1>
+        ) : (
+          <h1 className="min-h-[82px] pt-3 text-2xl font-semibold tracking-tight text-white">Duel</h1>
+        )}
+
+        <div
+          role="tablist"
+          aria-label="Leaderboard timeframe"
+          className="grid w-full grid-cols-3 gap-0.5 rounded-lg border border-zinc-800 bg-[#0e1013] p-[3px]"
+        >
+          {(
+            [
+              { id: 'weekly', label: 'Week' },
+              { id: 'monthly', label: 'Month' },
+              { id: 'karma', label: 'All-Time' },
+            ] as { id: LeaderboardTier; label: string }[]
+          ).map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={selectedTier === t.id}
+              onClick={() => handleSelectTier(t.id)}
+              className={`min-h-9 rounded-md px-2 text-xs font-mono font-medium transition-colors ${
+                selectedTier === t.id
+                  ? 'bg-zinc-800/90 text-white shadow-xs font-semibold'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 

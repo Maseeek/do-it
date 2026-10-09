@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticatedDuel, healthEnabled, validTimeZone } from '@/lib/health-server';
+import { authenticatedDuel, encryptToken, validTimeZone } from '@/lib/health-server';
+import { healthEnabled } from '@/lib/health-access';
 import { healthScopes } from '@/lib/health-sync';
 import type { Habit } from '@/lib/types';
 
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const context = await authenticatedDuel(request);
     if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
+    if (!healthEnabled(context.user.id)) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId || !process.env.GOOGLE_CLIENT_SECRET || !process.env.HEALTH_TOKEN_ENCRYPTION_KEY) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
     const body = await request.json().catch(() => ({}));
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
     url.searchParams.set('prompt', 'consent');
     url.searchParams.set('state', state);
     const response = NextResponse.json({ url: url.toString() });
-    response.cookies.set('health_oauth_state', JSON.stringify({ state, userId: context.user.id, scopes: [...scopes], timeZone }), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/api/auth/google', maxAge: 600 });
+    response.cookies.set('health_oauth_state', encryptToken(JSON.stringify({ state, userId: context.user.id, scopes: [...scopes], timeZone })), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/api/auth/google', maxAge: 600 });
     return response;
   } catch {
     return NextResponse.json({ error: 'Could not begin Google Health connection.' }, { status: 500 });

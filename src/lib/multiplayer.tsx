@@ -133,14 +133,6 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     const { error: rpcError } = await client.rpc('replace_solo_duel_with_invite', { code: normalizedCode, display_name: displayName });
     if (rpcError) {
       if (rpcError.code === 'PGRST202' || rpcError.message?.includes('replace_solo_duel_with_invite')) {
-        if (duel && !duel.guest_id) {
-          await client.from('duels').delete().eq('id', duel.id).is('guest_id', null);
-          const { error: fallbackError } = await client.rpc('accept_duel', { code: normalizedCode, display_name: displayName });
-          if (!fallbackError) {
-            await refresh();
-            return;
-          }
-        }
         throw new Error('Your account already owns a solo duel, and automatic solo-duel replacement (supabase/replace-solo-duel.sql) is not enabled in the database yet. Sign out to join with another account, or run supabase/replace-solo-duel.sql in the Supabase SQL Editor.');
       }
       throw new Error(rpcError.message || 'Could not replace your solo duel with this invitation.');
