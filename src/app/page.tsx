@@ -6,6 +6,7 @@ import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { getTodayDateString } from '@/lib/date-utils';
 import { prepareQuickCheckIn } from '@/lib/quick-checkin';
+import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { Header } from '@/components/Header';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { BottomNav, TabType } from '@/components/BottomNav';
@@ -36,9 +37,9 @@ function AppContent() {
     toggleHabit,
     syncStatus,
     loadedDuelId,
+    players,
   } = useStore();
   const multiplayer = useMultiplayer();
-
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [showSettings, setShowSettings] = useState(false);
   const [openPlanner, setOpenPlanner] = useState(false);
@@ -202,13 +203,20 @@ function AppContent() {
     return (
       <>
         {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
-        <HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} />
+        <div style={getPlayerThemeStyles(players[activePlayerId])}><HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} /></div>
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white transition-colors">
+    <div
+      style={{
+        ...getPlayerThemeStyles(players[activePlayerId]),
+        ...getPlayerThemeStyles(players.maciek, 'owner'),
+        ...getPlayerThemeStyles(players.myrna, 'guest'),
+      }}
+      className="min-h-screen bg-background text-foreground flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white transition-colors"
+    >
       {/* Ambient background glow mesh */}
       <div className="ambient-mesh" aria-hidden="true" />
 

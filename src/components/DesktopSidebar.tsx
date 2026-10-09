@@ -29,7 +29,7 @@ export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType;
             aria-current={activeTab === id ? 'page' : undefined}
             className={`w-full min-h-10 flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-left transition-colors border ${
               activeTab === id
-                ? 'bg-black/[0.06] dark:bg-zinc-900/90 border-black/10 dark:border-zinc-800 text-foreground font-semibold shadow-xs'
+                ? 'bg-player-500/15 border-player-500/30 text-player-400 font-semibold shadow-xs'
                 : 'border-transparent text-zinc-500 hover:bg-black/[0.03] dark:hover:bg-zinc-900/40 hover:text-foreground'
             }`}
           >
@@ -48,7 +48,7 @@ export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType;
           {activePlayer?.name} · Lifetime Karma
         </p>
         <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="text-xl font-bold font-mono tabular-nums text-foreground">
+          <span className="text-xl font-bold font-mono tabular-nums text-player-400">
             {activePlayerSummary.karma.toLocaleString()}
           </span>
           <span className="text-[11px] font-mono text-zinc-500">pts</span>

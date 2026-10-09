@@ -45,7 +45,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
       >
         <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
-            <Keyboard className="w-4 h-4 text-blue-400" />
+            <Keyboard className="w-4 h-4 text-player-400" />
             <h3 id="shortcuts-modal-title" className="text-sm font-semibold text-white">Shortcuts</h3>
           </div>
           <button

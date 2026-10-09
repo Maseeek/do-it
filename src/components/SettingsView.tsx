@@ -112,7 +112,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                 maxLength={40}
                 onChange={event => { setName(event.target.value); setNameMessage(null); }}
                 autoComplete="nickname"
-                className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-sm text-foreground outline-none focus:border-emerald-400"
+                className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-sm text-foreground outline-none focus:border-player-400"
               />
               <button
                 type="submit"
@@ -141,12 +141,12 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                     onClick={() => { void savePlayerColor(option.id); }}
                     aria-pressed={selected}
                     className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${
-                      selected ? 'border-white/40 bg-white/[0.08]' : 'border-white/[0.08]'
+                      selected ? 'border-player-400 bg-player-500/15 text-player-400' : 'border-white/[0.08]'
                     } disabled:cursor-not-allowed disabled:opacity-45`}
                   >
                     <span className="size-3.5 rounded-full border border-white/20" style={getPlayerColorStyles(option)} />
                     <span className="min-w-0">
-                      <span className="block font-medium text-foreground">{option.name}</span>
+                      <span className="block font-medium">{option.name}</span>
                       <span className="text-[10px] text-zinc-500">
                         {unlocked ? (selected ? 'Selected' : 'Unlocked') : `${option.unlockAt.toLocaleString()} points`}
                       </span>

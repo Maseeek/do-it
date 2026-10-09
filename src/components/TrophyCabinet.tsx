@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
+import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { PlayerId } from '@/lib/types';
 import {
   Award,
@@ -27,7 +28,6 @@ export function TrophyCabinet() {
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
 
   const badges = selectedPlayer === 'maciek' ? maciekBadges : myrnaBadges;
-  const isMaciek = selectedPlayer === 'maciek';
 
   const filteredBadges = badges.filter((b) => {
     if (filter === 'unlocked') return b.isUnlocked;
@@ -83,7 +83,7 @@ export function TrophyCabinet() {
   };
 
   return (
-    <div className="space-y-3">
+    <div style={getPlayerThemeStyles(players[selectedPlayer])} className="space-y-3">
       {/* Top Controls: Player & Filter */}
       <div className="flex items-center justify-between gap-2">
         <div role="tablist" aria-label="Select player for badges" className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
@@ -93,7 +93,7 @@ export function TrophyCabinet() {
             onClick={() => handlePlayerChange('maciek')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'maciek'
-                ? 'bg-blue-500/20 text-blue-300 font-semibold'
+                ? 'bg-owner-500/20 text-owner-300 font-semibold'
                 : 'text-zinc-400'
             }`}
           >
@@ -105,7 +105,7 @@ export function TrophyCabinet() {
             onClick={() => handlePlayerChange('myrna')}
             className={`px-3 py-1 rounded-full transition-colors ${
               selectedPlayer === 'myrna'
-                ? 'bg-purple-500/20 text-purple-300 font-semibold'
+                ? 'bg-guest-500/20 text-guest-300 font-semibold'
                 : 'text-zinc-400'
             }`}
           >
@@ -167,9 +167,7 @@ export function TrophyCabinet() {
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border ${
                   isUnlocked
-                    ? isMaciek
-                      ? 'bg-blue-500/15 border-blue-500/30 text-blue-400'
-                      : 'bg-purple-500/15 border-purple-500/30 text-purple-400'
+                    ? 'bg-player-500/15 border-player-500/30 text-player-400'
                     : 'bg-[#2c2c2e] border-white/[0.06] text-zinc-600'
                 }`}
               >
@@ -203,7 +201,7 @@ export function TrophyCabinet() {
                   >
                     <div className="h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${isMaciek ? 'bg-blue-500' : 'bg-purple-500'}`}
+                        className="h-full rounded-full bg-player-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>

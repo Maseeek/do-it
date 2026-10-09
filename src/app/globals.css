@@ -2,6 +2,42 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Player theme palettes. Slot identities only select the source Player. */
+:root { --accent-text-weight: 55%; --accent-text-mix: black; }
+.dark { --accent-text-weight: 100%; --accent-text-mix: black; }
+@theme inline {
+  --color-player-200: color-mix(in srgb, var(--player-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-player-300: color-mix(in srgb, var(--player-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-player-400: color-mix(in srgb, var(--player-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-player-500: color-mix(in srgb, var(--player-base) 45%, black);
+  --color-player-600: color-mix(in srgb, var(--player-base) 65%, black);
+  --color-player-700: color-mix(in srgb, var(--player-base) 50%, black);
+  --color-player-800: color-mix(in srgb, var(--player-base) 35%, black);
+  --color-player-900: color-mix(in srgb, var(--player-base) 22%, black);
+  --color-player-950: color-mix(in srgb, var(--player-base) 12%, black);
+  --color-owner-200: color-mix(in srgb, var(--owner-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-owner-300: color-mix(in srgb, var(--owner-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-owner-400: color-mix(in srgb, var(--owner-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-owner-500: color-mix(in srgb, var(--owner-base) 45%, black);
+  --color-owner-600: color-mix(in srgb, var(--owner-base) 65%, black);
+  --color-owner-700: color-mix(in srgb, var(--owner-base) 50%, black);
+  --color-owner-800: color-mix(in srgb, var(--owner-base) 35%, black);
+  --color-owner-900: color-mix(in srgb, var(--owner-base) 22%, black);
+  --color-owner-950: color-mix(in srgb, var(--owner-base) 12%, black);
+  --color-guest-200: color-mix(in srgb, var(--guest-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-guest-300: color-mix(in srgb, var(--guest-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-guest-400: color-mix(in srgb, var(--guest-base) var(--accent-text-weight), var(--accent-text-mix));
+  --color-guest-500: color-mix(in srgb, var(--guest-base) 45%, black);
+  --color-guest-600: color-mix(in srgb, var(--guest-base) 65%, black);
+  --color-guest-700: color-mix(in srgb, var(--guest-base) 50%, black);
+  --color-guest-800: color-mix(in srgb, var(--guest-base) 35%, black);
+  --color-guest-900: color-mix(in srgb, var(--guest-base) 22%, black);
+  --color-guest-950: color-mix(in srgb, var(--guest-base) 12%, black);
+}
+@utility bg-player-500 { background-image: var(--player-gradient); }
+@utility bg-owner-500 { background-image: var(--owner-gradient); }
+@utility bg-guest-500 { background-image: var(--guest-gradient); }
+
 :root {
   --background: #f7f8f9;
   --foreground: #111315;
@@ -9,18 +45,12 @@
   --surface-1: #ffffff;
   --surface-2: #eef0f3;
   --surface-3: #dfe3e8;
-  --border-subtle: rgba(0, 0, 0, 0.07);
-  --border-medium: rgba(0, 0, 0, 0.12);
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.15);
   --border-strong: rgba(0, 0, 0, 0.22);
   --text-primary: #0f141c;
   --text-secondary: #4b5565;
   --text-muted: #788292;
-  --maciek-blue: #3b82f6;
-  --maciek-blue-glow: rgba(59, 130, 246, 0.18);
-  --myrna-pink: #a855f7;
-  --myrna-pink-glow: rgba(168, 85, 247, 0.18);
-  --myrna-purple: #a855f7;
-  --myrna-purple-glow: rgba(168, 85, 247, 0.18);
   --par-emerald: #10b981;
   --par-emerald-glow: rgba(16, 185, 129, 0.18);
   --stake-amber: #f59e0b;
@@ -41,12 +71,6 @@
   --text-primary: #f5f6f8;
   --text-secondary: #9ba1b0;
   --text-muted: #676f82;
-  --maciek-blue: #3b82f6;
-  --maciek-blue-glow: rgba(59, 130, 246, 0.22);
-  --myrna-pink: #a855f7;
-  --myrna-pink-glow: rgba(168, 85, 247, 0.22);
-  --myrna-purple: #a855f7;
-  --myrna-purple-glow: rgba(168, 85, 247, 0.22);
   --par-emerald: #10b981;
   --par-emerald-glow: rgba(16, 185, 129, 0.22);
   --stake-amber: #f59e0b;
@@ -55,7 +79,7 @@
 button, a, input, select, textarea { touch-action: manipulation; }
 button:not(:disabled), summary { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--player-base, #71717a); outline-offset: 4px; }
 
 .skip-link {
   position: fixed;
@@ -154,16 +178,16 @@ body {
   pointer-events: none;
   z-index: -1;
   background: 
-    radial-gradient(circle at 20% 0%, rgba(59, 130, 246, 0.04) 0%, transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.03) 0%, transparent 45%),
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--owner-base) 4%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--guest-base) 3%, transparent) 0%, transparent 45%),
     var(--background);
   transition: background 0.3s ease;
 }
 
 .dark .ambient-mesh {
   background: 
-    radial-gradient(circle at 20% 0%, rgba(59, 130, 246, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--owner-base) 4%, transparent) 0%, transparent 40%),
+    radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--guest-base) 3%, transparent) 0%, transparent 40%),
     #08090a;
 }
 
@@ -338,6 +362,9 @@ html:not(.dark) .hover\:border-zinc-600:hover {
 
 /* 9. Typography and Contrast Hierarchy */
 html:not(.dark) .text-white:not(
+  .bg-player-500,
+  .bg-owner-500,
+  .bg-guest-500,
   button.bg-blue-500,
   button.bg-pink-500,
   button.bg-purple-500,
@@ -347,6 +374,9 @@ html:not(.dark) .text-white:not(
   button.bg-red-500,
   button.bg-black,
   button.bg-zinc-900,
+  .bg-player-500 *,
+  .bg-owner-500 *,
+  .bg-guest-500 *,
   .bg-blue-500 *,
   .bg-pink-500 *,
   .bg-purple-500 *,
@@ -367,12 +397,12 @@ html:not(.dark) .text-zinc-200 {
 }
 
 html:not(.dark) .hover\:text-white:hover:not(
-  button.bg-blue-500,
-  button.bg-pink-500,
-  button.bg-purple-500,
-  .bg-blue-500 *,
-  .bg-pink-500 *,
-  .bg-purple-500 *
+  .bg-player-500,
+  .bg-owner-500,
+  .bg-guest-500,
+  .bg-player-500 *,
+  .bg-owner-500 *,
+  .bg-guest-500 *
 ) {
   color: #000000;
 }
@@ -578,70 +608,26 @@ html:not(.dark) section.bg-gradient-to-br .bg-white\/\[0\.04\] {
   animation: kinetic-ring-expand 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes kinetic-card-pulse-blue {
+@keyframes kinetic-card-pulse-player {
   0% {
     transform: scale(0.992);
-    border-color: rgba(96, 165, 250, 0.95);
-    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.5), 0 0 28px -2px rgba(59, 130, 246, 0.5), inset 0 0 22px -10px rgba(59, 130, 246, 0.35);
+    border-color: color-mix(in srgb, var(--player-base) 95%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--player-base) 50%, transparent), 0 0 28px -2px color-mix(in srgb, var(--player-base) 50%, transparent), inset 0 0 22px -10px color-mix(in srgb, var(--player-base) 35%, transparent);
   }
   35% {
     transform: scale(1.006);
-    border-color: rgba(147, 197, 253, 0.95);
-    box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.4), 0 0 32px -2px rgba(59, 130, 246, 0.55), inset 0 0 24px -8px rgba(59, 130, 246, 0.32);
+    border-color: color-mix(in srgb, var(--player-base) 95%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--player-base) 40%, transparent), 0 0 32px -2px color-mix(in srgb, var(--player-base) 55%, transparent), inset 0 0 24px -8px color-mix(in srgb, var(--player-base) 32%, transparent);
   }
   100% {
     transform: scale(1);
-    border-color: rgba(59, 130, 246, 0.35);
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1), 0 0 12px -4px rgba(59, 130, 246, 0.2);
+    border-color: color-mix(in srgb, var(--player-base) 35%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--player-base) 10%, transparent), 0 0 12px -4px color-mix(in srgb, var(--player-base) 20%, transparent);
   }
 }
 
-.animate-kinetic-card-blue {
-  animation: kinetic-card-pulse-blue 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes kinetic-card-pulse-pink {
-  0% {
-    transform: scale(0.992);
-    border-color: rgba(244, 114, 182, 0.95);
-    box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.5), 0 0 28px -2px rgba(236, 72, 153, 0.5), inset 0 0 22px -10px rgba(236, 72, 153, 0.35);
-  }
-  35% {
-    transform: scale(1.006);
-    border-color: rgba(249, 168, 212, 0.95);
-    box-shadow: 0 0 0 1px rgba(249, 168, 212, 0.4), 0 0 32px -2px rgba(236, 72, 153, 0.55), inset 0 0 24px -8px rgba(236, 72, 153, 0.32);
-  }
-  100% {
-    transform: scale(1);
-    border-color: rgba(236, 72, 153, 0.35);
-    box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.1), 0 0 12px -4px rgba(236, 72, 153, 0.2);
-  }
-}
-
-.animate-kinetic-card-pink {
-  animation: kinetic-card-pulse-pink 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes kinetic-card-pulse-purple {
-  0% {
-    transform: scale(0.992);
-    border-color: rgba(192, 132, 252, 0.95);
-    box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.5), 0 0 28px -2px rgba(168, 85, 247, 0.5), inset 0 0 22px -10px rgba(168, 85, 247, 0.35);
-  }
-  35% {
-    transform: scale(1.006);
-    border-color: rgba(216, 180, 254, 0.95);
-    box-shadow: 0 0 0 1px rgba(216, 180, 254, 0.4), 0 0 32px -2px rgba(168, 85, 247, 0.55), inset 0 0 24px -8px rgba(168, 85, 247, 0.32);
-  }
-  100% {
-    transform: scale(1);
-    border-color: rgba(168, 85, 247, 0.35);
-    box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.1), 0 0 12px -4px rgba(168, 85, 247, 0.2);
-  }
-}
-
-.animate-kinetic-card-purple {
-  animation: kinetic-card-pulse-purple 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-kinetic-card-player {
+  animation: kinetic-card-pulse-player 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes kinetic-laser-sweep {
@@ -729,10 +715,10 @@ html:not(.dark) section.bg-gradient-to-br .bg-white\/\[0\.04\] {
   animation: kinetic-card-settle 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes target-card-pulse-blue {
+@keyframes target-card-pulse-player {
   0% {
-    border-color: rgba(96, 165, 250, 0.85);
-    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.35), 0 0 28px -4px rgba(59, 130, 246, 0.42), inset 0 1px 0 rgba(147, 197, 253, 0.35);
+    border-color: color-mix(in srgb, var(--player-base) 85%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--player-base) 35%, transparent), 0 0 28px -4px color-mix(in srgb, var(--player-base) 42%, transparent), inset 0 1px 0 color-mix(in srgb, var(--player-base) 35%, transparent);
   }
   100% {
     border-color: rgba(39, 39, 42, 0.9);
@@ -740,38 +726,8 @@ html:not(.dark) section.bg-gradient-to-br .bg-white\/\[0\.04\] {
   }
 }
 
-.animate-target-pulse-blue {
-  animation: target-card-pulse-blue 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes target-card-pulse-pink {
-  0% {
-    border-color: rgba(244, 114, 182, 0.85);
-    box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.35), 0 0 28px -4px rgba(236, 72, 153, 0.42), inset 0 1px 0 rgba(249, 168, 212, 0.35);
-  }
-  100% {
-    border-color: rgba(39, 39, 42, 0.9);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-}
-
-.animate-target-pulse-pink {
-  animation: target-card-pulse-pink 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes target-card-pulse-purple {
-  0% {
-    border-color: rgba(192, 132, 252, 0.85);
-    box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.35), 0 0 28px -4px rgba(168, 85, 247, 0.42), inset 0 1px 0 rgba(216, 180, 254, 0.35);
-  }
-  100% {
-    border-color: rgba(39, 39, 42, 0.9);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-}
-
-.animate-target-pulse-purple {
-  animation: target-card-pulse-purple 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-target-pulse-player {
+  animation: target-card-pulse-player 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes target-card-pulse-emerald {

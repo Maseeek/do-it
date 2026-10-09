@@ -46,12 +46,12 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 ${
                 isActive
-                  ? 'bg-black/[0.06] dark:bg-zinc-900/80 text-foreground font-semibold shadow-xs'
+                  ? 'bg-player-500/15 text-player-400 font-semibold shadow-xs'
                   : 'text-zinc-500 hover:text-foreground'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2] text-foreground' : 'stroke-[1.75]'}`} />
-              <span className={`text-[10px] font-mono tracking-tight ${isActive ? 'font-semibold text-foreground' : 'font-medium'}`}>
+              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2] text-player-400' : 'stroke-[1.75]'}`} />
+              <span className={`text-[10px] font-mono tracking-tight ${isActive ? 'font-semibold text-player-400' : 'font-medium'}`}>
                 {tab.label}
               </span>
             </button>
