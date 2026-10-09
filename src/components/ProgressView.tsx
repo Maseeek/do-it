@@ -16,7 +16,7 @@ export function ProgressView({
   openPlanner?: boolean;
   onOpenDateInToday?: (dateStr: string) => void;
 }) {
-  const { activeHabits, activePlayerSummary, checkIns, updateHabit } = useStore();
+  const { activePlayerId, activeHabits, activePlayerSummary, checkIns, updateHabit } = useStore();
   const [planner, setPlanner] = useState(openPlanner);
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
 
