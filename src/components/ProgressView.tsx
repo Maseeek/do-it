@@ -1,23 +1,169 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, ChevronRight } from 'lucide-react';
+import { Pencil, ChevronRight, Flame, TrendingUp } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { soundEngine } from '@/lib/sound-utils';
+import { hapticLight } from '@/lib/haptic-utils';
 import { HabitOnboarding } from './HabitOnboarding';
 import { HabitIcon } from './HabitIcon';
-import { getTodayDateString } from '@/lib/date-utils';
+import { HabitHeatmap } from './HabitHeatmap';
 
-export function ProgressView({ openPlanner = false }: { openPlanner?: boolean }) {
+export function ProgressView({
+  openPlanner = false,
+  onOpenDateInToday,
+}: {
+  openPlanner?: boolean;
+  onOpenDateInToday?: (dateStr: string) => void;
+}) {
   const { activePlayerId, activeHabits, activePlayerSummary, checkIns, updateHabit } = useStore();
   const [planner, setPlanner] = useState(openPlanner);
+  const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+
   if (planner) return <HabitOnboarding onDone={() => setPlanner(false)} />;
-  const days = Array.from({ length: 7 }, (_, i) => { const day = new Date(`${getTodayDateString()}T12:00:00`); day.setDate(day.getDate() - (6 - i)); const year = day.getFullYear(); const month = String(day.getMonth() + 1).padStart(2, '0'); const date = String(day.getDate()).padStart(2, '0'); return `${year}-${month}-${date}`; });
-  const totals = days.map(date => checkIns.filter(item => item.playerId === activePlayerId && item.date === date).reduce((sum, item) => sum + item.pointsEarned, 0));
-  const max = Math.max(1, ...totals);
-  return <div className="mx-auto max-w-2xl space-y-6">
-    <div className="flex items-center justify-between"><h1 className="text-3xl font-semibold tracking-tight">Progress</h1><button className="control min-h-11" onClick={() => setPlanner(true)}><Pencil size={15}/>Edit plan</button></div>
-    <div className="grid grid-cols-2 gap-3"><div className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4"><div className="text-2xl font-semibold">{activePlayerSummary.currentStreak}</div><div className="text-xs text-zinc-400">Day streak</div></div><div className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4"><div className="text-2xl font-semibold">{activePlayerSummary.completionRateWeekly}%</div><div className="text-xs text-zinc-400">This week</div></div></div>
-    <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4"><h2 className="text-sm font-semibold">Last 7 days</h2><div className="mt-4 flex h-24 items-end justify-between gap-2">{days.map((date, i) => <div key={date} className="flex flex-1 flex-col items-center gap-1"><div title={`${totals[i]} points`} className="w-full max-w-10 rounded-t-md bg-emerald-400/70" style={{ height: `${Math.max(3, totals[i] / max * 72)}px` }}/><span className="text-[10px] text-zinc-500">{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2)}</span></div>)}</div></section>
-    <section><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold">Your habits</h2><button onClick={() => setPlanner(true)} className="flex min-h-11 items-center gap-1 text-xs text-zinc-400 hover:text-white">Manage <ChevronRight size={14}/></button></div><div className="space-y-2">{activeHabits.map(habit => <div key={habit.id} className="flex min-h-14 items-center gap-3 rounded-xl border border-white/[0.07] bg-[#17181b] px-3"><HabitIcon name={habit.iconName} className="size-4 text-zinc-400"/><span className="flex-1 text-sm">{habit.title}</span>{habit.automation?.metric === 'steps' ? <select aria-label="Step goal" className="rounded-lg bg-zinc-800 p-2 text-xs" value={habit.automation.target} onChange={event => updateHabit({ ...habit, automation: { metric: 'steps', target: Number(event.target.value) } })}>{[6000, 10000, 14000].map(target => <option key={target} value={target}>{target.toLocaleString()} steps</option>)}</select> : habit.automation ? <span className="text-[11px] text-emerald-300">Auto</span> : null}</div>)}</div></section>
-  </div>;
+  const isMaciek = (activePlayerId || 'maciek') === 'maciek';
+
+  return (
+    <div className="w-full space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-semibold tracking-tight">Progress</h1>
+        <button className="control min-h-11" onClick={() => setPlanner(true)}>
+          <Pencil size={15} />
+          Edit plan
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-purple-500/25 bg-[#0e1013] p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+              Day streak
+            </span>
+            <Flame className="w-3.5 h-3.5 text-purple-400" />
+          </div>
+          <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-purple-300">
+            {activePlayerSummary.currentStreak}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-red-500/25 bg-[#0e1013] p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+              This week
+            </span>
+            <TrendingUp className="w-3.5 h-3.5 text-red-400" />
+          </div>
+          <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-red-300">
+            {activePlayerSummary.completionRateWeekly}%
+          </div>
+        </div>
+      </div>
+
+      <HabitHeatmap
+        selectedHabitId={selectedHabitId}
+        onSelectHabitId={setSelectedHabitId}
+        onOpenDateInToday={onOpenDateInToday}
+      />
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-300">
+              Your habits
+            </h2>
+            <p className="text-[11px] font-mono text-zinc-500">
+              Tap a habit to filter its contribution calendar above
+            </p>
+          </div>
+          <button
+            onClick={() => setPlanner(true)}
+            className="flex min-h-11 items-center gap-1 text-xs font-mono text-zinc-400 hover:text-white"
+          >
+            Manage <ChevronRight size={14} />
+          </button>
+        </div>
+        <div className="space-y-2">
+          {activeHabits.map((habit) => {
+            const isSelected = selectedHabitId === habit.id;
+            const totalCompletions = checkIns.filter(
+              (c) => c.playerId === activePlayerId && c.habitId === habit.id
+            ).length;
+
+            return (
+              <div
+                key={habit.id}
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setSelectedHabitId(isSelected ? null : habit.id);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    soundEngine.playClick();
+                    setSelectedHabitId(isSelected ? null : habit.id);
+                  }
+                }}
+                aria-pressed={isSelected}
+                className={`flex min-h-14 items-center gap-3 rounded-xl border bg-[#0e1013] px-3.5 cursor-pointer transition-colors ${
+                  isSelected
+                    ? isMaciek
+                      ? 'border-purple-500/50 bg-purple-500/5'
+                      : 'border-red-500/50 bg-red-500/5'
+                    : 'border-zinc-800/90 hover:border-zinc-700'
+                }`}
+              >
+                <HabitIcon
+                  name={habit.iconName}
+                  className={`size-4 ${isMaciek ? 'text-purple-400' : 'text-red-400'}`}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm truncate">{habit.title}</div>
+                  <div className="text-[10px] font-mono text-zinc-500">
+                    {totalCompletions} {totalCompletions === 1 ? 'check-in' : 'check-ins'} logged
+                  </div>
+                </div>
+                {habit.automation?.metric === 'steps' ? (
+                  <select
+                    aria-label="Step goal"
+                    className="rounded-lg border border-zinc-800 bg-zinc-900 p-2 text-xs font-mono"
+                    value={habit.automation.target}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) =>
+                      updateHabit({
+                        ...habit,
+                        automation: { metric: 'steps', target: Number(event.target.value) },
+                      })
+                    }
+                  >
+                    {[6000, 10000, 14000].map((target) => (
+                      <option key={target} value={target}>
+                        {target.toLocaleString()} steps
+                      </option>
+                    ))}
+                  </select>
+                ) : habit.automation ? (
+                  <span
+                    className={`rounded border px-1.5 py-0.5 text-[10px] font-mono ${
+                      isMaciek
+                        ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
+                        : 'border-red-500/30 bg-red-500/10 text-red-300'
+                    }`}
+                  >
+                    Auto
+                  </span>
+                ) : (
+                  <span className="text-xs font-mono text-zinc-400 tabular-nums">
+                    {habit.points} pts{habit.weeklyTargetDays ? ` · ${habit.weeklyTargetDays}×/wk` : ''}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
 }

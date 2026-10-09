@@ -54,6 +54,12 @@ export function isDateInCurrentYear(dateStr: string): boolean {
   return getYearKey(dateStr) === getYearKey(getTodayDateString());
 }
 
+const friendlyDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+
 export function formatFriendlyDate(dateStr: string): string {
   const date = parseDate(dateStr);
   const today = getTodayDateString();
@@ -64,11 +70,7 @@ export function formatFriendlyDate(dateStr: string): string {
   const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
   if (dateStr === yStr) return 'Yesterday';
 
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  return friendlyDateFormatter.format(date);
 }
 
 export function getDaysRemainingInWeek(): { days: number; hours: number } {
@@ -105,8 +107,17 @@ export function isFutureDate(dateStr: string): boolean {
   return dateStr > getTodayDateString();
 }
 
+export interface CalendarWeekDay {
+  dateStr: string;
+  dayName: string;
+  dayNumber: number;
+  isToday: boolean;
+  isSelected: boolean;
+  isFuture: boolean;
+}
+
 // Generate the 7 days of the current calendar week (Monday to Sunday)
-export function getCurrentWeekDays(selectedDateStr: string = getTodayDateString()) {
+export function getCurrentWeekDays(selectedDateStr: string = getTodayDateString()): CalendarWeekDay[] {
   const ref = parseDate(selectedDateStr);
   const day = ref.getDay(); // 0 is Sunday
   const mondayOffset = day === 0 ? -6 : 1 - day;
@@ -114,15 +125,7 @@ export function getCurrentWeekDays(selectedDateStr: string = getTodayDateString(
   const monday = new Date(ref);
   monday.setDate(ref.getDate() + mondayOffset);
 
-  const days: {
-    dateStr: string;
-    dayName: string;
-    dayNumber: number;
-    isToday: boolean;
-    isSelected: boolean;
-    isFuture: boolean;
-  }[] = [];
-
+  const days: CalendarWeekDay[] = [];
   const today = getTodayDateString();
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -159,6 +162,95 @@ export function getHeatmapDays(totalDays: number = 84): { dateStr: string; date:
   }
 
   return result;
+}
+
+const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export interface HeatmapCalendarDay {
+  dateStr: string;
+  dayOfWeek: number; // 0 = Mon .. 6 = Sun
+  dayNumber: number;
+  monthShort: string;
+  isToday: boolean;
+  isFuture: boolean;
+}
+
+export interface HeatmapCalendarWeek {
+  weekKey: string;
+  startDateStr: string;
+  monthLabel: string | null;
+  days: HeatmapCalendarDay[];
+}
+
+// GitHub-style Monday-to-Sunday aligned calendar weeks ending on the current week
+export function getHeatmapCalendarWeeks(
+  weekCount: number = 16,
+  todayDateStr: string = getTodayDateString()
+): HeatmapCalendarWeek[] {
+  const safeWeeks = Math.max(1, Math.min(53, Math.floor(weekCount)));
+  const ref = parseDate(todayDateStr);
+  const jsDay = ref.getDay(); // 0 is Sunday
+  const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay;
+
+  const currentWeekMonday = new Date(
+    ref.getFullYear(),
+    ref.getMonth(),
+    ref.getDate() + mondayOffset
+  );
+
+  const rawWeeks: Omit<HeatmapCalendarWeek, 'monthLabel'>[] = [];
+
+  for (let w = safeWeeks - 1; w >= 0; w--) {
+    const weekMonday = new Date(
+      currentWeekMonday.getFullYear(),
+      currentWeekMonday.getMonth(),
+      currentWeekMonday.getDate() - w * 7
+    );
+    const startDateStr = formatDateString(weekMonday);
+    const days: HeatmapCalendarDay[] = [];
+
+    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+      const cur = new Date(
+        weekMonday.getFullYear(),
+        weekMonday.getMonth(),
+        weekMonday.getDate() + dayIdx
+      );
+      const dStr = formatDateString(cur);
+      days.push({
+        dateStr: dStr,
+        dayOfWeek: dayIdx,
+        dayNumber: cur.getDate(),
+        monthShort: MONTH_NAMES_SHORT[cur.getMonth()],
+        isToday: dStr === todayDateStr,
+        isFuture: dStr > todayDateStr,
+      });
+    }
+
+    rawWeeks.push({
+      weekKey: getWeekKey(startDateStr),
+      startDateStr,
+      days,
+    });
+  }
+
+  return rawWeeks.map((week, idx) => {
+    const firstOfMonth = week.days.find((d) => d.dayNumber === 1 && !d.isFuture);
+    let monthLabel: string | null = null;
+
+    if (firstOfMonth) {
+      monthLabel = firstOfMonth.monthShort;
+    } else if (idx === 0) {
+      const nextHasFirst = rawWeeks[1]?.days.some((d) => d.dayNumber === 1 && !d.isFuture);
+      if (!nextHasFirst) {
+        monthLabel = week.days[0].monthShort;
+      }
+    }
+
+    return {
+      ...week,
+      monthLabel,
+    };
+  });
 }
 
 // Time-ago relative string (e.g. "Just now", "5m ago", "2h ago", "Yesterday")

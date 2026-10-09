@@ -2,6 +2,17 @@ export type PlayerId = 'maciek' | 'myrna';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type EffectiveTheme = 'light' | 'dark';
+export type PlayerColorId = 'blue' | 'purple' | 'teal' | 'orange' | 'pink' | 'green' | 'rainbow';
+export const PLAYER_COLORS = [
+  { id: 'blue', name: 'Blue', color: '#60a5fa', accentBg: 'rgba(96, 165, 250, 0.1)', accentBorder: 'rgba(96, 165, 250, 0.25)', unlockAt: 0 },
+  { id: 'purple', name: 'Purple', color: '#c084fc', accentBg: 'rgba(192, 132, 252, 0.1)', accentBorder: 'rgba(192, 132, 252, 0.25)', unlockAt: 0 },
+  { id: 'teal', name: 'Teal', color: '#2dd4bf', accentBg: 'rgba(45, 212, 191, 0.1)', accentBorder: 'rgba(45, 212, 191, 0.25)', unlockAt: 250 },
+  { id: 'orange', name: 'Orange', color: '#fb923c', accentBg: 'rgba(251, 146, 60, 0.1)', accentBorder: 'rgba(251, 146, 60, 0.25)', unlockAt: 500 },
+  { id: 'pink', name: 'Pink', color: '#f472b6', accentBg: 'rgba(244, 114, 182, 0.1)', accentBorder: 'rgba(244, 114, 182, 0.25)', unlockAt: 1000 },
+  { id: 'green', name: 'Green', color: '#4ade80', accentBg: 'rgba(74, 222, 128, 0.1)', accentBorder: 'rgba(74, 222, 128, 0.25)', unlockAt: 2500 },
+  { id: 'rainbow', name: 'Rainbow', color: '#f0abfc', accentBg: 'rgba(232, 121, 249, 0.1)', accentBorder: 'rgba(232, 121, 249, 0.3)', unlockAt: 10000 },
+] as const;
+
 
 export interface Player {
   id: PlayerId;
@@ -172,23 +183,6 @@ export interface WearableConfig {
     qualified?: boolean;
     message?: string;
   };
-  stravaConnected?: boolean;
-  stravaAthleteName?: string;
-  stravaLastSync?: string;
-}
-
-export interface AppleHealthSyncPayload {
-  player?: 'myrna' | 'maciek';
-  metric?: string;
-  value?: number; // sleep in hours, running in km or mins, gym in mins
-  hours?: number;
-  duration?: number;
-  minutes?: number;
-  seconds?: number;
-  qty?: number;
-  unit?: string;
-  date?: string; // YYYY-MM-DD
-  note?: string;
 }
 
 export interface AppState {

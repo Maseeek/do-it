@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getWeekKey, isValidDateString } from './date-utils';
+import { getHeatmapCalendarWeeks, getWeekKey, isValidDateString } from './date-utils';
 import { calculatePlayerBadges } from './badge-utils';
 import { getInitialState } from './seed';
 import { prepareQuickCheckIn } from './quick-checkin';
@@ -11,6 +11,28 @@ test('ISO week belongs to the Thursday year, including New Year boundaries', () 
   assert.equal(getWeekKey('2024-12-30'), '2025-W01');
   assert.equal(getWeekKey('2026-09-28'), '2026-W40');
   assert.equal(isValidDateString('2026-02-30'), false);
+});
+
+test('GitHub calendar weeks align Monday through Sunday with month headers and future flags', () => {
+  const weeks = getHeatmapCalendarWeeks(12, '2026-10-05'); // Monday Oct 5, 2026
+  assert.equal(weeks.length, 12);
+  for (const week of weeks) {
+    assert.equal(week.days.length, 7);
+    assert.equal(week.days[0].dayOfWeek, 0);
+    assert.equal(week.days[6].dayOfWeek, 6);
+  }
+  const currentWeek = weeks[weeks.length - 1];
+  assert.equal(currentWeek.days[0].dateStr, '2026-10-05');
+  assert.equal(currentWeek.days[0].isToday, true);
+  assert.equal(currentWeek.days[0].isFuture, false);
+  assert.equal(currentWeek.days[1].dateStr, '2026-10-06');
+  assert.equal(currentWeek.days[1].isFuture, true);
+  assert.equal(currentWeek.days[6].dateStr, '2026-10-11');
+  assert.equal(currentWeek.days[6].isFuture, true);
+
+  const octFirstWeek = weeks.find((w) => w.days.some((d) => d.dateStr === '2026-10-01'));
+  assert.ok(octFirstWeek);
+  assert.equal(octFirstWeek.monthLabel, 'Oct');
 });
 test('daily par badge displays partial progress until 240 points', () => {
   const state = getInitialState();

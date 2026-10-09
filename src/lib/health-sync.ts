@@ -1,7 +1,8 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CheckIn, Habit, PlayerId } from './types';
-import { decryptToken, healthDatabase, healthEnabled, localDate } from './health-server';
+import { decryptToken, healthDatabase, localDate } from './health-server';
+import { healthEnabled } from './health-access';
 import { sleepHours, workouts, type HealthDataPoint } from './health-data';
 import { rebalanceWeeklyHabitCheckIns } from './weekly-utils';
 import { getWeekKey } from './date-utils';
@@ -114,7 +115,7 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
 }
 
 export async function syncUserHealth(userId: string, requestedDate?: string) {
-  if (!healthEnabled()) throw new Error('Google Health is not available yet.');
+  if (!healthEnabled(userId)) throw new Error('Google Health is not available yet.');
   const db = healthDatabase();
   const { data: connection, error: connectionError } = await db.from('health_connections').select('*').eq('user_id', userId).maybeSingle();
   if (connectionError) throw connectionError;

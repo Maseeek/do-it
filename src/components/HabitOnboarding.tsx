@@ -12,11 +12,11 @@ import { rowToHabit } from '@/lib/supabase-sync';
 import { canImportLegacyDatabase } from '@/lib/legacy-import';
 
 export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => void; firstRun?: boolean }) {
-  const { activePlayer, habits, applyHabitPlan } = useStore();
+  const { activePlayer, habits, applyHabitPlan, isPartnerConnected } = useStore();
   const multiplayer = useMultiplayer();
   const playerId = activePlayer?.id || 'maciek';
   const existing = habits.filter(habit => habit.playerId === playerId && !habit.isArchived);
-  const partnerTotal = weeklyPointPotential(habits.filter(habit => habit.playerId !== playerId));
+  const partnerTotal = isPartnerConnected ? weeklyPointPotential(habits.filter(habit => habit.playerId !== playerId)) : 0;
   const [plan, setPlan] = useState<Habit[]>(() => {
     const catalog = catalogHabits(playerId);
     return [...catalog.map(habit => existing.find(item => item.id === habit.id) || habit), ...existing.filter(habit => !catalog.some(item => item.id === habit.id))];
@@ -108,7 +108,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground px-4 py-8 lg:py-12 transition-colors">
+    <main className="relative z-10 min-h-screen bg-background text-foreground px-4 py-8 lg:py-12 transition-colors">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -139,7 +139,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
         )}
 
         {(!firstRun || partnerTotal > 0) && (
-          <div className="sticky top-0 z-10 rounded-2xl border border-white/10 bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
+          <div className="sticky top-0 z-10 rounded-2xl border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
             <div>
               <div className="text-xs text-zinc-400">Weekly potential · {activeCount} habits</div>
               <div className="text-2xl font-semibold tabular-nums text-foreground">{total} <span className="text-sm text-zinc-500">pts</span></div>
@@ -178,7 +178,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                     key={habit.id}
                     className={`rounded-xl border p-3 flex items-center gap-3 transition-colors ${
                       habit.isActive
-                        ? 'border-black/10 dark:border-white/20 bg-[#1c1c1e]'
+                        ? 'border-black/10 dark:border-white/20 bg-white dark:bg-[#1c1c1e] shadow-xs'
                         : 'border-black/5 dark:border-white/[0.07] bg-black/[0.02] dark:bg-white/[0.02]'
                     }`}
                   >
@@ -189,7 +189,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                       onClick={() => changeHabit(habit.id, { isActive: !habit.isActive })}
                       className={`w-11 h-11 shrink-0 rounded-lg border flex items-center justify-center transition-all ${
                         habit.isActive
-                          ? 'bg-white text-black border-white'
+                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-black border-transparent'
                           : 'border-black/15 dark:border-white/20 text-zinc-500'
                       }`}
                     >
@@ -224,7 +224,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                               type="button"
                               onClick={() => changeHabit(habit.id, { automation: { metric: 'steps', target } })}
                               aria-pressed={habit.automation?.target === target}
-                              className={`min-h-11 rounded-full px-3 text-xs ${habit.automation?.target === target ? 'bg-white text-black' : 'bg-black/5 dark:bg-white/10 text-foreground'}`}
+                              className={`min-h-11 rounded-full px-3 text-xs ${habit.automation?.target === target ? 'bg-zinc-900 text-white dark:bg-white dark:text-black' : 'bg-black/5 dark:bg-white/10 text-foreground'}`}
                             >
                               {target / 1000}k
                             </button>
@@ -263,7 +263,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
           </button>
         )}
 
-        <form onSubmit={addCustom} className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4 space-y-3">
+        <form onSubmit={addCustom} className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1c1c1e] p-4 space-y-3 shadow-xs">
           <h2 className="text-sm font-semibold text-foreground">Add your own</h2>
           <div className="flex gap-2">
             <input
@@ -295,7 +295,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
           <button
             onClick={() => void save()}
             disabled={saving || checkingPrevious || activeCount === 0 || (partnerTotal > 0 && difference !== 0)}
-            className="w-full rounded-xl bg-white py-3 text-sm font-semibold text-black disabled:opacity-40"
+            className="w-full rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-black py-3 text-sm font-semibold disabled:opacity-40"
           >
             {checkingPrevious ? 'Checking previous habits…' : saving ? 'Saving your plan…' : firstRun ? 'Start with these habits' : 'Save habit plan'}
           </button>

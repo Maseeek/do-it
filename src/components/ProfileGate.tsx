@@ -6,6 +6,7 @@ import { PlayerId } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticSuccess } from '@/lib/haptic-utils';
+import { getPlayerColorStyles } from '@/lib/player-colors';
 
 import { DoLogo } from './DoLogo';
 
@@ -43,11 +44,12 @@ export function ProfileGate() {
           <button
             onClick={() => handleSelect('maciek')}
             aria-label={`Select ${players.maciek.name}, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma`}
-            className="w-full text-left p-4 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] hover:border-blue-500/50 transition-all active:scale-[0.98]"
+            className="w-full text-left p-4 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] transition-all active:scale-[0.98] shadow-sm"
+            style={{ borderColor: players.maciek.accentBorder }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 font-bold text-base">
+                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={getPlayerColorStyles(players.maciek)}>
                   {players.maciek.name[0]?.toUpperCase()}
                 </div>
                 <div>
@@ -67,11 +69,12 @@ export function ProfileGate() {
           <button
             onClick={() => handleSelect('myrna')}
             aria-label={`Select ${players.myrna.name}, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma`}
-            className="w-full text-left p-4 rounded-2xl bg-[#1c1c1e] border border-white/[0.08] hover:border-pink-500/50 transition-all active:scale-[0.98]"
+            className="w-full text-left p-4 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] transition-all active:scale-[0.98] shadow-sm"
+            style={{ borderColor: players.myrna.accentBorder }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-500 dark:text-pink-400 font-bold text-base">
+                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={getPlayerColorStyles(players.myrna)}>
                   {players.myrna.name[0]?.toUpperCase()}
                 </div>
                 <div>

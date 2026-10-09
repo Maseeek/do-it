@@ -1,9 +1,11 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { getTodayDateString } from '@/lib/date-utils';
+import { prepareQuickCheckIn } from '@/lib/quick-checkin';
 import { Header } from '@/components/Header';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { BottomNav, TabType } from '@/components/BottomNav';
@@ -14,13 +16,13 @@ import { SettingsView } from '@/components/SettingsView';
 import { MultiplayerGate } from '@/components/MultiplayerGate';
 import { ExistingDuelInviteGate } from '@/components/ExistingDuelInviteGate';
 import { ProfileGate } from '@/components/ProfileGate';
+import { getMultiplayerEntry, shouldHoldDuelLoadingScreen } from '@/lib/invite-navigation';
 import { HabitOnboarding } from '@/components/HabitOnboarding';
 import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
 import { Check } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 import { DoLogo } from '@/components/DoLogo';
-import { resolveMultiplayerEntry } from '@/lib/invite-navigation';
 
 function AppContent() {
   const {
@@ -30,6 +32,8 @@ function AppContent() {
     setSelectedDate,
     storageError,
     habits,
+    checkIns,
+    toggleHabit,
     syncStatus,
     loadedDuelId,
   } = useStore();
@@ -40,31 +44,61 @@ function AppContent() {
   const [openPlanner, setOpenPlanner] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const handledAction = useRef<string | null>(null);
 
-  // Sync tab from URL query params (?tab=today|duel|progress&section=habits)
+  const searchParams = useSearchParams();
+  const hasInviteParam = searchParams.has('invite');
+  const rawInviteCode = hasInviteParam ? (searchParams.get('invite') ?? '') : null;
+  const [dismissedInvite, setDismissedInvite] = useState<string | null>(null);
+  const inviteCode = rawInviteCode !== null && rawInviteCode === dismissedInvite ? null : rawInviteCode;
+  const multiplayerEntry = getMultiplayerEntry(multiplayer.configured, !!multiplayer.user, !!multiplayer.duel, inviteCode);
+  const pendingDuelId = multiplayer.duel?.id;
+  const pendingGuestId = multiplayer.duel?.guest_id;
+
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab') as TabType | null;
-    const sectionParam = params.get('section');
-    const inviteParam = params.get('invite');
-    if (inviteParam) setInviteCode(inviteParam);
-    if (tabParam && ['today', 'duel', 'progress'].includes(tabParam)) {
-      setActiveTab(tabParam);
-      if (tabParam === 'progress' && sectionParam === 'habits') {
-        setOpenPlanner(true);
-      }
-    }
-  }, []);
+    if (pendingDuelId && !pendingGuestId) setActiveTab('duel');
+  }, [pendingDuelId, pendingGuestId]);
 
-  const multiplayerEntry = resolveMultiplayerEntry({
-    configured: multiplayer.configured,
-    loading: multiplayer.loading,
-    user: multiplayer.user,
-    duel: multiplayer.duel,
-    inviteCode,
-  });
+  useEffect(() => {
+    if (activeTab === 'today') setSelectedDate(getTodayDateString());
+  }, [activeTab, setSelectedDate]);
+
+  // Handle URL deep-linking query parameters (?tab=..., ?action=checkin&habit=...)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'today' || tabParam === 'duel' || tabParam === 'progress' || tabParam === 'vault') {
+      setActiveTab(tabParam === 'vault' ? 'progress' : tabParam as TabType);
+    }
+    if (searchParams.get('section') === 'habits') {
+      setActiveTab('progress');
+      setOpenPlanner(true);
+    }
+    if (searchParams.has('wearable_error') || searchParams.has('wearable_connected') || searchParams.get('section') === 'settings') {
+      setShowSettings(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!isHydrated || !activePlayerId) return;
+    if (multiplayer.configured && (!multiplayer.duel || loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot)) return;
+    const action = searchParams.get('action');
+    const habitId = searchParams.get('habit');
+    const actionKey = searchParams.toString();
+    if (action !== 'checkin' || !habitId || handledAction.current === actionKey) return;
+    handledAction.current = actionKey;
+    const today = getTodayDateString();
+    const result = prepareQuickCheckIn(habitId, activePlayerId, habits, checkIns, today);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('action');
+    url.searchParams.delete('habit');
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    setSelectedDate(today);
+    setActiveTab('today');
+    if (result.habit) {
+      toggleHabit(habitId, undefined, undefined, undefined, today);
+    }
+    setToastMessage(result.message);
+  }, [isHydrated, activePlayerId, multiplayer.configured, multiplayer.duel, multiplayer.slot, loadedDuelId, searchParams, habits, checkIns, toggleHabit, setSelectedDate]);
 
   // Auto-dismiss toast after 4.5 seconds
   useEffect(() => {
@@ -123,30 +157,40 @@ function AppContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [switchProfile, setSelectedDate, multiplayer.configured]);
 
-  if (!multiplayer.loading && multiplayerEntry === 'invite-conflict' && inviteCode) {
-    return <ExistingDuelInviteGate inviteCode={inviteCode} />;
+  const showInviteConflictModal = !multiplayer.loading && multiplayerEntry === 'invite-conflict' && inviteCode !== null;
+
+  if (!multiplayer.loading && multiplayerEntry === 'gate') {
+    return <MultiplayerGate inviteCode={inviteCode} onDismissInvite={() => setDismissedInvite(rawInviteCode)} />;
   }
 
   // SSR hydration placeholder
-  if (multiplayer.configured && multiplayer.duel && syncStatus === 'offline' && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot)) {
+  const isDuelSyncing = shouldHoldDuelLoadingScreen(
+    multiplayer.configured,
+    Boolean(multiplayer.duel),
+    multiplayer.slot,
+    loadedDuelId,
+    activePlayerId,
+    multiplayer.duel?.id
+  );
+
+  // SSR hydration placeholder
+  if (multiplayer.configured && multiplayer.duel && syncStatus === 'offline' && isDuelSyncing) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3 px-4">
+      <div className="relative z-10 min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3 px-4">
+        {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
         <p role="alert">{storageError || 'Could not load your duel.'}</p>
         <button className="rounded-xl bg-white text-black px-4 py-2" onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
-  if (!isHydrated || multiplayer.loading || (multiplayer.configured && multiplayer.duel && (loadedDuelId !== multiplayer.duel.id || activePlayerId !== multiplayer.slot))) {
+  if (!isHydrated || multiplayer.loading || isDuelSyncing) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3">
+      <div className="relative z-10 min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3">
+        {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
         <DoLogo size="md" className="animate-pulse" />
         <span className="text-xs font-mono text-zinc-500">loading do...</span>
       </div>
     );
-  }
-
-  if (multiplayerEntry === 'gate') {
-    return <MultiplayerGate inviteCode={inviteCode} />;
   }
 
   // First time or logged out: "Who are you?" profile selection
@@ -155,7 +199,12 @@ function AppContent() {
   }
 
   if (multiplayer.configured && !habits.some(habit => habit.playerId === activePlayerId)) {
-    return <HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} />;
+    return (
+      <>
+        {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
+        <HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} />
+      </>
+    );
   }
 
   return (
@@ -163,12 +212,13 @@ function AppContent() {
       {/* Ambient background glow mesh */}
       <div className="ambient-mesh" aria-hidden="true" />
 
+      {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
+
       {/* App frame */}
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
         <DesktopSidebar activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setActiveTab(tab); }} />
-        <Header onOpenSettings={() => setShowSettings(true)} />
-
+        <Header onOpenSettings={() => setShowSettings(true)} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />
         {/* Floating Quick Action Toast */}
         {toastMessage && (
           <div
@@ -186,12 +236,22 @@ function AppContent() {
           </div>
         )}
 
-        <main id="main-content" className="flex-1 max-w-xl lg:max-w-6xl w-full mx-auto px-4 lg:px-10 pt-5 lg:pt-9 pb-28 lg:pb-12">
+        <main id="main-content" className="flex-1 w-full px-4 lg:px-10 pt-5 lg:pt-9 pb-28 lg:pb-12">
           {storageError && <div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-500">{storageError}</div>}
           {showSettings ? <SettingsView onBack={() => setShowSettings(false)} onChooseHabits={() => { setShowSettings(false); setOpenPlanner(true); setActiveTab('progress'); }} /> : <>
-            {activeTab === 'today' && <TodayView onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} />}
+            {activeTab === 'today' && <TodayView onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />}
             {activeTab === 'duel' && <DuelView />}
-            {activeTab === 'progress' && <ProgressView key={openPlanner ? 'planner' : 'progress'} openPlanner={openPlanner} />}
+            {activeTab === 'progress' && (
+              <ProgressView
+                key={openPlanner ? 'planner' : 'progress'}
+                openPlanner={openPlanner}
+                onOpenDateInToday={(dateStr) => {
+                  setSelectedDate(dateStr);
+                  setOpenPlanner(false);
+                  setActiveTab('today');
+                }}
+              />
+            )}
           </>}
         </main>
 

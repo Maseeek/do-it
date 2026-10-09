@@ -3,36 +3,57 @@
 import { CheckCircle2, Flame, ChartNoAxesColumn } from 'lucide-react';
 import { TabType } from './BottomNav';
 import { DoLogo } from './DoLogo';
+import { useStore } from '@/lib/store';
 
 export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType; onChangeTab: (tab: TabType) => void }) {
-  const tabs = [\
-    { id: 'today' as const, label: 'Today', icon: CheckCircle2 },
-    { id: 'duel' as const, label: 'Duel', icon: Flame },
-    { id: 'progress' as const, label: 'Progress', icon: ChartNoAxesColumn },
+  const { activePlayer, activePlayerSummary } = useStore();
+  const tabs = [
+    { id: 'today' as const, label: 'Today', icon: CheckCircle2, shortcut: '1' },
+    { id: 'duel' as const, label: 'Duel', icon: Flame, shortcut: '2' },
+    { id: 'progress' as const, label: 'Progress', icon: ChartNoAxesColumn, shortcut: '3' },
   ];
   return (
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 border-r border-black/[0.07] dark:border-white/[0.07] bg-white dark:bg-[#0b0c0e] flex-col p-6 z-40 transition-colors">
-      <div className="flex items-center gap-3 mb-12">
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 border-r border-black/[0.07] dark:border-zinc-800/80 bg-white dark:bg-[#0b0c0e] flex-col p-5 z-40 transition-colors">
+      <div className="flex items-center gap-2.5 mb-8 px-1">
         <DoLogo size="sm" />
-        <span className="text-base font-semibold tracking-tight text-foreground">do it.</span>
+        <div>
+          <span className="text-sm font-semibold tracking-tight text-foreground block">do it.</span>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">Habit Parity</span>
+        </div>
       </div>
-      <nav aria-label="Desktop navigation" className="space-y-2">
-        {tabs.map(({ id, label, icon: Icon }) => (
+      <nav aria-label="Desktop navigation" className="space-y-1">
+        {tabs.map(({ id, label, icon: Icon, shortcut }) => (
           <button
             key={id}
             onClick={() => onChangeTab(id)}
             aria-current={activeTab === id ? 'page' : undefined}
-            className={`w-full min-h-11 flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
+            className={`w-full min-h-10 flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-left transition-colors border ${
               activeTab === id
-                ? 'bg-black/[0.06] dark:bg-white/[0.08] text-foreground font-semibold shadow-xs'
-                : 'text-zinc-500 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-foreground'
+                ? 'bg-black/[0.06] dark:bg-zinc-900/90 border-black/10 dark:border-zinc-800 text-foreground font-semibold shadow-xs'
+                : 'border-transparent text-zinc-500 hover:bg-black/[0.03] dark:hover:bg-zinc-900/40 hover:text-foreground'
             }`}
           >
-            <Icon size={18} />
-            <span className="text-sm font-medium">{label}</span>
+            <span className="flex items-center gap-2.5">
+              <Icon size={16} />
+              <span className="text-xs font-medium">{label}</span>
+            </span>
+            <kbd className="text-[10px] font-mono text-zinc-500 bg-black/[0.05] dark:bg-zinc-900 px-1.5 py-0.2 rounded border border-black/10 dark:border-zinc-800">
+              {shortcut}
+            </kbd>
           </button>
         ))}
       </nav>
+      <div className="mt-auto border-t border-black/[0.07] dark:border-zinc-800/80 pt-4 px-1">
+        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+          {activePlayer?.name} · Lifetime Karma
+        </p>
+        <div className="flex items-baseline gap-1.5 mt-1">
+          <span className="text-xl font-bold font-mono tabular-nums text-foreground">
+            {activePlayerSummary.karma.toLocaleString()}
+          </span>
+          <span className="text-[11px] font-mono text-zinc-500">pts</span>
+        </div>
+      </div>
     </aside>
   );
 }
