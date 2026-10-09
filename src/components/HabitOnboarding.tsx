@@ -107,45 +107,203 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     }
   }
 
-  return <main className="relative z-10 min-h-screen bg-black text-white px-4 py-8 lg:py-12">
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div><p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">{firstRun ? 'Welcome to do' : 'Your habits'}</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Choose your habits.</h1>
-          <p className="text-sm text-zinc-400 mt-2">Start with one habit. You can add more later.</p></div>
-        {!firstRun && <button aria-label="Close habit planner" onClick={onDone} className="p-2 rounded-full bg-white/5 text-zinc-400 hover:text-white"><X size={18}/></button>}
+  return (
+    <main className="relative z-10 min-h-screen bg-background text-foreground px-4 py-8 lg:py-12 transition-colors">
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">
+              {firstRun ? 'Welcome to do' : 'Your habits'}
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Choose your habits.
+            </h1>
+            <p className="text-sm text-zinc-400 mt-2">
+              Start with one habit. You can add more later.
+            </p>
+          </div>
+          {!firstRun && (
+            <button
+              aria-label="Close habit planner"
+              onClick={onDone}
+              className="p-2 rounded-full bg-black/5 dark:bg-white/5 text-zinc-400 hover:text-foreground transition-colors"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
+        {importedCount > 0 && (
+          <p role="status" className="text-xs text-emerald-500">
+            Found {importedCount} of your previous habits. Review them below, then save to your account.
+          </p>
+        )}
+
+        {(!firstRun || partnerTotal > 0) && (
+          <div className="sticky top-0 z-10 rounded-2xl border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs text-zinc-400">Weekly potential · {activeCount} habits</div>
+              <div className="text-2xl font-semibold tabular-nums text-foreground">{total} <span className="text-sm text-zinc-500">pts</span></div>
+            </div>
+            <div className={`text-right text-xs font-medium tabular-nums ${partnerTotal > 0 && difference === 0 ? 'text-emerald-500' : 'text-zinc-400'}`}>
+              {partnerTotal > 0 ? (
+                <>
+                  {difference === 0 ? 'Matched' : difference > 0 ? `${difference} pts below` : `${-difference} pts above`}
+                  <span className="block text-zinc-500 font-normal">Partner: {partnerTotal} pts</span>
+                </>
+              ) : (
+                <span className="text-zinc-400">You set the first total</span>
+              )}
+            </div>
+          </div>
+        )}
+        {partnerTotal > 0 && difference !== 0 && activeCount > 0 && (
+          <button
+            type="button"
+            onClick={balance}
+            className="w-full rounded-xl border border-black/10 dark:border-white/20 bg-black/5 dark:bg-white/[0.06] py-2.5 text-sm font-medium hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+          >
+            Balance points for me
+          </button>
+        )}
+
+        {visibleSections.filter(section => section.entries.length > 0).map(section => {
+          return (
+            <section key={section.title} className="space-y-2" aria-labelledby={`section-${section.title.replaceAll(' ', '-')}`}>
+              <h2 id={`section-${section.title.replaceAll(' ', '-')}`} className="text-xs font-semibold uppercase tracking-widest text-zinc-400 px-1">
+                {section.title}
+              </h2>
+              <div className="space-y-2">
+                {section.entries.map(habit => (
+                  <div
+                    key={habit.id}
+                    className={`rounded-xl border p-3 flex items-center gap-3 transition-colors ${
+                      habit.isActive
+                        ? 'border-black/10 dark:border-white/20 bg-white dark:bg-[#1c1c1e] shadow-xs'
+                        : 'border-black/5 dark:border-white/[0.07] bg-black/[0.02] dark:bg-white/[0.02]'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      aria-label={`${habit.isActive ? 'Remove' : 'Select'} ${habit.title}`}
+                      aria-pressed={habit.isActive}
+                      onClick={() => changeHabit(habit.id, { isActive: !habit.isActive })}
+                      className={`w-11 h-11 shrink-0 rounded-lg border flex items-center justify-center transition-all ${
+                        habit.isActive
+                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-black border-transparent'
+                          : 'border-black/15 dark:border-white/20 text-zinc-500'
+                      }`}
+                    >
+                      {habit.isActive ? <Check size={16} /> : <Plus size={16} />}
+                    </button>
+                    <HabitIcon name={habit.iconName} className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate text-foreground">{habit.title}</div>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {!firstRun && (
+                          <select
+                            aria-label={`Frequency for ${habit.title}`}
+                            disabled={!habit.isActive}
+                            value={habit.weeklyTargetDays || 7}
+                            onChange={event => {
+                              const days = Number(event.target.value);
+                              changeHabit(habit.id, { weeklyTargetDays: days === 7 ? undefined : days, frequency: days === 7 ? 'daily' : 'weekly' });
+                            }}
+                            className="max-w-20 shrink-0 bg-transparent text-[11px] text-zinc-400 disabled:opacity-60"
+                          >
+                            <option value={7}>Daily</option>
+                            {[1, 2, 3, 4, 5, 6].map(days => <option key={days} value={days}>{days}×/week</option>)}
+                          </select>
+                        )}
+                        {habit.description && <span className="text-[11px] text-zinc-500 truncate">{habit.description}</span>}
+                      </div>
+                      {habit.automation?.metric === 'steps' && habit.isActive && (
+                        <div className="mt-1 flex gap-1" aria-label="Daily step goal">
+                          {[6000, 10000, 14000].map(target => (
+                            <button
+                              key={target}
+                              type="button"
+                              onClick={() => changeHabit(habit.id, { automation: { metric: 'steps', target } })}
+                              aria-pressed={habit.automation?.target === target}
+                              className={`min-h-11 rounded-full px-3 text-xs ${habit.automation?.target === target ? 'bg-zinc-900 text-white dark:bg-white dark:text-black' : 'bg-black/5 dark:bg-white/10 text-foreground'}`}
+                            >
+                              {target / 1000}k
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {habit.isActive && !firstRun && (
+                      <label className="flex items-center gap-1 shrink-0 text-xs text-zinc-400">
+                        <span className="sr-only">Points for {habit.title}</span>
+                        <input
+                          type="number"
+                          min={5}
+                          max={maximumHabitPoints(habit)}
+                          step={1}
+                          value={habit.points}
+                          onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })}
+                          className="w-14 rounded-lg border border-black/10 dark:border-white/15 bg-[#f1f3f6] dark:bg-black px-2 py-1.5 text-right text-foreground tabular-nums"
+                        />
+                        <span>pts</span>
+                      </label>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+        {firstRun && !showMore && (
+          <button
+            type="button"
+            onClick={() => setShowMore(true)}
+            className="min-h-11 w-full rounded-xl border border-black/10 dark:border-white/15 text-sm text-zinc-400 hover:text-foreground transition-colors"
+          >
+            See more habits
+          </button>
+        )}
+
+        <form onSubmit={addCustom} className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1c1c1e] p-4 space-y-3 shadow-xs">
+          <h2 className="text-sm font-semibold text-foreground">Add your own</h2>
+          <div className="flex gap-2">
+            <input
+              aria-label="New habit name"
+              value={customTitle}
+              onChange={event => setCustomTitle(event.target.value)}
+              maxLength={70}
+              placeholder="A habit that matters to you"
+              className="min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/15 bg-[#f1f3f6] dark:bg-black px-3 py-2 text-sm text-foreground outline-none focus:border-blue-500"
+            />
+            <button className="rounded-xl bg-black/10 dark:bg-white/10 px-3 text-sm font-medium hover:bg-black/15 dark:hover:bg-white/15 transition-colors">
+              Add
+            </button>
+          </div>
+          <select
+            aria-label="New habit category"
+            value={customCategory}
+            onChange={event => setCustomCategory(event.target.value as HabitCategory)}
+            className="rounded-lg bg-[#f1f3f6] dark:bg-black border border-black/10 dark:border-white/15 px-2 py-1 text-xs text-foreground"
+          >
+            {HABIT_SECTIONS.flatMap(section => section.categories).map(category => (
+              <option key={category} value={category}>{category.replaceAll('_', ' ')}</option>
+            ))}
+          </select>
+        </form>
+
+        <div className="pb-8 space-y-3">
+          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+          <button
+            onClick={() => void save()}
+            disabled={saving || checkingPrevious || activeCount === 0 || (partnerTotal > 0 && difference !== 0)}
+            className="w-full rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-black py-3 text-sm font-semibold disabled:opacity-40"
+          >
+            {checkingPrevious ? 'Checking previous habits…' : saving ? 'Saving your plan…' : firstRun ? 'Start with these habits' : 'Save habit plan'}
+          </button>
+          <p className="text-center text-xs text-zinc-500">
+            Daily habits count seven times; weekly habits count their target sessions. {partnerTotal > 0 ? 'Match your partner’s weekly potential.' : 'Your partner will match the weekly potential you choose.'} Past check-ins stay in your history.
+          </p>
+        </div>
       </div>
-      {importedCount > 0 && <p role="status" className="text-xs text-emerald-300">Found {importedCount} of your previous habits. Review them below, then save to your account.</p>}
-
-      {(!firstRun || partnerTotal > 0) && <div className="sticky top-0 z-10 rounded-2xl border border-white/10 bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
-        <div><div className="text-xs text-zinc-400">Weekly potential · {activeCount} habits</div><div className="text-2xl font-semibold tabular-nums">{total} <span className="text-sm text-zinc-500">pts</span></div></div>
-        <div className={`text-right text-xs font-medium tabular-nums ${partnerTotal > 0 && difference === 0 ? 'text-emerald-300' : 'text-zinc-300'}`}>{partnerTotal > 0 ? <>{difference === 0 ? 'Matched' : difference > 0 ? `${difference} pts below` : `${-difference} pts above`}<span className="block text-zinc-500 font-normal">Partner: {partnerTotal} pts</span></> : <span className="text-zinc-400">You set the first total</span>}</div>
-      </div>}
-      {partnerTotal > 0 && difference !== 0 && activeCount > 0 && <button type="button" onClick={balance} className="w-full rounded-xl border border-white/20 bg-white/[0.06] py-2.5 text-sm font-medium">Balance points for me</button>}
-
-      {visibleSections.filter(section => section.entries.length > 0).map(section => {
-        return <section key={section.title} className="space-y-2" aria-labelledby={`section-${section.title.replaceAll(' ', '-')}`}>
-          <h2 id={`section-${section.title.replaceAll(' ', '-')}`} className="text-xs font-semibold uppercase tracking-widest text-zinc-400 px-1">{section.title}</h2>
-          <div className="space-y-2">{section.entries.map(habit => <div key={habit.id} className={`rounded-xl border p-3 flex items-center gap-3 ${habit.isActive ? 'border-white/20 bg-[#1c1c1e]' : 'border-white/[0.07] bg-white/[0.02]'}`}>
-            <button type="button" aria-label={`${habit.isActive ? 'Remove' : 'Select'} ${habit.title}`} aria-pressed={habit.isActive} onClick={() => changeHabit(habit.id, { isActive: !habit.isActive })} className={`w-11 h-11 shrink-0 rounded-lg border flex items-center justify-center ${habit.isActive ? 'bg-white text-black border-white' : 'border-white/20 text-zinc-500'}`}>{habit.isActive ? <Check size={16}/> : <Plus size={16}/>}</button>
-            <HabitIcon name={habit.iconName} className="w-4 h-4 text-zinc-400 shrink-0"/>
-            <div className="min-w-0 flex-1"><div className="text-sm font-medium truncate">{habit.title}</div><div className="flex items-center gap-1.5 min-w-0">{!firstRun && <select aria-label={`Frequency for ${habit.title}`} disabled={!habit.isActive} value={habit.weeklyTargetDays || 7} onChange={event => { const days = Number(event.target.value); changeHabit(habit.id, { weeklyTargetDays: days === 7 ? undefined : days, frequency: days === 7 ? 'daily' : 'weekly' }); }} className="max-w-20 shrink-0 bg-transparent text-[11px] text-zinc-400 disabled:opacity-60"><option value={7}>Daily</option>{[1, 2, 3, 4, 5, 6].map(days => <option key={days} value={days}>{days}×/week</option>)}</select>}{habit.description && <span className="text-[11px] text-zinc-500 truncate">{habit.description}</span>}</div>{habit.automation?.metric === 'steps' && habit.isActive && <div className="mt-1 flex gap-1" aria-label="Daily step goal">{[6000, 10000, 14000].map(target => <button key={target} type="button" onClick={() => changeHabit(habit.id, { automation: { metric: 'steps', target } })} aria-pressed={habit.automation?.target === target} className={`min-h-11 rounded-full px-3 text-xs ${habit.automation?.target === target ? 'bg-white text-black' : 'bg-white/10 text-zinc-300'}`}>{target / 1000}k</button>)}</div>}</div>
-            {habit.isActive && !firstRun && <label className="flex items-center gap-1 shrink-0 text-xs text-zinc-400"><span className="sr-only">Points for {habit.title}</span><input type="number" min={5} max={maximumHabitPoints(habit)} step={1} value={habit.points} onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })} className="w-14 rounded-lg border border-white/15 bg-black px-2 py-1.5 text-right text-white tabular-nums"/><span>pts</span></label>}
-          </div>)}</div>
-        </section>;
-      })}
-      {firstRun && !showMore && <button type="button" onClick={() => setShowMore(true)} className="min-h-11 w-full rounded-xl border border-white/15 text-sm text-zinc-300">See more habits</button>}
-
-      <form onSubmit={addCustom} className="rounded-2xl border border-white/10 bg-[#1c1c1e] p-4 space-y-3">
-        <h2 className="text-sm font-semibold">Add your own</h2>
-        <div className="flex gap-2"><input aria-label="New habit name" value={customTitle} onChange={event => setCustomTitle(event.target.value)} maxLength={70} placeholder="A habit that matters to you" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black px-3 py-2 text-sm"/><button className="rounded-xl bg-white/10 px-3 text-sm font-medium">Add</button></div>
-        <select aria-label="New habit category" value={customCategory} onChange={event => setCustomCategory(event.target.value as HabitCategory)} className="rounded-lg bg-black border border-white/15 px-2 py-1 text-xs text-zinc-300">{HABIT_SECTIONS.flatMap(section => section.categories).map(category => <option key={category} value={category}>{category.replaceAll('_', ' ')}</option>)}</select>
-      </form>
-
-      <div className="pb-8 space-y-3">{error && <p role="alert" className="text-sm text-red-300">{error}</p>}
-        <button onClick={() => void save()} disabled={saving || checkingPrevious || activeCount === 0 || (partnerTotal > 0 && difference !== 0)} className="w-full rounded-xl bg-white py-3 text-sm font-semibold text-black disabled:opacity-40">{checkingPrevious ? 'Checking previous habits…' : saving ? 'Saving your plan…' : firstRun ? 'Start with these habits' : 'Save habit plan'}</button>
-        <p className="text-center text-xs text-zinc-500">Daily habits count seven times; weekly habits count their target sessions. {partnerTotal > 0 ? 'Match your partner’s weekly potential.' : 'Your partner will match the weekly potential you choose.'} Past check-ins stay in your history.</p>
-      </div>
-    </div>
-  </main>;
+    </main>
+  );
 }

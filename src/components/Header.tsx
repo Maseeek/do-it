@@ -40,16 +40,16 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-[#08090a]/90 px-4 py-2.5 backdrop-blur-xl safe-area-top">
+    <header className="sticky top-0 z-40 border-b border-black/[0.06] dark:border-zinc-800/80 bg-[#f6f7fa]/80 dark:bg-[#08090a]/90 px-4 py-2.5 backdrop-blur-xl safe-area-top transition-colors">
       <div className="flex w-full items-center justify-between gap-3">
         {/* Left: Brand + Player Identity + Streak & Live Status */}
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex lg:hidden items-center gap-2 shrink-0">
             <DoLogo size="xs" />
-            <span className="text-sm font-semibold tracking-tight">do it.</span>
+            <span className="text-sm font-semibold tracking-tight text-foreground">do it.</span>
           </div>
 
-          <div className="w-[1px] h-4 bg-zinc-800 shrink-0 lg:hidden" />
+          <div className="w-[1px] h-4 bg-black/10 dark:bg-zinc-800 shrink-0 lg:hidden" />
 
           <button
             onClick={handleProfileClick}
@@ -63,14 +63,14 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
             >
               {activePlayer?.name[0] || 'D'}
             </span>
-            <span className="text-xs font-semibold text-white truncate">
+            <span className="text-xs font-semibold text-foreground truncate">
               {activePlayer?.name}
             </span>
           </button>
 
           {activePlayerSummary.currentStreak > 0 && (
             <span
-              className="inline-flex items-center gap-0.5 text-[10px] font-mono font-medium text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0"
+              className="inline-flex items-center gap-0.5 text-[10px] font-mono font-medium text-amber-500 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0"
               title={`${activePlayerSummary.currentStreak}-day active streak`}
             >
               <Flame className="w-2.5 h-2.5" />
@@ -96,7 +96,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
                 hapticLight();
                 onOpenDuel();
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-player-500/30 bg-player-500/10 px-2.5 py-1.5 text-xs font-mono font-medium text-player-300 hover:bg-player-500/20 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-player-500/30 bg-player-500/10 px-2.5 py-1.5 text-xs font-mono font-medium text-player-400 dark:text-player-300 hover:bg-player-500/20 transition-colors"
             >
               <Share2 size={13} />
               <span>Invite</span>
@@ -104,15 +104,15 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
           )}
           <div className="hidden sm:flex flex-col items-end mr-1">
             <div className="flex items-baseline gap-1 font-mono">
-              <span className={`text-xs font-bold tabular-nums ${pct >= 100 ? 'text-emerald-400' : 'text-white'}`}>
+              <span className={`text-xs font-bold tabular-nums ${pct >= 100 ? 'text-emerald-500 dark:text-emerald-400' : 'text-foreground'}`}>
                 {activePlayerSummary.today}
               </span>
               <span className="text-[10px] text-zinc-500">/ {dailyPar} pts</span>
             </div>
-            <div className="w-16 h-1 rounded-full bg-zinc-800 mt-1 overflow-hidden">
+            <div className="w-16 h-1 rounded-full bg-black/10 dark:bg-zinc-800 mt-1 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  pct >= 100 ? 'bg-emerald-400' : 'bg-player-400'
+                  pct >= 100 ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-player-400'
                 }`}
                 style={{ width: `${pct}%` }}
               />
@@ -121,9 +121,9 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
 
           <button
             onClick={toggleTheme}
-            aria-label={`Switch theme (current: ${themePreference})`}
-            title={`Switch theme (current: ${themePreference})`}
-            className="flex w-8 h-8 items-center justify-center rounded-lg border border-zinc-800 bg-[#0e1013] text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+            aria-label={`Switch theme (current: ${themePreference === 'system' ? `system [${effectiveTheme}]` : themePreference})`}
+            title={`Theme: ${themePreference === 'system' ? `System (${effectiveTheme})` : themePreference} (click to toggle)`}
+            className="flex w-8 h-8 items-center justify-center rounded-lg border border-black/[0.08] dark:border-zinc-800 bg-black/[0.03] dark:bg-[#0e1013] text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:border-black/20 dark:hover:border-zinc-700 transition-colors"
           >
             {themePreference === 'system' ? (
               <Monitor size={14} />
@@ -138,7 +138,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
             onClick={onOpenSettings}
             aria-label="Open settings"
             title="Settings"
-            className="flex w-8 h-8 items-center justify-center rounded-lg border border-zinc-800 bg-[#0e1013] text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
+            className="flex w-8 h-8 items-center justify-center rounded-lg border border-black/[0.08] dark:border-zinc-800 bg-black/[0.03] dark:bg-[#0e1013] text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:border-black/20 dark:hover:border-zinc-700 transition-colors"
           >
             <Settings size={14} />
           </button>
