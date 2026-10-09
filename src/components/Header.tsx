@@ -96,7 +96,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
                 hapticLight();
                 onOpenDuel();
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-2.5 py-1.5 text-xs font-mono font-medium text-blue-300 hover:bg-blue-500/20 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-player-500/30 bg-player-500/10 px-2.5 py-1.5 text-xs font-mono font-medium text-player-300 hover:bg-player-500/20 transition-colors"
             >
               <Share2 size={13} />
               <span>Invite</span>
@@ -112,7 +112,7 @@ export function Header({ onOpenSettings, onOpenDuel }: { onOpenSettings: () => v
             <div className="w-16 h-1 rounded-full bg-zinc-800 mt-1 overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  pct >= 100 ? 'bg-emerald-400' : isMaciek ? 'bg-blue-400' : 'bg-purple-400'
+                  pct >= 100 ? 'bg-emerald-400' : 'bg-player-400'
                 }`}
                 style={{ width: `${pct}%` }}
               />

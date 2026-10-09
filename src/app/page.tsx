@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { ProfileGate } from '@/components/ProfileGate';
 import { Header } from '@/components/Header';
 import { BottomNav, TabType } from '@/components/BottomNav';
@@ -26,7 +27,7 @@ import { HabitOnboarding } from '@/components/HabitOnboarding';
 
 function AppContent() {
   const multiplayer = useMultiplayer();
-  const { isHydrated, loadedDuelId, syncStatus, activePlayerId, toggleHabit, habits, checkIns, switchProfile, setSelectedDate, storageError } = useStore();
+  const { isHydrated, loadedDuelId, syncStatus, activePlayerId, players, toggleHabit, habits, checkIns, switchProfile, setSelectedDate, storageError } = useStore();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -183,13 +184,13 @@ function AppContent() {
     return (
       <>
         {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
-        <HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} />
+        <div style={getPlayerThemeStyles(players[activePlayerId])}><HabitOnboarding firstRun onDone={() => { setActiveTab('today'); }} /></div>
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8f9] dark:bg-[#08090a] text-[#111315] dark:text-zinc-100 flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white">
+    <div style={{ ...getPlayerThemeStyles(players[activePlayerId]), ...getPlayerThemeStyles(players.maciek, 'owner'), ...getPlayerThemeStyles(players.myrna, 'guest') }} className="min-h-screen bg-[#f7f8f9] dark:bg-[#08090a] text-[#111315] dark:text-zinc-100 flex flex-col font-sans relative selection:bg-zinc-200 selection:text-black dark:selection:bg-zinc-800 dark:selection:text-white">
       {/* Ambient background glow mesh */}
       <div className="ambient-mesh" aria-hidden="true" />
 

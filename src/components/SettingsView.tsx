@@ -64,7 +64,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       <form onSubmit={saveName} className="space-y-3">
         <label htmlFor="profile-name" className="block text-xs text-zinc-400">Username</label>
         <div className="flex flex-wrap gap-2">
-          <input id="profile-name" value={name} maxLength={40} onChange={event => { setName(event.target.value); setNameMessage(null); }} autoComplete="nickname" className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-sm text-white outline-none focus:border-emerald-400" />
+          <input id="profile-name" value={name} maxLength={40} onChange={event => { setName(event.target.value); setNameMessage(null); }} autoComplete="nickname" className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-sm text-white outline-none focus:border-player-400" />
           <button type="submit" className="control min-h-11" disabled={savingName || name.trim() === activePlayer.name}>{savingName ? 'Saving…' : 'Save name'}</button>
         </div>
         {nameMessage && <p role="status" className="text-xs text-zinc-300">{nameMessage}</p>}
@@ -75,7 +75,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
           {PLAYER_COLORS.map(option => {
             const unlocked = isPlayerColorUnlocked(option.id, activePlayerSummary.karma);
             const selected = activePlayer.color === option.color;
-            return <button key={option.id} type="button" disabled={!unlocked || savingColor} onClick={() => { void savePlayerColor(option.id); }} aria-pressed={selected} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${selected ? 'border-white/40 bg-white/[0.08]' : 'border-white/[0.08]'} disabled:cursor-not-allowed disabled:opacity-45`}>
+            return <button key={option.id} type="button" disabled={!unlocked || savingColor} onClick={() => { void savePlayerColor(option.id); }} aria-pressed={selected} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${selected ? 'border-player-400 bg-player-500/15 text-player-400' : 'border-white/[0.08]'} disabled:cursor-not-allowed disabled:opacity-45`}>
               <span className="size-3.5 rounded-full border border-white/20" style={getPlayerColorStyles(option)} />
               <span className="min-w-0"><span className="block">{option.name}</span><span className="text-[10px] text-zinc-500">{unlocked ? (selected ? 'Selected' : 'Unlocked') : `${option.unlockAt.toLocaleString()} points`}</span></span>
             </button>;
