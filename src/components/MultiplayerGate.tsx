@@ -45,29 +45,107 @@ export function MultiplayerGate({ inviteCode }: { inviteCode: string | null }) {
     void run(async () => {
       const displayName = name.trim() || String(multiplayer.user?.user_metadata?.display_name || '').trim();
       if (!displayName) throw new Error('Enter your display name.');
-      if (effectiveInviteCode) await multiplayer.acceptInvite(effectiveInviteCode, displayName);
+      if (effectiveInviteCode) await multiplayer.acceptInvite(effectiveInviteCode, displayName);\
       else await multiplayer.createDuel(displayName);
     });
   };
 
-  return <main className="min-h-screen bg-black text-white flex items-center justify-center px-4">
-    <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1c1c1e] p-6 space-y-5">
-      <div className="text-center"><DoLogo size="lg" className="mx-auto mb-4" /><h1 className="text-2xl font-bold">{multiplayer.user ? effectiveInviteCode ? 'Join the duel' : 'Start a duel' : mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
-        <p className="text-sm text-zinc-400 mt-2">{effectiveInviteCode ? 'Your invitation will be ready after you sign in.' : 'Build habits together, then face off each week.'}</p></div>
-      {!multiplayer.configured ? <p role="alert" className="text-sm text-amber-300">Supabase needs to be configured by the app owner before accounts and duels can be used.</p> : multiplayer.loading ? <p className="text-center text-zinc-400">Loading…</p> : multiplayer.user && multiplayer.error ?
-        <button className="w-full rounded-xl bg-white text-black p-3 font-semibold" onClick={() => void multiplayer.refresh()}>Retry loading account</button> : multiplayer.user ?
-        <form onSubmit={submitDuel} className="space-y-3"><label className="block text-xs text-zinc-400">Your display name<input className="w-full mt-1 rounded-xl bg-black border border-white/15 p-3 text-white" maxLength={40} required value={name || String(multiplayer.user.user_metadata?.display_name || '')} onChange={e => setName(e.target.value)} /></label>
-          <button disabled={busy} className="w-full rounded-xl bg-white text-black p-3 font-semibold disabled:opacity-50">{busy ? 'Please wait…' : effectiveInviteCode ? 'Accept invitation' : 'Create duel and get invite link'}</button>
-          {effectiveInviteCode && <button type="button" className="w-full text-xs text-zinc-400" onClick={() => { setIgnoredInviteCode(effectiveInviteCode); setError(null); }}>Start my own duel instead</button>}
-          <button type="button" className="w-full text-xs text-zinc-400" onClick={() => void run(multiplayer.signOut)}>Sign out</button></form> :
-        <form onSubmit={submitAuth} className="space-y-3">
-          {mode === 'signup' && <label className="block text-xs text-zinc-400">Display name<input className="w-full mt-1 rounded-xl bg-black border border-white/15 p-3 text-white" maxLength={40} required value={name} onChange={e => setName(e.target.value)} /></label>}
-          <label className="block text-xs text-zinc-400">Email<input type="email" autoComplete="email" className="w-full mt-1 rounded-xl bg-black border border-white/15 p-3 text-white" required value={email} onChange={e => setEmail(e.target.value)} /></label>
-          <label className="block text-xs text-zinc-400">Password<input type="password" minLength={6} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} className="w-full mt-1 rounded-xl bg-black border border-white/15 p-3 text-white" required value={password} onChange={e => setPassword(e.target.value)} /></label>
-          <button disabled={busy} className="w-full rounded-xl bg-white text-black p-3 font-semibold disabled:opacity-50">{busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
-          <button type="button" className="w-full text-xs text-zinc-400" onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(null); }}>{mode === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Sign up'}</button></form>}
-      {(error || multiplayer.error) && <p role="alert" className="text-sm text-red-300">{error || multiplayer.error}</p>}
-      {message && <p role="status" className="text-sm text-emerald-300">{message}</p>}
-    </div>
-  </main>;
+  return (
+    <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-4 transition-colors">
+      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1c1c1e] p-6 space-y-5 shadow-2xl">
+        <div className="text-center">
+          <DoLogo size="lg" className="mx-auto mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {multiplayer.user ? effectiveInviteCode ? 'Join the duel' : 'Start a duel' : mode === 'signup' ? 'Create your account' : 'Welcome back'}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-2">
+            {effectiveInviteCode ? 'Your invitation will be ready after you sign in.' : 'Build habits together, then face off each week.'}
+          </p>
+        </div>
+        {!multiplayer.configured ? (
+          <p role=\"alert\" className="text-sm text-amber-500">Supabase needs to be configured by the app owner before accounts and duels can be used.</p>
+        ) : multiplayer.loading ? (
+          <p className="text-center text-zinc-400">Loading…</p>
+        ) : multiplayer.user && multiplayer.error ? (
+          <button className="w-full rounded-xl bg-white text-black p-3 font-semibold" onClick={() => void multiplayer.refresh()}>
+            Retry loading account
+          </button>
+        ) : multiplayer.user ? (
+          <form onSubmit={submitDuel} className="space-y-3">
+            <label className="block text-xs text-zinc-400">
+              Your display name
+              <input
+                className="w-full mt-1 rounded-xl bg-[#f1f3f6] dark:bg-black border border-black/10 dark:border-white/15 p-3 text-foreground outline-none focus:border-blue-500"
+                maxLength={40}
+                required
+                value={name || String(multiplayer.user.user_metadata?.display_name || '')}
+                onChange={e => setName(e.target.value)}
+              />
+            </label>
+            <button disabled={busy} className="w-full rounded-xl bg-white text-black p-3 font-semibold disabled:opacity-50">
+              {busy ? 'Please wait…' : effectiveInviteCode ? 'Accept invitation' : 'Create duel and get invite link'}
+            </button>
+            {effectiveInviteCode && (
+              <button type="button" className="w-full text-xs text-zinc-400 hover:text-foreground" onClick={() => { setIgnoredInviteCode(effectiveInviteCode); setError(null); }}>
+                Start my own duel instead
+              </button>
+            )}
+            <button type="button" className="w-full text-xs text-zinc-400 hover:text-foreground" onClick={() => void run(multiplayer.signOut)}>
+              Sign out
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={submitAuth} className="space-y-3">
+            {mode === 'signup' && (
+              <label className="block text-xs text-zinc-400">
+                Display name
+                <input
+                  className="w-full mt-1 rounded-xl bg-[#f1f3f6] dark:bg-black border border-black/10 dark:border-white/15 p-3 text-foreground outline-none focus:border-blue-500"
+                  maxLength={40}
+                  required
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                />
+              </label>
+            )}
+            <label className="block text-xs text-zinc-400">
+              Email
+              <input
+                type="email"
+                autoComplete="email"
+                className="w-full mt-1 rounded-xl bg-[#f1f3f6] dark:bg-black border border-black/10 dark:border-white/15 p-3 text-foreground outline-none focus:border-blue-500"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </label>
+            <label className="block text-xs text-zinc-400">
+              Password
+              <input
+                type="password"
+                minLength={6}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                className="w-full mt-1 rounded-xl bg-[#f1f3f6] dark:bg-black border border-black/10 dark:border-white/15 p-3 text-foreground outline-none focus:border-blue-500"
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+            </label>
+            <button disabled={busy} className="w-full rounded-xl bg-white text-black p-3 font-semibold disabled:opacity-50">
+              {busy ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Sign in'}
+            </button>
+            <button
+              type="button"
+              className="w-full text-xs text-zinc-400 hover:text-foreground"
+              onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(null); }}
+            >
+              {mode === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+            </button>
+          </form>
+        )}
+        {(error || multiplayer.error) && <p role="alert" className="text-sm text-red-400">{error || multiplayer.error}</p>}
+        {message && <p role="status" className="text-sm text-emerald-500">{message}</p>}
+      </div>
+    </main>
+  );
 }

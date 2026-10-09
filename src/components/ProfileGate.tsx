@@ -23,13 +23,13 @@ export function ProfileGate() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-gate-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background px-4 transition-colors"
     >
       <div className="w-full max-w-sm">
         {/* Brand Header */}
         <div className="text-center mb-8">
           <DoLogo size="lg" className="mb-3.5 shadow-2xl" />
-          <h1 id="profile-gate-title" className="text-2xl font-bold tracking-tight text-white">
+          <h1 id="profile-gate-title" className="text-2xl font-bold tracking-tight text-foreground">
             Select Profile
           </h1>
           <p className="text-xs text-zinc-500 mt-1">
@@ -47,11 +47,11 @@ export function ProfileGate() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-base">
+                <div className="w-11 h-11 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 font-bold text-base">
                   {players.maciek.name[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <div className="text-base font-semibold text-white">
+                  <div className="text-base font-semibold text-foreground">
                     {players.maciek.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
@@ -59,7 +59,7 @@ export function ProfileGate() {
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-zinc-500" />
+              <ChevronRight className="w-5 h-5 text-zinc-400" />
             </div>
           </button>
 
@@ -71,11 +71,11 @@ export function ProfileGate() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 font-bold text-base">
+                <div className="w-11 h-11 rounded-full bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-500 dark:text-pink-400 font-bold text-base">
                   {players.myrna.name[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <div className="text-base font-semibold text-white">
+                  <div className="text-base font-semibold text-foreground">
                     {players.myrna.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
@@ -83,7 +83,7 @@ export function ProfileGate() {
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-zinc-500" />
+              <ChevronRight className="w-5 h-5 text-zinc-400" />
             </div>
           </button>
         </div>

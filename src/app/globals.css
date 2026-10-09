@@ -3,34 +3,42 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f2f2f7;
-  --foreground: #1c1c1e;
-  --surface-0: #f2f2f7;
+  --background: #f6f7fa;
+  --foreground: #0f141c;
+  --surface-0: #f6f7fa;
   --surface-1: #ffffff;
-  --surface-2: #e5e5ea;
-  --surface-3: #d1d1d6;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-medium: rgba(0, 0, 0, 0.16);
+  --surface-2: #f0f2f5;
+  --surface-3: #e4e7ec;
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-medium: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.22);
+  --text-primary: #0f141c;
+  --text-secondary: #4b5565;
+  --text-muted: #788292;
   --maciek-blue: #007aff;
-  --maciek-blue-glow: rgba(0, 122, 255, 0.2);
+  --maciek-blue-glow: rgba(0, 122, 255, 0.18);
   --myrna-pink: #ff2d55;
-  --myrna-pink-glow: rgba(255, 45, 85, 0.2);
-  --par-emerald: #30d158;
-  --par-emerald-glow: rgba(48, 209, 88, 0.2);
-  --stake-amber: #ff9500;
+  --myrna-pink-glow: rgba(255, 45, 85, 0.18);
+  --par-emerald: #10b981;
+  --par-emerald-glow: rgba(16, 185, 129, 0.18);
+  --stake-amber: #f59e0b;
   color-scheme: light dark;
 }
 
 :root.dark,
 .dark {
   --background: #000000;
-  --foreground: #f5f5f7;
+  --foreground: #f5f6f8;
   --surface-0: #000000;
-  --surface-1: #1c1c1e;
-  --surface-2: #2c2c2e;
-  --surface-3: #3a3a3c;
+  --surface-1: #131418;
+  --surface-2: #1c1e24;
+  --surface-3: #262933;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.15);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.25);
+  --text-primary: #f5f6f8;
+  --text-secondary: #9ba1b0;
+  --text-muted: #676f82;
   --maciek-blue: #007aff;
   --maciek-blue-glow: rgba(0, 122, 255, 0.25);
   --myrna-pink: #ff2d55;
@@ -43,18 +51,79 @@
 button, a, input, select, textarea { touch-action: manipulation; }
 button:not(:disabled), summary { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-:focus-visible { outline: 2px solid #93c5fd; outline-offset: 4px; }
-.skip-link { position: fixed; top: -100px; left: 1rem; z-index: 100; background: white; color: black; padding: 0.75rem 1rem; border-radius: 0.75rem; }
+:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
+
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 1rem;
+  z-index: 100;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: top 0.15s ease;
+}
 .skip-link:focus { top: 1rem; }
-.settings-panel { border: 1px solid rgba(255,255,255,.08); background: #141518; border-radius: 1rem; padding: 1.25rem; }
+
+.settings-panel {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
 .settings-panel h2 { font-size: .875rem; font-weight: 600; margin-bottom: .35rem; }
-.settings-panel p { font-size: .75rem; line-height: 1.7; color: #a1a1aa; }
-.control { min-height: 42px; padding: .65rem .9rem; border: 1px solid rgba(255,255,255,.12); border-radius: .7rem; font-size: .75rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; transition: background .15s; }
-.control:hover { background: rgba(255,255,255,.08); }
-.control-primary { color: #111; background: #f4f4f5; border-color: transparent; }
-.control-primary:hover { background: #d4d4d8; }
+.settings-panel p { font-size: .75rem; line-height: 1.7; color: var(--text-secondary); }
+
+.control {
+  min-height: 42px;
+  padding: .65rem .9rem;
+  border: 1px solid var(--border-medium);
+  background: var(--surface-1);
+  color: var(--foreground);
+  border-radius: .7rem;
+  font-size: .75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  transition: all .15s ease;
+}
+.control:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.control-primary {
+  color: #ffffff;
+  background: #0f141c;
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.dark .control-primary {
+  color: #090a0f;
+  background: #ffffff;
+}
+.control-primary:hover {
+  background: #252b36;
+}
+.dark .control-primary:hover {
+  background: #e4e4e7;
+}
 .control:disabled { opacity: .45; }
-.field { display: block; width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.12); background: #09090b; padding: .7rem .85rem; font-size: .8rem; border-radius: .7rem; }
+
+.field {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border-medium);
+  background: var(--surface-2);
+  color: var(--foreground);
+  padding: .7rem .85rem;
+  font-size: .8rem;
+  border-radius: .7rem;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -70,104 +139,190 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Apple-style subtle ambient glow */
+/* Subtle, Apple/Linear style ambient glow mesh */
 .ambient-mesh {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background: 
-    radial-gradient(circle at 20% 0%, rgba(0, 122, 255, 0.06) 0%, transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(255, 45, 85, 0.05) 0%, transparent 45%),
-    #f2f2f7;
+    radial-gradient(circle at 15% -2%, rgba(0, 122, 255, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 85% -2%, rgba(255, 45, 85, 0.04) 0%, transparent 45%),
+    var(--background);
   transition: background 0.3s ease;
 }
 
 .dark .ambient-mesh {
   background: 
-    radial-gradient(circle at 20% 0%, rgba(0, 122, 255, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(255, 45, 85, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 20% -2%, rgba(0, 122, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 80% -2%, rgba(255, 45, 85, 0.07) 0%, transparent 45%),
     #000000;
 }
 
-/* Light mode overrides for existing utility classes when dark mode is not active */
-html:not(.dark) .bg-\[\#1c1c1e\] {
+/* ============================================================
+   LIGHT MODE UNIFIED DESIGN TOKENS & UTILITY COMPATIBILITY
+   ============================================================ */
+
+/* 1. Primary Card Surfaces */
+html:not(.dark) .bg-\[\#1c1c1e\],
+html:not(.dark) .bg-\[\#17181b\],
+html:not(.dark) .bg-\[\#141518\] {
   background-color: #ffffff;
-  border-color: rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 3px 8px -1px rgba(0, 0, 0, 0.03);
 }
 
+/* 2. Sidebar Surface */
+html:not(.dark) .bg-\[\#0b0c0e\] {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* 3. Satisfied / Muted Cards */
 html:not(.dark) .bg-\[\#1c1c1e\]\/60 {
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.05);
 }
 
 html:not(.dark) .bg-\[\#1c1c1e\]\/40 {
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.55);
 }
 
-html:not(.dark) .bg-\[\#2c2c2e\] {
-  background-color: #e5e5ea;
-}
-
-html:not(.dark) .bg-\[\#3a3a3c\] {
-  background-color: #d1d1d6;
-}
-
-html:not(.dark) .border-white\/\[0\.08\],
-html:not(.dark) .border-white\/\[0\.04\],
-html:not(.dark) .border-white\/\[0\.06\],
-html:not(.dark) .border-white\/\[0\.1\],
-html:not(.dark) .border-white\/\[0\.12\],
-html:not(.dark) .border-white\/10 {
+html:not(.dark) .bg-\[\#1c1c1e\]\/95 {
+  background-color: rgba(255, 255, 255, 0.94);
   border-color: rgba(0, 0, 0, 0.08);
 }
 
-html:not(.dark) .border-white\/20 {
-  border-color: rgba(0, 0, 0, 0.16);
+/* 4. Wells, Inputs, and Pill Tracks */
+html:not(.dark) .bg-\[\#2c2c2e\] {
+  background-color: #f0f2f5;
+  border-color: rgba(0, 0, 0, 0.06);
+  color: #0f141c;
 }
 
-html:not(.dark) .hover\:border-white\/\[0\.16\]:hover {
-  border-color: rgba(0, 0, 0, 0.16);
+html:not(.dark) .bg-\[\#101113\],
+html:not(.dark) .bg-\[\#18191d\],
+html:not(.dark) .bg-\[\#09090b\] {
+  background-color: #f1f3f6;
+  border-color: rgba(0, 0, 0, 0.09);
+  color: #0f141c;
 }
 
+html:not(.dark) .bg-\[\#3a3a3c\],
+html:not(.dark) .bg-\[\#38383a\] {
+  background-color: #e2e5eb;
+}
+
+/* Segmented control track and active pill polish */
+html:not(.dark) [role="tablist"] {
+  background-color: #edeef2;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) [role="tablist"] .bg-\[\#2c2c2e\] {
+  background-color: #ffffff;
+  color: #0f141c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.09), 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* 5. Header, BottomNav, and Floating Bars */
 html:not(.dark) .bg-black\/80,
 html:not(.dark) .bg-black\/85 {
-  background-color: rgba(242, 242, 247, 0.85);
+  background-color: rgba(246, 247, 250, 0.85);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+/* 6. Modal and Dialog Backdrops */
+html:not(.dark) .bg-black\/90,
+html:not(.dark) .bg-black\/80:has(> [role="dialog"]),
+html:not(.dark) .fixed.bg-black\/80,
+html:not(.dark) .fixed.bg-black\/90 {
+  background-color: rgba(15, 20, 28, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+/* 7. Subtle background fills */
+html:not(.dark) .bg-black\/20,
+html:not(.dark) .bg-black\/30 {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
 }
 
 html:not(.dark) .bg-white\/\[0\.02\],
+html:not(.dark) .bg-white\/\[0\.03\],
 html:not(.dark) .bg-white\/\[0\.04\],
-html:not(.dark) .bg-white\/\[0\.06\] {
-  background-color: rgba(0, 0, 0, 0.03);
+html:not(.dark) .bg-white\/\[0\.05\],
+html:not(.dark) .bg-white\/\[0\.06\],
+html:not(.dark) .bg-white\/\[0\.07\],
+html:not(.dark) .bg-white\/\[0\.08\] {
+  background-color: rgba(0, 0, 0, 0.035);
 }
 
-html:not(.dark) .bg-white\/\[0\.08\] {
+html:not(.dark) .bg-white\/10,
+html:not(.dark) .bg-white\/15 {
   background-color: rgba(0, 0, 0, 0.06);
 }
 
 html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover,
+html:not(.dark) .hover\:bg-white\/\[0\.08\]:hover,
 html:not(.dark) .hover\:bg-white\/\[0\.1\]:hover,
 html:not(.dark) .hover\:bg-white\/\[0\.12\]:hover {
   background-color: rgba(0, 0, 0, 0.06);
 }
 
+/* 8. Border classes */
+html:not(.dark) .border-white\/\[0\.04\],
+html:not(.dark) .border-white\/\[0\.06\],
+html:not(.dark) .border-white\/\[0\.07\],
+html:not(.dark) .border-white\/\[0\.08\],
+html:not(.dark) .border-white\/\[0\.09\],
+html:not(.dark) .border-white\/\[0\.1\],
+html:not(.dark) .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+html:not(.dark) .border-white\/15,
+html:not(.dark) .border-white\/20,
+html:not(.dark) .border-white\/30,
+html:not(.dark) .border-white\/\[0\.12\],
+html:not(.dark) .border-white\/\[0\.15\],
+html:not(.dark) .border-white\/\[0\.16\] {
+  border-color: rgba(0, 0, 0, 0.13);
+}
+
+html:not(.dark) .hover\:border-white\/\[0\.16\]:hover,
+html:not(.dark) .hover\:border-white\/30:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* 9. Typography and Contrast Hierarchy */
 html:not(.dark) .text-white:not(
   button.bg-blue-500,
   button.bg-pink-500,
+  button.bg-emerald-500,
+  button.bg-amber-500,
+  button.bg-indigo-500,
+  button.bg-red-500,
   button.bg-black,
   button.bg-zinc-900,
   .bg-blue-500 *,
   .bg-pink-500 *,
+  .bg-emerald-500 *,
+  .bg-amber-500 *,
+  .bg-indigo-500 *,
+  .bg-red-500 *,
   .bg-black *,
   .bg-zinc-900 *
 ) {
-  color: #1c1c1e;
+  color: #0f141c;
 }
 
 html:not(.dark) .text-\[\#f5f5f7\] {
-  color: #1c1c1e;
+  color: #0f141c;
 }
 
 html:not(.dark) .hover\:text-white:hover:not(
@@ -179,63 +334,132 @@ html:not(.dark) .hover\:text-white:hover:not(
   color: #000000;
 }
 
+html:not(.dark) .text-zinc-200 {
+  color: #272e3b;
+}
+
 html:not(.dark) .text-zinc-300 {
-  color: #3a3a3c;
+  color: #4b5565;
 }
 
 html:not(.dark) .text-zinc-400 {
-  color: #636366;
+  color: #64748b;
 }
 
 html:not(.dark) .text-zinc-500 {
-  color: #8e8e93;
+  color: #8b94a5;
 }
 
-html:not(.dark) circle.text-white\/\[0\.08\] {
-  stroke: rgba(0, 0, 0, 0.08);
+/* 10. Primary Action Button Inversion for High-Contrast Light Mode */
+html:not(.dark) button.bg-white.text-black,
+html:not(.dark) a.bg-white.text-black,
+html:not(.dark) [role="tab"].bg-white.text-black {
+  background-color: #0f141c;
+  color: #ffffff !important;
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
-html:not(.dark) kbd {
-  background-color: #e5e5ea;
-  border-color: rgba(0, 0, 0, 0.1);
-  color: #1c1c1e;
+html:not(.dark) button.bg-white.text-black:hover,
+html:not(.dark) a.bg-white.text-black:hover {
+  background-color: #272e3b;
+  color: #ffffff !important;
 }
 
+html:not(.dark) button.bg-white.text-black svg,
+html:not(.dark) a.bg-white.text-black svg,
+html:not(.dark) [role="tab"].bg-white.text-black * {
+  color: #ffffff !important;
+}
+
+/* 11. Form controls and inputs */
 html:not(.dark) input,
 html:not(.dark) textarea,
 html:not(.dark) select {
-  color: #1c1c1e;
+  color: #0f141c;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #94a3b8;
+}
+
+html:not(.dark) input:focus,
+html:not(.dark) textarea:focus,
+html:not(.dark) select:focus {
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
+
+html:not(.dark) kbd {
+  background-color: #f0f2f5;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0f141c;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+html:not(.dark) circle.text-white\/\[0\.08\] {
+  stroke: rgba(0, 0, 0, 0.07);
+}
+
+/* 12. Activity hero card gradient in light mode */
+html:not(.dark) section.bg-gradient-to-br {
+  background: linear-gradient(135deg, #eef4ff 0%, #ffffff 50%, #fff0f5 100%);
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+}
+
+html:not(.dark) section.bg-gradient-to-br .bg-white\/\[0\.04\] {
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 /* Glassmorphism primitives */
 .glass-panel {
-  background: rgba(12, 14, 18, 0.82);
+  background: var(--surface-1);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .glass-card {
-  background: linear-gradient(180deg, rgba(18, 21, 28, 0.7) 0%, rgba(12, 14, 18, 0.85) 100%);
+  background: var(--surface-1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.04);
+}
+
+.dark .glass-card {
+  background: linear-gradient(180deg, rgba(19, 20, 25, 0.8) 0%, rgba(14, 15, 19, 0.9) 100%);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .glass-card-interactive {
-  background: linear-gradient(180deg, rgba(18, 21, 28, 0.7) 0%, rgba(12, 14, 18, 0.85) 100%);
+  background: var(--surface-1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.dark .glass-card-interactive {
+  background: linear-gradient(180deg, rgba(19, 20, 25, 0.8) 0%, rgba(14, 15, 19, 0.9) 100%);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 .glass-card-interactive:hover {
-  border-color: var(--border-medium);
+  border-color: var(--border-strong);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .glass-card-interactive:hover {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .glass-card-interactive:active {
@@ -251,11 +475,11 @@ html:not(.dark) select {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: var(--border-medium);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--border-strong);
 }
 
 /* Mobile Safe Areas */

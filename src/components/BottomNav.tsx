@@ -31,7 +31,7 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
   return (
     <nav
       aria-label="Main navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/85 backdrop-blur-2xl border-t border-white/[0.08] py-2 px-6 safe-area-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#f6f7fa]/90 dark:bg-black/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] py-2 px-6 safe-area-bottom transition-colors"
     >
       <div className="max-w-md mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
@@ -46,12 +46,12 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 py-1 px-3 rounded-2xl transition-all active:scale-95 ${
                 isActive
-                  ? 'text-white'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'text-foreground font-semibold'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-              <span className={`text-[10px] tracking-tight ${isActive ? 'font-semibold text-white' : 'font-medium'}`}>
+              <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5] text-foreground' : 'stroke-[1.8]'}`} />
+              <span className={`text-[10px] tracking-tight ${isActive ? 'font-semibold text-foreground' : 'font-medium'}`}>
                 {tab.label}
               </span>
             </button>
