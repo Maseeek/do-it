@@ -16,9 +16,32 @@ const geistMono = localFont({
   weight: '100 900',
 });
 
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://do-it-plum-seven.vercel.app");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(appUrl),
   title: "do: habit tracker",
   description: "Minimalist habit tracker and daily accountability.",
+  applicationName: "do",
+  openGraph: {
+    title: "do: habit tracker",
+    description: "Minimalist habit tracker and daily accountability.",
+    url: "/",
+    siteName: "do",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "do: habit tracker",
+    description: "Minimalist habit tracker and daily accountability.",
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
