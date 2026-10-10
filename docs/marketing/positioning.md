@@ -87,3 +87,9 @@ The primary outcome is a new activated pair per unique eligible visitor within s
 Ask a few pairs what they expected from the headline, whether they understood the point matching, and whether the rivalry felt fun. Keep small-sample results directional; a click-through lift alone is insufficient to select a winner. Instrumentation and campaign launch are follow-up work, not changes included here.
 
 The pair invitation is a plausible growth loop because the experience needs a second person. Recurring stakes and scorecards may give pairs something to talk about. An emotional headline alone cannot establish virality; actual invitations, new activated pairs, and retention must show it.
+
+## Character progression and TikTok
+
+Maciek also wants upgradeable characters as a marketing angle. The existing plan in [#33](https://github.com/Maseeek/do-it/issues/33) gives each Player an avatar immediately and uses lifetime Karma and approved achievements to unlock cosmetics. Character looks persist across weekly contests and do not change scoring.
+
+The creative hypothesis is that two visible characters make the pair's progress and rivalry easier to follow. An upgradeable character alone has established competitors. Show the habits behind each earned look and the actual weekly result, then test whether those clips produce activated pairs. See [the character and TikTok proposal](character-marketing.md) for the progression loop, headline copy, storyboard, rollout boundaries, and experiment, and [Luna's supporting research](character-research-luna.md) for primary sources. The full character system remains planned; it is not a shipped feature to advertise as available today.
