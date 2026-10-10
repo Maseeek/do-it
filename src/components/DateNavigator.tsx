@@ -41,6 +41,21 @@ export function DateNavigator() {
     return 240;
   }, [multiplayer.configured, activeHabits]);
 
+  const dailyStats = useMemo(() => {
+    const stats = new Map<string, { count: number; points: number }>();
+    for (const checkIn of checkIns) {
+      if (checkIn.playerId !== activePlayerId) continue;
+      let day = stats.get(checkIn.date);
+      if (!day) {
+        day = { count: 0, points: 0 };
+        stats.set(checkIn.date, day);
+      }
+      day.count++;
+      day.points += checkIn.pointsEarned;
+    }
+    return stats;
+  }, [checkIns, activePlayerId]);
+
   const selectedWeekMonday = useMemo(
     () => getCurrentWeekDays(selectedDate)[0].dateStr,
     [selectedDate]
@@ -202,11 +217,8 @@ export function DateNavigator() {
           const dayRest = isRestDay(day.dateStr);
 
           // Calculate points for indicator
-          const dayLogs = checkIns.filter(
-            (c) => c.playerId === activePlayerId && c.date === day.dateStr
-          );
-          const completedCount = dayLogs.length;
-          const totalPoints = dayLogs.reduce((acc, c) => acc + c.pointsEarned, 0);
+          const completedCount = dailyStats.get(day.dateStr)?.count ?? 0;
+          const totalPoints = dailyStats.get(day.dateStr)?.points ?? 0;
           const isParAchieved = totalPoints >= dailyPar;
           const parsed = parseDate(day.dateStr);
           const showMonthTag = day.dayNumber === 1;

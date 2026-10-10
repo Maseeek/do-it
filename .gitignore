@@ -44,6 +44,7 @@ next-env.d.ts
 agent-audit-report.json
 /scripts/*
 !/scripts/revoke-legacy-health-tokens.mjs
+!/scripts/benchmark-performance.ts
 # scratch & local cache
 /.scratch/
 supabase/.temp/

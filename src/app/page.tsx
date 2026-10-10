@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -11,19 +12,24 @@ import { Header } from '@/components/Header';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { BottomNav, TabType } from '@/components/BottomNav';
 import { TodayView } from '@/components/TodayView';
-import { DuelView } from '@/components/DuelView';
-import { ProgressView } from '@/components/ProgressView';
-import { SettingsView } from '@/components/SettingsView';
-import { MultiplayerGate } from '@/components/MultiplayerGate';
-import { ExistingDuelInviteGate } from '@/components/ExistingDuelInviteGate';
 import { ProfileGate } from '@/components/ProfileGate';
 import { getMultiplayerEntry, shouldHoldDuelLoadingScreen } from '@/lib/invite-navigation';
-import { HabitOnboarding } from '@/components/HabitOnboarding';
-import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
 import { Check } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 import { DoLogo } from '@/components/DoLogo';
+
+function ViewLoading() {
+  return <p role="status" className="py-8 text-center text-sm text-zinc-500">Loading...</p>;
+}
+
+const DuelView = dynamic(() => import('@/components/DuelView').then(module => module.DuelView), { loading: ViewLoading });
+const ProgressView = dynamic(() => import('@/components/ProgressView').then(module => module.ProgressView), { loading: ViewLoading });
+const SettingsView = dynamic(() => import('@/components/SettingsView').then(module => module.SettingsView), { loading: ViewLoading });
+const MultiplayerGate = dynamic(() => import('@/components/MultiplayerGate').then(module => module.MultiplayerGate), { loading: ViewLoading });
+const ExistingDuelInviteGate = dynamic(() => import('@/components/ExistingDuelInviteGate').then(module => module.ExistingDuelInviteGate), { loading: ViewLoading });
+const HabitOnboarding = dynamic(() => import('@/components/HabitOnboarding').then(module => module.HabitOnboarding), { loading: ViewLoading });
+const KeyboardShortcutsModal = dynamic(() => import('@/components/KeyboardShortcutsModal').then(module => module.KeyboardShortcutsModal), { loading: ViewLoading });
 
 function AppContent() {
   const {
@@ -265,10 +271,10 @@ function AppContent() {
 
         <BottomNav activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); setActiveTab(tab); }} />
 
-        <KeyboardShortcutsModal
+        {isShortcutsModalOpen && <KeyboardShortcutsModal
           isOpen={isShortcutsModalOpen}
           onClose={() => setIsShortcutsModalOpen(false)}
-        />
+        />}
       </div>
     </div>
   );

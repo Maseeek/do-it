@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pencil, ChevronRight, Flame, TrendingUp } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { soundEngine } from '@/lib/sound-utils';
@@ -19,6 +19,14 @@ export function ProgressView({
   const { activePlayerId, activeHabits, activePlayerSummary, checkIns, updateHabit } = useStore();
   const [planner, setPlanner] = useState(openPlanner);
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+
+  const completionCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const checkIn of checkIns) {
+      if (checkIn.playerId === activePlayerId) counts.set(checkIn.habitId, (counts.get(checkIn.habitId) ?? 0) + 1);
+    }
+    return counts;
+  }, [checkIns, activePlayerId]);
 
   if (planner) return <HabitOnboarding onDone={() => setPlanner(false)} />;
 
@@ -84,9 +92,7 @@ export function ProgressView({
         <div className="space-y-2">
           {activeHabits.map((habit) => {
             const isSelected = selectedHabitId === habit.id;
-            const totalCompletions = checkIns.filter(
-              (c) => c.playerId === activePlayerId && c.habitId === habit.id
-            ).length;
+            const totalCompletions = completionCounts.get(habit.id) ?? 0;
 
             return (
               <div

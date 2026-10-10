@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -87,7 +87,7 @@ export function HabitHeatmap({
     }
   };
 
-  const calendarWeeks = getHeatmapCalendarWeeks(weekCount, todayStr);
+  const calendarWeeks = useMemo(() => getHeatmapCalendarWeeks(weekCount, todayStr), [weekCount, todayStr]);
   const allVisibleDays = calendarWeeks.flatMap((w) => w.days).filter((d) => !d.isFuture);
 
   const rawPar = multiplayer.configured
@@ -95,29 +95,21 @@ export function HabitHeatmap({
     : 240;
   const dailyPar = filteredHabit ? Math.max(1, filteredHabit.points) : rawPar > 0 ? rawPar : 240;
 
-  const restDaySet = new Set(
+  const restDaySet = useMemo(() => new Set(
     restDays.filter((r) => r.playerId === selectedPlayer).map((r) => r.date)
-  );
+  ), [restDays, selectedPlayer]);
 
-  const dayStatsMap: Record<
-    string,
-    { points: number; count: number; items: CheckIn[] }
-  > = {};
-
-  checkIns
-    .filter(
-      (c) =>
-        c.playerId === selectedPlayer &&
-        (!activeHabitFilter || c.habitId === activeHabitFilter)
-    )
-    .forEach((c) => {
-      const existing = dayStatsMap[c.date] || { points: 0, count: 0, items: [] };
-      dayStatsMap[c.date] = {
-        points: existing.points + c.pointsEarned,
-        count: existing.count + 1,
-        items: [...existing.items, c],
-      };
-    });
+  const dayStatsMap = useMemo(() => {
+    const stats: Record<string, { points: number; count: number; items: CheckIn[] }> = {};
+    for (const checkIn of checkIns) {
+      if (checkIn.playerId !== selectedPlayer || (activeHabitFilter && checkIn.habitId !== activeHabitFilter)) continue;
+      const day = stats[checkIn.date] ?? (stats[checkIn.date] = { points: 0, count: 0, items: [] });
+      day.points += checkIn.pointsEarned;
+      day.count++;
+      day.items.push(checkIn);
+    }
+    return stats;
+  }, [checkIns, selectedPlayer, activeHabitFilter]);
 
   // Compute summary metrics across visible window
   let windowTotalPoints = 0;

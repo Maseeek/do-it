@@ -94,12 +94,13 @@ export function DuelView() {
   const maciekHabits = habits.filter((h) => h.playerId === 'maciek' && h.isActive);
   const myrnaHabits = habits.filter((h) => h.playerId === 'myrna' && h.isActive);
 
-  const dailyDuelPoints = getWeeklyDailyDuelPoints(checkIns);
-  const categoryBreakdown = getCategoryBreakdown(
+  const dailyDuelPoints = useMemo(() => getWeeklyDailyDuelPoints(checkIns, todayStr), [checkIns, todayStr]);
+  const categoryBreakdown = useMemo(() => getCategoryBreakdown(
     checkIns,
     habits,
-    selectedTier === 'karma' ? 'karma' : 'weekly'
-  );
+    selectedTier === 'karma' ? 'karma' : 'weekly',
+    todayStr
+  ), [checkIns, habits, selectedTier, todayStr]);
   const stakesRecord = getStakesRecord(stakes);
 
   const activeCategories = useMemo(

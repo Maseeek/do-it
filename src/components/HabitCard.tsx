@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, Player } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
-import { ProofModal } from './ProofModal';
-import { ProofGalleryModal } from './ProofGalleryModal';
+import dynamic from 'next/dynamic';
+
 
 import {
   BookOpen,
@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
+
+const ProofModal = dynamic(() => import('./ProofModal').then(module => module.ProofModal));
+const ProofGalleryModal = dynamic(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal));
 
 interface HabitCardProps {
   habit: Habit;
@@ -626,13 +629,13 @@ export const HabitCard = React.memo(function HabitCard({
       </div>
 
       {/* Proof Modal */}
-      <ProofModal
+      {isProofModalOpen && <ProofModal
         habit={habit}
         isOpen={isProofModalOpen}
         onClose={() => setIsProofModalOpen(false)}
         onConfirm={handleProofConfirmed}
         initialPhotos={proofPhotos}
-      />
+      />}
 
       {/* Own Proof Gallery Lightbox */}
       {showFullProof && proofPhotos.length > 0 && (
