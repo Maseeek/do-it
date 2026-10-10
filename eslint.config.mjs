@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     "tests/**",
     "scripts/**",
     ".scratch/**",
+    ".agents/**",
+    ".gemini/**",
   ]),
 ]);
 

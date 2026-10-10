@@ -31,7 +31,7 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
   return (
     <nav
       aria-label="Main navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#08090a]/90 backdrop-blur-2xl border-t border-zinc-800/80 py-1.5 px-6 safe-area-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#f6f7fa]/90 dark:bg-[#08090a]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-zinc-800/80 py-1.5 px-6 safe-area-bottom transition-colors"
     >
       <div className="max-w-md mx-auto flex items-center justify-around gap-2">
         {tabs.map((tab) => {
@@ -46,12 +46,12 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 ${
                 isActive
-                  ? 'bg-zinc-900/80 text-white'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-player-500/15 text-player-400 font-semibold shadow-xs'
+                  : 'text-zinc-500 hover:text-foreground'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2]' : 'stroke-[1.75]'}`} />
-              <span className={`text-[10px] font-mono tracking-tight ${isActive ? 'font-semibold text-white' : 'font-medium'}`}>
+              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2] text-player-400' : 'stroke-[1.75]'}`} />
+              <span className={`text-[10px] font-mono tracking-tight ${isActive ? 'font-semibold text-player-400' : 'font-medium'}`}>
                 {tab.label}
               </span>
             </button>

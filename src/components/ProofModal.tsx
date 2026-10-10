@@ -139,7 +139,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
             >
               {isCompressing ? (
                 <>
-                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin mb-1.5" />
+                  <Loader2 className="w-6 h-6 text-player-400 animate-spin mb-1.5" />
                   <span className="text-xs font-medium text-zinc-300">Processing...</span>
                 </>
               ) : (

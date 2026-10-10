@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import type { User } from '@supabase/supabase-js';
 import { extractInviteCode, hasMatchedAccount, hasMatchedDuelPartner, isValidInviteCode } from './invite-navigation';
 import { getSupabaseClient } from './supabase';
-import type { PlayerId } from './types';
+import type { PlayerColorId, PlayerId } from './types';
 export interface DuelSession {
   id: string;
   owner_id: string;
@@ -12,6 +12,8 @@ export interface DuelSession {
   owner_name: string;
   guest_name: string | null;
   invite_code: string;
+  owner_color: PlayerColorId;
+  guest_color: PlayerColorId;
 }
 
 interface MultiplayerContextValue {
@@ -28,6 +30,7 @@ interface MultiplayerContextValue {
   acceptInvite: (code: string, name: string) => Promise<void>;
   replaceSoloDuelWithInvite: (code: string, name: string) => Promise<void>;
   updatePlayerName: (name: string) => Promise<void>;
+  updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -130,14 +133,6 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     const { error: rpcError } = await client.rpc('replace_solo_duel_with_invite', { code: normalizedCode, display_name: displayName });
     if (rpcError) {
       if (rpcError.code === 'PGRST202' || rpcError.message?.includes('replace_solo_duel_with_invite')) {
-        if (duel && !duel.guest_id) {
-          await client.from('duels').delete().eq('id', duel.id).is('guest_id', null);
-          const { error: fallbackError } = await client.rpc('accept_duel', { code: normalizedCode, display_name: displayName });
-          if (!fallbackError) {
-            await refresh();
-            return;
-          }
-        }
         throw new Error('Your account already owns a solo duel, and automatic solo-duel replacement (supabase/replace-solo-duel.sql) is not enabled in the database yet. Sign out to join with another account, or run supabase/replace-solo-duel.sql in the Supabase SQL Editor.');
       }
       throw new Error(rpcError.message || 'Could not replace your solo duel with this invitation.');
@@ -148,6 +143,17 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     if (!client || !duel || !slot) throw new Error('Join a duel before changing your name.');
     const { error: rpcError } = await client.rpc('update_duel_player_name', { display_name: name });
     if (rpcError) throw rpcError;
+    await refresh();
+  };
+  const updatePlayerColor = async (colorId: PlayerColorId) => {
+    if (!client || !duel || !slot) throw new Error('Join a duel before changing your color.');
+    const { error: rpcError } = await client.rpc('set_player_color', { requested_color: colorId });
+    if (rpcError) {
+      if (rpcError.code === 'PGRST202' || rpcError.message?.includes('set_player_color')) {
+        throw new Error('Player colors are not enabled in Supabase yet. Run supabase/player-colors.sql in the SQL Editor.');
+      }
+      throw new Error(rpcError.message || 'Could not update your player color.');
+    }
     await refresh();
   };
   const signOut = async () => {
@@ -163,7 +169,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   const hasPairedPartner = hasMatchedDuelPartner(duel, user);
   const slot = duel && user && hasValidAccount ? (duel.owner_id === user.id ? 'maciek' : duel.guest_id === user.id ? 'myrna' : null) : null;
 
-  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, hasValidAccount, hasPairedPartner, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, signOut }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, hasValidAccount, hasPairedPartner, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, updatePlayerColor, signOut }}>{children}</Context.Provider>;
 }
 
 export function useMultiplayer() {

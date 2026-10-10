@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, Player } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
-import { ProofModal } from './ProofModal';
-import { ProofGalleryModal } from './ProofGalleryModal';
+import dynamic from 'next/dynamic';
+
 
 import {
   BookOpen,
@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
+
+const ProofModal = dynamic(() => import('./ProofModal').then(module => module.ProofModal));
+const ProofGalleryModal = dynamic(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal));
 
 interface HabitCardProps {
   habit: Habit;
@@ -76,7 +79,6 @@ export const HabitCard = React.memo(function HabitCard({
   const isWeeklyHabit = Boolean(habit.weeklyTargetDays && habit.weeklyTargetDays > 0);
   const isWeeklyTargetMet = isWeeklyHabit && weeklyCompletions >= habit.weeklyTargetDays!;
   const satisfied = completed || isWeeklyTargetMet;
-  const isMaciek = activePlayer?.id === 'maciek';
   const isPulsing = Boolean(isLocking || localPulse);
   const pulsePoints = localPulse?.points ?? checkIn?.pointsEarned ?? (isWeeklyTargetMet ? 0 : habit.points);
 
@@ -193,9 +195,7 @@ export const HabitCard = React.memo(function HabitCard({
       <div
         className={`group relative rounded-xl p-3.5 transition-all duration-200 border ${
           isPulsing
-            ? isMaciek
-              ? 'bg-[#10141f] border-blue-400/90 animate-kinetic-card-blue z-10'
-              : 'bg-[#16101f] border-purple-400/90 animate-kinetic-card-purple z-10'
+            ? 'bg-player-950/30 border-player-400/90 animate-kinetic-card-player z-10'
             : satisfied
             ? `bg-[#0b0c0f]/90 border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
             : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-xs'
@@ -207,9 +207,7 @@ export const HabitCard = React.memo(function HabitCard({
             aria-hidden="true"
             className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${
               completed
-                ? isMaciek
-                  ? 'bg-blue-500/50'
-                  : 'bg-purple-500/50'
+                ? 'bg-player-500/50'
                 : 'bg-emerald-500/50'
             }`}
           />
@@ -224,19 +222,11 @@ export const HabitCard = React.memo(function HabitCard({
           >
             {/* Horizontal laser sweep from checkbox to points counter */}
             <div
-              className={`absolute inset-y-0 w-1/2 animate-kinetic-laser-sweep bg-gradient-to-r ${
-                isMaciek
-                  ? 'from-transparent via-blue-400/22 to-transparent'
-                  : 'from-transparent via-purple-400/22 to-transparent'
-              }`}
+              className="absolute inset-y-0 w-1/2 animate-kinetic-laser-sweep bg-gradient-to-r from-transparent via-player-400/22 to-transparent"
             />
             {/* Top perimeter ignition filament */}
             <div
-              className={`absolute inset-x-4 top-0 h-[1.5px] bg-gradient-to-r ${
-                isMaciek
-                  ? 'from-transparent via-blue-300/90 to-transparent'
-                  : 'from-transparent via-purple-300/90 to-transparent'
-              }`}
+              className="absolute inset-x-4 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-player-300/90 to-transparent"
             />
           </div>
         )}
@@ -248,9 +238,7 @@ export const HabitCard = React.memo(function HabitCard({
               <span
                 key={`ring-${localPulse?.token ?? 'lock'}`}
                 aria-hidden="true"
-                className={`pointer-events-none absolute inset-0 rounded-lg border-2 animate-kinetic-ring ${
-                  isMaciek ? 'border-blue-400' : 'border-purple-400'
-                }`}
+                className="pointer-events-none absolute inset-0 rounded-lg border-2 animate-kinetic-ring border-player-400"
               />
             )}
 
@@ -267,9 +255,7 @@ export const HabitCard = React.memo(function HabitCard({
                 isPulsing ? 'animate-kinetic-box-snap ' : ''
               }${
                 completed
-                  ? isMaciek
-                    ? 'bg-blue-500 border border-blue-300/90 text-white shadow-[0_0_14px_-2px_rgba(59,130,246,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
-                    : 'bg-purple-500 border border-purple-300/90 text-white shadow-[0_0_14px_-2px_rgba(168,85,247,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]'
+                  ? 'bg-player-500 border border-player-300/90 text-white shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.35)]'
                   : isWeeklyTargetMet
                   ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
                   : 'border border-zinc-700/90 bg-[#090a0d] hover:border-zinc-500 text-transparent hover:text-zinc-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
@@ -303,9 +289,7 @@ export const HabitCard = React.memo(function HabitCard({
               <span
                 className={`w-3.5 h-3.5 transition-colors ${
                   isPulsing
-                    ? isMaciek
-                      ? 'text-blue-400'
-                      : 'text-purple-400'
+                    ? 'text-player-400'
                     : satisfied
                     ? 'text-zinc-500'
                     : 'text-zinc-400'
@@ -317,9 +301,7 @@ export const HabitCard = React.memo(function HabitCard({
               <span
                 className={`text-[10px] uppercase font-mono font-medium tracking-wider transition-colors ${
                   isPulsing
-                    ? isMaciek
-                      ? 'text-blue-300'
-                      : 'text-purple-300'
+                    ? 'text-player-300'
                     : satisfied
                     ? 'text-zinc-500'
                     : 'text-zinc-400'
@@ -372,11 +354,7 @@ export const HabitCard = React.memo(function HabitCard({
                 {isPulsing && (
                   <span
                     aria-hidden="true"
-                    className={`pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1.5px] rounded-full animate-kinetic-strike bg-gradient-to-r ${
-                      isMaciek
-                        ? 'from-blue-400 via-blue-200 to-white shadow-[0_0_8px_rgba(96,165,250,0.9)]'
-                        : 'from-purple-400 via-purple-200 to-white shadow-[0_0_8px_rgba(192,132,252,0.9)]'
-                    }`}
+                    className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1.5px] rounded-full animate-kinetic-strike bg-gradient-to-r from-player-400 via-player-200 to-white shadow-[0_0_8px_color-mix(in_srgb,var(--player-base)_90%,transparent)]"
                   />
                 )}
               </span>
@@ -391,7 +369,7 @@ export const HabitCard = React.memo(function HabitCard({
             {/* Micro-note preview */}
             {checkIn?.note && (
               <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-zinc-300 italic bg-zinc-900/70 border border-zinc-800/80 rounded-md px-2 py-0.5 max-w-full">
-                <MessageSquare className="w-2.5 h-2.5 text-blue-400 shrink-0" />
+                <MessageSquare className="w-2.5 h-2.5 text-player-400 shrink-0" />
                 <span className="truncate">{checkIn.note}</span>
               </div>
             )}
@@ -403,11 +381,7 @@ export const HabitCard = React.memo(function HabitCard({
               <span
                 key={`pts-${localPulse?.token ?? 'lock'}`}
                 aria-hidden="true"
-                className={`pointer-events-none absolute -top-2 right-0 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-extrabold tracking-tight whitespace-nowrap border shadow-lg animate-kinetic-pts-launch ${
-                  isMaciek
-                    ? 'bg-blue-500 text-white border-blue-300 shadow-blue-500/40'
-                    : 'bg-purple-500 text-white border-purple-300 shadow-purple-500/40'
-                }`}
+                className="pointer-events-none absolute -top-2 right-0 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-extrabold tracking-tight whitespace-nowrap border shadow-lg animate-kinetic-pts-launch bg-player-500 text-white border-player-300 shadow-player-500/40"
               >
                 <span>↑</span>
                 <span>+{pulsePoints} PTS</span>
@@ -429,20 +403,16 @@ export const HabitCard = React.memo(function HabitCard({
               }
               className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-all tabular-nums ${
                 isPulsing
-                  ? isMaciek
-                    ? 'bg-blue-500/20 border-blue-400 text-blue-200 shadow-[0_0_14px_-2px_rgba(59,130,246,0.5)] animate-kinetic-badge-ignite'
-                    : 'bg-purple-500/20 border-purple-400 text-purple-200 shadow-[0_0_14px_-2px_rgba(168,85,247,0.5)] animate-kinetic-badge-ignite'
+                  ? 'bg-player-500/20 border-player-400 text-player-200 shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_50%,transparent)] animate-kinetic-badge-ignite'
                   : completed
                   ? checkIn?.pointsEarned === 0
                     ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
-                    : isMaciek
-                    ? 'bg-blue-500/10 border-blue-500/25 text-blue-300/90'
-                    : 'bg-purple-500/10 border-purple-500/25 text-purple-300/90'
+                    : 'bg-player-500/10 border-player-500/25 text-player-300/90'
                   : isWeeklyTargetMet
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                   : habit.isQuantitative
-                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-100 hover:border-zinc-700'
+                  ? 'bg-player-500/10 border-player-500/30 text-player-400 hover:bg-player-500/20'
+                  : 'bg-player-500/5 border-player-500/20 text-player-400 hover:border-player-400'
               }`}
               title={
                 completed && checkIn?.pointsEarned === 0
@@ -468,7 +438,7 @@ export const HabitCard = React.memo(function HabitCard({
                 aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
                 className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${
                   checkIn?.note
-                    ? 'text-blue-400 bg-blue-500/10 border-blue-500/25'
+                    ? 'text-player-400 bg-player-500/10 border-player-500/25'
                     : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-zinc-900 hover:border-zinc-800'
                 }`}
                 title={checkIn?.note ? 'Edit note' : 'Add note'}
@@ -560,7 +530,7 @@ export const HabitCard = React.memo(function HabitCard({
                 hapticLight();
                 setShowPartnerProof(true);
               }}
-              className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 transition-colors"
+              className="text-player-400 hover:text-player-300 font-medium flex items-center gap-1 bg-player-500/10 px-2 py-0.5 rounded border border-player-500/20 transition-colors"
             >
               <Camera className="w-3 h-3" />
               <span>Photos ({partnerProofPhotos.length})</span>
@@ -573,10 +543,10 @@ export const HabitCard = React.memo(function HabitCard({
           <div className="mt-3 pt-3 border-t border-zinc-800/80 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                <BookOpen className="w-3.5 h-3.5 text-player-400" />
                 How many pages did you read?
               </span>
-              <span className="font-mono font-bold text-blue-400">
+              <span className="font-mono font-bold text-player-400">
                 {quantity} {habit.quantityUnit} = +{Math.min(habit.points, quantity)} pts
               </span>
             </div>
@@ -589,8 +559,8 @@ export const HabitCard = React.memo(function HabitCard({
                   onClick={() => handleLogQuantity(pages)}
                   className={`flex-1 py-1 rounded-lg text-xs font-mono border transition-colors ${
                     quantity === pages
-                      ? 'bg-blue-500/20 border-blue-500/50 text-blue-300 font-bold'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                      ? 'bg-player-500/20 border-player-500/50 text-player-300 font-bold'
+                      : 'bg-player-500/5 border-player-500/15 text-zinc-400 hover:text-player-400'
                   }`}
                 >
                   {pages}p
@@ -638,7 +608,7 @@ export const HabitCard = React.memo(function HabitCard({
 
               <button
                 onClick={() => handleLogQuantity(quantity)}
-                className="flex-1 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors"
+                className="flex-1 py-1.5 rounded-lg bg-player-500 text-white font-semibold text-xs hover:bg-player-600 transition-colors"
               >
                 Log {quantity} Pages
               </button>
@@ -659,13 +629,13 @@ export const HabitCard = React.memo(function HabitCard({
       </div>
 
       {/* Proof Modal */}
-      <ProofModal
+      {isProofModalOpen && <ProofModal
         habit={habit}
         isOpen={isProofModalOpen}
         onClose={() => setIsProofModalOpen(false)}
         onConfirm={handleProofConfirmed}
         initialPhotos={proofPhotos}
-      />
+      />}
 
       {/* Own Proof Gallery Lightbox */}
       {showFullProof && proofPhotos.length > 0 && (

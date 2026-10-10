@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUpRight,
   BedDouble,
@@ -11,17 +11,21 @@ import {
   Trophy,
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { useMultiplayer } from '@/lib/multiplayer';
-import { formatFriendlyDate, parseDate } from '@/lib/date-utils';
+import { formatFriendlyDate, getTodayDateString, parseDate } from '@/lib/date-utils';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticCelebration, hapticLight } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
-import { ActivityFeed } from './ActivityFeed';
-import { ProofGalleryModal } from './ProofGalleryModal';
+import dynamic from 'next/dynamic';
+
 import { Habit } from '@/lib/types';
 import { calculateHabitStreak } from '@/lib/score-calculator';
+
+const ActivityFeed = dynamic(() => import('./ActivityFeed').then(module => module.ActivityFeed));
+const ProofGalleryModal = dynamic(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal));
 
 export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
@@ -93,7 +97,6 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   const allDone = activeHabits.length > 0 && satisfiedHabits.length === activeHabits.length;
   const progress = par > 0 ? Math.min(100, Math.round((points / par) * 100)) : 0;
   const isRest = isRestDay(selectedDate);
-  const isMaciek = activePlayer?.id === 'maciek';
   const activeTargetPulse =
     targetPulse && targetPulse.context === context ? targetPulse : null;
 
@@ -169,13 +172,17 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     : partnerCleanSpaceCheckIn?.proofUrl
     ? [partnerCleanSpaceCheckIn.proofUrl]
     : [];
+  const todayStr = getTodayDateString();
+  const habitStreaks = useMemo(() => new Map(activeHabits.map(habit =>
+    [habit.id, calculateHabitStreak(habit, checkIns, restDays, todayStr)]
+  )), [activeHabits, checkIns, restDays, todayStr]);
   const getHabitCardProps = (habit: Habit) => ({
     habit,
     selectedDate,
     completed: isHabitCompletedOnDate(habit.id, selectedDate),
     checkIn: getHabitCheckInOnDate(habit.id, selectedDate),
     weeklyCompletions: getWeeklyHabitCompletions(habit.id, selectedDate),
-    habitStreak: calculateHabitStreak(habit, checkIns, restDays),
+    habitStreak: habitStreaks.get(habit.id) ?? 0,
     activePlayer,
     partnerPlayer: habit.category === 'environment' && habit.requiresProof ? partner : null,
     partnerCleanSpaceCheckIn: habit.category === 'environment' && habit.requiresProof ? partnerCleanSpaceCheckIn : undefined,
@@ -205,7 +212,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   });
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="w-full space-y-4">
       {/* Top Header Row + Segmented View Switcher */}
       <div className="flex items-end justify-between gap-3">
         <div>
@@ -284,9 +291,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
               activeTargetPulse
                 ? progress >= 100
                   ? 'animate-target-pulse-emerald'
-                  : isMaciek
-                  ? 'animate-target-pulse-blue'
-                  : 'animate-target-pulse-purple'
+                  : 'animate-target-pulse-player'
                 : ''
             }`}
           >
@@ -310,9 +315,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                       className={`inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold tracking-tight border animate-target-delta-flare ${
                         progress >= 100
                           ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                          : isMaciek
-                          ? 'bg-blue-500/15 text-blue-300 border-blue-400/40 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
-                          : 'bg-purple-500/15 text-purple-300 border-purple-400/40 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
+                          : 'bg-player-500/15 text-player-300 border-player-400/40 shadow-[0_0_12px_color-mix(in_srgb,var(--player-base)_30%,transparent)]'
                       }`}
                     >
                       +{activeTargetPulse.delta} PTS
@@ -329,9 +332,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                   <span
                     className={`inline-flex items-center text-xs font-mono font-semibold px-2 py-0.5 rounded border tabular-nums transition-colors ${
                       activeTargetPulse
-                        ? isMaciek
-                          ? 'text-blue-200 bg-blue-500/15 border-blue-400/40'
-                          : 'text-purple-200 bg-purple-500/15 border-purple-400/40'
+                        ? 'text-player-200 bg-player-500/15 border-player-400/40'
                         : 'text-white bg-zinc-900/90 border-zinc-800'
                     }`}
                   >
@@ -354,9 +355,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                 className={`relative h-full rounded-full transition-[width] duration-500 ease-out ${
                   progress >= 100
                     ? 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]'
-                    : isMaciek
-                    ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 shadow-[0_0_12px_rgba(59,130,246,0.45)]'
-                    : 'bg-gradient-to-r from-purple-600 via-purple-500 to-fuchsia-400 shadow-[0_0_12px_rgba(168,85,247,0.45)]'
+                    : 'bg-gradient-to-r from-player-600 via-player-500 to-player-400 shadow-[0_0_12px_color-mix(in_srgb,var(--player-base)_45%,transparent)]'
                 }`}
                 style={{ width: `${progress}%` }}
               >
@@ -396,14 +395,10 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
 
             {/* Integrated Partner Accountability Row */}
             {partner ? (
-              <div className="mt-3.5 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
+              <div style={getPlayerThemeStyles(partner)} className="mt-3.5 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-mono font-bold border shrink-0 ${
-                      isMaciek
-                        ? 'bg-purple-500/10 border-purple-500/25 text-purple-300'
-                        : 'bg-blue-500/10 border-blue-500/25 text-blue-300'
-                    }`}
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-mono font-bold border shrink-0 bg-player-500/10 border-player-500/25 text-player-300"
                   >
                     {partner.name[0]}
                   </span>

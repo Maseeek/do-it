@@ -18,6 +18,17 @@ export function rebalanceWeeklyHabitCheckIns(
   );
   if (weekLogs.length === 0) return checkIns;
 
+  const updatedMap = new Map<string, CheckIn>();
+  collectRebalancedCheckIns(weekLogs, habit, updatedMap);
+  if (updatedMap.size === 0) return checkIns;
+  return checkIns.map((c) => updatedMap.get(c.id) || c);
+}
+
+function collectRebalancedCheckIns(
+  weekLogs: CheckIn[],
+  habit: Habit,
+  updatedMap: Map<string, CheckIn>
+) {
   // Sort chronologically by date ascending, then completedAt / loggedAt / id
   const sorted = [...weekLogs].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -26,7 +37,6 @@ export function rebalanceWeeklyHabitCheckIns(
     return timeA.localeCompare(timeB);
   });
 
-  const updatedMap = new Map<string, CheckIn>();
   sorted.forEach((log, index) => {
     const isEligibleForPoints = index < habit.weeklyTargetDays!;
     let targetPoints = 0;
@@ -47,9 +57,6 @@ export function rebalanceWeeklyHabitCheckIns(
       updatedMap.set(log.id, { ...log, pointsEarned: targetPoints });
     }
   });
-
-  if (updatedMap.size === 0) return checkIns;
-  return checkIns.map((c) => updatedMap.get(c.id) || c);
 }
 
 /**
@@ -59,20 +66,36 @@ export function rebalanceAllWeeklyCheckIns(
   checkIns: CheckIn[],
   habits: Habit[]
 ): CheckIn[] {
-  let result = checkIns;
-  habits.forEach((habit) => {
-    if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
-      const weekKeys = new Set(
-        result
-          .filter((c) => c.habitId === habit.id)
-          .map((c) => getWeekKey(c.date))
-      );
-      weekKeys.forEach((wk) => {
-        result = rebalanceWeeklyHabitCheckIns(result, habit, wk);
-      });
+  const weeklyHabits = new Map(habits
+    .filter(habit => habit.weeklyTargetDays && habit.weeklyTargetDays > 0)
+    .map(habit => [habit.id, habit]));
+  if (weeklyHabits.size === 0) return checkIns;
+
+  const groups = new Map<string, Map<string, CheckIn[]>>();
+  const weekKeys = new Map<string, string>();
+  for (const checkIn of checkIns) {
+    if (!weeklyHabits.has(checkIn.habitId)) continue;
+    let weekKey = weekKeys.get(checkIn.date);
+    if (!weekKey) {
+      weekKey = getWeekKey(checkIn.date);
+      weekKeys.set(checkIn.date, weekKey);
     }
-  });
-  return result;
+    let habitWeeks = groups.get(checkIn.habitId);
+    if (!habitWeeks) {
+      habitWeeks = new Map();
+      groups.set(checkIn.habitId, habitWeeks);
+    }
+    const logs = habitWeeks.get(weekKey);
+    if (logs) logs.push(checkIn);
+    else habitWeeks.set(weekKey, [checkIn]);
+  }
+
+  const updatedMap = new Map<string, CheckIn>();
+  for (const [habitId, weeks] of groups) {
+    const habit = weeklyHabits.get(habitId)!;
+    for (const logs of weeks.values()) collectRebalancedCheckIns(logs, habit, updatedMap);
+  }
+  return updatedMap.size === 0 ? checkIns : checkIns.map(c => updatedMap.get(c.id) || c);
 }
 
 /**

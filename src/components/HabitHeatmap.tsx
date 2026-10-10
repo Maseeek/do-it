@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
+import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { useMultiplayer } from '@/lib/multiplayer';
 import {
   formatFriendlyDate,
@@ -86,7 +87,7 @@ export function HabitHeatmap({
     }
   };
 
-  const calendarWeeks = getHeatmapCalendarWeeks(weekCount, todayStr);
+  const calendarWeeks = useMemo(() => getHeatmapCalendarWeeks(weekCount, todayStr), [weekCount, todayStr]);
   const allVisibleDays = calendarWeeks.flatMap((w) => w.days).filter((d) => !d.isFuture);
 
   const rawPar = multiplayer.configured
@@ -94,29 +95,21 @@ export function HabitHeatmap({
     : 240;
   const dailyPar = filteredHabit ? Math.max(1, filteredHabit.points) : rawPar > 0 ? rawPar : 240;
 
-  const restDaySet = new Set(
+  const restDaySet = useMemo(() => new Set(
     restDays.filter((r) => r.playerId === selectedPlayer).map((r) => r.date)
-  );
+  ), [restDays, selectedPlayer]);
 
-  const dayStatsMap: Record<
-    string,
-    { points: number; count: number; items: CheckIn[] }
-  > = {};
-
-  checkIns
-    .filter(
-      (c) =>
-        c.playerId === selectedPlayer &&
-        (!activeHabitFilter || c.habitId === activeHabitFilter)
-    )
-    .forEach((c) => {
-      const existing = dayStatsMap[c.date] || { points: 0, count: 0, items: [] };
-      dayStatsMap[c.date] = {
-        points: existing.points + c.pointsEarned,
-        count: existing.count + 1,
-        items: [...existing.items, c],
-      };
-    });
+  const dayStatsMap = useMemo(() => {
+    const stats: Record<string, { points: number; count: number; items: CheckIn[] }> = {};
+    for (const checkIn of checkIns) {
+      if (checkIn.playerId !== selectedPlayer || (activeHabitFilter && checkIn.habitId !== activeHabitFilter)) continue;
+      const day = stats[checkIn.date] ?? (stats[checkIn.date] = { points: 0, count: 0, items: [] });
+      day.points += checkIn.pointsEarned;
+      day.count++;
+      day.items.push(checkIn);
+    }
+    return stats;
+  }, [checkIns, selectedPlayer, activeHabitFilter]);
 
   // Compute summary metrics across visible window
   let windowTotalPoints = 0;
@@ -146,7 +139,6 @@ export function HabitHeatmap({
     }
   }
 
-  const isMaciek = selectedPlayer === 'maciek';
   const highThreshold = Math.max(1, Math.round(dailyPar * 0.625));
   const midThreshold = Math.max(1, Math.round(dailyPar * 0.3125));
 
@@ -160,29 +152,16 @@ export function HabitHeatmap({
       }
       return 'bg-[#22252b] border border-white/[0.04] hover:bg-[#2c3038]';
     }
-    if (isMaciek) {
-      if (points >= dailyPar) {
-        return 'bg-blue-400 border border-blue-300/80 hover:bg-blue-300 shadow-[0_0_8px_rgba(96,165,250,0.55)]';
-      }
-      if (points >= highThreshold) {
-        return 'bg-blue-600 border border-blue-500/80 hover:bg-blue-500';
-      }
-      if (points >= midThreshold) {
-        return 'bg-blue-800 border border-blue-700/70 hover:bg-blue-700';
-      }
-      return 'bg-blue-950 border border-blue-900/70 hover:bg-blue-900';
-    } else {
-      if (points >= dailyPar) {
-        return 'bg-purple-400 border border-purple-300/80 hover:bg-purple-300 shadow-[0_0_8px_rgba(192,132,252,0.55)]';
-      }
-      if (points >= highThreshold) {
-        return 'bg-purple-600 border border-purple-500/80 hover:bg-purple-500';
-      }
-      if (points >= midThreshold) {
-        return 'bg-purple-800 border border-purple-700/70 hover:bg-purple-700';
-      }
-      return 'bg-purple-950 border border-purple-900/70 hover:bg-purple-900';
+    if (points >= dailyPar) {
+      return 'bg-player-400 border border-player-300/80 hover:bg-player-300 shadow-[0_0_8px_color-mix(in_srgb,var(--player-base)_55%,transparent)]';
     }
+    if (points >= highThreshold) {
+      return 'bg-player-600 border border-player-500/80 hover:bg-player-500';
+    }
+    if (points >= midThreshold) {
+      return 'bg-player-800 border border-player-700/70 hover:bg-player-700';
+    }
+    return 'bg-player-950 border border-player-900/70 hover:bg-player-900';
   };
 
   const canSwitchPlayers = !multiplayer.configured || isPartnerConnected;
@@ -192,7 +171,7 @@ export function HabitHeatmap({
   const inspectedCalendarDate = heatmapDateFormatter.format(parseDate(inspectedDateStr));
 
   return (
-    <section
+    <section style={getPlayerThemeStyles(players[selectedPlayer])}
       aria-label="Consistency contribution calendar"
       className="rounded-xl bg-[#0e1013] border border-zinc-800/90 p-4 space-y-3.5"
     >
@@ -200,7 +179,7 @@ export function HabitHeatmap({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Calendar className={`w-4 h-4 shrink-0 ${isMaciek ? 'text-blue-400' : 'text-purple-400'}`} />
+            <Calendar className="w-4 h-4 shrink-0 text-player-400" />
             <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-200 truncate">
               {filteredHabit ? filteredHabit.title : 'Consistency Graph'}
             </h2>
@@ -262,7 +241,7 @@ export function HabitHeatmap({
                 }}
                 className={`px-2.5 py-0.5 rounded-md border transition-colors ${
                   selectedPlayer === 'maciek'
-                    ? 'bg-blue-500/20 border-blue-500/35 text-blue-300 font-semibold'
+                    ? 'bg-owner-500/20 border-owner-500/35 text-owner-300 font-semibold'
                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -281,7 +260,7 @@ export function HabitHeatmap({
                 }}
                 className={`px-2.5 py-0.5 rounded-md border transition-colors ${
                   selectedPlayer === 'myrna'
-                    ? 'bg-purple-500/20 border-purple-500/35 text-purple-300 font-semibold'
+                    ? 'bg-guest-500/20 border-guest-500/35 text-guest-300 font-semibold'
                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -309,9 +288,7 @@ export function HabitHeatmap({
             }}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
               activeHabitFilter === null
-                ? isMaciek
-                  ? 'bg-blue-500/20 border-blue-500/40 text-blue-200 font-semibold'
-                  : 'bg-purple-500/20 border-purple-500/40 text-purple-200 font-semibold'
+                ? 'bg-player-500/20 border-player-500/40 text-player-200 font-semibold'
                 : 'bg-[#08090a] border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -331,9 +308,7 @@ export function HabitHeatmap({
                 }}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
                   isSelected
-                    ? isMaciek
-                      ? 'bg-blue-500/20 border-blue-500/40 text-blue-200 font-semibold'
-                      : 'bg-purple-500/20 border-purple-500/40 text-purple-200 font-semibold'
+                    ? 'bg-player-500/20 border-player-500/40 text-player-200 font-semibold'
                     : 'bg-[#08090a] border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
@@ -341,9 +316,7 @@ export function HabitHeatmap({
                   name={habit.iconName}
                   className={`w-3 h-3 ${
                     isSelected
-                      ? isMaciek
-                        ? 'text-blue-300'
-                        : 'text-purple-300'
+                      ? 'text-player-300'
                       : 'text-zinc-500'
                   }`}
                 />
@@ -370,9 +343,7 @@ export function HabitHeatmap({
             {filteredHabit ? 'Full Target' : 'Par Days'}
           </div>
           <div
-            className={`mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums ${
-              isMaciek ? 'text-blue-300' : 'text-purple-300'
-            }`}
+            className="mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums text-player-300"
           >
             {parDaysCount}
           </div>
@@ -511,26 +482,16 @@ export function HabitHeatmap({
           <span>Less</span>
           <span className="w-2.5 h-2.5 rounded-[2px] bg-[#22252b] border border-white/[0.06]" />
           <span
-            className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek
-                ? 'bg-blue-950 border border-blue-900/70'
-                : 'bg-purple-950 border border-purple-900/70'
-            }`}
+            className="w-2.5 h-2.5 rounded-[2px] bg-player-950 border border-player-900/70"
           />
           <span
-            className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek ? 'bg-blue-800' : 'bg-purple-800'
-            }`}
+            className="w-2.5 h-2.5 rounded-[2px] bg-player-800"
           />
           <span
-            className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek ? 'bg-blue-600' : 'bg-purple-600'
-            }`}
+            className="w-2.5 h-2.5 rounded-[2px] bg-player-600"
           />
           <span
-            className={`w-2.5 h-2.5 rounded-[2px] ${
-              isMaciek ? 'bg-blue-400' : 'bg-purple-400'
-            }`}
+            className="w-2.5 h-2.5 rounded-[2px] bg-player-400"
           />
           <span>{dailyPar} Par</span>
         </div>
@@ -549,19 +510,13 @@ export function HabitHeatmap({
               </span>
             )}
             <span
-              className={`text-xs font-mono font-bold tabular-nums ${
-                isMaciek ? 'text-blue-300' : 'text-purple-300'
-              }`}
+              className="text-xs font-mono font-bold tabular-nums text-player-300"
             >
               {inspectedStats.points} / {dailyPar} pts
             </span>
             {inspectedStats.points >= dailyPar && (
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${
-                  isMaciek
-                    ? 'bg-blue-500/15 border-blue-500/35 text-blue-300'
-                    : 'bg-purple-500/15 border-purple-500/35 text-purple-300'
-                }`}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border bg-player-500/15 border-player-500/35 text-player-300"
               >
                 <Sparkles className="w-2.5 h-2.5" />
                 {filteredHabit ? 'Completed' : 'Par Hit'}
@@ -619,9 +574,7 @@ export function HabitHeatmap({
                   className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#12141a] border border-zinc-800/90 text-[11px] font-mono text-zinc-200"
                 >
                   <CheckCircle2
-                    className={`w-3 h-3 shrink-0 ${
-                      isMaciek ? 'text-blue-400' : 'text-purple-400'
-                    }`}
+                    className="w-3 h-3 shrink-0 text-player-400"
                   />
                   <span className="truncate max-w-44">{habit.title}</span>
                   {typeof item.quantity === 'number' && (
@@ -630,9 +583,7 @@ export function HabitHeatmap({
                     </span>
                   )}
                   <span
-                    className={`font-semibold tabular-nums ${
-                      isMaciek ? 'text-blue-300' : 'text-purple-300'
-                    }`}
+                    className="font-semibold tabular-nums text-player-300"
                   >
                     +{item.pointsEarned}
                   </span>

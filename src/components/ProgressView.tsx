@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pencil, ChevronRight, Flame, TrendingUp } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { soundEngine } from '@/lib/sound-utils';
@@ -20,11 +20,18 @@ export function ProgressView({
   const [planner, setPlanner] = useState(openPlanner);
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
 
+  const completionCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const checkIn of checkIns) {
+      if (checkIn.playerId === activePlayerId) counts.set(checkIn.habitId, (counts.get(checkIn.habitId) ?? 0) + 1);
+    }
+    return counts;
+  }, [checkIns, activePlayerId]);
+
   if (planner) return <HabitOnboarding onDone={() => setPlanner(false)} />;
-  const isMaciek = (activePlayerId || 'maciek') === 'maciek';
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold tracking-tight">Progress</h1>
         <button className="control min-h-11" onClick={() => setPlanner(true)}>
@@ -34,26 +41,26 @@ export function ProgressView({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-purple-500/25 bg-[#0e1013] p-4">
+        <div className="rounded-xl border border-player-500/25 bg-[#0e1013] p-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
               Day streak
             </span>
-            <Flame className="w-3.5 h-3.5 text-purple-400" />
+            <Flame className="w-3.5 h-3.5 text-player-400" />
           </div>
-          <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-purple-300">
+          <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-player-300">
             {activePlayerSummary.currentStreak}
           </div>
         </div>
 
-        <div className="rounded-xl border border-red-500/25 bg-[#0e1013] p-4">
+        <div className="rounded-xl border border-player-500/25 bg-[#0e1013] p-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
               This week
             </span>
-            <TrendingUp className="w-3.5 h-3.5 text-red-400" />
+            <TrendingUp className="w-3.5 h-3.5 text-player-400" />
           </div>
-          <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-red-300">
+          <div className="mt-1 text-2xl font-bold font-mono tabular-nums text-player-300">
             {activePlayerSummary.completionRateWeekly}%
           </div>
         </div>
@@ -85,9 +92,7 @@ export function ProgressView({
         <div className="space-y-2">
           {activeHabits.map((habit) => {
             const isSelected = selectedHabitId === habit.id;
-            const totalCompletions = checkIns.filter(
-              (c) => c.playerId === activePlayerId && c.habitId === habit.id
-            ).length;
+            const totalCompletions = completionCounts.get(habit.id) ?? 0;
 
             return (
               <div
@@ -109,15 +114,13 @@ export function ProgressView({
                 aria-pressed={isSelected}
                 className={`flex min-h-14 items-center gap-3 rounded-xl border bg-[#0e1013] px-3.5 cursor-pointer transition-colors ${
                   isSelected
-                    ? isMaciek
-                      ? 'border-purple-500/50 bg-purple-500/5'
-                      : 'border-red-500/50 bg-red-500/5'
+                    ? 'border-player-500/50 bg-player-500/5'
                     : 'border-zinc-800/90 hover:border-zinc-700'
                 }`}
               >
                 <HabitIcon
                   name={habit.iconName}
-                  className={`size-4 ${isMaciek ? 'text-purple-400' : 'text-red-400'}`}
+                  className="size-4 text-player-400"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm truncate">{habit.title}</div>
@@ -146,11 +149,7 @@ export function ProgressView({
                   </select>
                 ) : habit.automation ? (
                   <span
-                    className={`rounded border px-1.5 py-0.5 text-[10px] font-mono ${
-                      isMaciek
-                        ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
-                        : 'border-red-500/30 bg-red-500/10 text-red-300'
-                    }`}
+                    className="rounded border px-1.5 py-0.5 text-[10px] font-mono border-player-500/30 bg-player-500/10 text-player-300"
                   >
                     Auto
                   </span>

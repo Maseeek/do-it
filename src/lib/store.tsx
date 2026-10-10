@@ -17,7 +17,10 @@ import {
   GoogleHealthSyncResult,
   ThemePreference,
   EffectiveTheme,
+  PlayerColorId,
+  PLAYER_COLORS,
 } from './types';
+import { isPlayerColorUnlocked } from './player-colors';
 import { getInitialState } from './seed';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
@@ -25,11 +28,10 @@ import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, r
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
+import { indexCheckIns } from './check-in-index';
 import {
   rebalanceWeeklyHabitCheckIns,
   rebalanceAllWeeklyCheckIns,
-  getWeeklyHabitCompletionsCount,
-  isWeeklyHabitTargetMet,
 } from './weekly-utils';
 import { fireCelebrationConfetti } from './confetti';
 import { soundEngine } from './sound-utils';
@@ -101,6 +103,7 @@ interface StoreContextType {
   selectProfile: (id: PlayerId) => void;
   switchProfile: () => void;
   updateLocalPlayerName: (name: string) => void;
+  updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
   toggleHabit: (
     habitId: string,
     proofUrl?: string | string[],
@@ -158,6 +161,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const duelId = multiplayer.duel?.id || null;
   const duelOwnerName = multiplayer.duel?.owner_name || '';
   const duelGuestName = multiplayer.duel?.guest_name || '';
+  const duelOwnerColor = multiplayer.duel?.owner_color || 'blue';
+  const duelGuestColor = multiplayer.duel?.guest_color || 'purple';
   const [state, setState] = useState<AppState>(getInitialState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [loadedDuelId, setLoadedDuelId] = useState<string | null>(null);
@@ -174,6 +179,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const stateSlotRef = useRef<PlayerId | null>(null);
   const restorationInProgressRef = useRef<Record<string, boolean>>({});
   const latestAppliedSequenceRef = useRef(0);
+  const reloadSequenceRef = useRef(0);
 
   // 1. Hydrate from localStorage on client mount
   useEffect(() => {
@@ -442,13 +448,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     let cancelled = false;
-    let reloadSequence = 0;
     if (stateDuelRef.current !== duelId) {
       setLoadedDuelId(null);
       setSyncStatus('syncing');
     }
     const reload = async () => {
-      const sequence = ++reloadSequence;
+      const sequence = ++reloadSequenceRef.current;
       try {
         await duelQueueRef.current;
         let data = await loadDuelData(client, duelId);
@@ -481,6 +486,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const visibleCheckIns = partnerPaired ? data.checkIns : data.checkIns.filter(c => c.playerId === multiplayer.slot);
         const visibleReactions = partnerPaired ? data.reactions : data.reactions.filter(r => r.fromPlayerId === multiplayer.slot && r.toPlayerId === multiplayer.slot);
         const visibleRestDays = partnerPaired ? data.restDays : data.restDays.filter(r => r.playerId === multiplayer.slot);
+        const ownerColor = PLAYER_COLORS.find(color => color.id === duelOwnerColor) || PLAYER_COLORS[0];
+        const guestColor = PLAYER_COLORS.find(color => color.id === duelGuestColor) || PLAYER_COLORS[1];
         setState(prev => ({
           ...(sameDuel ? prev : initial),
           activePlayerId: multiplayer.slot,
@@ -490,8 +497,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           reactions: visibleReactions,
           restDays: visibleRestDays,
           players: {
-            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name },
-            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent' },
+            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: ownerColor.color, accentBg: ownerColor.accentBg, accentBorder: ownerColor.accentBorder },
+            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guestColor.color, accentBg: guestColor.accentBg, accentBorder: guestColor.accentBorder },
           },
         }));
         setLoadedDuelId(duelId);
@@ -521,7 +528,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     }, 30000);
     return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
-  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName]);
+  }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName, duelOwnerColor, duelGuestColor]);
 
   const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
     const client = getSupabaseClient();
@@ -560,42 +567,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
   const todayStr = getTodayDateString();
   const isTodaySelected = selectedDate === todayStr;
+  const checkInIndex = useMemo(() => indexCheckIns(state.checkIns), [state.checkIns]);
 
   const isHabitCompletedToday = useCallback(
-    (habitId: string): boolean => state.checkIns.some((c) => c.habitId === habitId && c.date === todayStr),
-    [state.checkIns, todayStr]
+    (habitId: string): boolean => checkInIndex.byHabitAndDate.get(habitId)?.has(todayStr) ?? false,
+    [checkInIndex, todayStr]
   );
 
   const getHabitCheckInToday = useCallback(
-    (habitId: string): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === todayStr),
-    [state.checkIns, todayStr]
+    (habitId: string): CheckIn | undefined => checkInIndex.byHabitAndDate.get(habitId)?.get(todayStr),
+    [checkInIndex, todayStr]
   );
 
   const isHabitCompletedOnDate = useCallback(
-    (habitId: string, date: string): boolean => state.checkIns.some((c) => c.habitId === habitId && c.date === date),
-    [state.checkIns]
+    (habitId: string, date: string): boolean => checkInIndex.byHabitAndDate.get(habitId)?.has(date) ?? false,
+    [checkInIndex]
   );
 
   const getHabitCheckInOnDate = useCallback(
-    (habitId: string, date: string): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === date),
-    [state.checkIns]
+    (habitId: string, date: string): CheckIn | undefined => checkInIndex.byHabitAndDate.get(habitId)?.get(date),
+    [checkInIndex]
   );
 
   const getCheckInForHabit = useCallback(
-    (habitId: string, date = selectedDate): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === date),
-    [state.checkIns, selectedDate]
+    (habitId: string, date = selectedDate): CheckIn | undefined => checkInIndex.byHabitAndDate.get(habitId)?.get(date),
+    [checkInIndex, selectedDate]
   );
 
   const getWeeklyHabitCompletions = useCallback(
-    (habitId: string, date = selectedDate): number => getWeeklyHabitCompletionsCount(habitId, date, state.checkIns),
-    [state.checkIns, selectedDate]
+    (habitId: string, date = selectedDate): number => checkInIndex.weeklyDates.get(habitId)?.get(getWeekKey(date))?.size ?? 0,
+    [checkInIndex, selectedDate]
   );
 
   const isHabitWeeklyTargetMet = useCallback((habitId: string, date = selectedDate): boolean => {
     const habit = state.habits.find((h) => h.id === habitId);
     if (!habit) return false;
-    return isWeeklyHabitTargetMet(habit, date, state.checkIns);
-  }, [state.habits, state.checkIns, selectedDate]);
+    return !!habit.weeklyTargetDays && habit.weeklyTargetDays > 0 && getWeeklyHabitCompletions(habitId, date) >= habit.weeklyTargetDays;
+  }, [state.habits, getWeeklyHabitCompletions, selectedDate]);
 
   const isHabitSatisfiedOnDate = useCallback(
     (habitId: string, date = selectedDate): boolean =>
@@ -664,8 +672,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
-      rebalanced.forEach((c) => {
-        const orig = nextCheckIns.find((o) => o.id === c.id);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
         if (orig && orig.pointsEarned !== c.pointsEarned) {
           syncedCheckIns.push(c);
         }
@@ -709,8 +717,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
-      rebalanced.forEach((c) => {
-        const orig = nextCheckIns.find((o) => o.id === c.id);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
         if (orig && orig.pointsEarned !== c.pointsEarned) {
           syncedCheckIns.push(c);
         }
@@ -785,8 +793,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
-      rebalanced.forEach((c) => {
-        const orig = nextCheckIns.find((o) => o.id === c.id);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
         if (orig && orig.pointsEarned !== c.pointsEarned) {
           syncedCheckIns.push(c);
         }
@@ -930,6 +938,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (trimmed.length < 1 || trimmed.length > 40) throw new Error('Name must be 1 to 40 characters.');
   const id = state.activePlayerId;
   setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], name: trimmed } } })); });
+  const updatePlayerColor = useStableCallback(async (colorId: PlayerColorId) => {
+    if (!state.activePlayerId) throw new Error('Choose a profile first.');
+    const color = PLAYER_COLORS.find(option => option.id === colorId);
+    const karma = state.checkIns.filter(checkIn => checkIn.playerId === state.activePlayerId).reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
+    if (!color || !isPlayerColorUnlocked(colorId, karma)) throw new Error('That color is still locked.');
+    if (multiplayer.configured) {
+      if (state.activePlayerId !== multiplayer.slot) throw new Error('Choose your own profile first.');
+      await multiplayer.updatePlayerColor(colorId);
+      return;
+    }
+    const id = state.activePlayerId;
+    setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], color: color.color, accentBg: color.accentBg, accentBorder: color.accentBorder } } }));
+  });
 
   const applyHabitPlan = useStableCallback(async (plannedHabits: Habit[]) => { const playerId = state.activePlayerId;
   if (!playerId || (multiplayer.configured && playerId !== multiplayer.slot)) throw new Error('Choose your own profile first.');
@@ -1259,7 +1280,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     stakes: state.stakes, reactions: state.reactions || [], restDays: state.restDays || [],
     selectedDate, isTodaySelected, setSelectedDate, maciekSummary, myrnaSummary,
     activePlayerSummary, maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled,
-    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, toggleHabit,
+    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit,
     updateCheckInNote, isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate,
     getHabitCheckInOnDate, getCheckInForHabit, getWeeklyHabitCompletions,
     isHabitWeeklyTargetMet, isHabitSatisfiedOnDate, isPartnerConnected, partnerId,
@@ -1273,7 +1294,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     isHydrated, loadedDuelId, syncStatus, storageError, state, activePlayer, activeHabits,
     selectedDate, isTodaySelected, maciekSummary, myrnaSummary, activePlayerSummary,
     maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled, setSoundEnabled,
-    selectProfile, switchProfile, updateLocalPlayerName, toggleHabit, updateCheckInNote,
+    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit, updateCheckInNote,
     isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate, getHabitCheckInOnDate,
     getCheckInForHabit, getWeeklyHabitCompletions, isHabitWeeklyTargetMet, isHabitSatisfiedOnDate,
     isPartnerConnected, partnerId, partnerCleanSpaceHabit, partnerCleanSpaceCheckIn, addReaction,

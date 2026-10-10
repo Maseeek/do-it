@@ -113,7 +113,7 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
   };
 
   return (
-    <main className="relative z-10 min-h-screen bg-[#f7f8f9] dark:bg-black text-white flex items-center justify-center px-4 py-8">
+    <main className="relative z-10 min-h-screen bg-[#f7f8f9] dark:bg-black text-white flex items-center justify-center px-4 py-8 transition-colors">
       {showPopup && (
         <div
           role="dialog"
@@ -126,17 +126,21 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
           <div className="w-full max-w-md rounded-3xl border border-white/15 bg-[#16181d] text-white p-6 space-y-5 shadow-2xl">
             <div className="text-center">
               <DoLogo size="lg" className="mx-auto mb-3" />
-              <h2 id="gate-invite-dialog-title" className="text-xl font-bold tracking-tight text-white">
-                {hasInvalidInviteLink ? 'Invalid invitation link' : 'Could not join invitation'}
-              </h2>
+              <h1 id="gate-invite-dialog-title" className="text-xl font-bold tracking-tight text-white">
+                {hasInvalidInviteLink ? 'Invalid invitation link' : 'Could not join duel'}
+              </h1>
+              {multiplayer.user?.email && (
+                <p className="text-xs font-mono text-zinc-400 mt-1">
+                  Signed in as {multiplayer.user.email}
+                </p>
+              )}
             </div>
-            <div className="space-y-2 text-sm text-zinc-300">
+
+            <div className="space-y-3 text-sm text-zinc-300">
               <p>
                 {hasInvalidInviteLink
-                  ? String(effectiveInviteCode ?? '').trim() === ''
-                    ? 'This invitation link is empty and does not include an invitation code.'
-                    : 'This invitation link is malformed or incomplete. It does not contain a valid duel invitation token.'
-                  : inviteJoinFailure}
+                  ? 'This invitation link is not valid or has expired. Make sure you copied the full URL from your partner.'
+                  : inviteJoinFailure || 'The invitation code could not be redeemed.'}
               </p>
               <p className="text-xs text-zinc-400">
                 Press <strong className="text-white">OK</strong> to dismiss this invitation link and continue, or <strong className="text-white">Cancel</strong> to close this dialog.
@@ -168,7 +172,7 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
       <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1c1c1e] p-6 space-y-5 shadow-2xl">
         <div className="text-center">
           <DoLogo size="lg" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-white">
             {multiplayer.user
               ? effectiveInviteCode
                 ? 'Join the duel'

@@ -41,6 +41,21 @@ export function DateNavigator() {
     return 240;
   }, [multiplayer.configured, activeHabits]);
 
+  const dailyStats = useMemo(() => {
+    const stats = new Map<string, { count: number; points: number }>();
+    for (const checkIn of checkIns) {
+      if (checkIn.playerId !== activePlayerId) continue;
+      let day = stats.get(checkIn.date);
+      if (!day) {
+        day = { count: 0, points: 0 };
+        stats.set(checkIn.date, day);
+      }
+      day.count++;
+      day.points += checkIn.pointsEarned;
+    }
+    return stats;
+  }, [checkIns, activePlayerId]);
+
   const selectedWeekMonday = useMemo(
     () => getCurrentWeekDays(selectedDate)[0].dateStr,
     [selectedDate]
@@ -109,7 +124,6 @@ export function DateNavigator() {
 
   const isRest = isRestDay(selectedDate);
   const isFuture = isFutureDate(addDays(selectedDate, 1));
-  const isMaciek = activePlayerId === 'maciek';
 
   return (
     <div className="space-y-2">
@@ -140,11 +154,7 @@ export function DateNavigator() {
             </span>
             {isTodaySelected && (
               <span
-                className={`text-[9px] font-mono uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border ${
-                  isMaciek
-                    ? 'text-blue-400 bg-blue-500/10 border-blue-500/25'
-                    : 'text-purple-400 bg-purple-500/10 border-purple-500/25'
-                }`}
+                className="text-[9px] font-mono uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border text-player-400 bg-player-500/10 border-player-500/25"
               >
                 Today
               </span>
@@ -184,11 +194,7 @@ export function DateNavigator() {
             <button
               onClick={handleJumpToday}
               aria-label="Jump to today"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-colors active:scale-95 border ${
-                isMaciek
-                  ? 'bg-blue-500/15 border-blue-500/30 text-blue-300 hover:bg-blue-500/25'
-                  : 'bg-purple-500/15 border-purple-500/30 text-purple-300 hover:bg-purple-500/25'
-              }`}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-colors active:scale-95 border bg-player-500/15 border-player-500/30 text-player-300 hover:bg-player-500/25"
               title="Return to today (Shortcut: T)"
             >
               <RotateCcw className="w-2.5 h-2.5" />
@@ -211,11 +217,8 @@ export function DateNavigator() {
           const dayRest = isRestDay(day.dateStr);
 
           // Calculate points for indicator
-          const dayLogs = checkIns.filter(
-            (c) => c.playerId === activePlayerId && c.date === day.dateStr
-          );
-          const completedCount = dayLogs.length;
-          const totalPoints = dayLogs.reduce((acc, c) => acc + c.pointsEarned, 0);
+          const completedCount = dailyStats.get(day.dateStr)?.count ?? 0;
+          const totalPoints = dailyStats.get(day.dateStr)?.points ?? 0;
           const isParAchieved = totalPoints >= dailyPar;
           const parsed = parseDate(day.dateStr);
           const showMonthTag = day.dayNumber === 1;
@@ -250,9 +253,7 @@ export function DateNavigator() {
               <span
                 className={`text-xs font-mono tabular-nums my-0.5 ${
                   isToday
-                    ? isMaciek
-                      ? 'font-extrabold text-blue-400'
-                      : 'font-extrabold text-purple-400'
+                    ? 'font-extrabold text-player-400'
                     : isSelected
                     ? 'font-bold text-white'
                     : 'font-medium text-zinc-300'
@@ -275,9 +276,7 @@ export function DateNavigator() {
                   />
                 ) : completedCount > 0 ? (
                   <span
-                    className={`w-2 h-1 rounded-xs ${
-                      isMaciek ? 'bg-blue-400/80' : 'bg-purple-400/80'
-                    }`}
+                    className="w-2 h-1 rounded-xs bg-player-400/80"
                     title={`${completedCount} logged (${totalPoints} pts)`}
                   />
                 ) : (
