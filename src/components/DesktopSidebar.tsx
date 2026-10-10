@@ -2,7 +2,6 @@
 
 import { CheckCircle2, Flame, ChartNoAxesColumn } from 'lucide-react';
 import { TabType } from './BottomNav';
-import { DoLogo } from './DoLogo';
 import { useStore } from '@/lib/store';
 
 export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType; onChangeTab: (tab: TabType) => void }) {
@@ -14,13 +13,6 @@ export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType;
   ];
   return (
     <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 border-r border-black/[0.07] dark:border-zinc-800/80 bg-white dark:bg-[#0b0c0e] flex-col p-5 z-40 transition-colors">
-      <div className="flex items-center gap-2.5 mb-8 px-1">
-        <DoLogo size="sm" />
-        <div>
-          <span className="text-sm font-semibold tracking-tight text-foreground block">do it.</span>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">Habit Parity</span>
-        </div>
-      </div>
       <nav aria-label="Desktop navigation" className="space-y-1">
         {tabs.map(({ id, label, icon: Icon, shortcut }) => (
           <button

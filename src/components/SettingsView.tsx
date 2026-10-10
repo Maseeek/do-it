@@ -14,6 +14,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   const multiplayer = useMultiplayer();
   const {
     activePlayer,
+    switchProfile,
     isPartnerConnected,
     players,
     soundEnabled,
@@ -103,6 +104,15 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
           <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <UserRound size={17} /> Profile
           </h2>
+          {!multiplayer.configured && (
+            <button
+              type="button"
+              className="control min-h-11"
+              onClick={switchProfile}
+            >
+              Switch Player
+            </button>
+          )}
           <form onSubmit={saveName} className="space-y-3">
             <label htmlFor="profile-name" className="block text-xs text-zinc-400">Username</label>
             <div className="flex flex-wrap gap-2">
