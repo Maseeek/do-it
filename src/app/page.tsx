@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
@@ -52,6 +52,10 @@ function AppContent() {
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const handledAction = useRef<string | null>(null);
+  const changeTab = useCallback((tab: TabType) => {
+    if (tab === 'today') setSelectedDate(getTodayDateString());
+    setActiveTab(tab);
+  }, [setSelectedDate]);
 
   const searchParams = useSearchParams();
   const hasInviteParam = searchParams.has('invite');
@@ -65,10 +69,6 @@ function AppContent() {
   useEffect(() => {
     if (pendingDuelId && !pendingGuestId) setActiveTab('duel');
   }, [pendingDuelId, pendingGuestId]);
-
-  useEffect(() => {
-    if (activeTab === 'today') setSelectedDate(getTodayDateString());
-  }, [activeTab, setSelectedDate]);
 
   // Handle URL deep-linking query parameters (?tab=..., ?action=checkin&habit=...)
   useEffect(() => {
@@ -126,7 +126,7 @@ function AppContent() {
       if (e.key === '1') {
         soundEngine.playClick();
         hapticLight();
-        setActiveTab('today');
+        changeTab('today');
       } else if (e.key === '2') {
         soundEngine.playClick();
         hapticLight();
@@ -162,7 +162,7 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [switchProfile, setSelectedDate, multiplayer.configured]);
+  }, [changeTab, switchProfile, setSelectedDate, multiplayer.configured]);
 
   const showInviteConflictModal = !multiplayer.loading && multiplayerEntry === 'invite-conflict' && inviteCode !== null;
 
@@ -231,7 +231,7 @@ function AppContent() {
       {/* App frame */}
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
-        <DesktopSidebar activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setActiveTab(tab); }} />
+        <DesktopSidebar activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); changeTab(tab); }} />
         <Header onOpenSettings={() => setShowSettings(true)} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />
         {/* Floating Quick Action Toast */}
         {toastMessage && (
@@ -269,7 +269,7 @@ function AppContent() {
           </>}
         </main>
 
-        <BottomNav activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); setActiveTab(tab); }} />
+        <BottomNav activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); changeTab(tab); }} />
 
         {isShortcutsModalOpen && <KeyboardShortcutsModal
           isOpen={isShortcutsModalOpen}
