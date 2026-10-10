@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUpRight,
   BedDouble,
@@ -13,16 +13,19 @@ import {
 import { useStore } from '@/lib/store';
 import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { useMultiplayer } from '@/lib/multiplayer';
-import { formatFriendlyDate, parseDate } from '@/lib/date-utils';
+import { formatFriendlyDate, getTodayDateString, parseDate } from '@/lib/date-utils';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticCelebration, hapticLight } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
-import { ActivityFeed } from './ActivityFeed';
-import { ProofGalleryModal } from './ProofGalleryModal';
+import dynamic from 'next/dynamic';
+
 import { Habit } from '@/lib/types';
 import { calculateHabitStreak } from '@/lib/score-calculator';
+
+const ActivityFeed = dynamic(() => import('./ActivityFeed').then(module => module.ActivityFeed));
+const ProofGalleryModal = dynamic(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal));
 
 export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
@@ -169,13 +172,17 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     : partnerCleanSpaceCheckIn?.proofUrl
     ? [partnerCleanSpaceCheckIn.proofUrl]
     : [];
+  const todayStr = getTodayDateString();
+  const habitStreaks = useMemo(() => new Map(activeHabits.map(habit =>
+    [habit.id, calculateHabitStreak(habit, checkIns, restDays, todayStr)]
+  )), [activeHabits, checkIns, restDays, todayStr]);
   const getHabitCardProps = (habit: Habit) => ({
     habit,
     selectedDate,
     completed: isHabitCompletedOnDate(habit.id, selectedDate),
     checkIn: getHabitCheckInOnDate(habit.id, selectedDate),
     weeklyCompletions: getWeeklyHabitCompletions(habit.id, selectedDate),
-    habitStreak: calculateHabitStreak(habit, checkIns, restDays),
+    habitStreak: habitStreaks.get(habit.id) ?? 0,
     activePlayer,
     partnerPlayer: habit.category === 'environment' && habit.requiresProof ? partner : null,
     partnerCleanSpaceCheckIn: habit.category === 'environment' && habit.requiresProof ? partnerCleanSpaceCheckIn : undefined,

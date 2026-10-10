@@ -28,11 +28,10 @@ import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, r
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
 import { calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { calculatePlayerBadges } from './badge-utils';
+import { indexCheckIns } from './check-in-index';
 import {
   rebalanceWeeklyHabitCheckIns,
   rebalanceAllWeeklyCheckIns,
-  getWeeklyHabitCompletionsCount,
-  isWeeklyHabitTargetMet,
 } from './weekly-utils';
 import { fireCelebrationConfetti } from './confetti';
 import { soundEngine } from './sound-utils';
@@ -568,42 +567,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
   const todayStr = getTodayDateString();
   const isTodaySelected = selectedDate === todayStr;
+  const checkInIndex = useMemo(() => indexCheckIns(state.checkIns), [state.checkIns]);
 
   const isHabitCompletedToday = useCallback(
-    (habitId: string): boolean => state.checkIns.some((c) => c.habitId === habitId && c.date === todayStr),
-    [state.checkIns, todayStr]
+    (habitId: string): boolean => checkInIndex.byHabitAndDate.get(habitId)?.has(todayStr) ?? false,
+    [checkInIndex, todayStr]
   );
 
   const getHabitCheckInToday = useCallback(
-    (habitId: string): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === todayStr),
-    [state.checkIns, todayStr]
+    (habitId: string): CheckIn | undefined => checkInIndex.byHabitAndDate.get(habitId)?.get(todayStr),
+    [checkInIndex, todayStr]
   );
 
   const isHabitCompletedOnDate = useCallback(
-    (habitId: string, date: string): boolean => state.checkIns.some((c) => c.habitId === habitId && c.date === date),
-    [state.checkIns]
+    (habitId: string, date: string): boolean => checkInIndex.byHabitAndDate.get(habitId)?.has(date) ?? false,
+    [checkInIndex]
   );
 
   const getHabitCheckInOnDate = useCallback(
-    (habitId: string, date: string): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === date),
-    [state.checkIns]
+    (habitId: string, date: string): CheckIn | undefined => checkInIndex.byHabitAndDate.get(habitId)?.get(date),
+    [checkInIndex]
   );
 
   const getCheckInForHabit = useCallback(
-    (habitId: string, date = selectedDate): CheckIn | undefined => state.checkIns.find((c) => c.habitId === habitId && c.date === date),
-    [state.checkIns, selectedDate]
+    (habitId: string, date = selectedDate): CheckIn | undefined => checkInIndex.byHabitAndDate.get(habitId)?.get(date),
+    [checkInIndex, selectedDate]
   );
 
   const getWeeklyHabitCompletions = useCallback(
-    (habitId: string, date = selectedDate): number => getWeeklyHabitCompletionsCount(habitId, date, state.checkIns),
-    [state.checkIns, selectedDate]
+    (habitId: string, date = selectedDate): number => checkInIndex.weeklyDates.get(habitId)?.get(getWeekKey(date))?.size ?? 0,
+    [checkInIndex, selectedDate]
   );
 
   const isHabitWeeklyTargetMet = useCallback((habitId: string, date = selectedDate): boolean => {
     const habit = state.habits.find((h) => h.id === habitId);
     if (!habit) return false;
-    return isWeeklyHabitTargetMet(habit, date, state.checkIns);
-  }, [state.habits, state.checkIns, selectedDate]);
+    return !!habit.weeklyTargetDays && habit.weeklyTargetDays > 0 && getWeeklyHabitCompletions(habitId, date) >= habit.weeklyTargetDays;
+  }, [state.habits, getWeeklyHabitCompletions, selectedDate]);
 
   const isHabitSatisfiedOnDate = useCallback(
     (habitId: string, date = selectedDate): boolean =>
@@ -672,8 +672,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
-      rebalanced.forEach((c) => {
-        const orig = nextCheckIns.find((o) => o.id === c.id);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
         if (orig && orig.pointsEarned !== c.pointsEarned) {
           syncedCheckIns.push(c);
         }
@@ -717,8 +717,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
-      rebalanced.forEach((c) => {
-        const orig = nextCheckIns.find((o) => o.id === c.id);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
         if (orig && orig.pointsEarned !== c.pointsEarned) {
           syncedCheckIns.push(c);
         }
@@ -793,8 +793,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
-      rebalanced.forEach((c) => {
-        const orig = nextCheckIns.find((o) => o.id === c.id);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
         if (orig && orig.pointsEarned !== c.pointsEarned) {
           syncedCheckIns.push(c);
         }

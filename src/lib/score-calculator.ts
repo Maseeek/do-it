@@ -12,9 +12,6 @@ import {
   getCurrentWeekDays,
   getWeekKey,
   getTodayDateString,
-  isDateInCurrentMonth,
-  isDateInCurrentWeek,
-  isDateInCurrentYear,
   parseDate,
   addDays,
 } from './date-utils';
@@ -41,19 +38,27 @@ export function calculatePlayerScores(
   let monthlyPoints = 0;
   let yearlyPoints = 0;
   let karmaPoints = 0;
+  const currentDate = getTodayDateString();
+  const weekDays = getCurrentWeekDays(currentDate);
+  const weekStart = weekDays[0].dateStr;
+  const weekEnd = weekDays[6].dateStr;
+  const month = currentDate.slice(0, 7);
+  const year = currentDate.slice(0, 4);
+  const weeklyHabitCounts = new Map<string, number>();
 
   playerLogs.forEach((log) => {
     karmaPoints += log.pointsEarned;
     if (log.date === today) {
       todayPoints += log.pointsEarned;
     }
-    if (isDateInCurrentWeek(log.date)) {
+    if (log.date >= weekStart && log.date <= weekEnd) {
       weeklyPoints += log.pointsEarned;
+      weeklyHabitCounts.set(log.habitId, (weeklyHabitCounts.get(log.habitId) ?? 0) + 1);
     }
-    if (isDateInCurrentMonth(log.date)) {
+    if (log.date.slice(0, 7) === month) {
       monthlyPoints += log.pointsEarned;
     }
-    if (isDateInCurrentYear(log.date)) {
+    if (log.date.slice(0, 4) === year) {
       yearlyPoints += log.pointsEarned;
     }
   });
@@ -99,16 +104,14 @@ export function calculatePlayerScores(
   let validWeeklyLogs = 0;
 
   playerHabits.forEach((habit) => {
-    const habitWeekLogs = playerLogs.filter(
-      (l) => l.habitId === habit.id && isDateInCurrentWeek(l.date)
-    );
+    const habitWeekCount = weeklyHabitCounts.get(habit.id) ?? 0;
     if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
       const targetSoFar = Math.min(dayOfWeek, habit.weeklyTargetDays);
       maxPossibleSoFar += targetSoFar;
-      validWeeklyLogs += Math.min(habitWeekLogs.length, habit.weeklyTargetDays);
+      validWeeklyLogs += Math.min(habitWeekCount, habit.weeklyTargetDays);
     } else {
       maxPossibleSoFar += dayOfWeek;
-      validWeeklyLogs += Math.min(habitWeekLogs.length, dayOfWeek);
+      validWeeklyLogs += Math.min(habitWeekCount, dayOfWeek);
     }
   });
 
@@ -179,12 +182,27 @@ export interface CategoryComparison {
 export function getCategoryBreakdown(
   checkIns: CheckIn[],
   habits: Habit[],
-  scope: 'weekly' | 'karma' = 'weekly'
+  scope: 'weekly' | 'karma' = 'weekly',
+  today = getTodayDateString()
 ): CategoryComparison[] {
   const habitMap = new Map<string, Habit>();
   habits.forEach((h) => habitMap.set(h.id, h));
 
-  const filteredLogs = checkIns.filter((c) => (scope === 'weekly' ? isDateInCurrentWeek(c.date) : true));
+  const weekDays = getCurrentWeekDays(today);
+  const weekStart = weekDays[0].dateStr;
+  const weekEnd = weekDays[6].dateStr;
+  const points = new Map<HabitCategory, { maciek: number; myrna: number }>();
+  for (const log of checkIns) {
+    if (scope === 'weekly' && (log.date < weekStart || log.date > weekEnd)) continue;
+    const habit = habitMap.get(log.habitId);
+    if (!habit) continue;
+    let categoryPoints = points.get(habit.category);
+    if (!categoryPoints) {
+      categoryPoints = { maciek: 0, myrna: 0 };
+      points.set(habit.category, categoryPoints);
+    }
+    categoryPoints[log.playerId] += log.pointsEarned;
+  }
 
   const categories: HabitCategory[] = [
     'foundation',
@@ -215,16 +233,8 @@ export function getCategoryBreakdown(
   };
 
   return categories.map((cat) => {
-    let maciekPts = 0;
-    let myrnaPts = 0;
-
-    filteredLogs.forEach((log) => {
-      const h = habitMap.get(log.habitId);
-      if (h && h.category === cat) {
-        if (log.playerId === 'maciek') maciekPts += log.pointsEarned;
-        if (log.playerId === 'myrna') myrnaPts += log.pointsEarned;
-      }
-    });
+    const maciekPts = points.get(cat)?.maciek ?? 0;
+    const myrnaPts = points.get(cat)?.myrna ?? 0;
 
     let leader: PlayerId | 'tie' = 'tie';
     if (maciekPts > myrnaPts) leader = 'maciek';
@@ -250,8 +260,8 @@ export interface DailyDuelPoint {
   isFuture: boolean;
 }
 
-export function getWeeklyDailyDuelPoints(checkIns: CheckIn[]): DailyDuelPoint[] {
-  const days = getCurrentWeekDays();
+export function getWeeklyDailyDuelPoints(checkIns: CheckIn[], today = getTodayDateString()): DailyDuelPoint[] {
+  const days = getCurrentWeekDays(today);
 
   return days.map((day) => {
     const dayLogs = checkIns.filter((c) => c.date === day.dateStr);
@@ -300,12 +310,12 @@ export function getStakesRecord(stakes: Stake[]): StakesRecord {
 // Calculate consecutive week streak for a weekly-target habit
 export function calculateWeeklyHabitStreak(
   habit: Habit,
-  checkIns: CheckIn[]
+  checkIns: CheckIn[],
+  today = getTodayDateString()
 ): number {
   if (!habit.weeklyTargetDays || habit.weeklyTargetDays <= 0) return 0;
 
   const target = habit.weeklyTargetDays;
-  const today = getTodayDateString();
   const todayDays = getCurrentWeekDays(today);
   const currentWeekMondayStr = todayDays[0].dateStr;
 
@@ -344,10 +354,11 @@ export function calculateWeeklyHabitStreak(
 export function calculateHabitStreak(
   habit: Habit,
   checkIns: CheckIn[],
-  restDays: RestDay[] = []
+  restDays: RestDay[] = [],
+  today = getTodayDateString()
 ): number {
   if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
-    return calculateWeeklyHabitStreak(habit, checkIns);
+    return calculateWeeklyHabitStreak(habit, checkIns, today);
   }
 
   const uniqueDates = new Set<string>();
@@ -356,7 +367,6 @@ export function calculateHabitStreak(
   }
   if (uniqueDates.size === 0) return 0;
 
-  const today = getTodayDateString();
   const playerRestDays = new Set<string>();
   for (const restDay of restDays) {
     if (restDay.playerId === habit.playerId) playerRestDays.add(restDay.date);

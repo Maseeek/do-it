@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Habit, CheckIn, Player } from '@/lib/types';
 import { formatFriendlyDate, formatDateString, formatTimeAgo } from '@/lib/date-utils';
@@ -91,53 +91,61 @@ export function ActivityFeed() {
         message: string;
       };
 
-  const timelineItems: TimelineItem[] = [];
+  const timelineItems = useMemo(() => {
+    const timelineItems: TimelineItem[] = [];
+    const habitById = new Map(habits.map(habit => [habit.id, habit]));
 
-  checkIns.forEach((ci) => {
-    const habit = habits.find((h) => h.id === ci.habitId);
-    const player = players[ci.playerId];
-    if (habit && player) {
-      timelineItems.push({
-        type: 'check_in',
-        id: ci.id,
-        timestamp: ci.completedAt || `${ci.date}T12:00:00.000Z`,
-        date: ci.date,
-        checkIn: ci,
-        habit,
-        player,
-      });
-    }
-  });
+    checkIns.forEach((ci) => {
+      const habit = habitById.get(ci.habitId);
+      const player = players[ci.playerId];
+      if (habit && player) {
+        timelineItems.push({
+          type: 'check_in',
+          id: ci.id,
+          timestamp: ci.completedAt || `${ci.date}T12:00:00.000Z`,
+          date: ci.date,
+          checkIn: ci,
+          habit,
+          player,
+        });
+      }
+    });
 
-  reactions.forEach((r) => {
-    const fromPlayer = players[r.fromPlayerId];
-    const toPlayer = players[r.toPlayerId];
-    if (fromPlayer && toPlayer) {
-      timelineItems.push({
-        type: 'reaction',
-        id: r.id,
-        timestamp: r.timestamp,
-        date: formatDateString(new Date(r.timestamp)),
-        fromPlayer,
-        toPlayer,
-        emoji: r.emoji,
-        message: r.message,
-      });
-    }
-  });
+    reactions.forEach((r) => {
+      const fromPlayer = players[r.fromPlayerId];
+      const toPlayer = players[r.toPlayerId];
+      if (fromPlayer && toPlayer) {
+        timelineItems.push({
+          type: 'reaction',
+          id: r.id,
+          timestamp: r.timestamp,
+          date: formatDateString(new Date(r.timestamp)),
+          fromPlayer,
+          toPlayer,
+          emoji: r.emoji,
+          message: r.message,
+        });
+      }
+    });
 
-  timelineItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    timelineItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const filteredItems = timelineItems.filter((item) => {
-    if (feedFilter !== 'all' && item.type !== feedFilter) return false;
-    const actorId = item.type === 'check_in' ? item.player.id : item.fromPlayer.id;
-    if (playerFilter === 'me' && actorId !== activePlayerId) return false;
-    if (playerFilter === 'partner' && actorId !== partnerId) return false;
-    const content = item.type === 'check_in'
-      ? `${item.player.name} ${item.habit.title} ${item.checkIn.note || ''}`
-      : `${item.fromPlayer.name} ${item.toPlayer.name} ${item.message}`;
-    return content.toLowerCase().includes(search.trim().toLowerCase());
-  });
+    return timelineItems;
+  }, [checkIns, habits, players, reactions]);
+
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return timelineItems.filter((item) => {
+      if (feedFilter !== 'all' && item.type !== feedFilter) return false;
+      const actorId = item.type === 'check_in' ? item.player.id : item.fromPlayer.id;
+      if (playerFilter === 'me' && actorId !== activePlayerId) return false;
+      if (playerFilter === 'partner' && actorId !== partnerId) return false;
+      const content = item.type === 'check_in'
+        ? `${item.player.name} ${item.habit.title} ${item.checkIn.note || ''}`
+        : `${item.fromPlayer.name} ${item.toPlayer.name} ${item.message}`;
+      return content.toLowerCase().includes(query);
+    });
+  }, [timelineItems, feedFilter, playerFilter, activePlayerId, partnerId, search]);
   const visibleItems = filteredItems.slice(0, visibleCount);
   const checkInCount = timelineItems.filter((item) => item.type === 'check_in').length;
 
