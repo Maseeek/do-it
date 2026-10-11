@@ -43,7 +43,7 @@ export function ProfileGate() {
           {/* Maciek */}
           <button
             onClick={() => handleSelect('maciek')}
-            aria-label={`Select ${players.maciek.name}, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma`}
+            aria-label={`Select ${players.maciek.name}, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma, ${players.maciek.inviteCount ?? 0} invites`}
             className="w-full text-left p-4 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] transition-all active:scale-[0.98] shadow-sm"
             style={{ borderColor: players.maciek.accentBorder }}
           >
@@ -57,7 +57,7 @@ export function ProfileGate() {
                     {players.maciek.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
-                    {maciekSummary.weekly} pts this week · {maciekSummary.karma} karma
+                    {maciekSummary.weekly} pts this week · {maciekSummary.karma} karma · {players.maciek.inviteCount ?? 0} {players.maciek.inviteCount === 1 ? 'invite' : 'invites'}
                   </div>
                 </div>
               </div>
@@ -68,7 +68,7 @@ export function ProfileGate() {
           {/* Myrna */}
           <button
             onClick={() => handleSelect('myrna')}
-            aria-label={`Select ${players.myrna.name}, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma`}
+            aria-label={`Select ${players.myrna.name}, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma, ${players.myrna.inviteCount ?? 0} invites`}
             className="w-full text-left p-4 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] transition-all active:scale-[0.98] shadow-sm"
             style={{ borderColor: players.myrna.accentBorder }}
           >
@@ -82,7 +82,7 @@ export function ProfileGate() {
                     {players.myrna.name}
                   </div>
                   <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
-                    {myrnaSummary.weekly} pts this week · {myrnaSummary.karma} karma
+                    {myrnaSummary.weekly} pts this week · {myrnaSummary.karma} karma · {players.myrna.inviteCount ?? 0} {players.myrna.inviteCount === 1 ? 'invite' : 'invites'}
                   </div>
                 </div>
               </div>

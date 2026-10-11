@@ -14,6 +14,8 @@ export interface DuelSession {
   invite_code: string;
   owner_color: PlayerColorId;
   guest_color: PlayerColorId;
+  owner_invites?: number;
+  guest_invites?: number;
 }
 
 interface MultiplayerContextValue {
@@ -31,6 +33,7 @@ interface MultiplayerContextValue {
   replaceSoloDuelWithInvite: (code: string, name: string) => Promise<void>;
   updatePlayerName: (name: string) => Promise<void>;
   updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
+  recordAppInvite: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -156,6 +159,13 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     }
     await refresh();
   };
+  const recordAppInvite = async () => {
+    if (!client || !duel || !slot) return;
+    const { error: rpcError } = await client.rpc("record_app_invite");
+    if (!rpcError) {
+      await refresh();
+    }
+  };
   const signOut = async () => {
     if (!client) return;
     refreshSequence.current++;
@@ -169,7 +179,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   const hasPairedPartner = hasMatchedDuelPartner(duel, user);
   const slot = duel && user && hasValidAccount ? (duel.owner_id === user.id ? 'maciek' : duel.guest_id === user.id ? 'myrna' : null) : null;
 
-  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, hasValidAccount, hasPairedPartner, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, updatePlayerColor, signOut }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, hasValidAccount, hasPairedPartner, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, updatePlayerColor, recordAppInvite, signOut }}>{children}</Context.Provider>;
 }
 
 export function useMultiplayer() {

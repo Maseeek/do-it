@@ -20,7 +20,14 @@ async function healthRequest(path: string, method: 'GET' | 'POST' | 'DELETE', bo
 
 export function HealthConnection({ compact = false, onChooseHabits }: { compact?: boolean; onChooseHabits?: () => void }) {
   const multiplayer = useMultiplayer();
-  const { activeHabits } = useStore();
+  const {
+    activeHabits,
+    selectedDate,
+    setHealthTelemetry,
+    clearHealthTelemetry,
+    toggleHabit,
+    isHabitCompletedOnDate,
+  } = useStore();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
   const lastAttempt = useRef(0);
@@ -78,6 +85,41 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     finally { setBusy(false); }
   }
 
+
+  function simulateSleepTelemetry(hours: number) {
+    const sleepHabit = activeHabits.find(h => h.automation?.metric === "sleep") || activeHabits.find(h => h.id.endsWith("-sleep"));
+    if (!sleepHabit) return;
+    const target = sleepHabit.automation?.target || 8;
+    setHealthTelemetry({
+      habitId: sleepHabit.id,
+      playerId: sleepHabit.playerId,
+      date: selectedDate,
+      metric: "sleep",
+      value: hours,
+      target,
+      unit: "hrs",
+      source: "google_health",
+    });
+    if (hours >= target) {
+      if (!isHabitCompletedOnDate(sleepHabit.id, selectedDate)) {
+        toggleHabit(sleepHabit.id, undefined, undefined, `${hours.toFixed(1)} h sleep`, selectedDate);
+      }
+    } else {
+      if (isHabitCompletedOnDate(sleepHabit.id, selectedDate)) {
+        toggleHabit(sleepHabit.id, undefined, undefined, undefined, selectedDate);
+      }
+    }
+  }
+
+  function simulateNoWatchData() {
+    const sleepHabit = activeHabits.find(h => h.automation?.metric === "sleep") || activeHabits.find(h => h.id.endsWith("-sleep"));
+    if (!sleepHabit) return;
+    clearHealthTelemetry(sleepHabit.id, selectedDate);
+    if (isHabitCompletedOnDate(sleepHabit.id, selectedDate)) {
+      toggleHabit(sleepHabit.id, undefined, undefined, undefined, selectedDate);
+    }
+  }
+
   return <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-4">
     <div className="flex items-center gap-3"><Activity size={20} className="text-emerald-300"/><div className="flex-1"><h2 className="text-sm font-semibold">Google Health</h2><p className="text-xs text-zinc-400">{status?.connected ? status.needsAttention ? 'Needs attention' : 'Connected' : 'Connect to complete selected habits automatically'}</p></div></div>
     {status?.connected ? <>
@@ -89,6 +131,41 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
       {activeHabits.some(habit => habit.automation) ? <button className="control control-primary min-h-11" disabled={busy} onClick={connect}>{busy ? 'Connecting…' : 'Connect Google Health'}<ArrowUpRight size={15}/></button> : <button className="control control-primary min-h-11" onClick={onChooseHabits}>Choose an automatic habit<ArrowUpRight size={15}/></button>}
       <details className="text-xs text-zinc-400"><summary className="cursor-pointer">Phone setup</summary><p className="mt-2 leading-5">On iPhone, allow Apple Health to share with Google Health. On Android, allow Health Connect to share with Google Health. Your fitness apps must also send their data to the phone health store. Some apps and metrics may not be supported.</p><a className="mt-2 inline-flex underline" href="https://support.google.com/googlehealth/answer/14236613?hl=en" target="_blank" rel="noreferrer">Google’s connection guide</a></details>
     </>}
+
+    <details className="border-t border-white/[0.08] pt-3 text-xs text-zinc-400">
+      <summary className="cursor-pointer font-medium text-zinc-300">Test health correlation &amp; lock</summary>
+      <p className="mt-2 text-zinc-400">Simulate how Google Health telemetry colors and locks the sleep habit on {selectedDate}:</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => simulateSleepTelemetry(8.5)}
+          className="px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 font-mono text-[11px]"
+        >
+          ● 8.5h Sleep (Green · Goal Met)
+        </button>
+        <button
+          type="button"
+          onClick={() => simulateSleepTelemetry(3.0)}
+          className="px-2.5 py-1.5 rounded-lg border border-orange-600/50 bg-orange-600/15 text-orange-300 hover:bg-orange-600/25 font-mono text-[11px]"
+        >
+          ● 3.0h Sleep (Dark Orange · Locked)
+        </button>
+        <button
+          type="button"
+          onClick={() => simulateSleepTelemetry(1.5)}
+          className="px-2.5 py-1.5 rounded-lg border border-red-600/50 bg-red-600/15 text-red-300 hover:bg-red-600/25 font-mono text-[11px]"
+        >
+          ● 1.5h Sleep (Red · Locked)
+        </button>
+        <button
+          type="button"
+          onClick={simulateNoWatchData}
+          className="px-2.5 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 font-mono text-[11px]"
+        >
+          ○ Watch Not Worn (Blank · Allow Check-in)
+        </button>
+      </div>
+    </details>
     <details className="border-t border-white/[0.08] pt-3 text-xs text-zinc-400"><summary className="cursor-pointer">Privacy</summary><button className="control mt-3 min-h-11" disabled={busy} onClick={deleteHistory}>Delete imported check-ins</button></details>
     {error && <p role="alert" className="text-xs text-amber-300">{error}</p>}
   </section>;

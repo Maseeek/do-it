@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { PLAYER_COLORS } from '@/lib/types';
 import { getPlayerColorStyles, isPlayerColorUnlocked } from '@/lib/player-colors';
-import { ArrowLeft, Copy, LogOut, Monitor, Moon, Share2, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
+import { getRecommendationShareData, getRecommendationUrl } from '@/lib/recommendation';
+import { ArrowLeft, Copy, Gift, LogOut, Monitor, Moon, Share2, Sparkles, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { HealthConnection } from './HealthConnection';
@@ -21,6 +22,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     setSoundEnabled,
     updateLocalPlayerName,
     updatePlayerColor,
+    recordInvite,
     activePlayerSummary,
     themePreference,
     setThemePreference,
@@ -33,8 +35,15 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   const [savingColor, setSavingColor] = useState(false);
   const [colorMessage, setColorMessage] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [recommendCopied, setRecommendCopied] = useState(false);
+  const [recommendShared, setRecommendShared] = useState(false);
+
   const inviteUrl = typeof window !== 'undefined' && multiplayer.duel
     ? `${window.location.origin}/?invite=${multiplayer.duel.invite_code}`
+    : '';
+
+  const recommendUrl = typeof window !== 'undefined'
+    ? getRecommendationUrl(window.location.origin, activePlayer?.id)
     : '';
 
   useEffect(() => {
@@ -80,11 +89,53 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     }
   };
 
+  const handleShareRecommendation = async () => {
+    if (!recommendUrl || !activePlayer) return;
+    soundEngine.playClick();
+    hapticLight();
+    const shareData = getRecommendationShareData(window.location.origin, activePlayer.name, activePlayer.id);
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await navigator.share(shareData);
+        await recordInvite(activePlayer.id);
+        setRecommendShared(true);
+        setTimeout(() => setRecommendShared(false), 3000);
+        return;
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(recommendUrl);
+      await recordInvite(activePlayer.id);
+      setRecommendCopied(true);
+      setTimeout(() => setRecommendCopied(false), 3000);
+    } catch {
+      setError('Select and copy the recommendation link above.');
+    }
+  };
+
+  const handleCopyRecommendation = async () => {
+    if (!recommendUrl || !activePlayer) return;
+    soundEngine.playClick();
+    hapticLight();
+    try {
+      await navigator.clipboard.writeText(recommendUrl);
+      await recordInvite(activePlayer.id);
+      setRecommendCopied(true);
+      setTimeout(() => setRecommendCopied(false), 3000);
+    } catch {
+      setError('Select and copy the recommendation link above.');
+    }
+  };
+
   const handleSelectTheme = (pref: 'system' | 'light' | 'dark') => {
     soundEngine.playClick();
     hapticLight();
     setThemePreference(pref);
   };
+
+  const inviteCount = activePlayer?.inviteCount ?? 0;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-5">
@@ -100,10 +151,19 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       </div>
 
       {activePlayer && (
-        <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <UserRound size={17} /> Profile
-          </h2>
+        <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <UserRound size={17} /> Profile
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-300">
+                <Gift size={13} className="text-amber-400" />
+                <span>{inviteCount} {inviteCount === 1 ? 'invite' : 'invites'} done</span>
+              </span>
+            </div>
+          </div>
+
           {!multiplayer.configured && (
             <button
               type="button"
@@ -113,6 +173,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
               Switch Player
             </button>
           )}
+
           <form onSubmit={saveName} className="space-y-3">
             <label htmlFor="profile-name" className="block text-xs text-zinc-400">Username</label>
             <div className="flex flex-wrap gap-2">
@@ -134,6 +195,69 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
             </div>
             {nameMessage && <p role="status" className="text-xs text-zinc-300">{nameMessage}</p>}
           </form>
+
+          {/* App Recommendation & Invite Counter */}
+          <div className="space-y-2 rounded-xl border border-white/[0.08] bg-[#101113] p-3.5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                  <Sparkles size={14} className="text-amber-400" />
+                  <span>Recommend do it. to friends</span>
+                </div>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-400">
+                  {inviteCount >= 1
+                    ? `You've invited ${inviteCount} ${inviteCount === 1 ? 'person' : 'people'}. The unique Gold palette is unlocked!`
+                    : 'Recommend the app to a friend to unlock the exclusive Gold colour palette! (Separate from 1v1 duel invites)'}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <span className="text-xl font-bold font-mono text-amber-400 tabular-nums">
+                  {inviteCount}
+                </span>
+                <span className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                  {inviteCount === 1 ? 'invite' : 'invites'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <label htmlFor="settings-recommend-link" className="block text-[11px] text-zinc-400">
+                Your recommendation link
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  id="settings-recommend-link"
+                  readOnly
+                  value={recommendUrl}
+                  onFocus={event => event.currentTarget.select()}
+                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#17181b] px-3 text-xs text-foreground outline-none font-mono"
+                />
+                <button
+                  type="button"
+                  className="control control-primary min-h-11"
+                  onClick={handleShareRecommendation}
+                >
+                  <Share2 size={15} />
+                  {recommendShared ? 'Shared!' : 'Share app'}
+                </button>
+                <button
+                  type="button"
+                  className="control min-h-11"
+                  onClick={handleCopyRecommendation}
+                >
+                  <Copy size={15} />
+                  {recommendCopied ? 'Copied!' : 'Copy link'}
+                </button>
+              </div>
+              {(recommendCopied || recommendShared) && (
+                <p role="status" className="text-xs text-emerald-400">
+                  {recommendShared ? 'Shared!' : 'Link copied!'} +1 invite registered.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Color Palettes Section */}
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
               <span className="text-xs text-zinc-400">Player color</span>
@@ -141,14 +265,25 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {PLAYER_COLORS.map(option => {
-                const unlocked = isPlayerColorUnlocked(option.id, activePlayerSummary.karma);
+                const unlocked = isPlayerColorUnlocked(option.id, activePlayerSummary.karma, inviteCount);
                 const selected = activePlayer.color === option.color;
+                const lockLabel = 'requiredInvites' in option && typeof option.requiredInvites === 'number'
+                  ? 'Share app to unlock'
+                  : `${option.unlockAt.toLocaleString()} points`;
                 return (
                   <button
                     key={option.id}
                     type="button"
                     disabled={!unlocked || savingColor}
-                    onClick={() => { void savePlayerColor(option.id); }}
+                    onClick={() => {
+                      if (!unlocked) {
+                        if ('requiredInvites' in option) {
+                          setColorMessage('Share or recommend the app above to unlock the Gold palette!');
+                        }
+                        return;
+                      }
+                      void savePlayerColor(option.id);
+                    }}
                     aria-pressed={selected}
                     className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${
                       selected ? 'border-player-400 bg-player-500/15 text-player-400' : 'border-white/[0.08]'
@@ -158,7 +293,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                     <span className="min-w-0">
                       <span className="block font-medium">{option.name}</span>
                       <span className="text-[10px] text-zinc-500">
-                        {unlocked ? (selected ? 'Selected' : 'Unlocked') : `${option.unlockAt.toLocaleString()} points`}
+                        {unlocked ? (selected ? 'Selected' : 'Unlocked') : lockLabel}
                       </span>
                     </span>
                   </button>
@@ -292,8 +427,8 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
               soundEnabled ? 'bg-emerald-400 text-black' : 'bg-zinc-700 text-white'
             }`}
           >
-            {soundEnabled ? 'On' : 'Off'}
-          </button>
+            {soundEnabled ? 'On' : 'Off'
+          }</button>
         </div>
         {multiplayer.user && (
           <div className="border-t border-white/[0.08] pt-3">

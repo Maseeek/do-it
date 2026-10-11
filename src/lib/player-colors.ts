@@ -5,9 +5,17 @@ const RAINBOW_GRADIENT = 'linear-gradient(135deg,#b91c1c,#a16207,#15803d,#1d4ed8
 
 type PlayerColorStyleSource = Pick<Player, 'color' | 'accentBg' | 'accentBorder'>;
 
-export function isPlayerColorUnlocked(colorId: PlayerColorId, lifetimePoints: number): boolean {
+export function isPlayerColorUnlocked(
+  colorId: PlayerColorId,
+  lifetimePoints: number,
+  inviteCount: number = 0,
+): boolean {
   const color = PLAYER_COLORS.find(option => option.id === colorId);
-  return Number.isFinite(lifetimePoints) && color !== undefined && lifetimePoints >= color.unlockAt;
+  if (!color) return false;
+  if ('requiredInvites' in color && typeof color.requiredInvites === 'number') {
+    return inviteCount >= color.requiredInvites;
+  }
+  return Number.isFinite(lifetimePoints) && lifetimePoints >= color.unlockAt;
 }
 
 export function getPlayerColorStyles(player: PlayerColorStyleSource): CSSProperties {

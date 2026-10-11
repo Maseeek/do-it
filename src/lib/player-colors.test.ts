@@ -26,6 +26,28 @@ describe('Domain: Karma-gated player colors', () => {
   });
 });
 
+describe('Domain: Recommendation-gated Gold player color', () => {
+  it('keeps Gold locked when the user has 0 invites even with high karma', () => {
+    assert.equal(isPlayerColorUnlocked('gold', 0, 0), false);
+    assert.equal(isPlayerColorUnlocked('gold', 50000, 0), false);
+  });
+
+  it('unlocks Gold when the user has invited at least one person', () => {
+    assert.equal(isPlayerColorUnlocked('gold', 0, 1), true);
+    assert.equal(isPlayerColorUnlocked('gold', 150, 3), true);
+  });
+
+  it('keeps Gold locked for an invited person until they recommend the app to someone else', () => {
+    // Person B received an invite (their own inviteCount is 0)
+    const invitedPersonInviteCount = 0;
+    assert.equal(isPlayerColorUnlocked('gold', 0, invitedPersonInviteCount), false);
+
+    // Person B now recommends the app to another person (their inviteCount becomes 1)
+    const afterRecommendingInviteCount = 1;
+    assert.equal(isPlayerColorUnlocked('gold', 0, afterRecommendingInviteCount), true);
+  });
+});
+
 describe('Player color identity styles', () => {
   it('uses a high-contrast rainbow gradient for the Rainbow identity', () => {
     assert.deepEqual(getPlayerColorStyles({
@@ -39,8 +61,21 @@ describe('Player color identity styles', () => {
       backgroundImage: 'linear-gradient(135deg,#b91c1c,#a16207,#15803d,#1d4ed8,#7e22ce)',
     });
   });
-});
 
+  it('uses solid styles for the Gold identity', () => {
+    const gold = PLAYER_COLORS.find(c => c.id === 'gold');
+    assert.ok(gold);
+    assert.deepEqual(getPlayerColorStyles({
+      color: gold.color,
+      accentBg: gold.accentBg,
+      accentBorder: gold.accentBorder,
+    }), {
+      color: '#eab308',
+      backgroundColor: 'rgba(234, 179, 8, 0.1)',
+      borderColor: 'rgba(234, 179, 8, 0.25)',
+    });
+  });
+});
 
 describe('Player theme scopes', () => {
   it('uses the chosen color for every unlocked palette without setting container colors', () => {

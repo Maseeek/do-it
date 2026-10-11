@@ -15,6 +15,7 @@ import {
   Stake,
   WearableConfig,
   GoogleHealthSyncResult,
+  HealthTelemetryRecord,
   ThemePreference,
   EffectiveTheme,
   PlayerColorId,
@@ -104,6 +105,7 @@ interface StoreContextType {
   switchProfile: () => void;
   updateLocalPlayerName: (name: string) => void;
   updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
+  recordInvite: (playerId?: PlayerId) => Promise<void>;
   toggleHabit: (
     habitId: string,
     proofUrl?: string | string[],
@@ -143,6 +145,10 @@ interface StoreContextType {
   exportStateToJson: () => string;
   importStateFromJson: (jsonStr: string) => { success: boolean; error?: string };
   wearableConfig: WearableConfig | undefined;
+  healthTelemetry?: Record<string, HealthTelemetryRecord>;
+  getHealthTelemetryOnDate: (habitId: string, date?: string) => HealthTelemetryRecord | undefined;
+  setHealthTelemetry: (record: HealthTelemetryRecord) => void;
+  clearHealthTelemetry: (habitId: string, date?: string) => void;
   syncGoogleHealth: (
     simulate?: boolean,
     simulateUnder?: boolean
@@ -197,6 +203,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             checkIns: rebalanced,
             reactions: parsed.reactions || prev.reactions || [],
             restDays: parsed.restDays || prev.restDays || [],
+            healthTelemetry: parsed.healthTelemetry || prev.healthTelemetry || {},
           }));
         } else {
           const fresh = getInitialState();
@@ -497,8 +504,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           reactions: visibleReactions,
           restDays: visibleRestDays,
           players: {
-            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: ownerColor.color, accentBg: ownerColor.accentBg, accentBorder: ownerColor.accentBorder },
-            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guestColor.color, accentBg: guestColor.accentBg, accentBorder: guestColor.accentBorder },
+            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: ownerColor.color, accentBg: ownerColor.accentBg, accentBorder: ownerColor.accentBorder, inviteCount: multiplayer.duel?.owner_invites ?? 0 },
+            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guestColor.color, accentBg: guestColor.accentBg, accentBorder: guestColor.accentBorder, inviteCount: multiplayer.duel?.guest_invites ?? 0 },
           },
         }));
         setLoadedDuelId(duelId);
@@ -628,6 +635,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ? state.checkIns.find((c) => c.habitId === partnerCleanSpaceHabit.id && c.date === selectedDate)
     : undefined;
 
+  const getHealthTelemetryOnDate = useCallback(
+    (habitId: string, date = selectedDate): HealthTelemetryRecord | undefined => {
+      return state.healthTelemetry?.[`${habitId}:${date}`];
+    },
+    [state.healthTelemetry, selectedDate]
+  );
+
+  const setHealthTelemetry = useStableCallback((record: HealthTelemetryRecord) => {
+    setState((prev) => ({
+      ...prev,
+      healthTelemetry: {
+        ...(prev.healthTelemetry || {}),
+        [`${record.habitId}:${record.date}`]: record,
+      },
+    }));
+  });
+
+  const clearHealthTelemetry = useStableCallback((habitId: string, date = selectedDate) => {
+    setState((prev) => {
+      if (!prev.healthTelemetry) return prev;
+      const next = { ...prev.healthTelemetry };
+      delete next[`${habitId}:${date}`];
+      return { ...prev, healthTelemetry: next };
+    });
+  });
+
   const toggleHabit = useStableCallback((habitId: string,
   proofUrl?: string | string[],
   quantity?: number,
@@ -643,6 +676,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const existingCheckIn = state.checkIns.find(
     (c) => c.habitId === habitId && c.date === targetDate
   );
+
+  // Disallow manual check-in if Google Health recorded telemetry below target
+  if (!existingCheckIn) {
+    const telemetry = state.healthTelemetry?.[`${habitId}:${targetDate}`];
+    if (telemetry && habit.automation && telemetry.value < habit.automation.target) {
+      soundEngine.playUncheck();
+      hapticLight();
+      return;
+    }
+  }
   
   // Calculate base points
   let basePoints = existingCheckIn?.pointsEarned ?? habit.points;
@@ -938,11 +981,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (trimmed.length < 1 || trimmed.length > 40) throw new Error('Name must be 1 to 40 characters.');
   const id = state.activePlayerId;
   setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], name: trimmed } } })); });
+  const recordInvite = useStableCallback(async (playerId?: PlayerId) => {
+    const targetId = playerId ?? state.activePlayerId;
+    if (!targetId) return;
+    soundEngine.playCheck();
+    hapticSuccess();
+    if (multiplayer.configured && multiplayer.duel) {
+      try {
+        await multiplayer.recordAppInvite();
+      } catch (err) {
+        console.error("Failed to record app invite remotely", err);
+      }
+    }
+    setState(prev => {
+      const current = prev.players[targetId]?.inviteCount ?? 0;
+      return {
+        ...prev,
+        players: {
+          ...prev.players,
+          [targetId]: {
+            ...prev.players[targetId],
+            inviteCount: current + 1,
+          },
+        },
+      };
+    });
+  });
+
   const updatePlayerColor = useStableCallback(async (colorId: PlayerColorId) => {
     if (!state.activePlayerId) throw new Error('Choose a profile first.');
     const color = PLAYER_COLORS.find(option => option.id === colorId);
     const karma = state.checkIns.filter(checkIn => checkIn.playerId === state.activePlayerId).reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
-    if (!color || !isPlayerColorUnlocked(colorId, karma)) throw new Error('That color is still locked.');
+    const inviteCount = state.players[state.activePlayerId]?.inviteCount ?? 0;
+    if (!color || !isPlayerColorUnlocked(colorId, karma, inviteCount)) throw new Error('That color is still locked.');
     if (multiplayer.configured) {
       if (state.activePlayerId !== multiplayer.slot) throw new Error('Choose your own profile first.');
       await multiplayer.updatePlayerColor(colorId);
@@ -1106,10 +1177,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
         const syncTimeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        if (data.checkInsCreated && data.checkInsCreated.length > 0) {
-          setState((prev) => {
-            const newCheckIns = [...prev.checkIns];
-            for (const incoming of data.checkInsCreated!) {
+        setState((prev) => {
+          let newCheckIns = [...prev.checkIns];
+          const newTelemetry = { ...(prev.healthTelemetry || {}) };
+
+          if (data.telemetry && data.telemetry.length > 0) {
+            for (const t of data.telemetry) {
+              newTelemetry[`${t.habitId}:${t.date}`] = t;
+              if (t.value < t.target) {
+                newCheckIns = newCheckIns.filter(
+                  (c) => !(c.habitId === t.habitId && c.date === t.date && c.source === 'google_health')
+                );
+              }
+            }
+          }
+
+          if (data.checkInsCreated && data.checkInsCreated.length > 0) {
+            for (const incoming of data.checkInsCreated) {
               const idx = newCheckIns.findIndex(
                 (c) => c.habitId === incoming.habitId && c.date === incoming.date
               );
@@ -1119,18 +1203,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 newCheckIns.push(incoming);
               }
             }
-            return {
-              ...prev,
-              checkIns: newCheckIns,
-              wearableConfig: {
-                ...prev.wearableConfig,
-                googleConnected: true,
-                googleLastSync: syncTimeString,
-                googleLastResult: data,
-              },
-            };
-          });
+          }
 
+          return {
+            ...prev,
+            checkIns: newCheckIns,
+            healthTelemetry: newTelemetry,
+            wearableConfig: {
+              ...prev.wearableConfig,
+              googleConnected: true,
+              googleLastSync: syncTimeString,
+              googleLastResult: data,
+            },
+          };
+        });
+
+        if (data.checkInsCreated && data.checkInsCreated.length > 0) {
           soundEngine.playFanfare();
           hapticMedium();
           fireCelebrationConfetti();
@@ -1141,16 +1229,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             result: data,
           };
         }
-
-        setState((prev) => ({
-          ...prev,
-          wearableConfig: {
-            ...prev.wearableConfig,
-            googleConnected: true,
-            googleLastSync: syncTimeString,
-            googleLastResult: data,
-          },
-        }));
 
         return {
           success: true,
@@ -1280,7 +1358,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     stakes: state.stakes, reactions: state.reactions || [], restDays: state.restDays || [],
     selectedDate, isTodaySelected, setSelectedDate, maciekSummary, myrnaSummary,
     activePlayerSummary, maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled,
-    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit,
+    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, recordInvite, toggleHabit,
     updateCheckInNote, isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate,
     getHabitCheckInOnDate, getCheckInForHabit, getWeeklyHabitCompletions,
     isHabitWeeklyTargetMet, isHabitSatisfiedOnDate, isPartnerConnected, partnerId,
@@ -1288,19 +1366,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addHabit, updateHabit, deleteHabit, applyHabitPlan, importPreviousProgress, updateStake,
     addStake, deleteStake, activeWeeklyStake, activeMonthlyStake, getComparison,
     resetToDefaults, updateSupabaseConfig, exportStateToJson, importStateFromJson,
-    wearableConfig: state.wearableConfig, syncGoogleHealth, disconnectGoogleHealth,
+    wearableConfig: state.wearableConfig, healthTelemetry: state.healthTelemetry,
+    getHealthTelemetryOnDate, setHealthTelemetry, clearHealthTelemetry,
+    syncGoogleHealth, disconnectGoogleHealth,
     themePreference, effectiveTheme, setThemePreference, toggleTheme,
   }), [
     isHydrated, loadedDuelId, syncStatus, storageError, state, activePlayer, activeHabits,
     selectedDate, isTodaySelected, maciekSummary, myrnaSummary, activePlayerSummary,
     maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled, setSoundEnabled,
-    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit, updateCheckInNote,
+    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, recordInvite, toggleHabit, updateCheckInNote,
     isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate, getHabitCheckInOnDate,
     getCheckInForHabit, getWeeklyHabitCompletions, isHabitWeeklyTargetMet, isHabitSatisfiedOnDate,
     isPartnerConnected, partnerId, partnerCleanSpaceHabit, partnerCleanSpaceCheckIn, addReaction,
     toggleRestDay, isRestDay, addHabit, updateHabit, deleteHabit, applyHabitPlan,
     importPreviousProgress, updateStake, addStake, deleteStake, activeWeeklyStake, activeMonthlyStake,
     getComparison, resetToDefaults, updateSupabaseConfig, exportStateToJson, importStateFromJson,
+    getHealthTelemetryOnDate, setHealthTelemetry, clearHealthTelemetry,
     syncGoogleHealth, disconnectGoogleHealth, themePreference, effectiveTheme, setThemePreference, toggleTheme,
   ]);
 

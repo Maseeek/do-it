@@ -49,6 +49,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     partnerCleanSpaceCheckIn,
     partnerCleanSpaceHabit,
     isRestDay,
+    getHealthTelemetryOnDate,
   } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
   const [proofIndex, setProofIndex] = useState<number | null>(null);
@@ -181,6 +182,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     selectedDate,
     completed: isHabitCompletedOnDate(habit.id, selectedDate),
     checkIn: getHabitCheckInOnDate(habit.id, selectedDate),
+    telemetry: getHealthTelemetryOnDate(habit.id, selectedDate),
     weeklyCompletions: getWeeklyHabitCompletions(habit.id, selectedDate),
     habitStreak: habitStreaks.get(habit.id) ?? 0,
     activePlayer,

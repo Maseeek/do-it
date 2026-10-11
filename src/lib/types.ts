@@ -2,7 +2,7 @@ export type PlayerId = 'maciek' | 'myrna';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type EffectiveTheme = 'light' | 'dark';
-export type PlayerColorId = 'blue' | 'purple' | 'teal' | 'orange' | 'pink' | 'green' | 'rainbow';
+export type PlayerColorId = 'blue' | 'purple' | 'teal' | 'orange' | 'pink' | 'green' | 'rainbow' | 'gold';
 export const PLAYER_COLORS = [
   { id: 'blue', name: 'Blue', color: '#60a5fa', accentBg: 'rgba(96, 165, 250, 0.1)', accentBorder: 'rgba(96, 165, 250, 0.25)', unlockAt: 0 },
   { id: 'purple', name: 'Purple', color: '#c084fc', accentBg: 'rgba(192, 132, 252, 0.1)', accentBorder: 'rgba(192, 132, 252, 0.25)', unlockAt: 0 },
@@ -11,6 +11,7 @@ export const PLAYER_COLORS = [
   { id: 'pink', name: 'Pink', color: '#f472b6', accentBg: 'rgba(244, 114, 182, 0.1)', accentBorder: 'rgba(244, 114, 182, 0.25)', unlockAt: 1000 },
   { id: 'green', name: 'Green', color: '#4ade80', accentBg: 'rgba(74, 222, 128, 0.1)', accentBorder: 'rgba(74, 222, 128, 0.25)', unlockAt: 2500 },
   { id: 'rainbow', name: 'Rainbow', color: '#f0abfc', accentBg: 'rgba(232, 121, 249, 0.1)', accentBorder: 'rgba(232, 121, 249, 0.3)', unlockAt: 10000 },
+  { id: 'gold', name: 'Gold', color: '#eab308', accentBg: 'rgba(234, 179, 8, 0.1)', accentBorder: 'rgba(234, 179, 8, 0.25)', unlockAt: 0, requiredInvites: 1 },
 ] as const;
 
 
@@ -21,6 +22,7 @@ export interface Player {
   color: string;
   accentBg: string;
   accentBorder: string;
+  inviteCount?: number;
 }
 
 export type HabitCategory =
@@ -74,6 +76,7 @@ export interface CheckIn {
   isRetroactive?: boolean; // true if logged for past date
   loggedAt?: string; // timestamp when the check-in was registered
   source?: 'google_health';
+  healthValue?: number;
 }
 
 export interface CouplesReaction {
@@ -145,6 +148,18 @@ export interface SleepSessionInfo {
   durationHours: number;
 }
 
+export interface HealthTelemetryRecord {
+  habitId: string;
+  playerId: PlayerId;
+  date: string;
+  metric: HealthMetric;
+  value: number;
+  target: number;
+  unit: string;
+  recordedAt?: string;
+  source?: 'google_health' | 'apple_health' | 'simulated';
+}
+
 export interface GoogleHealthSyncResult {
   success: boolean;
   date: string;
@@ -164,6 +179,9 @@ export interface GoogleHealthSyncResult {
   sportDetected?: boolean;
   sportReason?: string;
   checkInsCreated?: CheckIn[];
+  telemetry?: HealthTelemetryRecord[];
+  changed?: number;
+  needsAttention?: boolean;
   message: string;
   error?: string;
 }
@@ -202,5 +220,5 @@ export interface AppState {
     enabled: boolean;
   };
   wearableConfig?: WearableConfig;
+  healthTelemetry?: Record<string, HealthTelemetryRecord>;
 }
-

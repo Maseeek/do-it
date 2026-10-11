@@ -9,6 +9,7 @@ export const INITIAL_PLAYERS: Record<'maciek' | 'myrna', Player> = {
     color: '#60a5fa', // Linear sky blue
     accentBg: 'rgba(96, 165, 250, 0.1)',
     accentBorder: 'rgba(96, 165, 250, 0.25)',
+    inviteCount: 0,
   },
   myrna: {
     id: 'myrna',
@@ -17,6 +18,7 @@ export const INITIAL_PLAYERS: Record<'maciek' | 'myrna', Player> = {
     color: '#c084fc', // Linear purple
     accentBg: 'rgba(192, 132, 252, 0.1)',
     accentBorder: 'rgba(192, 132, 252, 0.25)',
+    inviteCount: 0,
   },
 };
 
@@ -32,6 +34,7 @@ export const INITIAL_HABITS: Habit[] = [
     iconName: 'Moon',
     order: 1,
     isActive: true,
+    automation: { metric: 'sleep', target: 8 },
   },
   {
     id: 'maciek-gym',
@@ -153,6 +156,7 @@ export const INITIAL_HABITS: Habit[] = [
     iconName: 'Moon',
     order: 1,
     isActive: true,
+    automation: { metric: 'sleep', target: 8 },
   },
   {
     id: 'myrna-gym',
@@ -322,5 +326,6 @@ export function getInitialState(): AppState {
     restDays: [],
     soundEnabled: true,
     hapticsEnabled: true,
+    healthTelemetry: {},
   };
 }
