@@ -6,6 +6,7 @@ import { healthEnabled } from './health-access';
 import { sleepHours, workouts, type HealthDataPoint } from './health-data';
 import { rebalanceWeeklyHabitCheckIns } from './weekly-utils';
 import { getWeekKey } from './date-utils';
+import { calculateSleepRewardRatio, createSleepCheckIn } from './health-rewards';
 
 const activityScope = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly';
 const sleepScope = 'https://www.googleapis.com/auth/googlehealth.sleep.readonly';
@@ -106,12 +107,13 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
     }
 
     const existing = rows?.find(row => row.habit_id === habit.id);
-    if (existing && (existing.data as CheckIn).source !== 'google_health') continue;
+    if (existing && (existing.data as CheckIn).source !== 'google_health' &&
+        (automation.metric !== 'sleep' || measuredValue === null)) continue;
     const hasData = automation.metric === 'sleep' ? values.sleep !== null : automation.metric === 'steps' ? values.steps !== null : values.exerciseObserved;
     const settled = date < new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString().slice(0, 10);
     if (!hasData && !settled) continue;
     let detail: string | null = null;
-    if (automation.metric === 'sleep' && values.sleep !== null && values.sleep >= automation.target) detail = `${values.sleep.toFixed(1)} h sleep`;
+    if (automation.metric === 'sleep' && values.sleep !== null && calculateSleepRewardRatio(values.sleep) > 0) detail = `${values.sleep.toFixed(2)} h sleep`;
     if (automation.metric === 'steps' && values.steps !== null && values.steps >= automation.target) detail = `${values.steps.toLocaleString('en-GB')} steps`;
     if (automation.metric === 'workout' || automation.metric === 'cardio') {
       const matched = values.exercise.filter(item => item.metric === automation.metric && item.minutes >= automation.target).sort((a, b) => b.minutes - a.minutes)[0];
@@ -121,7 +123,11 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
       if (existing) { const { error: deleteError } = await db.from('duel_check_ins').delete().eq('duel_id', duelId).eq('id', existing.id); if (deleteError) throw deleteError; changed++; }
       continue;
     }
-    const checkIn: CheckIn = {
+    const priorCheckIn: CheckIn | undefined = existing?.data;
+    const sleepCheckIn = automation.metric === 'sleep' && values.sleep !== null
+      ? createSleepCheckIn(habit, date, values.sleep, priorCheckIn)
+      : null;
+    const checkIn: CheckIn = sleepCheckIn ?? {
       id: existing?.id || `health-${habit.id}-${date}`,
       habitId: habit.id,
       playerId: slot,
@@ -134,7 +140,7 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
     };
     if (existing) {
       const prior = existing.data as CheckIn;
-      if (prior.note === checkIn.note && prior.pointsEarned === checkIn.pointsEarned && prior.source === checkIn.source) continue;
+      if (prior.note === checkIn.note && prior.pointsEarned === checkIn.pointsEarned && prior.source === checkIn.source && prior.healthValue === checkIn.healthValue) continue;
     }
     const { error: saveError } = await db.from('duel_check_ins').upsert({ duel_id: duelId, id: checkIn.id, habit_id: habit.id, player_slot: slot, data: checkIn });
     if (saveError) throw saveError;

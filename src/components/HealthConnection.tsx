@@ -25,8 +25,7 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     selectedDate,
     setHealthTelemetry,
     clearHealthTelemetry,
-    toggleHabit,
-    isHabitCompletedOnDate,
+    syncGoogleHealth,
   } = useStore();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,9 +43,14 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     if (status.lastCheckedAt && Date.now() - Date.parse(status.lastCheckedAt) < 10 * 60_000) return;
     let cancelled = false;
     lastAttempt.current = Date.now();
-    healthRequest('/api/sync/google-health', 'POST').then(async () => { if (!cancelled) await refresh(); }).catch(async () => { if (!cancelled) await refresh(); });
+    syncGoogleHealth().then(async result => {
+      if (!cancelled) {
+        if (!result.success) setError(result.message);
+        await refresh();
+      }
+    });
     return () => { cancelled = true; };
-  }, [compact, status?.connected, status?.lastCheckedAt, refresh]);
+  }, [compact, status?.connected, status?.lastCheckedAt, refresh, syncGoogleHealth]);
 
   if (!multiplayer.configured) return null;
   if (status?.available === false) {
@@ -67,7 +71,11 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
   }
   async function sync() {
     setBusy(true); setError(null);
-    try { await healthRequest('/api/sync/google-health', 'POST'); await refresh(); }
+    try {
+      const result = await syncGoogleHealth();
+      if (!result.success) throw new Error(result.message);
+      await refresh();
+    }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not check health data.'); }
     finally { setBusy(false); }
   }
@@ -89,7 +97,7 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
   function simulateSleepTelemetry(hours: number) {
     const sleepHabit = activeHabits.find(h => h.automation?.metric === "sleep") || activeHabits.find(h => h.id.endsWith("-sleep"));
     if (!sleepHabit) return;
-    const target = sleepHabit.automation?.target || 8;
+    const target = 8.5;
     setHealthTelemetry({
       habitId: sleepHabit.id,
       playerId: sleepHabit.playerId,
@@ -98,26 +106,14 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
       value: hours,
       target,
       unit: "hrs",
-      source: "google_health",
+      source: "simulated",
     });
-    if (hours >= target) {
-      if (!isHabitCompletedOnDate(sleepHabit.id, selectedDate)) {
-        toggleHabit(sleepHabit.id, undefined, undefined, `${hours.toFixed(1)} h sleep`, selectedDate);
-      }
-    } else {
-      if (isHabitCompletedOnDate(sleepHabit.id, selectedDate)) {
-        toggleHabit(sleepHabit.id, undefined, undefined, undefined, selectedDate);
-      }
-    }
   }
 
   function simulateNoWatchData() {
     const sleepHabit = activeHabits.find(h => h.automation?.metric === "sleep") || activeHabits.find(h => h.id.endsWith("-sleep"));
     if (!sleepHabit) return;
     clearHealthTelemetry(sleepHabit.id, selectedDate);
-    if (isHabitCompletedOnDate(sleepHabit.id, selectedDate)) {
-      toggleHabit(sleepHabit.id, undefined, undefined, undefined, selectedDate);
-    }
   }
 
   return <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-4">
@@ -133,29 +129,34 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     </>}
 
     <details className="border-t border-white/[0.08] pt-3 text-xs text-zinc-400">
-      <summary className="cursor-pointer font-medium text-zinc-300">Test health correlation &amp; lock</summary>
-      <p className="mt-2 text-zinc-400">Simulate how Google Health telemetry colors and locks the sleep habit on {selectedDate}:</p>
+      <summary className="cursor-pointer font-medium text-zinc-300">Test sleep points</summary>
+      <p className="mt-2 text-zinc-400">Try sleep readings for {selectedDate} in your local progress:</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => simulateSleepTelemetry(8.5)}
           className="px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 font-mono text-[11px]"
         >
-          ● 8.5h Sleep (Green · Goal Met)
+          8.5h · 100%
         </button>
+        {[8, 7.5, 7, 6.5].map((hours, index) => (
+          <button key={hours} type="button" onClick={() => simulateSleepTelemetry(hours)} className="control text-xs">
+            {hours}h · {[90, 60, 40, 20][index]}%
+          </button>
+        ))}
         <button
           type="button"
           onClick={() => simulateSleepTelemetry(3.0)}
           className="px-2.5 py-1.5 rounded-lg border border-orange-600/50 bg-orange-600/15 text-orange-300 hover:bg-orange-600/25 font-mono text-[11px]"
         >
-          ● 3.0h Sleep (Dark Orange · Locked)
+          3h · 0%
         </button>
         <button
           type="button"
           onClick={() => simulateSleepTelemetry(1.5)}
           className="px-2.5 py-1.5 rounded-lg border border-red-600/50 bg-red-600/15 text-red-300 hover:bg-red-600/25 font-mono text-[11px]"
         >
-          ● 1.5h Sleep (Red · Locked)
+          1.5h · 0%
         </button>
         <button
           type="button"

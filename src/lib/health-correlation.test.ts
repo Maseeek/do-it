@@ -33,21 +33,21 @@ const stepsHabit: Habit = {
   automation: { metric: 'steps', target: 10000 },
 };
 
-test('8 or 9 hours of sleep is perfect green and unlocked', () => {
+test('8 hours earns 90% with lime; 9 hours is capped at full green', () => {
   const result8 = calculateHealthProgress(8.0, 8.0, 'sleep');
-  assert.equal(result8.tier, 'perfect');
-  assert.equal(result8.colorName, 'green');
-  assert.equal(result8.hexColor, '#10b981');
-  assert.equal(result8.qualified, true);
-  assert.equal(result8.isLocked, false);
-  assert.equal(result8.percentage, 100);
+  assert.equal(result8.tier, 'almost');
+  assert.equal(result8.colorName, 'lime');
+  assert.equal(result8.qualified, false);
+  assert.equal(result8.isLocked, true);
+  assert.equal(result8.percentage, 90);
+  assert.equal(result8.target, 8.5);
 
   const result9 = calculateHealthProgress(9.0, 8.0, 'sleep');
   assert.equal(result9.tier, 'perfect');
   assert.equal(result9.colorName, 'green');
   assert.equal(result9.qualified, true);
   assert.equal(result9.isLocked, false);
-  assert.equal(result9.percentage, 113);
+  assert.equal(result9.percentage, 100);
 });
 
 test('3 hours of sleep correlates to dark orange and is locked', () => {
@@ -57,7 +57,7 @@ test('3 hours of sleep correlates to dark orange and is locked', () => {
   assert.equal(result3.hexColor, '#ea580c');
   assert.equal(result3.qualified, false);
   assert.equal(result3.isLocked, true);
-  assert.equal(result3.percentage, 38);
+  assert.equal(result3.percentage, 0);
 });
 
 test('2 hours or less of sleep correlates to red and is locked', () => {
@@ -67,7 +67,7 @@ test('2 hours or less of sleep correlates to red and is locked', () => {
   assert.equal(result2.hexColor, '#ef4444');
   assert.equal(result2.qualified, false);
   assert.equal(result2.isLocked, true);
-  assert.equal(result2.percentage, 25);
+  assert.equal(result2.percentage, 0);
 
   const result1 = calculateHealthProgress(1.0, 8.0, 'sleep');
   assert.equal(result1.tier, 'critical');
@@ -75,16 +75,20 @@ test('2 hours or less of sleep correlates to red and is locked', () => {
   assert.equal(result1.isLocked, true);
 });
 
-test('intermediate values map to lime and yellow', () => {
+test('sleep colors follow hours independently of reward percentage', () => {
   const result6 = calculateHealthProgress(6.5, 8.0, 'sleep');
-  assert.equal(result6.tier, 'almost');
-  assert.equal(result6.colorName, 'lime');
+  assert.equal(result6.colorName, 'dark-orange');
+  assert.equal(result6.percentage, 20);
   assert.equal(result6.isLocked, true);
 
-  const result5 = calculateHealthProgress(5.0, 8.0, 'sleep');
+  const result5 = calculateHealthProgress(7.0, 8.0, 'sleep');
   assert.equal(result5.tier, 'halfway');
   assert.equal(result5.colorName, 'yellow');
+  assert.equal(result5.percentage, 40);
   assert.equal(result5.isLocked, true);
+  const result75 = calculateHealthProgress(7.5, 8.0, 'sleep');
+  assert.equal(result75.colorName, 'lime');
+  assert.equal(result75.percentage, 60);
 });
 
 test('returns null when no data recorded so habit is left blank and clickable', () => {
@@ -142,7 +146,13 @@ test('correlates steps metric accurately', () => {
 });
 
 test("formatHealthMetricValue formats metrics cleanly", () => {
-  assert.equal(formatHealthMetricValue(8.25, "sleep"), "8.3 hrs");
+  assert.equal(formatHealthMetricValue(8.25, "sleep"), "8.25 hrs");
+  assert.equal(formatHealthMetricValue(6.4999, "sleep"), "6.49 hrs");
   assert.equal(formatHealthMetricValue(10500, "steps"), "10,500 steps");
   assert.equal(formatHealthMetricValue(45, "workout"), "45 min");
+});
+
+test('a health check-in without a measured value leaves progress blank', () => {
+  const entry: CheckIn = { id: 'unknown', habitId: sleepHabit.id, playerId: 'maciek', date: '2026-10-11', pointsEarned: 50, completedAt: '', source: 'google_health' };
+  assert.equal(getHealthProgressDetails(sleepHabit, undefined, entry), null);
 });

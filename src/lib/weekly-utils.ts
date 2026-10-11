@@ -1,5 +1,7 @@
 import { CheckIn, Habit } from './types';
 import { getWeekKey } from './date-utils';
+import { getHealthProgressDetails } from './health-correlation';
+import { calculateHealthPoints } from './health-rewards';
 
 /**
  * Rebalances a habit's check-ins for a given calendar week so that only the first
@@ -41,7 +43,10 @@ function collectRebalancedCheckIns(
     const isEligibleForPoints = index < habit.weeklyTargetDays!;
     let targetPoints = 0;
     if (isEligibleForPoints) {
-      if (habit.isQuantitative && log.quantity !== undefined) {
+      const health = getHealthProgressDetails(habit, undefined, log);
+      if (health?.metric === 'sleep') {
+        targetPoints = calculateHealthPoints(habit, health.value);
+      } else if (habit.isQuantitative && log.quantity !== undefined) {
         targetPoints = Math.min(
           habit.points,
           Math.max(1, Math.round(log.quantity * (habit.pointsPerUnit || 1)))

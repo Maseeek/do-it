@@ -23,6 +23,8 @@ import {
 } from './types';
 import { isPlayerColorUnlocked } from './player-colors';
 import { getInitialState } from './seed';
+import { getHealthProgressDetails } from './health-correlation';
+import { reconcileSleepTelemetry } from './health-rewards';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
 import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, readLegacyProgress, restoreLegacyDuelProgress } from './legacy-import';
@@ -195,7 +197,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(saved);
         if (parsed.players && parsed.players.maciek && parsed.players.myrna) {
           const habitsToUse = parsed.habits || [];
-          const checkInsToUse = parsed.checkIns || [];
+          let checkInsToUse = parsed.checkIns || [];
+          for (const record of Object.values<HealthTelemetryRecord>(parsed.healthTelemetry || {})) {
+            const habit = habitsToUse.find((item: Habit) => item.id === record.habitId && item.playerId === record.playerId);
+            if (habit) checkInsToUse = reconcileSleepTelemetry(checkInsToUse, habit, record);
+          }
           const rebalanced = rebalanceAllWeeklyCheckIns(checkInsToUse, habitsToUse);
           setState((prev) => ({
             ...prev,
@@ -643,13 +649,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const setHealthTelemetry = useStableCallback((record: HealthTelemetryRecord) => {
-    setState((prev) => ({
-      ...prev,
-      healthTelemetry: {
-        ...(prev.healthTelemetry || {}),
-        [`${record.habitId}:${record.date}`]: record,
-      },
-    }));
+    setState((prev) => {
+      const habit = prev.habits.find(item => item.id === record.habitId && item.playerId === record.playerId);
+      const checkIns = habit ? reconcileSleepTelemetry(prev.checkIns, habit, record) : prev.checkIns;
+      return {
+        ...prev,
+        checkIns: habit ? rebalanceWeeklyHabitCheckIns(checkIns, habit, getWeekKey(record.date)) : checkIns,
+        healthTelemetry: { ...prev.healthTelemetry, [`${record.habitId}:${record.date}`]: record },
+      };
+    });
   });
 
   const clearHealthTelemetry = useStableCallback((habitId: string, date = selectedDate) => {
@@ -657,7 +665,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (!prev.healthTelemetry) return prev;
       const next = { ...prev.healthTelemetry };
       delete next[`${habitId}:${date}`];
-      return { ...prev, healthTelemetry: next };
+      const habit = prev.habits.find(item => item.id === habitId);
+      const checkIns = prev.checkIns.filter(entry => !(entry.habitId === habitId && entry.date === date && entry.source === 'google_health'));
+      return {
+        ...prev,
+        healthTelemetry: next,
+        checkIns: habit ? rebalanceWeeklyHabitCheckIns(checkIns, habit, getWeekKey(date)) : checkIns,
+      };
     });
   });
 
@@ -677,14 +691,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (c) => c.habitId === habitId && c.date === targetDate
   );
 
-  // Disallow manual check-in if Google Health recorded telemetry below target
-  if (!existingCheckIn) {
-    const telemetry = state.healthTelemetry?.[`${habitId}:${targetDate}`];
-    if (telemetry && habit.automation && telemetry.value < habit.automation.target) {
-      soundEngine.playUncheck();
-      hapticLight();
-      return;
-    }
+  const telemetry = state.healthTelemetry?.[`${habitId}:${targetDate}`];
+  const healthProgress = getHealthProgressDetails(habit, telemetry, existingCheckIn);
+  // Sleep rewards are imported automatically. Manual actions cannot upgrade or remove them.
+  if (healthProgress?.metric === 'sleep' || (!existingCheckIn && healthProgress?.isLocked)) {
+    soundEngine.playUncheck();
+    hapticLight();
+    return;
   }
   
   // Calculate base points
@@ -1162,7 +1175,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (simulateUnder) params.set('simulateUnder', 'true');
 
         const url = `/api/sync/google-health?${params.toString()}`;
-        const res = await fetch(url, { method: 'POST' });
+        const client = getSupabaseClient();
+        const session = (await client?.auth.getSession())?.data.session;
+        const res = await fetch(url, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+        });
         const data: GoogleHealthSyncResult = await res.json();
 
         if (!res.ok || !data.success) {
@@ -1184,7 +1203,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           if (data.telemetry && data.telemetry.length > 0) {
             for (const t of data.telemetry) {
               newTelemetry[`${t.habitId}:${t.date}`] = t;
-              if (t.value < t.target) {
+              const habit = prev.habits.find(item => item.id === t.habitId && item.playerId === t.playerId);
+              if (habit?.automation?.metric === 'sleep') {
+                newCheckIns = reconcileSleepTelemetry(newCheckIns, habit, t);
+              } else if (t.value < t.target) {
                 newCheckIns = newCheckIns.filter(
                   (c) => !(c.habitId === t.habitId && c.date === t.date && c.source === 'google_health')
                 );
@@ -1204,6 +1226,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
               }
             }
           }
+
+          newCheckIns = rebalanceAllWeeklyCheckIns(newCheckIns, prev.habits);
 
           return {
             ...prev,

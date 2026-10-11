@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
 import { getHealthProgressDetails } from '@/lib/health-correlation';
+import { calculateHealthPoints } from '@/lib/health-rewards';
 import { HabitIcon } from './HabitIcon';
 import dynamic from 'next/dynamic';
 import { loadCurrentPage } from '@/lib/load-current-page';
@@ -81,7 +82,8 @@ export const HabitCard = React.memo(function HabitCard({
     () => getHealthProgressDetails(habit, telemetry, checkIn),
     [habit, telemetry, checkIn]
   );
-  const isHealthLocked = Boolean(healthProgress?.isLocked && !completed);
+  const isHealthLocked = Boolean(healthProgress && (healthProgress.metric === 'sleep' || (healthProgress.isLocked && !completed)));
+  const availablePoints = healthProgress ? calculateHealthPoints(habit, healthProgress.value) : habit.points;
 
   useEffect(() => {
     if (!lockedAlertMessage) return;
@@ -101,7 +103,7 @@ export const HabitCard = React.memo(function HabitCard({
   const isWeeklyTargetMet = isWeeklyHabit && weeklyCompletions >= habit.weeklyTargetDays!;
   const satisfied = completed || isWeeklyTargetMet;
   const isPulsing = Boolean(isLocking || localPulse);
-  const pulsePoints = localPulse?.points ?? checkIn?.pointsEarned ?? (isWeeklyTargetMet ? 0 : habit.points);
+  const pulsePoints = localPulse?.points ?? checkIn?.pointsEarned ?? (isWeeklyTargetMet ? 0 : availablePoints);
 
   const proofPhotos = checkIn?.proofUrls && checkIn.proofUrls.length > 0
     ? checkIn.proofUrls
@@ -164,7 +166,7 @@ export const HabitCard = React.memo(function HabitCard({
         hapticLight();
         setIsProofModalOpen(true);
       } else {
-        const earnedPts = isWeeklyTargetMet ? 0 : habit.points;
+        const earnedPts = isWeeklyTargetMet ? 0 : availablePoints;
         soundEngine.playCheck();
         hapticSuccess();
         triggerKineticPulse(earnedPts);
@@ -174,7 +176,7 @@ export const HabitCard = React.memo(function HabitCard({
   };
 
   const handleProofConfirmed = (proofUrls?: string[]) => {
-    const earnedPts = completed ? 0 : isWeeklyTargetMet ? 0 : habit.points;
+    const earnedPts = completed ? 0 : isWeeklyTargetMet ? 0 : availablePoints;
     soundEngine.playCheck();
     hapticSuccess();
     triggerKineticPulse(earnedPts);
@@ -204,7 +206,11 @@ export const HabitCard = React.memo(function HabitCard({
     if (checkIn) {
       updateCheckInNote(checkIn.id, noteText.trim());
     } else {
-      const earnedPts = isWeeklyTargetMet ? 0 : habit.points;
+      if (isHealthLocked) {
+        setLockedAlertMessage(healthProgress?.lockReason ?? null);
+        return;
+      }
+      const earnedPts = isWeeklyTargetMet ? 0 : availablePoints;
       triggerKineticPulse(earnedPts);
       toggleHabit(habit.id, undefined, undefined, noteText.trim(), selectedDate);
     }
@@ -238,7 +244,7 @@ export const HabitCard = React.memo(function HabitCard({
             className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${
               completed
                 ? healthProgress
-                  ? 'bg-emerald-500/80 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                  ? `${healthProgress.classes.bar} ${healthProgress.classes.glow}`
                   : 'bg-player-500/50'
                 : 'bg-emerald-500/50'
             }`}
@@ -292,6 +298,7 @@ export const HabitCard = React.memo(function HabitCard({
                   : `Mark ${habit.title} completed`
               }
               title={isHealthLocked ? healthProgress?.lockReason : undefined}
+              aria-disabled={isHealthLocked}
               className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${
                 isHealthLocked
                   ? 'cursor-not-allowed opacity-90'
@@ -299,10 +306,10 @@ export const HabitCard = React.memo(function HabitCard({
               } ${
                 isPulsing ? 'animate-kinetic-box-snap ' : ''
               }${
-                completed
-                  ? 'bg-player-500 border border-player-300/90 text-white shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.35)]'
-                  : isHealthLocked
+                isHealthLocked
                   ? `${healthProgress?.classes.border} ${healthProgress?.classes.bg} ${healthProgress?.classes.text} shadow-xs`
+                  : completed
+                  ? 'bg-player-500 border border-player-300/90 text-white shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.35)]'
                   : isWeeklyTargetMet
                   ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
                   : 'border border-zinc-700/90 bg-[#090a0d] hover:border-zinc-500 text-transparent hover:text-zinc-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
@@ -422,8 +429,8 @@ export const HabitCard = React.memo(function HabitCard({
               <div
                 className={`mt-2 p-2 rounded-lg border ${healthProgress.classes.border} ${healthProgress.classes.bg} space-y-1.5`}
               >
-                <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="flex items-center gap-1.5 font-medium text-zinc-300">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-mono">
+                  <span className="flex flex-wrap items-center gap-1.5 font-medium text-zinc-300">
                     <Activity className={`w-3 h-3 ${healthProgress.classes.text}`} />
                     <span className="text-[10px] uppercase tracking-wide text-zinc-400">Google Health</span>
                     <span className="text-zinc-600">·</span>
@@ -439,7 +446,7 @@ export const HabitCard = React.memo(function HabitCard({
                   </span>
                 </div>
                 {/* Visual telemetry progress bar */}
-                <div className="w-full h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
+                <div role="progressbar" aria-label={healthProgress.metric === 'sleep' ? 'Sleep points earned' : 'Health goal progress'} aria-valuenow={healthProgress.barPercentage} aria-valuemin={0} aria-valuemax={100} className="w-full h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${healthProgress.classes.bar} ${healthProgress.classes.glow}`}
                     style={{ width: `${healthProgress.barPercentage}%` }}
@@ -502,7 +509,7 @@ export const HabitCard = React.memo(function HabitCard({
               aria-label={
                 habit.isQuantitative
                   ? `Log quantity for ${habit.title}`
-                  : `${habit.points} points`
+                  : `${completed ? checkIn?.pointsEarned ?? availablePoints : availablePoints} points`
               }
               className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-all tabular-nums ${
                 isPulsing
@@ -533,7 +540,7 @@ export const HabitCard = React.memo(function HabitCard({
                   : `+${checkIn?.pointsEarned ?? habit.points}`
                 : isWeeklyTargetMet
                 ? 'Goal Met'
-                : `+${habit.points}`}
+                : `+${availablePoints}`}
             </button>
 
             <div className="flex items-center gap-1">

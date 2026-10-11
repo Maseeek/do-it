@@ -13,7 +13,7 @@ describe('Store: URL Automation & Deep Linking (iOS Shortcuts & Siri)', () => {
 
     const targetHabit = INITIAL_HABITS.find((h) => h.id === habitId);
     assert.ok(targetHabit);
-    assert.strictEqual(targetHabit.title, 'Sleep 8+ Hours');
+    assert.strictEqual(targetHabit.title, 'Sleep 8.5+ Hours');
     assert.strictEqual(targetHabit.points, 50);
   });
 
