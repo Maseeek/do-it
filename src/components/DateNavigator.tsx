@@ -132,7 +132,7 @@ export function DateNavigator() {
         <div className="flex items-center gap-1.5 min-w-0">
           <button
             onClick={handlePrevDay}
-            className="w-7 h-7 rounded-md bg-[#0e1013] border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 flex items-center justify-center transition-colors active:scale-95 shrink-0"
+            className="w-7 h-7 rounded-md bg-white dark:bg-[#0e1013] border border-black/10 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-black/20 dark:hover:border-zinc-700 flex items-center justify-center transition-colors active:scale-95 shrink-0 shadow-2xs"
             aria-label="Previous day"
             title="Previous day"
           >
@@ -140,7 +140,7 @@ export function DateNavigator() {
           </button>
 
           <div className="flex items-baseline gap-1.5 px-1 truncate">
-            <span className="text-xs font-mono font-bold tracking-tight text-white truncate">
+            <span className="text-xs font-mono font-bold tracking-tight text-zinc-900 dark:text-white truncate">
               {isTodaySelected
                 ? parseDate(selectedDate).toLocaleDateString('en-US', {
                     weekday: 'short',
@@ -164,7 +164,7 @@ export function DateNavigator() {
           <button
             onClick={handleNextDay}
             disabled={isFuture}
-            className="w-7 h-7 rounded-md bg-[#0e1013] border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none transition-colors active:scale-95 shrink-0"
+            className="w-7 h-7 rounded-md bg-white dark:bg-[#0e1013] border border-black/10 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-black/20 dark:hover:border-zinc-700 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none transition-colors active:scale-95 shrink-0 shadow-2xs"
             aria-label="Next day"
             title="Next day"
           >
@@ -180,8 +180,8 @@ export function DateNavigator() {
             aria-label={isRest ? 'Disable rest day' : 'Enable rest day'}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-all active:scale-95 border ${
               isRest
-                ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-300'
-                : 'bg-[#0e1013] border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-600 dark:text-indigo-300'
+                : 'bg-white dark:bg-[#0e1013] border-black/10 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:border-black/20 dark:hover:border-zinc-700 shadow-2xs'
             }`}
             title="Declare scheduled rest day (protects streak)"
           >
@@ -209,7 +209,7 @@ export function DateNavigator() {
         ref={scrollContainerRef}
         role="tablist"
         aria-label="Calendar dates"
-        className="flex gap-1.5 p-1.5 rounded-xl bg-[#0e1013] border border-zinc-800/90 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-1.5 p-1.5 rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800/90 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shadow-2xs"
       >
         {scrollableDays.map((day) => {
           const isSelected = day.dateStr === selectedDate;
@@ -236,8 +236,8 @@ export function DateNavigator() {
                 day.isFuture
                   ? 'opacity-25 cursor-not-allowed border-transparent'
                   : isSelected
-                  ? 'bg-zinc-800/90 border-zinc-600 text-white shadow-xs'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/70 hover:border-zinc-800/80'
+                  ? 'bg-zinc-900 dark:bg-zinc-800/90 text-white border-zinc-900 dark:border-zinc-600 shadow-xs'
+                  : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900/70 hover:border-zinc-200 dark:hover:border-zinc-800/80'
               }`}
             >
               <span
@@ -253,10 +253,10 @@ export function DateNavigator() {
               <span
                 className={`text-xs font-mono tabular-nums my-0.5 ${
                   isToday
-                    ? 'font-extrabold text-player-400'
+                    ? 'font-extrabold text-player-500 dark:text-player-400'
                     : isSelected
                     ? 'font-bold text-white'
-                    : 'font-medium text-zinc-300'
+                    : 'font-medium text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 {day.dayNumber}
@@ -280,7 +280,7 @@ export function DateNavigator() {
                     title={`${completedCount} logged (${totalPoints} pts)`}
                   />
                 ) : (
-                  <span className="w-1 h-1 rounded-xs bg-zinc-800" />
+                  <span className="w-1 h-1 rounded-xs bg-zinc-300 dark:bg-zinc-800" />
                 )}
               </div>
             </button>

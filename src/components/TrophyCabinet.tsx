@@ -86,7 +86,7 @@ export function TrophyCabinet() {
     <div style={getPlayerThemeStyles(players[selectedPlayer])} className="space-y-3">
       {/* Top Controls: Player & Filter */}
       <div className="flex items-center justify-between gap-2">
-        <div role="tablist" aria-label="Select player for badges" className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
+        <div role="tablist" aria-label="Select player for badges" className="flex p-0.5 rounded-full bg-zinc-100 dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] text-xs">
           <button
             role="tab"
             aria-selected={selectedPlayer === 'maciek'}
@@ -119,13 +119,13 @@ export function TrophyCabinet() {
       </div>
 
       {/* Filter Tabs */}
-      <div role="tablist" aria-label="Filter badges by unlock state" className="flex p-0.5 rounded-full bg-[#1c1c1e] border border-white/[0.08] text-xs">
+      <div role="tablist" aria-label="Filter badges by unlock state" className="flex p-0.5 rounded-full bg-zinc-100 dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] text-xs">
         <button
           role="tab"
           aria-selected={filter === 'all'}
           onClick={() => handleFilterChange('all')}
           className={`flex-1 py-1 rounded-full transition-colors ${
-            filter === 'all' ? 'bg-[#2c2c2e] text-white font-medium' : 'text-zinc-400'
+            filter === 'all' ? 'bg-white text-zinc-900 shadow-xs dark:bg-[#2c2c2e] dark:text-white font-medium' : 'text-zinc-400'
           }`}
         >
           All
@@ -135,7 +135,7 @@ export function TrophyCabinet() {
           aria-selected={filter === 'unlocked'}
           onClick={() => handleFilterChange('unlocked')}
           className={`flex-1 py-1 rounded-full transition-colors ${
-            filter === 'unlocked' ? 'bg-[#2c2c2e] text-emerald-400 font-medium' : 'text-zinc-400'
+            filter === 'unlocked' ? 'bg-white text-emerald-600 shadow-xs dark:bg-[#2c2c2e] dark:text-emerald-400 font-medium' : 'text-zinc-400'
           }`}
         >
           Unlocked
@@ -145,7 +145,7 @@ export function TrophyCabinet() {
           aria-selected={filter === 'locked'}
           onClick={() => handleFilterChange('locked')}
           className={`flex-1 py-1 rounded-full transition-colors ${
-            filter === 'locked' ? 'bg-[#2c2c2e] text-white font-medium' : 'text-zinc-400'
+            filter === 'locked' ? 'bg-white text-zinc-900 shadow-xs dark:bg-[#2c2c2e] dark:text-white font-medium' : 'text-zinc-400'
           }`}
         >
           Locked
@@ -157,10 +157,10 @@ export function TrophyCabinet() {
         {filteredBadges.map(({ badge, isUnlocked, progress, currentValue }) => (
           <div
             key={badge.id}
-            className={`p-3.5 rounded-2xl border transition-all ${
+            className={`p-3.5 rounded-2xl border transition-all shadow-xs ${
               isUnlocked
-                ? 'bg-[#1c1c1e] border-white/[0.08]'
-                : 'bg-[#1c1c1e]/40 border-white/[0.04] opacity-60'
+                ? 'bg-white dark:bg-[#1c1c1e] border-black/[0.08] dark:border-white/[0.08]'
+                : 'bg-zinc-50/70 dark:bg-[#1c1c1e]/40 border-black/[0.04] dark:border-white/[0.04] opacity-60'
             }`}
           >
             <div className="flex items-start gap-3">

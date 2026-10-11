@@ -41,7 +41,7 @@ export function ProgressView({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-player-500/25 bg-[#0e1013] p-4">
+        <div className="rounded-xl border border-player-500/25 bg-white dark:bg-[#0e1013] p-4 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
               Day streak
@@ -53,7 +53,7 @@ export function ProgressView({
           </div>
         </div>
 
-        <div className="rounded-xl border border-player-500/25 bg-[#0e1013] p-4">
+        <div className="rounded-xl border border-player-500/25 bg-white dark:bg-[#0e1013] p-4 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
               This week
@@ -112,10 +112,10 @@ export function ProgressView({
                   }
                 }}
                 aria-pressed={isSelected}
-                className={`flex min-h-14 items-center gap-3 rounded-xl border bg-[#0e1013] px-3.5 cursor-pointer transition-colors ${
+                className={`flex min-h-14 items-center gap-3 rounded-xl border bg-white dark:bg-[#0e1013] px-3.5 cursor-pointer transition-colors shadow-xs ${
                   isSelected
                     ? 'border-player-500/50 bg-player-500/5'
-                    : 'border-zinc-800/90 hover:border-zinc-700'
+                    : 'border-black/[0.08] dark:border-zinc-800/90 hover:border-black/15 dark:hover:border-zinc-700'
                 }`}
               >
                 <HabitIcon
@@ -131,7 +131,7 @@ export function ProgressView({
                 {habit.automation?.metric === 'steps' ? (
                   <select
                     aria-label="Step goal"
-                    className="rounded-lg border border-zinc-800 bg-zinc-900 p-2 text-xs font-mono"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 p-2 text-xs font-mono text-zinc-900 dark:text-white"
                     value={habit.automation.target}
                     onClick={(event) => event.stopPropagation()}
                     onChange={(event) =>

@@ -183,7 +183,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                 maxLength={40}
                 onChange={event => { setName(event.target.value); setNameMessage(null); }}
                 autoComplete="nickname"
-                className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-sm text-foreground outline-none focus:border-player-400"
+                className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-zinc-100 dark:bg-[#101113] px-3 text-sm text-foreground outline-none focus:border-player-400"
               />
               <button
                 type="submit"
@@ -197,7 +197,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
           </form>
 
           {/* App Recommendation & Invite Counter */}
-          <div className="space-y-2 rounded-xl border border-white/[0.08] bg-[#101113] p-3.5">
+          <div className="space-y-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-zinc-100 dark:bg-[#101113] p-3.5 shadow-2xs">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -230,7 +230,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                   readOnly
                   value={recommendUrl}
                   onFocus={event => event.currentTarget.select()}
-                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#17181b] px-3 text-xs text-foreground outline-none font-mono"
+                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-white dark:bg-[#17181b] px-3 text-xs text-foreground outline-none font-mono"
                 />
                 <button
                   type="button"
@@ -306,7 +306,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       )}
 
       {/* Theme / Appearance Section */}
-      <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
+      <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <SunMedium size={17} /> Appearance
@@ -363,7 +363,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       </section>
 
       {multiplayer.configured && multiplayer.user && (
-        <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
+        <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Share2 size={17} /> Account &amp; Duel Invitation
           </h2>
@@ -387,7 +387,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                   readOnly
                   value={inviteUrl}
                   onFocus={event => event.currentTarget.select()}
-                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/[0.15] bg-[#101113] px-3 text-xs text-foreground outline-none"
+                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-zinc-100 dark:bg-[#101113] px-3 text-xs text-foreground outline-none"
                 />
                 <button
                   type="button"
@@ -414,7 +414,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
 
       <HealthConnection onChooseHabits={onChooseHabits} />
 
-      <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-3">
+      <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-sm text-foreground">
             <Volume2 size={17} /> Sounds

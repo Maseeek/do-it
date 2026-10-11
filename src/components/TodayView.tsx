@@ -230,7 +230,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
         <div
           role="tablist"
           aria-label="Today views"
-          className="flex p-0.5 rounded-lg bg-[#0e1013] border border-zinc-800"
+          className="flex p-0.5 rounded-lg bg-zinc-200/70 dark:bg-[#0e1013] border border-black/[0.06] dark:border-zinc-800"
         >
           {([
             { id: 'ritual', label: 'Ritual' },
@@ -247,8 +247,8 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
               }}
               className={`px-3 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
                 activeSubTab === tab.id
-                  ? 'bg-zinc-800/90 text-white shadow-xs'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white text-zinc-900 shadow-xs dark:bg-zinc-800/90 dark:text-white'
+                  : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
               }`}
             >
               {tab.label}
@@ -290,7 +290,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
           <section
             key={activeTargetPulse ? `target-${activeTargetPulse.token}` : 'target-idle'}
             aria-label="Today progress"
-            className={`relative rounded-xl bg-gradient-to-b from-[#12141a] to-[#0c0d10] border border-zinc-800/90 p-4 shadow-xs transition-colors ${
+            className={`relative rounded-xl bg-white dark:bg-gradient-to-b dark:from-[#12141a] dark:to-[#0c0d10] border border-black/[0.08] dark:border-zinc-800/90 p-4 shadow-xs transition-colors ${
               activeTargetPulse
                 ? progress >= 100
                   ? 'animate-target-pulse-emerald'
@@ -305,7 +305,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                 </span>
                 <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
                   <span
-                    className={`text-3xl font-bold font-mono tracking-tight tabular-nums text-white ${
+                    className={`text-3xl font-bold font-mono tracking-tight tabular-nums text-zinc-900 dark:text-white ${
                       activeTargetPulse ? 'animate-target-score-bump' : ''
                     }`}
                   >
@@ -336,7 +336,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                     className={`inline-flex items-center text-xs font-mono font-semibold px-2 py-0.5 rounded border tabular-nums transition-colors ${
                       activeTargetPulse
                         ? 'text-player-200 bg-player-500/15 border-player-400/40'
-                        : 'text-white bg-zinc-900/90 border-zinc-800'
+                        : 'text-zinc-900 bg-zinc-100 border-zinc-200 dark:text-white dark:bg-zinc-900/90 dark:border-zinc-800'
                     }`}
                   >
                     {satisfiedHabits.length} / {activeHabits.length}
@@ -352,7 +352,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
               aria-valuenow={points}
               aria-valuemin={0}
               aria-valuemax={Math.max(1, par)}
-              className="relative w-full h-2 rounded-full bg-zinc-800/90 overflow-hidden"
+              className="relative w-full h-2 rounded-full bg-zinc-200 dark:bg-zinc-800/90 overflow-hidden"
             >
               <div
                 className={`relative h-full rounded-full transition-[width] duration-500 ease-out ${
@@ -556,7 +556,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-zinc-800 bg-[#0e1013] px-5 py-7">
+            <div className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] px-5 py-7 shadow-xs">
               <h2 className="text-sm font-semibold">Start with one habit.</h2>
               <p className="mt-1 text-xs text-zinc-400">Add something you want to do today.</p>
               <button onClick={onOpenHabits} className="control control-primary mt-5">

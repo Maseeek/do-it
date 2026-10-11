@@ -249,7 +249,7 @@ export function DuelView() {
           {selectedTier === 'weekly' && (
             <button
               onClick={handleShareScorecardCard}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-[#0e1013] text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white sm:w-auto sm:px-2.5"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0e1013] text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white sm:w-auto sm:px-2.5"
               aria-label={shareCardStatus || 'Share scorecard'}
               title="Export & Share Scorecard"
             >
@@ -268,8 +268,8 @@ export function DuelView() {
               </span>
             </span>
             <span className="relative flex h-full items-center justify-center font-mono text-[9px] text-zinc-400">
-              <span aria-hidden="true" className="absolute inset-y-[15px] left-1/2 w-px -translate-x-1/2 bg-zinc-800" />
-              <span className="relative bg-[#08090a] px-1 py-1">VS</span>
+              <span aria-hidden="true" className="absolute inset-y-[15px] left-1/2 w-px -translate-x-1/2 bg-zinc-200 dark:bg-zinc-800" />
+              <span className="relative bg-background px-1 py-1 text-zinc-500">VS</span>
             </span>
             <span className="min-w-0 text-right">
               <span aria-hidden="true" className="mb-2.5 ml-auto block h-0.5 w-[26px] rounded bg-guest-500" />
@@ -285,7 +285,7 @@ export function DuelView() {
         <div
           role="tablist"
           aria-label="Leaderboard timeframe"
-          className="grid w-full grid-cols-3 gap-0.5 rounded-lg border border-zinc-800 bg-[#0e1013] p-[3px]"
+          className="grid w-full grid-cols-3 gap-0.5 rounded-lg border border-black/[0.06] dark:border-zinc-800 bg-zinc-200/70 dark:bg-[#0e1013] p-[3px]"
         >
           {(
             [
@@ -301,8 +301,8 @@ export function DuelView() {
               onClick={() => handleSelectTier(t.id)}
               className={`min-h-9 rounded-md px-2 text-xs font-mono font-medium transition-colors ${
                 selectedTier === t.id
-                  ? 'bg-zinc-800/90 text-white shadow-xs font-semibold'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white text-zinc-900 shadow-xs font-semibold dark:bg-zinc-800/90 dark:text-white'
+                  : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
               }`}
             >
               {t.label}
@@ -313,7 +313,7 @@ export function DuelView() {
 
       {/* Invite Panel (when requested or unpaired) */}
       {multiplayer.duel && (!isPartnerConnected || showInvitePanel) && (
-        <section className="rounded-xl border border-player-500/25 bg-[#0e1013] p-4 space-y-3">
+        <section className="rounded-xl border border-player-500/25 bg-white dark:bg-[#0e1013] shadow-xs p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-white">{isPartnerConnected ? `${ownerDisplayName} vs ${guestDisplayName}` : `Duel invite for ${ownerDisplayName}`}</h2>
@@ -412,7 +412,7 @@ export function DuelView() {
 
       {/* Onboarding Empty State */}
       {multiplayer.duel && habits.length === 0 && (
-        <section className="rounded-xl border border-zinc-800 bg-[#0e1013] p-4">
+        <section className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] shadow-xs p-4">
           <h2 className="text-sm font-semibold text-white">Start with a habit</h2>
           <p className="text-xs text-zinc-400 mt-1">
             Each player adds their own habits. Check-ins will appear here as you go.
@@ -427,7 +427,7 @@ export function DuelView() {
       )}
 
       {/* Main Head-to-Head Competition Card */}
-      <div className="rounded-xl bg-[#0e1013] border border-zinc-800 p-4 space-y-4">
+      <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-4">
         {/* Top: Tier Name + Countdown */}
         <div className="flex items-center justify-between text-xs">
           <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
@@ -506,7 +506,7 @@ export function DuelView() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuetext={`${players.maciek.name} ${comparison.maciekPct}%, ${players.myrna.name} ${comparison.myrnaPct}%`}
-            className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden flex"
+            className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex"
           >
             <div
               className="h-full bg-owner-500 transition-all duration-500"
@@ -526,7 +526,7 @@ export function DuelView() {
 
       {/* Wager Card (Ultra-compact inline when empty, full card when active) */}
       {!activeStake ? (
-        <div className="rounded-xl border border-zinc-800 bg-[#0e1013] p-3 flex items-center justify-between gap-3">
+        <div className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] shadow-xs p-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
             <span className="text-xs font-mono text-zinc-400 truncate">
@@ -552,7 +552,7 @@ export function DuelView() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-zinc-800 bg-[#0e1013] p-3.5 space-y-2">
+        <div className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] shadow-xs p-3.5 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4 text-amber-400" />
@@ -624,7 +624,7 @@ export function DuelView() {
       <div
         role="tablist"
         aria-label="Duel sections"
-        className="flex p-0.5 rounded-lg bg-[#0e1013] border border-zinc-800"
+        className="flex p-0.5 rounded-lg bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs"
       >
         {subsegmentOptions.map((tab) => (
           <button
@@ -649,7 +649,7 @@ export function DuelView() {
 
       {/* Subsegment View 1: Today's Habits */}
       {activeSubsegment === 'habits' && (
-        <div className="rounded-xl bg-[#0e1013] border border-zinc-800 p-4 space-y-3">
+        <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-3">
           <div className="flex items-center justify-between text-xs font-mono">
             <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
               Today&apos;s Habits Parity
@@ -787,7 +787,7 @@ export function DuelView() {
 
       {/* Subsegment View 2: Daily Battles (Horizontal 7-Day Strip + Inspector) */}
       {activeSubsegment === 'battles' && selectedTier === 'weekly' && (
-        <div className="rounded-xl bg-[#0e1013] border border-zinc-800 p-4 space-y-3">
+        <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-3">
           <div className="flex items-center justify-between text-xs font-mono">
             <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
               Weekly Daily Battles
@@ -868,7 +868,7 @@ export function DuelView() {
               </div>
 
               {selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints > 0 ? (
-                <div className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex">
+                <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex">
                   <div
                     className="h-full bg-owner-500 transition-all duration-300"
                     style={{
@@ -905,7 +905,7 @@ export function DuelView() {
 
       {/* Subsegment View 3: Categories (Active categories + collapsible inactive) */}
       {activeSubsegment === 'categories' && (
-        <div className="rounded-xl bg-[#0e1013] border border-zinc-800 p-4 space-y-3">
+        <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-3">
           <div className="flex items-center justify-between text-xs font-mono">
             <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
               Category Breakdown ({selectedTier === 'karma' ? 'All-Time' : selectedTier})
@@ -942,7 +942,7 @@ export function DuelView() {
                       aria-valuenow={cat.maciekPoints}
                       aria-valuemin={0}
                       aria-valuemax={Math.max(1, total)}
-                      className="h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden flex"
+                      className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex"
                     >
                       <div
                         className="h-full bg-owner-500 transition-all duration-300"
@@ -1020,7 +1020,7 @@ export function DuelView() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="resolve-wager-title"
-            className="w-full max-w-sm rounded-2xl bg-[#0e1013] border border-zinc-800 p-5 shadow-2xl space-y-4"
+            className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-5 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -1088,7 +1088,7 @@ export function DuelView() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="stake-modal-title"
-            className="w-full max-w-sm rounded-2xl bg-[#0e1013] border border-zinc-800 p-5 shadow-2xl space-y-3.5"
+            className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-5 shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">

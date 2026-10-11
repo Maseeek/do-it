@@ -92,13 +92,13 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
         role="dialog"
         aria-modal="true"
         aria-labelledby="proof-modal-title"
-        className="w-full max-w-sm rounded-3xl bg-[#1c1c1e] border border-white/[0.12] p-5 shadow-2xl max-h-[90vh] flex flex-col"
+        className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.12] p-5 shadow-2xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div>
-            <h2 id="proof-modal-title" className="text-sm font-semibold text-white">Attach Proof</h2>
+            <h2 id="proof-modal-title" className="text-sm font-semibold text-zinc-900 dark:text-white">Attach Proof</h2>
             <span className="text-xs text-zinc-400">{habit.title}</span>
           </div>
           <button
