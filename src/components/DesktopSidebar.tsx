@@ -11,6 +11,8 @@ export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType;
     { id: 'duel' as const, label: 'Duel', icon: Flame, shortcut: '2' },
     { id: 'progress' as const, label: 'Progress', icon: ChartNoAxesColumn, shortcut: '3' },
   ];
+  const inviteCount = activePlayer?.inviteCount ?? 0;
+
   return (
     <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 border-r border-black/[0.07] dark:border-zinc-800/80 bg-white dark:bg-[#0b0c0e] flex-col p-5 z-40 transition-colors">
       <nav aria-label="Desktop navigation" className="space-y-1">
@@ -35,15 +37,21 @@ export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType;
           </button>
         ))}
       </nav>
-      <div className="mt-auto border-t border-black/[0.07] dark:border-zinc-800/80 pt-4 px-1">
-        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-          {activePlayer?.name} · Lifetime Karma
-        </p>
-        <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="text-xl font-bold font-mono tabular-nums text-player-400">
-            {activePlayerSummary.karma.toLocaleString()}
-          </span>
-          <span className="text-[11px] font-mono text-zinc-500">pts</span>
+      <div className="mt-auto border-t border-black/[0.07] dark:border-zinc-800/80 pt-4 px-1 space-y-2">
+        <div>
+          <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+            {activePlayer?.name} · Lifetime Karma
+          </p>
+          <div className="flex items-baseline gap-1.5 mt-1">
+            <span className="text-xl font-bold font-mono tabular-nums text-player-400">
+              {activePlayerSummary.karma.toLocaleString()}
+            </span>
+            <span className="text-[11px] font-mono text-zinc-500">pts</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.05] pt-2 text-xs font-mono text-zinc-400">
+          <span>Invites</span>
+          <span className="font-semibold text-foreground tabular-nums">{inviteCount}</span>
         </div>
       </div>
     </aside>

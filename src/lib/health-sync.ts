@@ -1,6 +1,6 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CheckIn, Habit, PlayerId } from './types';
+import type { CheckIn, Habit, HealthTelemetryRecord, PlayerId } from './types';
 import { decryptToken, healthDatabase, localDate } from './health-server';
 import { healthEnabled } from './health-access';
 import { sleepHours, workouts, type HealthDataPoint } from './health-data';
@@ -69,9 +69,42 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
   const { data: rows, error } = await db.from('duel_check_ins').select('id,habit_id,data').eq('duel_id', duelId).eq('player_slot', slot).eq('data->>date', date);
   if (error) throw error;
   let changed = 0;
+  const telemetry: HealthTelemetryRecord[] = [];
+
   for (const habit of habits) {
     const automation = habit.automation;
     if (!automation) continue;
+
+    let measuredValue: number | null = null;
+    let unit = 'hrs';
+    if (automation.metric === 'sleep') {
+      measuredValue = values.sleep;
+      unit = 'hrs';
+    } else if (automation.metric === 'steps') {
+      measuredValue = values.steps;
+      unit = 'steps';
+    } else if (automation.metric === 'workout' || automation.metric === 'cardio') {
+      if (values.exerciseObserved) {
+        const matched = values.exercise.filter(item => item.metric === automation.metric).sort((a, b) => b.minutes - a.minutes)[0];
+        measuredValue = matched ? matched.minutes : 0;
+      }
+      unit = 'min';
+    }
+
+    if (measuredValue !== null) {
+      telemetry.push({
+        habitId: habit.id,
+        playerId: slot,
+        date,
+        metric: automation.metric,
+        value: measuredValue,
+        target: automation.target,
+        unit,
+        recordedAt: new Date().toISOString(),
+        source: 'google_health',
+      });
+    }
+
     const existing = rows?.find(row => row.habit_id === habit.id);
     if (existing && (existing.data as CheckIn).source !== 'google_health') continue;
     const hasData = automation.metric === 'sleep' ? values.sleep !== null : automation.metric === 'steps' ? values.steps !== null : values.exerciseObserved;
@@ -88,7 +121,17 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
       if (existing) { const { error: deleteError } = await db.from('duel_check_ins').delete().eq('duel_id', duelId).eq('id', existing.id); if (deleteError) throw deleteError; changed++; }
       continue;
     }
-    const checkIn: CheckIn = { id: existing?.id || `health-${habit.id}-${date}`, habitId: habit.id, playerId: slot, date, pointsEarned: habit.points, completedAt: (existing?.data as CheckIn | undefined)?.completedAt || new Date().toISOString(), source: 'google_health', note: detail };
+    const checkIn: CheckIn = {
+      id: existing?.id || `health-${habit.id}-${date}`,
+      habitId: habit.id,
+      playerId: slot,
+      date,
+      pointsEarned: habit.points,
+      completedAt: (existing?.data as CheckIn | undefined)?.completedAt || new Date().toISOString(),
+      source: 'google_health',
+      healthValue: measuredValue ?? undefined,
+      note: detail,
+    };
     if (existing) {
       const prior = existing.data as CheckIn;
       if (prior.note === checkIn.note && prior.pointsEarned === checkIn.pointsEarned && prior.source === checkIn.source) continue;
@@ -111,7 +154,7 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
       }
     }
   }
-  return changed;
+  return { changed, telemetry };
 }
 
 export async function syncUserHealth(userId: string, requestedDate?: string) {
@@ -140,9 +183,16 @@ export async function syncUserHealth(userId: string, requestedDate?: string) {
       habits.some(habit => habit.automation?.metric === 'steps') && canActivity ? stepsForDay(date, token) : Promise.resolve(null),
     ]);
     const usable = habits.filter(habit => habit.automation?.metric === 'sleep' ? canSleep : canActivity);
-    const changed = await applyResults(db, duel.id, slot, usable, date, { sleep: sleepPoints?.length ? sleepHours(sleepPoints) : null, steps, exercise: exercisePoints === null ? [] : workouts(exercisePoints), exerciseObserved: !!exercisePoints?.length });
+    const { changed, telemetry } = await applyResults(db, duel.id, slot, usable, date, { sleep: sleepPoints?.length ? sleepHours(sleepPoints) : null, steps, exercise: exercisePoints === null ? [] : workouts(exercisePoints), exerciseObserved: !!exercisePoints?.length });
     await db.from('health_connections').update({ last_checked_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString() }).eq('user_id', userId);
-    return { success: true, date, changed, needsAttention: habits.length > usable.length, message: habits.length > usable.length ? 'Some health permissions are missing. Reconnect to sync all automatic habits.' : 'Google Health checked.' };
+    return {
+      success: true,
+      date,
+      changed,
+      telemetry,
+      needsAttention: habits.length > usable.length,
+      message: habits.length > usable.length ? 'Some health permissions are missing. Reconnect to sync all automatic habits.' : 'Google Health checked.',
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Health sync failed.';
     await db.from('health_connections').update({ last_checked_at: new Date().toISOString(), last_error: message, updated_at: new Date().toISOString() }).eq('user_id', userId);

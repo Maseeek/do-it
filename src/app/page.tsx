@@ -8,6 +8,7 @@ import { useMultiplayer } from '@/lib/multiplayer';
 import { getTodayDateString } from '@/lib/date-utils';
 import { prepareQuickCheckIn } from '@/lib/quick-checkin';
 import { getPlayerThemeStyles } from '@/lib/player-colors';
+import { extractRecommendationReferrer } from '@/lib/recommendation';
 import { Header } from '@/components/Header';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { BottomNav, TabType } from '@/components/BottomNav';
@@ -58,6 +59,7 @@ function AppContent() {
   }, [setSelectedDate]);
 
   const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const hasInviteParam = searchParams.has('invite');
   const rawInviteCode = hasInviteParam ? (searchParams.get('invite') ?? '') : null;
   const [dismissedInvite, setDismissedInvite] = useState<string | null>(null);
@@ -67,8 +69,8 @@ function AppContent() {
   const pendingGuestId = multiplayer.duel?.guest_id;
 
   useEffect(() => {
-    if (pendingDuelId && !pendingGuestId) setActiveTab('duel');
-  }, [pendingDuelId, pendingGuestId]);
+    if (pendingDuelId && !pendingGuestId && tabParam !== 'today') setActiveTab('duel');
+  }, [pendingDuelId, pendingGuestId, tabParam]);
 
   // Handle URL deep-linking query parameters (?tab=..., ?action=checkin&habit=...)
   useEffect(() => {
@@ -83,6 +85,17 @@ function AppContent() {
     if (searchParams.has('wearable_error') || searchParams.has('wearable_connected') || searchParams.get('section') === 'settings') {
       setShowSettings(true);
     }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const referrer = extractRecommendationReferrer(searchParams);
+    if (!referrer) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('ref');
+    url.searchParams.delete('recommend');
+    window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    const displayName = referrer === 'maciek' ? 'Maciek' : referrer === 'myrna' ? 'Myrna' : 'a friend';
+    setToastMessage(`Welcome to do it.! Recommended by ${displayName}.`);
   }, [searchParams]);
 
   useEffect(() => {

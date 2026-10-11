@@ -3,7 +3,7 @@ import { authenticatedDuel } from '@/lib/health-server';
 import { healthEnabled } from '@/lib/health-access';
 import { syncUserHealth } from '@/lib/health-sync';
 import { healthScopes } from '@/lib/health-sync';
-import type { Habit } from '@/lib/types';
+import type { CheckIn, Habit, HealthTelemetryRecord } from '@/lib/types';
 
 function unavailable() {
   return NextResponse.json({ available: false, connected: false, scopes: [], message: 'Automatic health check-ins are not available yet. You can keep checking off habits manually.' });
@@ -28,12 +28,73 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const targetDate = request.nextUrl.searchParams.get('date') || new Date().toISOString().slice(0, 10);
+  const isSimulated = request.nextUrl.searchParams.get('simulate') === 'true';
+  const isSimulatedUnder = request.nextUrl.searchParams.get('simulateUnder') === 'true';
+
+  if (isSimulated || isSimulatedUnder) {
+    const sleepValue = isSimulatedUnder ? 3.0 : 8.5;
+    const stepsValue = isSimulatedUnder ? 4200 : 10500;
+    const telemetry: HealthTelemetryRecord[] = [
+      {
+        habitId: 'maciek-sleep',
+        playerId: 'maciek',
+        date: targetDate,
+        metric: 'sleep',
+        value: sleepValue,
+        target: 8.0,
+        unit: 'hrs',
+        source: 'google_health',
+      },
+      {
+        habitId: 'maciek-steps',
+        playerId: 'maciek',
+        date: targetDate,
+        metric: 'steps',
+        value: stepsValue,
+        target: 10000,
+        unit: 'steps',
+        source: 'google_health',
+      },
+    ];
+
+    const checkInsCreated: CheckIn[] = [];
+    if (!isSimulatedUnder) {
+      checkInsCreated.push({
+        id: `health-maciek-sleep-${targetDate}`,
+        habitId: 'maciek-sleep',
+        playerId: 'maciek',
+        date: targetDate,
+        pointsEarned: 50,
+        completedAt: new Date().toISOString(),
+        source: 'google_health',
+        healthValue: 8.5,
+        note: '8.5 h sleep',
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      simulated: true,
+      provider: 'Google Health (Simulated)',
+      date: targetDate,
+      sleepHours: sleepValue,
+      sleepQualified: !isSimulatedUnder,
+      sleepReason: isSimulatedUnder ? '3.0 / 8.0 hrs logged (goal not reached)' : '8.5 / 8.0 hrs logged (goal achieved)',
+      checkInsCreated,
+      telemetry,
+      message: isSimulatedUnder
+        ? 'Google Health checked: 3.0 hrs sleep (below 8.0 hr goal).'
+        : 'Google Health checked: 8.5 hrs sleep (goal achieved!).',
+    });
+  }
+
   if (!healthEnabled()) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
   try {
     const context = await authenticatedDuel(request);
     if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
     if (!healthEnabled(context.user.id)) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
-    return NextResponse.json(await syncUserHealth(context.user.id));
+    return NextResponse.json(await syncUserHealth(context.user.id, targetDate));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Health sync failed.' }, { status: 502 });
   }

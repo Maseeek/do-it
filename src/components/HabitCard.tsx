@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckIn, Habit, Player } from '@/lib/types';
+import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
+import { getHealthProgressDetails } from '@/lib/health-correlation';
 import { HabitIcon } from './HabitIcon';
 import dynamic from 'next/dynamic';
 
 
 import {
+  Activity,
   BookOpen,
   Camera,
   Flame,
+  Lock,
   MessageSquare,
   MessageSquarePlus,
   Minus,
@@ -28,6 +31,7 @@ interface HabitCardProps {
   selectedDate: string;
   completed: boolean;
   checkIn: CheckIn | undefined;
+  telemetry?: HealthTelemetryRecord;
   weeklyCompletions: number;
   habitStreak: number;
   activePlayer: Player | null;
@@ -47,6 +51,7 @@ export const HabitCard = React.memo(function HabitCard({
   selectedDate,
   completed,
   checkIn,
+  telemetry,
   weeklyCompletions,
   habitStreak,
   activePlayer,
@@ -69,6 +74,21 @@ export const HabitCard = React.memo(function HabitCard({
   const [noteText, setNoteText] = useState('');
   const [localPulse, setLocalPulse] = useState<{ points: number; token: number } | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [lockedAlertMessage, setLockedAlertMessage] = useState<string | null>(null);
+
+  const healthProgress = React.useMemo(
+    () => getHealthProgressDetails(habit, telemetry, checkIn),
+    [habit, telemetry, checkIn]
+  );
+  const isHealthLocked = Boolean(healthProgress?.isLocked && !completed);
+
+  useEffect(() => {
+    if (!lockedAlertMessage) return;
+    const timer = setTimeout(() => {
+      setLockedAlertMessage(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [lockedAlertMessage]);
 
   useEffect(() => {
     return () => {
@@ -113,6 +133,13 @@ export const HabitCard = React.memo(function HabitCard({
   };
 
   const handleToggle = () => {
+    if (isHealthLocked && healthProgress) {
+      soundEngine.playUncheck();
+      hapticLight();
+      setLockedAlertMessage(healthProgress.lockReason);
+      return;
+    }
+
     if (habit.isQuantitative) {
       soundEngine.playClick();
       hapticLight();
@@ -198,6 +225,8 @@ export const HabitCard = React.memo(function HabitCard({
             ? 'bg-player-950/30 border-player-400/90 animate-kinetic-card-player z-10'
             : satisfied
             ? `bg-[#0b0c0f]/90 border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
+            : isHealthLocked
+            ? `bg-[#0e1013] ${healthProgress?.classes.border} shadow-xs`
             : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-xs'
         }`}
       >
@@ -207,9 +236,17 @@ export const HabitCard = React.memo(function HabitCard({
             aria-hidden="true"
             className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${
               completed
-                ? 'bg-player-500/50'
+                ? healthProgress
+                  ? 'bg-emerald-500/80 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                  : 'bg-player-500/50'
                 : 'bg-emerald-500/50'
             }`}
+          />
+        )}
+        {!satisfied && isHealthLocked && !isPulsing && (
+          <div
+            aria-hidden="true"
+            className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${healthProgress?.classes.bar}`}
           />
         )}
 
@@ -245,41 +282,54 @@ export const HabitCard = React.memo(function HabitCard({
             <button
               onClick={handleToggle}
               aria-label={
-                completed
+                isHealthLocked
+                  ? healthProgress?.lockReason
+                  : completed
                   ? `Mark ${habit.title} uncompleted for today`
                   : isWeeklyTargetMet
                   ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
                   : `Mark ${habit.title} completed`
               }
-              className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 active:scale-90 ${
+              title={isHealthLocked ? healthProgress?.lockReason : undefined}
+              className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${
+                isHealthLocked
+                  ? 'cursor-not-allowed opacity-90'
+                  : 'active:scale-90'
+              } ${
                 isPulsing ? 'animate-kinetic-box-snap ' : ''
               }${
                 completed
                   ? 'bg-player-500 border border-player-300/90 text-white shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.35)]'
+                  : isHealthLocked
+                  ? `${healthProgress?.classes.border} ${healthProgress?.classes.bg} ${healthProgress?.classes.text} shadow-xs`
                   : isWeeklyTargetMet
                   ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
                   : 'border border-zinc-700/90 bg-[#090a0d] hover:border-zinc-500 text-transparent hover:text-zinc-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
               }`}
             >
-              <svg
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-                className={`w-4 h-4 ${
-                  !completed && !isWeeklyTargetMet
-                    ? 'opacity-0 group-hover:opacity-40 transition-opacity duration-150'
-                    : 'opacity-100'
-                }`}
-              >
-                <path
-                  d="M4.5 10.5L8.25 14.25L15.5 6.25"
-                  stroke="currentColor"
-                  strokeWidth="2.6"
-                  strokeLinecap="square"
-                  strokeLinejoin="miter"
-                  className={isPulsing ? 'animate-kinetic-check-draw' : ''}
-                />
-              </svg>
+              {isHealthLocked ? (
+                <Lock className={`w-3.5 h-3.5 ${healthProgress?.classes.text}`} />
+              ) : (
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  aria-hidden="true"
+                  className={`w-4 h-4 ${
+                    !completed && !isWeeklyTargetMet
+                      ? 'opacity-0 group-hover:opacity-40 transition-opacity duration-150'
+                      : 'opacity-100'
+                  }`}
+                >
+                  <path
+                    d="M4.5 10.5L8.25 14.25L15.5 6.25"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="square"
+                    strokeLinejoin="miter"
+                    className={isPulsing ? 'animate-kinetic-check-draw' : ''}
+                  />
+                </svg>
+              )}
             </button>
           </div>
 
@@ -366,6 +416,58 @@ export const HabitCard = React.memo(function HabitCard({
                 : habit.description}
             </p>
 
+            {/* Google Health Correlation Telemetry Bar */}
+            {healthProgress && (
+              <div
+                className={`mt-2 p-2 rounded-lg border ${healthProgress.classes.border} ${healthProgress.classes.bg} space-y-1.5`}
+              >
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="flex items-center gap-1.5 font-medium text-zinc-300">
+                    <Activity className={`w-3 h-3 ${healthProgress.classes.text}`} />
+                    <span className="text-[10px] uppercase tracking-wide text-zinc-400">Google Health</span>
+                    <span className="text-zinc-600">·</span>
+                    <span className={`font-semibold ${healthProgress.classes.text}`}>
+                      {healthProgress.formattedValue}
+                    </span>
+                    <span className="text-zinc-500">/ {healthProgress.formattedTarget}</span>
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${healthProgress.classes.text} border ${healthProgress.classes.border}`}
+                  >
+                    {healthProgress.percentage}% · {healthProgress.label}
+                  </span>
+                </div>
+                {/* Visual telemetry progress bar */}
+                <div className="w-full h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${healthProgress.classes.bar} ${healthProgress.classes.glow}`}
+                    style={{ width: `${healthProgress.barPercentage}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Inline warning alert when user attempts to check off a locked habit */}
+            {lockedAlertMessage && (
+              <div
+                role="alert"
+                className="mt-2 p-2 rounded-lg bg-orange-950/70 border border-orange-600/50 text-[11px] text-orange-200 flex items-start justify-between gap-2 animate-in fade-in duration-150"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Lock className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                  <span className="leading-tight">{lockedAlertMessage}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLockedAlertMessage(null)}
+                  aria-label="Dismiss alert"
+                  className="text-orange-400 hover:text-white p-0.5 shrink-0"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
             {/* Micro-note preview */}
             {checkIn?.note && (
               <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-zinc-300 italic bg-zinc-900/70 border border-zinc-800/80 rounded-md px-2 py-0.5 max-w-full">
@@ -408,6 +510,8 @@ export const HabitCard = React.memo(function HabitCard({
                   ? checkIn?.pointsEarned === 0
                     ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
                     : 'bg-player-500/10 border-player-500/25 text-player-300/90'
+                  : isHealthLocked
+                  ? `${healthProgress?.classes.bg} ${healthProgress?.classes.border} ${healthProgress?.classes.text}`
                   : isWeeklyTargetMet
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
                   : habit.isQuantitative
