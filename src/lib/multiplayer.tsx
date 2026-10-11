@@ -5,18 +5,8 @@ import type { User } from '@supabase/supabase-js';
 import { extractInviteCode, hasMatchedAccount, hasMatchedDuelPartner, isValidInviteCode } from './invite-navigation';
 import { getSupabaseClient } from './supabase';
 import type { PlayerColorId, PlayerId } from './types';
-export interface DuelSession {
-  id: string;
-  owner_id: string;
-  guest_id: string | null;
-  owner_name: string;
-  guest_name: string | null;
-  invite_code: string;
-  owner_color: PlayerColorId;
-  guest_color: PlayerColorId;
-  owner_invites?: number;
-  guest_invites?: number;
-}
+import { isDuelProfile, saveDuelColor, type DuelProfile } from './duel-profile';
+export type DuelSession = DuelProfile;
 
 interface MultiplayerContextValue {
   configured: boolean;
@@ -33,7 +23,6 @@ interface MultiplayerContextValue {
   replaceSoloDuelWithInvite: (code: string, name: string) => Promise<void>;
   updatePlayerName: (name: string) => Promise<void>;
   updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
-  recordAppInvite: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -46,9 +35,12 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(!!client);
   const [error, setError] = useState<string | null>(null);
   const refreshSequence = useRef(0);
+  const colorSaveInFlight = useRef(false);
+  const refreshAfterSave = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!client) return;
+    if (colorSaveInFlight.current) { refreshAfterSave.current = true; return; }
     const sequence = ++refreshSequence.current;
     try {
       // The session is already persisted locally by Supabase. Reading it avoids
@@ -64,7 +56,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
         .or(`owner_id.eq.${currentUser.id},guest_id.eq.${currentUser.id}`).limit(1).maybeSingle();
       if (sequence !== refreshSequence.current) return;
       if (queryError) throw queryError;
-      const fetchedDuel = (data as DuelSession | null) || null;
+      const fetchedDuel = isDuelProfile(data) ? data : null;
       const cleanedDuel = fetchedDuel && fetchedDuel.owner_id === currentUser.id && !hasMatchedDuelPartner(fetchedDuel, currentUser)
         ? { ...fetchedDuel, guest_id: null, guest_name: null }
         : fetchedDuel;
@@ -95,12 +87,17 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       .subscribe((status) => {
         isSubscribed = status === 'SUBSCRIBED';
       });
+    const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
     const timer = setInterval(() => {
       if (!isSubscribed) {
         void refresh();
       }
     }, 15000);
     return () => {
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
       subscription.unsubscribe();
       clearInterval(timer);
       void client.removeChannel(channel);
@@ -150,20 +147,26 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   };
   const updatePlayerColor = async (colorId: PlayerColorId) => {
     if (!client || !duel || !slot) throw new Error('Join a duel before changing your color.');
-    const { error: rpcError } = await client.rpc('set_player_color', { requested_color: colorId });
-    if (rpcError) {
-      if (rpcError.code === 'PGRST202' || rpcError.message?.includes('set_player_color')) {
-        throw new Error('Player colors are not enabled in Supabase yet. Run supabase/player-colors.sql in the SQL Editor.');
+    if (colorSaveInFlight.current) throw new Error('Your colour is still saving.');
+    colorSaveInFlight.current = true;
+    const saveSequence = ++refreshSequence.current;
+    try {
+      await saveDuelColor(duel, slot, colorId, value => {
+        if (saveSequence === refreshSequence.current) setDuel(value);
+      }, async () => {
+        const { data, error: rpcError } = await client.rpc('set_player_color', { requested_color: colorId });
+        if (rpcError) throw new Error(rpcError.message || 'Could not update your player color.');
+        return data;
+      });
+    } catch (error) {
+      refreshAfterSave.current = true;
+      throw error;
+    } finally {
+      colorSaveInFlight.current = false;
+      if (refreshAfterSave.current) {
+        refreshAfterSave.current = false;
+        void refresh();
       }
-      throw new Error(rpcError.message || 'Could not update your player color.');
-    }
-    await refresh();
-  };
-  const recordAppInvite = async () => {
-    if (!client || !duel || !slot) return;
-    const { error: rpcError } = await client.rpc("record_app_invite");
-    if (!rpcError) {
-      await refresh();
     }
   };
   const signOut = async () => {
@@ -179,7 +182,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   const hasPairedPartner = hasMatchedDuelPartner(duel, user);
   const slot = duel && user && hasValidAccount ? (duel.owner_id === user.id ? 'maciek' : duel.guest_id === user.id ? 'myrna' : null) : null;
 
-  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, hasValidAccount, hasPairedPartner, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, updatePlayerColor, recordAppInvite, signOut }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ configured: !!client, loading, user, duel, slot, hasValidAccount, hasPairedPartner, error, refresh, createDuel, acceptInvite, replaceSoloDuelWithInvite, updatePlayerName, updatePlayerColor, signOut }}>{children}</Context.Provider>;
 }
 
 export function useMultiplayer() {

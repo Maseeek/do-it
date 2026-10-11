@@ -9,7 +9,7 @@ import { useMultiplayer } from '@/lib/multiplayer';
 import { getTodayDateString } from '@/lib/date-utils';
 import { prepareQuickCheckIn } from '@/lib/quick-checkin';
 import { getPlayerThemeStyles } from '@/lib/player-colors';
-import { extractRecommendationReferrer } from '@/lib/recommendation';
+import { extractRecommendationReferrer, isRecommendationCode, RECOMMENDATION_STORAGE_KEY } from '@/lib/recommendation';
 import { Header } from '@/components/Header';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { BottomNav, TabType } from '@/components/BottomNav';
@@ -91,12 +91,10 @@ function AppContent() {
   useEffect(() => {
     const referrer = extractRecommendationReferrer(searchParams);
     if (!referrer) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete('ref');
-    url.searchParams.delete('recommend');
-    window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
-    const displayName = referrer === 'maciek' ? 'Maciek' : referrer === 'myrna' ? 'Myrna' : 'a friend';
-    setToastMessage(`Welcome to do it.! Recommended by ${displayName}.`);
+    if (isRecommendationCode(referrer)) {
+      try { sessionStorage.setItem(RECOMMENDATION_STORAGE_KEY, referrer); } catch { /* The link still works when browser storage is unavailable. */ }
+    }
+    setToastMessage('Welcome to do it.! Create a new account to complete your friend’s recommendation.');
   }, [searchParams]);
 
   useEffect(() => {
