@@ -358,7 +358,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                 className={`relative h-full rounded-full transition-[width] duration-500 ease-out ${
                   progress >= 100
                     ? 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]'
-                    : 'bg-gradient-to-r from-player-600 via-player-500 to-player-400 shadow-[0_0_12px_color-mix(in_srgb,var(--player-base)_45%,transparent)]'
+                    : 'bg-player-500 shadow-[0_0_12px_color-mix(in_srgb,var(--player-base)_45%,transparent)]'
                 }`}
                 style={{ width: `${progress}%` }}
               >
