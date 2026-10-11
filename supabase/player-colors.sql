@@ -10,39 +10,47 @@ alter table public.duels
 alter table public.duels
   add column if not exists guest_invites integer not null default 0;
 
--- Function to record an app invite / recommendation by the current user
+-- Compatibility for older clients: sharing is not a completed referral.
 create or replace function public.record_app_invite()
-returns public.duels
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  target_duel public.duels;
-  v_player_slot text;
+returns public.duels language plpgsql security definer set search_path = '' as $$
+declare target_duel public.duels;
 begin
   if auth.uid() is null then raise exception 'Sign in first'; end if;
-
-  select d.* into target_duel
-    from public.duels d
+  select d.* into target_duel from public.duels d
     where d.owner_id = auth.uid() or d.guest_id = auth.uid()
-    order by d.created_at
-    limit 1
-    for update;
+    order by d.created_at limit 1;
   if target_duel.id is null then raise exception 'Join a duel first'; end if;
-
-  v_player_slot := case when target_duel.owner_id = auth.uid() then 'maciek' else 'myrna' end;
-  if v_player_slot = 'maciek' then
-    update public.duels set owner_invites = coalesce(owner_invites, 0) + 1 where id = target_duel.id returning * into target_duel;
-  else
-    update public.duels set guest_invites = coalesce(guest_invites, 0) + 1 where id = target_duel.id returning * into target_duel;
-  end if;
   return target_duel;
 end;
 $$;
-
 revoke all on function public.record_app_invite() from public, anon;
 grant execute on function public.record_app_invite() to authenticated;
+
+-- Repair an existing shared palette before enforcing distinct paired colours.
+update public.duels set guest_color = case when owner_color = 'blue' then 'purple' else 'blue' end
+where guest_id is not null and owner_color = guest_color;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.duels'::regclass and conname = 'duels_distinct_player_colors') then
+    alter table public.duels add constraint duels_distinct_player_colors
+      check (guest_id is null or owner_color <> guest_color);
+  end if;
+end $$;
+
+-- Joining a solo Duel must not inherit the owner's already chosen palette.
+create or replace function public.assign_distinct_guest_color()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  if new.guest_id is not null and (tg_op = 'INSERT' or old.guest_id is null)
+     and new.guest_color = new.owner_color then
+    new.guest_color := case when new.owner_color = 'blue' then 'purple' else 'blue' end;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.assign_distinct_guest_color() from public, anon, authenticated;
+drop trigger if exists assign_distinct_guest_color on public.duels;
+create trigger assign_distinct_guest_color before insert or update of guest_id on public.duels
+for each row execute function public.assign_distinct_guest_color();
 
 -- Enforce point unlocks or invite unlocks in the database and update only the caller's player slot.
 create or replace function public.set_player_color(requested_color text)
@@ -82,10 +90,15 @@ begin
 
   v_player_slot := case when target_duel.owner_id = auth.uid() then 'maciek' else 'myrna' end;
 
+  if target_duel.guest_id is not null and requested_color =
+    (case when v_player_slot = 'maciek' then target_duel.guest_color else target_duel.owner_color end) then
+    raise exception 'Your opponent is already using that colour. Choose another.';
+  end if;
+
   if requested_color = 'gold' then
     if (v_player_slot = 'maciek' and coalesce(target_duel.owner_invites, 0) < 1) or
        (v_player_slot = 'myrna' and coalesce(target_duel.guest_invites, 0) < 1) then
-      raise exception 'Recommend the app to a friend to unlock Gold';
+      raise exception 'A new friend must create and confirm an account through your recommendation link to unlock Gold';
     end if;
   else
     select coalesce(sum(
