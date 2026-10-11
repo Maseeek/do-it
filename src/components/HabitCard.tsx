@@ -5,6 +5,7 @@ import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
 import { getHealthProgressDetails } from '@/lib/health-correlation';
 import { HabitIcon } from './HabitIcon';
 import dynamic from 'next/dynamic';
+import { loadCurrentPage } from '@/lib/load-current-page';
 
 
 import {
@@ -23,8 +24,8 @@ import {
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
-const ProofModal = dynamic(() => import('./ProofModal').then(module => module.ProofModal));
-const ProofGalleryModal = dynamic(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal));
+const ProofModal = dynamic(() => loadCurrentPage(() => import('./ProofModal')).then(module => module.ProofModal));
+const ProofGalleryModal = dynamic(() => loadCurrentPage(() => import('./ProofGalleryModal')).then(module => module.ProofGalleryModal));
 
 interface HabitCardProps {
   habit: Habit;
