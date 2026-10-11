@@ -1,4 +1,5 @@
 import { CheckIn, Habit, HealthMetric, HealthTelemetryRecord } from './types';
+import { calculateSleepRewardRatio, SLEEP_FULL_POINTS_HOURS } from './health-rewards';
 
 export type HealthProgressTier = 'perfect' | 'almost' | 'halfway' | 'low' | 'critical';
 export type HealthColorName = 'green' | 'lime' | 'yellow' | 'dark-orange' | 'red';
@@ -32,7 +33,8 @@ export interface HealthProgressDetails {
 
 export function formatHealthMetricValue(value: number, metric: HealthMetric): string {
   if (metric === 'sleep') {
-    return `${Number(value.toFixed(1))} hrs`;
+    // Do not round a reading below a scoring cutoff up to that cutoff.
+    return `${Math.floor(value * 100) / 100} hrs`;
   }
   if (metric === 'steps') {
     return `${Math.round(value).toLocaleString('en-GB')} steps`;
@@ -71,8 +73,12 @@ export function calculateHealthProgress(
   target: number,
   metric: HealthMetric
 ): HealthProgressDetails {
-  const safeTarget = target > 0 ? target : 1;
-  const ratio = Math.max(0, value / safeTarget);
+  const safeTarget = metric === 'sleep' ? SLEEP_FULL_POINTS_HOURS : target > 0 ? target : 1;
+  const ratio = metric === 'sleep' ? calculateSleepRewardRatio(value) : Math.max(0, value / safeTarget);
+  // Sleep colors describe the measured hours, independently of the points curve.
+  const colorRatio = metric === 'sleep'
+    ? value >= 8.5 ? 1 : value >= 7.5 ? 0.75 : value >= 7 ? 0.5 : value >= 3 ? 0.3 : 0
+    : ratio;
   const percentage = Math.round(ratio * 100);
   const barPercentage = Math.min(100, Math.max(0, percentage));
   const qualified = ratio >= 1.0;
@@ -84,7 +90,7 @@ export function calculateHealthProgress(
   let label: string;
   let classes: HealthProgressDetails['classes'];
 
-  if (ratio >= 1.0) {
+  if (colorRatio >= 1.0) {
     tier = 'perfect';
     colorName = 'green';
     hexColor = '#10b981';
@@ -96,7 +102,7 @@ export function calculateHealthProgress(
       bar: 'bg-emerald-500',
       glow: 'shadow-[0_0_10px_rgba(16,185,129,0.35)]',
     };
-  } else if (ratio >= 0.75) {
+  } else if (colorRatio >= 0.75) {
     tier = 'almost';
     colorName = 'lime';
     hexColor = '#84cc16';
@@ -108,7 +114,7 @@ export function calculateHealthProgress(
       bar: 'bg-lime-500',
       glow: 'shadow-[0_0_10px_rgba(132,204,22,0.35)]',
     };
-  } else if (ratio >= 0.5) {
+  } else if (colorRatio >= 0.5) {
     tier = 'halfway';
     colorName = 'yellow';
     hexColor = '#eab308';
@@ -120,8 +126,7 @@ export function calculateHealthProgress(
       bar: 'bg-amber-500',
       glow: 'shadow-[0_0_10px_rgba(245,158,11,0.35)]',
     };
-  } else if (ratio >= 0.3) {
-    // e.g. 3 hours sleep out of 8 hours (37.5%) -> dark orange
+  } else if (colorRatio >= 0.3) {
     tier = 'low';
     colorName = 'dark-orange';
     hexColor = '#ea580c';
@@ -134,7 +139,6 @@ export function calculateHealthProgress(
       glow: 'shadow-[0_0_10px_rgba(234,88,12,0.4)]',
     };
   } else {
-    // e.g. 0 to 2 hours sleep out of 8 hours (<= 25%) -> red ("horrible")
     tier = 'critical';
     colorName = 'red';
     hexColor = '#ef4444';
@@ -149,14 +153,17 @@ export function calculateHealthProgress(
   }
 
   const formattedValue = formatHealthMetricValue(value, metric);
-  const formattedTarget = formatHealthMetricValue(target, metric);
-  const summaryText = `${formattedValue} / ${formattedTarget} (${percentage}%)`;
-  const lockReason = `Google Health recorded ${formattedValue} (goal: ${formattedTarget}). You cannot check off this habit because your recorded health data did not reach the daily target.`;
+  if (metric === 'sleep') label = qualified ? 'Full points' : ratio > 0 ? 'Partial points' : 'No points';
+  const formattedTarget = formatHealthMetricValue(safeTarget, metric);
+  const summaryText = `${formattedValue} / ${formattedTarget} (${percentage}%${metric === 'sleep' ? ' of points' : ''})`;
+  const lockReason = metric === 'sleep'
+    ? `Google Health recorded ${formattedValue}, earning ${percentage}% of this habit's points. Recorded sleep determines your reward; manual check-in cannot change it.`
+    : `Google Health recorded ${formattedValue} (goal: ${formattedTarget}). You cannot check off this habit because your recorded health data did not reach the daily target.`;
 
   return {
     metric,
     value,
-    target,
+    target: safeTarget,
     ratio,
     percentage,
     barPercentage,
@@ -198,9 +205,8 @@ export function getHealthProgressDetails(
   if (checkIn && checkIn.source === 'google_health') {
     const value =
       checkIn.healthValue ??
-      parseHealthValueFromNote(checkIn.note, metric) ??
-      target;
-    return calculateHealthProgress(value, target, metric);
+      parseHealthValueFromNote(checkIn.note, metric);
+    return value !== null && Number.isFinite(value) ? calculateHealthProgress(value, target, metric) : null;
   }
 
   // 3. No health data recorded (e.g. watch was not worn to sleep)

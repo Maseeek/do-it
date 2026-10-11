@@ -10,7 +10,7 @@ export const HABIT_SECTIONS: { title: string; categories: HabitCategory[] }[] = 
 
 const CATALOG: Omit<Habit, 'id' | 'playerId' | 'order' | 'isActive'>[] = [
   { title: 'Consistent bedtime', description: 'Follow a sleep schedule', category: 'foundation', points: 25, iconName: 'Moon' },
-  { title: 'Sleep 8 hours', description: 'Time asleep, recorded by Google Health', category: 'foundation', points: 25, iconName: 'Moon', automation: { metric: 'sleep', target: 8 } },
+  { title: 'Sleep 8.5 hours', description: 'Full points at 8.5 hours; partial points from 6.5 hours', category: 'foundation', points: 25, iconName: 'Moon', automation: { metric: 'sleep', target: 8.5 } },
   { title: 'Step goal', description: 'Choose 6k, 10k or 14k steps', category: 'physical', points: 20, iconName: 'Footprints', automation: { metric: 'steps', target: 10000 } },
   { title: 'Move your body', description: 'Walk, cycle, dance or stretch', category: 'physical', points: 20, iconName: 'Activity' },
   { title: 'Workout', description: 'Record a strength workout of 20+ minutes', category: 'physical', points: 35, iconName: 'Dumbbell', frequency: 'weekly', weeklyTargetDays: 3, automation: { metric: 'workout', target: 20 } },

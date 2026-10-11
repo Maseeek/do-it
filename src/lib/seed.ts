@@ -27,14 +27,14 @@ export const INITIAL_HABITS: Habit[] = [
   {
     id: 'maciek-sleep',
     playerId: 'maciek',
-    title: 'Sleep 8+ Hours',
+    title: 'Sleep 8.5+ Hours',
     description: 'Rest & recovery tracked via Fitbit / Health Connect',
     category: 'foundation',
     points: 50,
     iconName: 'Moon',
     order: 1,
     isActive: true,
-    automation: { metric: 'sleep', target: 8 },
+    automation: { metric: 'sleep', target: 8.5 },
   },
   {
     id: 'maciek-gym',
@@ -149,14 +149,14 @@ export const INITIAL_HABITS: Habit[] = [
   {
     id: 'myrna-sleep',
     playerId: 'myrna',
-    title: 'Sleep 8+ Hours',
+    title: 'Sleep 8.5+ Hours',
     description: 'Rest & recovery tracked via Garmin / wearable',
     category: 'foundation',
     points: 50,
     iconName: 'Moon',
     order: 1,
     isActive: true,
-    automation: { metric: 'sleep', target: 8 },
+    automation: { metric: 'sleep', target: 8.5 },
   },
   {
     id: 'myrna-gym',
