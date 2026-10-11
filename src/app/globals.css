@@ -201,10 +201,30 @@ html:not(.dark) .bg-\[\#17181b\],
 html:not(.dark) .bg-\[\#0e1013\],
 html:not(.dark) .bg-\[\#12141a\],
 html:not(.dark) .bg-\[\#141518\],
-html:not(.dark) .bg-\[\#0b0c0e\] {
+html:not(.dark) .bg-\[\#0b0c0e\],
+html:not(.dark) .bg-\[\#0b0c0f\],
+html:not(.dark) .bg-\[\#08090a\] {
   background-color: #ffffff;
   border-color: rgba(0, 0, 0, 0.08);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+/* 1b. Habit Checkboxes & Interactive Controls */
+html:not(.dark) button.bg-\[\#090a0d\],
+html:not(.dark) .bg-\[\#090a0d\] {
+  background-color: #f1f3f5;
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+html:not(.dark) button.bg-\[\#090a0d\]:hover {
+  background-color: #e5e7eb;
+  border-color: rgba(0, 0, 0, 0.25);
+  color: #64748b;
+}
+
+html:not(.dark) .shadow-\[inset_0_1px_2px_rgba\(0\,0\,0\,0\.55\)\] {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
 }
 
 html:not(.dark) .from-\[\#12141a\] {
@@ -226,9 +246,12 @@ html:not(.dark) .bg-\[\#0b0c0e\] {
 /* 3. Satisfied / Muted Cards */
 html:not(.dark) .bg-\[\#1c1c1e\]\/60,
 html:not(.dark) .bg-\[\#0e1013\]\/60,
+html:not(.dark) .bg-\[\#0b0c0f\],
+html:not(.dark) .bg-\[\#0b0c0f\]\/90,
 html:not(.dark) .bg-zinc-900\/30,
 html:not(.dark) .bg-zinc-900\/40 {
-  background-color: rgba(255, 255, 255, 0.75);
+  background-color: rgba(246, 247, 249, 0.9);
+  border-color: rgba(0, 0, 0, 0.06);
 }
 
 html:not(.dark) .bg-\[\#1c1c1e\]\/40 {
@@ -243,9 +266,23 @@ html:not(.dark) .bg-\[\#1c1c1e\]\/95 {
 /* 4. Wells, Inputs, and Pill Tracks */
 html:not(.dark) .bg-zinc-900:not(button),
 html:not(.dark) .bg-zinc-900\/60,
+html:not(.dark) .bg-zinc-900\/70,
 html:not(.dark) .bg-zinc-900\/80,
-html:not(.dark) .bg-\[\#16181d\] {
+html:not(.dark) .bg-zinc-900\/90,
+html:not(.dark) .bg-zinc-800:not(button),
+html:not(.dark) .bg-zinc-800\/90,
+html:not(.dark) .bg-\[\#16181d\],
+html:not(.dark) .bg-\[\#14161a\],
+html:not(.dark) .bg-\[\#14161a\]\/60 {
   background-color: #f1f3f5;
+  color: #0f141c;
+}
+
+html:not(.dark) .hover\:bg-zinc-900\/70:hover,
+html:not(.dark) .hover\:bg-zinc-900:hover,
+html:not(.dark) .hover\:bg-zinc-800:hover,
+html:not(.dark) .hover\:bg-zinc-700:hover {
+  background-color: #e5e7eb;
 }
 
 html:not(.dark) .bg-\[\#2c2c2e\],

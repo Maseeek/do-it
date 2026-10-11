@@ -181,7 +181,7 @@ export function ActivityFeed() {
       {partner && (
         <div className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-4 space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-zinc-900 dark:text-white">
               Send {partner.name} some energy
             </span>
           </div>
@@ -227,15 +227,15 @@ export function ActivityFeed() {
       )}
 
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold text-white">The timeline <span className="ml-1 text-xs font-normal text-zinc-500">{filteredItems.length}</span></h3><div role="group" aria-label="Filter by person" className="flex rounded-xl border border-white/[0.08] bg-[#17181b] p-1">{(['everyone', 'me', 'partner'] as const).map((value) => <button key={value} type="button" aria-pressed={playerFilter === value} onClick={() => { setPlayerFilter(value); setVisibleCount(12); }} className={`rounded-lg px-2.5 py-1.5 text-[11px] capitalize transition-colors ${playerFilter === value ? 'bg-white/[0.12] text-white' : 'text-zinc-500 hover:text-zinc-200'}`}>{value}</button>)}</div></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold text-zinc-900 dark:text-white">The timeline <span className="ml-1 text-xs font-normal text-zinc-500">{filteredItems.length}</span></h3><div role="group" aria-label="Filter by person" className="flex rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-zinc-100 dark:bg-[#17181b] p-1">{(['everyone', 'me', 'partner'] as const).map((value) => <button key={value} type="button" aria-pressed={playerFilter === value} onClick={() => { setPlayerFilter(value); setVisibleCount(12); }} className={`rounded-lg px-2.5 py-1.5 text-[11px] capitalize transition-colors ${playerFilter === value ? 'bg-white text-zinc-900 shadow-xs dark:bg-white/[0.12] dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}`}>{value}</button>)}</div></div>
         <div className="flex flex-wrap gap-2">{([{ id: 'all', label: 'All updates' }, { id: 'check_in', label: 'Check-ins' }, { id: 'reaction', label: 'Cheers' }] as const).map((option) => <button key={option.id} type="button" aria-pressed={feedFilter === option.id} onClick={() => { setFeedFilter(option.id); setVisibleCount(12); }} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors ${feedFilter === option.id ? 'border-white/30 bg-white text-black' : 'border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:text-white'}`}>{option.label}</button>)}</div>
-        <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" /><input type="search" value={search} onChange={(event) => { setSearch(event.target.value); setVisibleCount(12); }} aria-label="Search activity" placeholder="Search habits, notes, or cheers" className="w-full rounded-xl border border-white/[0.08] bg-[#18191d] py-2.5 pl-9 pr-9 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/30" />{search && <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"><X className="h-3.5 w-3.5" /></button>}</div>
+        <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" /><input type="search" value={search} onChange={(event) => { setSearch(event.target.value); setVisibleCount(12); }} aria-label="Search activity" placeholder="Search habits, notes, or cheers" className="w-full rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#18191d] py-2.5 pl-9 pr-9 text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400 dark:focus:border-white/30 shadow-2xs" />{search && <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"><X className="h-3.5 w-3.5" /></button>}</div>
       </div>
 
       {/* Activity Timeline List */}
       <div role="feed" aria-label="Activity timeline" className="space-y-2">
         {visibleItems.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/[0.1] bg-[#17181b] p-8 text-center"><Sparkles className="mx-auto h-6 w-6 text-zinc-500" /><p className="mt-3 text-sm font-medium text-white">{timelineItems.length ? 'Nothing matches those filters' : 'The story starts with a check-in'}</p><p className="mt-1 text-xs text-zinc-500">{timelineItems.length ? 'Try another search or switch filters.' : 'Complete a ritual and it will appear here.'}</p>{timelineItems.length > 0 && <button type="button" onClick={() => { setFeedFilter('all'); setPlayerFilter('everyone'); setSearch(''); }} className="mt-4 text-xs font-medium text-player-300 hover:text-player-200">Clear filters</button>}</div>
+          <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-white/[0.1] bg-white dark:bg-[#17181b] p-8 text-center shadow-xs"><Sparkles className="mx-auto h-6 w-6 text-zinc-500" /><p className="mt-3 text-sm font-medium text-zinc-900 dark:text-white">{timelineItems.length ? 'Nothing matches those filters' : 'The story starts with a check-in'}</p><p className="mt-1 text-xs text-zinc-500">{timelineItems.length ? 'Try another search or switch filters.' : 'Complete a ritual and it will appear here.'}</p>{timelineItems.length > 0 && <button type="button" onClick={() => { setFeedFilter('all'); setPlayerFilter('everyone'); setSearch(''); }} className="mt-4 text-xs font-medium text-player-300 hover:text-player-200">Clear filters</button>}</div>
         ) : (
           visibleItems.map((item, index) => {
             const dateHeading = (index === 0 || visibleItems[index - 1].date !== item.date) && <div className="flex items-center gap-3 pt-3 pb-1"><span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">{formatFriendlyDate(item.date)}</span><span className="h-px flex-1 bg-white/[0.07]" /></div>;
@@ -243,21 +243,21 @@ export function ActivityFeed() {
               const isMaciekSender = item.fromPlayer.id === 'maciek';
               return (
                 <React.Fragment key={`reaction:${item.id}`}>{dateHeading}<article
-                  className={`rounded-2xl bg-[#1c1c1e] border p-3 ${
+                  className={`rounded-2xl bg-white dark:bg-[#1c1c1e] border p-3 shadow-xs ${
                     isMaciekSender ? 'border-owner-500/20' : 'border-guest-500/20'
                   }`}
                 >
                   <div className="flex items-start gap-3"><span className="text-xl flex-shrink-0">{item.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-zinc-900 dark:text-white">
                         {item.fromPlayer.name} cheered {item.toPlayer.name}
                       </span>
                       <span className="text-[10px] text-zinc-500">
                         {formatTimeAgo(item.timestamp)}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-300 mt-0.5 italic">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 italic">
                       &ldquo;{item.message}&rdquo;
                     </p>
                   </div></div>
@@ -277,7 +277,7 @@ export function ActivityFeed() {
 
             return (
               <React.Fragment key={`checkin:${item.id}`}>{dateHeading}<article
-                className="rounded-2xl bg-[#1c1c1e] border border-white/[0.08] p-3.5 space-y-2 transition-colors"
+                className="rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.08] dark:border-white/[0.08] p-3.5 space-y-2 transition-colors shadow-xs"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -293,7 +293,7 @@ export function ActivityFeed() {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-zinc-900 dark:text-white">
                           {item.player.name}
                         </span>
                         <span className="text-zinc-500">completed</span>

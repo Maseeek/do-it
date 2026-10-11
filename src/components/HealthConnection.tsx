@@ -54,7 +54,7 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
 
   if (!multiplayer.configured) return null;
   if (status?.available === false) {
-    return compact ? null : <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-2"><h2 className="text-sm font-semibold">Google Health</h2><p role="status" className="text-xs leading-5 text-zinc-400">{status.message}</p></section>;
+    return compact ? null : <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] shadow-xs p-4 space-y-2"><h2 className="text-sm font-semibold">Google Health</h2><p role="status" className="text-xs leading-5 text-zinc-400">{status.message}</p></section>;
   }
   if (compact) {
     if (!status) return null;
@@ -116,7 +116,7 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     clearHealthTelemetry(sleepHabit.id, selectedDate);
   }
 
-  return <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-4">
+  return <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] shadow-xs p-4 space-y-4">
     <div className="flex items-center gap-3"><Activity size={20} className="text-emerald-300"/><div className="flex-1"><h2 className="text-sm font-semibold">Google Health</h2><p className="text-xs text-zinc-400">{status?.connected ? status.needsAttention ? 'Needs attention' : 'Connected' : 'Connect to complete selected habits automatically'}</p></div></div>
     {status?.connected ? <>
       <p className="text-xs text-zinc-400">{status.lastCheckedAt ? `Last checked ${new Date(status.lastCheckedAt).toLocaleString()}` : 'Waiting for first check'} · Manual check-ins remain available.</p>

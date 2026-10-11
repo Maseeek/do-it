@@ -144,13 +144,13 @@ export function HabitHeatmap({
 
   const getIntensityClass = (points: number, isRest: boolean, isFuture: boolean) => {
     if (isFuture) {
-      return 'bg-[#14161a]/60 border border-dashed border-zinc-800/50 opacity-30 cursor-default';
+      return 'bg-black/[0.03] dark:bg-[#14161a]/60 border border-dashed border-black/10 dark:border-zinc-800/50 opacity-40 cursor-default';
     }
     if (points === 0) {
       if (isRest) {
-        return 'bg-indigo-950/70 border border-indigo-500/40 hover:bg-indigo-900/70';
+        return 'bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-300 dark:border-indigo-500/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/70';
       }
-      return 'bg-[#22252b] border border-white/[0.04] hover:bg-[#2c3038]';
+      return 'bg-zinc-200/80 dark:bg-[#22252b] border border-black/[0.04] dark:border-white/[0.04] hover:bg-zinc-300/80 dark:hover:bg-[#2c3038]';
     }
     if (points >= dailyPar) {
       return 'bg-player-400 border border-player-300/80 hover:bg-player-300 shadow-[0_0_8px_color-mix(in_srgb,var(--player-base)_55%,transparent)]';
@@ -173,14 +173,14 @@ export function HabitHeatmap({
   return (
     <section style={getPlayerThemeStyles(players[selectedPlayer])}
       aria-label="Consistency contribution calendar"
-      className="rounded-xl bg-[#0e1013] border border-zinc-800/90 p-4 space-y-3.5"
+      className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800/90 p-4 space-y-3.5 shadow-xs"
     >
       {/* Top Header Row: Title + Range Selector + Player Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 shrink-0 text-player-400" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-200 truncate">
+            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-900 dark:text-zinc-200 truncate">
               {filteredHabit ? filteredHabit.title : 'Consistency Graph'}
             </h2>
           </div>
@@ -196,7 +196,7 @@ export function HabitHeatmap({
           <div
             role="group"
             aria-label="Select calendar timeframe"
-            className="flex p-0.5 rounded-lg bg-[#08090a] border border-zinc-800/90 text-[11px] font-mono"
+            className="flex p-0.5 rounded-lg bg-zinc-100 dark:bg-[#08090a] border border-zinc-200 dark:border-zinc-800/90 text-[11px] font-mono"
           >
             {WEEK_RANGES.map((range) => (
               <button
@@ -212,8 +212,8 @@ export function HabitHeatmap({
                 }}
                 className={`px-2 py-0.5 rounded-md transition-colors ${
                   weekCount === range.weeks
-                    ? 'bg-zinc-800 text-white font-semibold'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    ? 'bg-white text-zinc-900 shadow-xs dark:bg-zinc-800 dark:text-white font-semibold'
+                    : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
               >
                 {range.label}
@@ -226,7 +226,7 @@ export function HabitHeatmap({
             <div
               role="tablist"
               aria-label="Select player for consistency heatmap"
-              className="flex p-0.5 rounded-lg bg-[#08090a] border border-zinc-800/90 text-xs font-mono"
+              className="flex p-0.5 rounded-lg bg-zinc-100 dark:bg-[#08090a] border border-zinc-200 dark:border-zinc-800/90 text-xs font-mono"
             >
               <button
                 type="button"
@@ -242,7 +242,7 @@ export function HabitHeatmap({
                 className={`px-2.5 py-0.5 rounded-md border transition-colors ${
                   selectedPlayer === 'maciek'
                     ? 'bg-owner-500/20 border-owner-500/35 text-owner-300 font-semibold'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
               >
                 {players.maciek.name}
@@ -261,7 +261,7 @@ export function HabitHeatmap({
                 className={`px-2.5 py-0.5 rounded-md border transition-colors ${
                   selectedPlayer === 'myrna'
                     ? 'bg-guest-500/20 border-guest-500/35 text-guest-300 font-semibold'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
               >
                 {players.myrna.name}
@@ -289,7 +289,7 @@ export function HabitHeatmap({
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
               activeHabitFilter === null
                 ? 'bg-player-500/20 border-player-500/40 text-player-200 font-semibold'
-                : 'bg-[#08090a] border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
+                : 'bg-zinc-100 dark:bg-[#08090a] border-zinc-200 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
             }`}
           >
             <span>All Habits</span>
@@ -309,7 +309,7 @@ export function HabitHeatmap({
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
                   isSelected
                     ? 'bg-player-500/20 border-player-500/40 text-player-200 font-semibold'
-                    : 'bg-[#08090a] border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
+                    : 'bg-zinc-100 dark:bg-[#08090a] border-zinc-200 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                 }`}
               >
                 <HabitIcon
@@ -329,7 +329,7 @@ export function HabitHeatmap({
 
       {/* Summary Telemetry Strip */}
       <div className="grid grid-cols-4 gap-2">
-        <div className="rounded-lg bg-[#08090a] border border-zinc-800/80 px-2.5 py-2">
+        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
             Active Days
           </div>
@@ -338,7 +338,7 @@ export function HabitHeatmap({
             <span className="text-[10px] font-normal text-zinc-500">/ {allVisibleDays.length}</span>
           </div>
         </div>
-        <div className="rounded-lg bg-[#08090a] border border-zinc-800/80 px-2.5 py-2">
+        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
             {filteredHabit ? 'Full Target' : 'Par Days'}
           </div>
@@ -348,7 +348,7 @@ export function HabitHeatmap({
             {parDaysCount}
           </div>
         </div>
-        <div className="rounded-lg bg-[#08090a] border border-zinc-800/80 px-2.5 py-2">
+        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
             Best Run
           </div>
@@ -356,7 +356,7 @@ export function HabitHeatmap({
             {bestWindowStreak}d
           </div>
         </div>
-        <div className="rounded-lg bg-[#08090a] border border-zinc-800/80 px-2.5 py-2">
+        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
             Window Pts
           </div>
@@ -369,7 +369,7 @@ export function HabitHeatmap({
       {/* GitHub-Style Calendar Matrix (Month headers + Weekday axis + Week columns) */}
       <div className="overflow-x-auto no-scrollbar">
         <div className="inline-flex min-w-full justify-center">
-          <div className="inline-flex flex-col gap-1.5 p-3 rounded-lg bg-[#08090a] border border-zinc-800/80">
+          <div className="inline-flex flex-col gap-1.5 p-3 rounded-lg bg-zinc-50/70 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80">
             {/* Month Labels Row */}
             <div className="flex items-center gap-1.5 pl-8">
               {calendarWeeks.map((week) => (
@@ -498,7 +498,7 @@ export function HabitHeatmap({
       </div>
 
       {/* Interactive Day Inspector Panel */}
-      <div className="rounded-lg bg-[#08090a] border border-zinc-800/80 p-3 space-y-2.5">
+      <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 p-3 space-y-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <span className="text-xs font-mono font-semibold text-zinc-200">
@@ -571,7 +571,7 @@ export function HabitHeatmap({
               return (
                 <div
                   key={item.id}
-                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#12141a] border border-zinc-800/90 text-[11px] font-mono text-zinc-200"
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-white dark:bg-[#12141a] border border-zinc-200 dark:border-zinc-800/90 text-[11px] font-mono text-zinc-900 dark:text-zinc-200 shadow-2xs"
                 >
                   <CheckCircle2
                     className="w-3 h-3 shrink-0 text-player-400"

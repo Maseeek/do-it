@@ -231,10 +231,10 @@ export const HabitCard = React.memo(function HabitCard({
           isPulsing
             ? 'bg-player-950/30 border-player-400/90 animate-kinetic-card-player z-10'
             : satisfied
-            ? `bg-[#0b0c0f]/90 border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
+            ? `bg-zinc-100/90 dark:bg-[#0b0c0f]/90 border-black/[0.06] dark:border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
             : isHealthLocked
-            ? `bg-[#0e1013] ${healthProgress?.classes.border} shadow-xs`
-            : 'bg-[#0e1013] border-zinc-800/90 hover:border-zinc-700 shadow-xs'
+            ? `bg-white dark:bg-[#0e1013] ${healthProgress?.classes.border} shadow-xs`
+            : 'bg-white dark:bg-[#0e1013] border-black/[0.08] dark:border-zinc-800/90 hover:border-black/15 dark:hover:border-zinc-700 shadow-xs'
         }`}
       >
         {/* Recessed Left-Edge Telemetry Channel Bar for Completed State */}
@@ -312,7 +312,7 @@ export const HabitCard = React.memo(function HabitCard({
                   ? 'bg-player-500 border border-player-300/90 text-white shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.35)]'
                   : isWeeklyTargetMet
                   ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-                  : 'border border-zinc-700/90 bg-[#090a0d] hover:border-zinc-500 text-transparent hover:text-zinc-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
+                  : 'border border-zinc-300 dark:border-zinc-700/90 bg-zinc-100 hover:bg-zinc-200/70 dark:bg-[#090a0d] hover:border-zinc-400 dark:hover:border-zinc-500 text-transparent hover:text-zinc-400 dark:hover:text-zinc-500 shadow-xs dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
               }`}
             >
               {isHealthLocked ? (
@@ -372,8 +372,8 @@ export const HabitCard = React.memo(function HabitCard({
                 <span
                   className={`inline-flex items-center text-[9px] font-mono px-1.5 py-0.2 rounded border ${
                     isWeeklyTargetMet
-                      ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25 font-semibold'
-                      : 'text-zinc-400 bg-zinc-900 border-zinc-800'
+                      ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25 font-semibold'
+                      : 'text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
                   }`}
                 >
                   {weeklyCompletions}/{habit.weeklyTargetDays} wk{isWeeklyTargetMet ? ' · met' : ''}
@@ -404,8 +404,8 @@ export const HabitCard = React.memo(function HabitCard({
                   isPulsing
                     ? 'text-white'
                     : satisfied
-                    ? 'line-through decoration-zinc-600/80 text-zinc-400'
-                    : 'text-zinc-100'
+                    ? 'line-through decoration-zinc-400/80 dark:decoration-zinc-600/80 text-zinc-400 dark:text-zinc-500'
+                    : 'text-zinc-900 dark:text-zinc-100'
                 }`}
               >
                 {habit.title}
@@ -418,7 +418,7 @@ export const HabitCard = React.memo(function HabitCard({
               </span>
             </div>
 
-            <p className={`text-[11px] truncate mt-0.5 ${satisfied && !isPulsing ? 'text-zinc-500' : 'text-zinc-400'}`}>
+            <p className={`text-[11px] truncate mt-0.5 ${satisfied && !isPulsing ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500 dark:text-zinc-400'}`}>
               {completed && checkIn?.quantity
                 ? `Logged ${checkIn.quantity} ${habit.quantityUnit || 'units'} (+${checkIn.pointsEarned} pts)`
                 : habit.description}
@@ -446,7 +446,7 @@ export const HabitCard = React.memo(function HabitCard({
                   </span>
                 </div>
                 {/* Visual telemetry progress bar */}
-                <div role="progressbar" aria-label={healthProgress.metric === 'sleep' ? 'Sleep points earned' : 'Health goal progress'} aria-valuenow={healthProgress.barPercentage} aria-valuemin={0} aria-valuemax={100} className="w-full h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
+                <div role="progressbar" aria-label={healthProgress.metric === 'sleep' ? 'Sleep points earned' : 'Health goal progress'} aria-valuenow={healthProgress.barPercentage} aria-valuemin={0} aria-valuemax={100} className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800/80 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${healthProgress.classes.bar} ${healthProgress.classes.glow}`}
                     style={{ width: `${healthProgress.barPercentage}%` }}
@@ -478,7 +478,7 @@ export const HabitCard = React.memo(function HabitCard({
 
             {/* Micro-note preview */}
             {checkIn?.note && (
-              <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-zinc-300 italic bg-zinc-900/70 border border-zinc-800/80 rounded-md px-2 py-0.5 max-w-full">
+              <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 italic bg-zinc-100 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 rounded-md px-2 py-0.5 max-w-full">
                 <MessageSquare className="w-2.5 h-2.5 text-player-400 shrink-0" />
                 <span className="truncate">{checkIn.note}</span>
               </div>
@@ -516,15 +516,15 @@ export const HabitCard = React.memo(function HabitCard({
                   ? 'bg-player-500/20 border-player-400 text-player-200 shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_50%,transparent)] animate-kinetic-badge-ignite'
                   : completed
                   ? checkIn?.pointsEarned === 0
-                    ? 'bg-zinc-900 border-zinc-800 text-zinc-500'
-                    : 'bg-player-500/10 border-player-500/25 text-player-300/90'
+                    ? 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500'
+                    : 'bg-player-500/10 border-player-500/25 text-player-600 dark:text-player-300/90'
                   : isHealthLocked
                   ? `${healthProgress?.classes.bg} ${healthProgress?.classes.border} ${healthProgress?.classes.text}`
                   : isWeeklyTargetMet
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                  ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/25'
                   : habit.isQuantitative
-                  ? 'bg-player-500/10 border-player-500/30 text-player-400 hover:bg-player-500/20'
-                  : 'bg-player-500/5 border-player-500/20 text-player-400 hover:border-player-400'
+                  ? 'bg-player-500/10 border-player-500/30 text-player-600 dark:text-player-400 hover:bg-player-500/20'
+                  : 'bg-player-500/5 border-player-500/20 text-player-600 dark:text-player-400 hover:border-player-400'
               }`}
               title={
                 completed && checkIn?.pointsEarned === 0
@@ -551,7 +551,7 @@ export const HabitCard = React.memo(function HabitCard({
                 className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${
                   checkIn?.note
                     ? 'text-player-400 bg-player-500/10 border-player-500/25'
-                    : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-zinc-900 hover:border-zinc-800'
+                    : 'text-zinc-400 dark:text-zinc-500 border-transparent hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:border-zinc-200 dark:hover:border-zinc-800'
                 }`}
                 title={checkIn?.note ? 'Edit note' : 'Add note'}
               >

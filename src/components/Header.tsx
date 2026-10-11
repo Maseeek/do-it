@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame } from 'lucide-react';
+import { Flame, Moon, Sun, Monitor } from 'lucide-react';
 import { DoLogo } from './DoLogo';
 import { useStore } from '@/lib/store';
 import { soundEngine } from '@/lib/sound-utils';
@@ -8,7 +8,7 @@ import { hapticLight } from '@/lib/haptic-utils';
 import { getPlayerColorStyles } from '@/lib/player-colors';
 
 export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const { activePlayer, activePlayerSummary } = useStore();
+  const { activePlayer, activePlayerSummary, themePreference, effectiveTheme, toggleTheme } = useStore();
 
   const handleProfileClick = () => {
     soundEngine.playClick();
@@ -34,6 +34,26 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
               {activePlayerSummary.currentStreak}d
             </span>
           )}
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playClick();
+              hapticLight();
+              toggleTheme();
+            }}
+            aria-label={`Switch theme (current: ${themePreference})`}
+            title={`Switch theme (current: ${themePreference})`}
+            className="flex size-11 items-center justify-center rounded-lg border border-black/10 dark:border-white/[0.12] bg-black/[0.03] dark:bg-white/[0.05] text-zinc-600 dark:text-zinc-400 hover:text-foreground transition-colors"
+          >
+            {themePreference === "system" ? (
+              <Monitor size={16} />
+            ) : effectiveTheme === "dark" ? (
+              <Moon size={16} />
+            ) : (
+              <Sun size={16} />
+            )}
+          </button>
 
           <button
             type="button"
