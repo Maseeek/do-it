@@ -236,13 +236,13 @@ export function DateNavigator() {
                 day.isFuture
                   ? 'opacity-25 cursor-not-allowed border-transparent'
                   : isSelected
-                  ? 'bg-zinc-900 dark:bg-zinc-800/90 text-white border-zinc-900 dark:border-zinc-600 shadow-xs'
+                  ? 'bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-600 shadow-xs'
                   : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900/70 hover:border-zinc-200 dark:hover:border-zinc-800/80'
               }`}
             >
               <span
                 className={`text-[9px] font-mono uppercase tracking-wider ${
-                  isSelected ? 'font-bold text-zinc-200' : 'text-zinc-500'
+                  isSelected ? 'font-bold text-zinc-600 dark:text-zinc-200' : 'text-zinc-500'
                 }`}
               >
                 {showMonthTag
@@ -253,9 +253,9 @@ export function DateNavigator() {
               <span
                 className={`text-xs font-mono tabular-nums my-0.5 ${
                   isToday
-                    ? 'font-extrabold text-player-500 dark:text-player-400'
+                    ? 'font-extrabold text-player-300 dark:text-player-400'
                     : isSelected
-                    ? 'font-bold text-white'
+                    ? 'font-bold text-zinc-900 dark:text-white'
                     : 'font-medium text-zinc-700 dark:text-zinc-300'
                 }`}
               >

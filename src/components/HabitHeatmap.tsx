@@ -139,8 +139,7 @@ export function HabitHeatmap({
     }
   }
 
-  const highThreshold = Math.max(1, Math.round(dailyPar * 0.625));
-  const midThreshold = Math.max(1, Math.round(dailyPar * 0.3125));
+  const getFillOpacity = (points: number) => Math.min(1, 0.15 + (points / dailyPar) * 0.85);
 
   const getIntensityClass = (points: number, isRest: boolean, isFuture: boolean) => {
     if (isFuture) {
@@ -152,16 +151,7 @@ export function HabitHeatmap({
       }
       return 'bg-zinc-200/80 dark:bg-[#22252b] border border-black/[0.04] dark:border-white/[0.04] hover:bg-zinc-300/80 dark:hover:bg-[#2c3038]';
     }
-    if (points >= dailyPar) {
-      return 'bg-player-400 border border-player-300/80 hover:bg-player-300 shadow-[0_0_8px_color-mix(in_srgb,var(--player-base)_55%,transparent)]';
-    }
-    if (points >= highThreshold) {
-      return 'bg-player-600 border border-player-500/80 hover:bg-player-500';
-    }
-    if (points >= midThreshold) {
-      return 'bg-player-800 border border-player-700/70 hover:bg-player-700';
-    }
-    return 'bg-player-950 border border-player-900/70 hover:bg-player-900';
+    return 'border border-player-500/30 hover:border-player-500';
   };
 
   const canSwitchPlayers = !multiplayer.configured || isPartnerConnected;
@@ -436,13 +426,14 @@ export function HabitHeatmap({
                             );
                           }}
                           aria-label={`${formatFriendlyDate(d.dateStr)} (${d.dateStr}): ${stats.points} points, ${stats.count} habits${isRest ? ', Rest Day' : ''}`}
-                          className={`w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-[3px] transition-all duration-150 focus:outline-none ${getIntensityClass(
+                          aria-pressed={isSelected && !d.isFuture}
+                          className={`relative w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-[3px] transition-[transform,box-shadow,border-color,background-color] duration-150 ${getIntensityClass(
                             stats.points,
                             isRest,
                             d.isFuture
                           )} ${
                             isSelected && !d.isFuture
-                              ? 'scale-110 ring-2 ring-white shadow-lg z-10'
+                              ? 'scale-110 ring-2 ring-zinc-900 dark:ring-white shadow-lg z-10'
                               : d.isToday
                               ? 'ring-1 ring-zinc-300/70 hover:scale-110'
                               : !d.isFuture
@@ -454,7 +445,15 @@ export function HabitHeatmap({
                               ? `${d.dateStr} (Upcoming)`
                               : `${formatFriendlyDate(d.dateStr)}: ${stats.points} pts (${stats.count} habits)${isRest ? ' · Rest Day' : ''}`
                           }
-                        />
+                        >
+                          {stats.points > 0 && !d.isFuture && (
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute inset-0 rounded-[2px] bg-player-500"
+                              style={{ opacity: getFillOpacity(stats.points) }}
+                            />
+                          )}
+                        </button>
                       );
                     })}
                   </div>
@@ -469,30 +468,25 @@ export function HabitHeatmap({
       <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-zinc-500">
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-indigo-950/80 border border-indigo-500/40" />
+            <span className="w-2.5 h-2.5 rounded-[2px] bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-300 dark:border-indigo-500/40" />
             <span>Rest day</span>
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-[#22252b] ring-1 ring-zinc-300/70" />
+            <span className="w-2.5 h-2.5 rounded-[2px] bg-zinc-200/80 dark:bg-[#22252b] ring-1 ring-zinc-300/70" />
             <span>Today</span>
           </span>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
           <span>Less</span>
-          <span className="w-2.5 h-2.5 rounded-[2px] bg-[#22252b] border border-white/[0.06]" />
-          <span
-            className="w-2.5 h-2.5 rounded-[2px] bg-player-950 border border-player-900/70"
-          />
-          <span
-            className="w-2.5 h-2.5 rounded-[2px] bg-player-800"
-          />
-          <span
-            className="w-2.5 h-2.5 rounded-[2px] bg-player-600"
-          />
-          <span
-            className="w-2.5 h-2.5 rounded-[2px] bg-player-400"
-          />
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-zinc-200/80 dark:bg-[#22252b] border border-black/[0.04] dark:border-white/[0.04]" />
+          {[0.0625, 0.3125, 0.625, 1].map((ratio) => (
+            <span
+              key={ratio}
+              className="w-2.5 h-2.5 rounded-[2px] bg-player-500"
+              style={{ opacity: getFillOpacity(dailyPar * ratio) }}
+            />
+          ))}
           <span>{dailyPar} Par</span>
         </div>
       </div>
@@ -539,7 +533,7 @@ export function HabitHeatmap({
                   hapticLight();
                   onOpenDateInToday(inspectedDateStr);
                 }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-300 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
               >
                 <span>Open day</span>
                 <ArrowUpRight className="w-3 h-3" />
