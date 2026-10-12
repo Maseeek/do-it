@@ -1,15 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CheckIn, CouplesReaction, Habit, RestDay, Stake } from './types';
 
-async function fetchDuelRows<T>(client: SupabaseClient, table: string, duelId: string): Promise<T[]> {
+export async function fetchDuelRows<T>(client: SupabaseClient, table: string, duelId: string): Promise<T[]> {
   const rows: T[] = [];
   const pageSize = 1000;
+  let totalCount: number | null = null;
   for (let offset = 0; ;) {
-    const { data, count, error } = await client.from(table).select('data', { count: 'exact' }).eq('duel_id', duelId)
-      .order('id').range(offset, offset + pageSize - 1);
+    const selectOptions: { count?: 'exact' } = totalCount === null ? { count: 'exact' } : {};
+    const { data, count, error } = await client
+      .from(table)
+      .select('data', selectOptions)
+      .eq('duel_id', duelId)
+      .order('id')
+      .range(offset, offset + pageSize - 1);
     if (error) throw error;
+    if (totalCount === null && typeof count === 'number') {
+      totalCount = count;
+    }
     rows.push(...(data || []).map(row => row.data as T));
-    if (!data?.length || (count !== null && rows.length >= count) || (count === null && data.length < pageSize)) return rows;
+    if (!data?.length || (totalCount !== null && rows.length >= totalCount) || (totalCount === null && data.length < pageSize)) return rows;
     offset += data.length;
   }
 }

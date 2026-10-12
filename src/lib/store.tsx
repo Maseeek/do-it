@@ -41,6 +41,7 @@ import { soundEngine } from './sound-utils';
 import { hapticCelebration, hapticLight, hapticMedium, hapticSuccess } from './haptic-utils';
 import { getSupabaseClient } from './supabase';
 import { useMultiplayer } from './multiplayer';
+import { createCoalescedReloader } from './coalesced-reload';
 import { loadDuelData, saveDuelHabit, deleteDuelHabit, saveDuelCheckIn, deleteDuelCheckIn, saveDuelStake, deleteDuelStake, saveDuelReaction, saveDuelRestDay, deleteDuelRestDay } from './duel-sync';
 import {
   habitToRow,
@@ -460,87 +461,99 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setSyncStatus('local_only');
       return;
     }
-    let cancelled = false;
     if (stateDuelRef.current !== duelId) {
       setLoadedDuelId(null);
       setSyncStatus('syncing');
     }
-    const reload = async () => {
+    const reloader = createCoalescedReloader(async () => {
       const sequence = ++reloadSequenceRef.current;
-      try {
-        await duelQueueRef.current;
-        let data = await loadDuelData(client, duelId);
-        const restoreKey = `${duelId}:${multiplayer.slot}`;
-        if (
-          multiplayer.slot &&
-          canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email) &&
-          needsLegacyReplacement(multiplayer.slot, data.habits) &&
-          !restorationInProgressRef.current[restoreKey]
-        ) {
-          restorationInProgressRef.current[restoreKey] = true;
-          const slot = multiplayer.slot;
-          const restoration = duelQueueRef.current
-            .then(() => restoreLegacyDuelProgress(client, duelId, slot, data.habits, data.checkIns))
-            .finally(() => {
-              delete restorationInProgressRef.current[restoreKey];
-            });
-          duelQueueRef.current = restoration.then(() => {}, () => {});
-          if (await restoration) data = await loadDuelData(client, duelId);
-        }
-        if (cancelled) return;
-        if (sequence < latestAppliedSequenceRef.current) return;
-        latestAppliedSequenceRef.current = sequence;
-        const initial = getInitialState();
-        const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === multiplayer.slot;
-        stateDuelRef.current = duelId;
-        stateSlotRef.current = multiplayer.slot;
-        const partnerPaired = multiplayer.hasPairedPartner;
-        const visibleHabits = partnerPaired ? data.habits : data.habits.filter(h => h.playerId === multiplayer.slot);
-        const visibleCheckIns = partnerPaired ? data.checkIns : data.checkIns.filter(c => c.playerId === multiplayer.slot);
-        const visibleReactions = partnerPaired ? data.reactions : data.reactions.filter(r => r.fromPlayerId === multiplayer.slot && r.toPlayerId === multiplayer.slot);
-        const visibleRestDays = partnerPaired ? data.restDays : data.restDays.filter(r => r.playerId === multiplayer.slot);
-        const ownerColor = PLAYER_COLORS.find(color => color.id === duelOwnerColor) || PLAYER_COLORS[0];
-        const guestColor = PLAYER_COLORS.find(color => color.id === duelGuestColor) || PLAYER_COLORS[1];
-        setState(prev => ({
-          ...(sameDuel ? prev : initial),
-          activePlayerId: multiplayer.slot,
-          habits: visibleHabits,
-          checkIns: visibleCheckIns,
-          stakes: data.stakes,
-          reactions: visibleReactions,
-          restDays: visibleRestDays,
-          players: {
-            maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: ownerColor.color, accentBg: ownerColor.accentBg, accentBorder: ownerColor.accentBorder, inviteCount: multiplayer.duel?.owner_invites ?? 0 },
-            myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guestColor.color, accentBg: guestColor.accentBg, accentBorder: guestColor.accentBorder, inviteCount: multiplayer.duel?.guest_invites ?? 0 },
-          },
-        }));
-        setLoadedDuelId(duelId);
-        setSyncStatus('connected');
-        setStorageError(null);
-      } catch (error) {
-        if (!cancelled) {
-          setSyncStatus('offline');
-          setStorageError(error instanceof Error ? error.message : 'Could not load duel data.');
-        }
+      let pendingWrites = duelQueueRef.current;
+      await pendingWrites;
+      if (reloader.isCancelled) return;
+      let data = await loadDuelData(client, duelId);
+      if (reloader.isCancelled) return;
+      // A read started before a local mutation must not replace its optimistic state.
+      if (pendingWrites !== duelQueueRef.current) {
+        reloader.schedule();
+        return;
       }
-    };
-    void reload();
+      const restoreKey = `${duelId}:${multiplayer.slot}`;
+      if (
+        multiplayer.slot &&
+        canImportLegacyDatabase(multiplayer.slot, multiplayer.user?.email) &&
+        needsLegacyReplacement(multiplayer.slot, data.habits) &&
+        !restorationInProgressRef.current[restoreKey]
+      ) {
+        restorationInProgressRef.current[restoreKey] = true;
+        const slot = multiplayer.slot;
+        const restoration = duelQueueRef.current
+          .then(() => restoreLegacyDuelProgress(client, duelId, slot, data.habits, data.checkIns))
+          .finally(() => {
+            delete restorationInProgressRef.current[restoreKey];
+          });
+        duelQueueRef.current = restoration.then(() => {}, () => {});
+        pendingWrites = duelQueueRef.current;
+        if (await restoration) data = await loadDuelData(client, duelId);
+      }
+      if (reloader.isCancelled) return;
+      if (pendingWrites !== duelQueueRef.current) {
+        reloader.schedule();
+        return;
+      }
+      if (sequence < latestAppliedSequenceRef.current) return;
+      latestAppliedSequenceRef.current = sequence;
+      const initial = getInitialState();
+      const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === multiplayer.slot;
+      stateDuelRef.current = duelId;
+      stateSlotRef.current = multiplayer.slot;
+      const partnerPaired = multiplayer.hasPairedPartner;
+      const visibleHabits = partnerPaired ? data.habits : data.habits.filter(h => h.playerId === multiplayer.slot);
+      const visibleCheckIns = partnerPaired ? data.checkIns : data.checkIns.filter(c => c.playerId === multiplayer.slot);
+      const visibleReactions = partnerPaired ? data.reactions : data.reactions.filter(r => r.fromPlayerId === multiplayer.slot && r.toPlayerId === multiplayer.slot);
+      const visibleRestDays = partnerPaired ? data.restDays : data.restDays.filter(r => r.playerId === multiplayer.slot);
+      const ownerColor = PLAYER_COLORS.find(color => color.id === duelOwnerColor) || PLAYER_COLORS[0];
+      const guestColor = PLAYER_COLORS.find(color => color.id === duelGuestColor) || PLAYER_COLORS[1];
+      setState(prev => ({
+        ...(sameDuel ? prev : initial),
+        activePlayerId: multiplayer.slot,
+        habits: visibleHabits,
+        checkIns: visibleCheckIns,
+        stakes: data.stakes,
+        reactions: visibleReactions,
+        restDays: visibleRestDays,
+        players: {
+          maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: ownerColor.color, accentBg: ownerColor.accentBg, accentBorder: ownerColor.accentBorder, inviteCount: multiplayer.duel?.owner_invites ?? 0 },
+          myrna: { ...initial.players.myrna, name: partnerPaired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guestColor.color, accentBg: guestColor.accentBg, accentBorder: guestColor.accentBorder, inviteCount: multiplayer.duel?.guest_invites ?? 0 },
+        },
+      }));
+      setLoadedDuelId(duelId);
+      setSyncStatus('connected');
+      setStorageError(null);
+    }, {
+      debounceMs: 50,
+      onError: (error) => {
+        setSyncStatus('offline');
+        setStorageError(error instanceof Error ? error.message : 'Could not load duel data.');
+      },
+    });
+
+    reloader.schedule({ immediate: true });
     let isSubscribed = false;
     const channel = client.channel(`duel-${duelId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_habits', filter: `duel_id=eq.${duelId}` }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_check_ins', filter: `duel_id=eq.${duelId}` }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_stakes', filter: `duel_id=eq.${duelId}` }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_reactions', filter: `duel_id=eq.${duelId}` }, () => void reload())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_rest_days', filter: `duel_id=eq.${duelId}` }, () => void reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_habits', filter: `duel_id=eq.${duelId}` }, () => reloader.schedule())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_check_ins', filter: `duel_id=eq.${duelId}` }, () => reloader.schedule())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_stakes', filter: `duel_id=eq.${duelId}` }, () => reloader.schedule())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_reactions', filter: `duel_id=eq.${duelId}` }, () => reloader.schedule())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_rest_days', filter: `duel_id=eq.${duelId}` }, () => reloader.schedule())
       .subscribe((status) => {
         isSubscribed = status === 'SUBSCRIBED';
       });
     const poll = setInterval(() => {
       if (!isSubscribed) {
-        void reload();
+        reloader.schedule({ immediate: true });
       }
     }, 30000);
-    return () => { cancelled = true; clearInterval(poll); void client.removeChannel(channel); };
+    return () => { reloader.cancel(); clearInterval(poll); void client.removeChannel(channel); };
   }, [isHydrated, multiplayer.configured, duelId, multiplayer.slot, multiplayer.hasPairedPartner, multiplayer.user?.email, duelOwnerName, duelGuestName, duelOwnerColor, duelGuestColor]);
 
   const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
@@ -1267,57 +1280,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [selectedDate]
   );
-
-
-  // Automatically pull Apple Health check-ins queued by background iOS Shortcuts
-  useEffect(() => {
-    if (!isHydrated || multiplayer.configured) return;
-
-    const pullAppleHealthPending = async () => {
-      try {
-        const res = await fetch('/api/sync/apple-health?pending=true&consume=true');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.pendingCheckIns && Array.isArray(data.pendingCheckIns) && data.pendingCheckIns.length > 0) {
-          setState((prev) => {
-            let nextCheckIns = [...prev.checkIns];
-            for (const incoming of data.pendingCheckIns) {
-              if (!incoming || !incoming.habitId) continue;
-              const idx = nextCheckIns.findIndex(
-                (c) => c.habitId === incoming.habitId && c.date === incoming.date
-              );
-              if (idx >= 0) {
-                nextCheckIns[idx] = incoming;
-              } else {
-                nextCheckIns.push(incoming);
-              }
-            }
-            nextCheckIns = rebalanceAllWeeklyCheckIns(nextCheckIns, prev.habits);
-            return {
-              ...prev,
-              checkIns: nextCheckIns,
-              wearableConfig: {
-                ...prev.wearableConfig,
-                appleConnected: true,
-                appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              },
-            };
-          });
-          soundEngine.playFanfare();
-          hapticSuccess();
-        }
-      } catch {
-        // Silent failure in offline/local
-      }
-    };
-
-    pullAppleHealthPending();
-    const handleFocus = () => {
-      pullAppleHealthPending();
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isHydrated, multiplayer.configured]);
 
 
   const disconnectGoogleHealth = useStableCallback(() => { if (typeof document !== 'undefined') {
