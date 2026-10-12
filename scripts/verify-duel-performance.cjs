@@ -9,6 +9,9 @@ const { values } = parseArgs({ options: {
   output: { type: 'string', default: '.scratch/duel-performance.json' },
   chrome: { type: 'string' },
   'page-cap': { type: 'string', default: '1000' },
+  'history-days': { type: 'string', default: '125' },
+  'loading-only': { type: 'boolean', default: false },
+  samples: { type: 'string', default: '1' },
   race: { type: 'boolean', default: false },
 } });
 const resultPath = path.resolve(values.output);
@@ -17,6 +20,11 @@ fs.mkdirSync(root, { recursive: true });
 const pageCap = Number(values['page-cap']);
 assert.ok(Number.isInteger(pageCap) && pageCap > 0);
 const raceOnly = values.race;
+const historyDays = Number(values['history-days']);
+const samples = Number(values.samples);
+assert.ok(Number.isInteger(historyDays) && historyDays > 0);
+assert.ok(Number.isInteger(samples) && samples > 0);
+assert.ok(samples === 1 || values['loading-only'], 'Repeated samples require loading-only mode');
 
 const initial = require(path.resolve('.scratch/test-build/seed.js')).getInitialState();
 const owner = '11111111-1111-4111-8111-111111111111';
@@ -24,12 +32,13 @@ const guest = '22222222-2222-4222-8222-222222222222';
 const duelId = '33333333-3333-4333-8333-333333333333';
 const user = { id: owner, email: 'performance-owner@local.test', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' };
 const duel = { id: duelId, owner_id: owner, guest_id: guest, owner_name: 'Perf Owner', guest_name: 'Perf Guest', owner_color: 'blue', guest_color: 'purple', invite_code: '44444444-4444-4444-8444-444444444444' };
-const results = { measuredAt: new Date().toISOString(), pageCap, method: 'Production copies configured only for a Playwright-routed localhost Supabase mock. 2500 CheckIns, 50ms per HTTP response, real Phoenix subscriptions/events, no live database or auth. Counts verify reload amplification, not hosted latency.', variants: {} };
+const historyCount = initial.habits.length * historyDays;
+const results = { measuredAt: new Date().toISOString(), pageCap, historyCount, samples, method: `Production copies configured only for a Playwright-routed localhost Supabase mock. ${historyCount} CheckIns, 50ms per HTTP response, real Phoenix subscriptions/events, no live database or auth. New browser context per sample. Initial rendering measured inside the page from navigation start to Daily Ritual and a Check-in control, followed by two animation frames. Counts verify reload amplification; loading times include localhost JS and rendering, not hosted latency.`, variants: {} };
 
 function makeRows() {
   const checks = [];
   const today = new Date();
-  for (let day = 1; day <= 125; day++) {
+  for (let day = 1; day <= historyDays; day++) {
     const d = new Date(today); d.setDate(d.getDate() - day);
     const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     for (const h of initial.habits) checks.push({ id: `${h.id}-${date}`, habitId: h.id, playerId: h.playerId, date, pointsEarned: h.points, completedAt: `${date}T12:00:00Z` });
@@ -55,12 +64,22 @@ async function verify(browser, name, url) {
   const errors = [];
   let phase = 'initial';
   let active = 0;
+  const activeByTable = {};
+  const peakByTable = {};
   let lastQueryAt = 0;
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(({ user, token }) => {
     localStorage.setItem('sb-127-auth-token', JSON.stringify({ access_token: token, refresh_token: 'local-mock-refresh', token_type: 'bearer', expires_in: 86400, expires_at: Math.floor(Date.now()/1000)+86400, user }));
     localStorage.setItem('do_it_sound_enabled', 'false');
     localStorage.setItem('do_it_app_data_v2', 'local-history-sentinel');
+    let scheduled = false;
+    const observer = new MutationObserver(() => {
+      if (scheduled || !document.body?.innerText.includes('Daily Ritual') || !document.querySelector('button[aria-label="Mark Gym & Strength completed"]')) return;
+      scheduled = true;
+      observer.disconnect();
+      requestAnimationFrame(() => requestAnimationFrame(() => { window.initialRitualMs = performance.now(); }));
+    });
+    observer.observe(document, { subtree: true, childList: true, attributes: true });
   }, { user, token: 'eyJhbGciOiJub25lIn0.' + Buffer.from(JSON.stringify({ sub: owner, exp: Math.floor(Date.now()/1000)+86400, role: 'authenticated' })).toString('base64url') + '.local-mock' });
 
   await page.route('http://127.0.0.1:54321/**', async route => {
@@ -99,11 +118,13 @@ async function verify(browser, name, url) {
     queries.push({ phase, table, start, limit, exact, rows: selected.length });
     lastQueryAt = Date.now();
     active++;
+    activeByTable[table] = (activeByTable[table] ?? 0) + 1;
+    peakByTable[table] = Math.max(peakByTable[table] ?? 0, activeByTable[table]);
     try {
       await new Promise(resolve => setTimeout(resolve, 50));
       headers['content-range'] = `${start}-${Math.max(start, start + selected.length - 1)}/${exact ? sorted.length : '*'}`;
       await route.fulfill({ status: 200, headers, body: JSON.stringify(selected) });
-    } finally { active--; }
+    } finally { active--; activeByTable[table]--; }
   });
 
   await page.routeWebSocket('ws://127.0.0.1:54321/**', socket => {
@@ -134,10 +155,20 @@ async function verify(browser, name, url) {
     await page.getByText('Daily Ritual', { exact: true }).waitFor();
     await until(page, () => active === 0 && Date.now() - lastQueryAt > 250 && subscriptions.some(s => s.topic === 'realtime:duel-' + duelId), 'initial load');
     const initialQueries = queries.filter(q => q.phase === 'initial');
-    const checkPages = Math.ceil(2500 / pageCap);
+    const checkPages = Math.ceil(historyCount / pageCap);
     assert.equal(initialQueries.filter(q => q.table === 'duel_check_ins').length, checkPages);
     assert.equal(initialQueries.filter(q => q.exact).length, name === 'current' ? 5 : checkPages + 4);
     assert.equal(await page.evaluate(() => localStorage.getItem('do_it_app_data_v2')), 'local-history-sentinel');
+
+    if (values['loading-only']) {
+      await page.waitForFunction(() => typeof window.initialRitualMs === 'number');
+      const initialRitualMs = await page.evaluate(() => window.initialRitualMs);
+      await page.getByRole('tab', { name: 'Activity', exact: true }).click();
+      await page.waitForFunction(() => document.body.innerText.includes('The timeline'), null, { timeout: 5000 });
+      assert.equal(await page.getByText(String(historyCount), { exact: true }).count() > 0, true);
+      assert.deepEqual(errors, []);
+      return { initialRitualMs, initialQueries, peakByTable, visibleHistory: historyCount, errors };
+    }
 
     if (raceOnly) {
       phase = 'race';
@@ -160,7 +191,7 @@ async function verify(browser, name, url) {
       notify(1);
       await until(page, () => active === 0 && Date.now() - lastQueryAt > 250, 'race quiescence');
       const trace = await page.evaluate(() => { window.raceObserver.disconnect(); return window.raceTrace; });
-      assert.equal(rows.duel_check_ins.length, 2501);
+      assert.equal(rows.duel_check_ins.length, historyCount + 1);
       const finalChecked = await page.getByRole('button', { name: 'Mark Gym & Strength uncompleted for today', exact: true }).count() === 1;
       assert.equal(finalChecked, true);
       assert.equal(trace.some(entry => !entry.checked), name === 'baseline');
@@ -192,16 +223,16 @@ async function verify(browser, name, url) {
     assert.equal(entry?.pointsEarned, 40);
     await page.getByRole('button', { name: 'Mark Gym & Strength uncompleted for today', exact: true }).click();
     await until(page, () => writes.some(w => w.method === 'DELETE'), 'undo write');
-    assert.equal(rows.duel_check_ins.length, 2500);
+    assert.equal(rows.duel_check_ins.length, historyCount);
     assert.equal(await page.evaluate(() => localStorage.getItem('do_it_app_data_v2')), 'local-history-sentinel');
 
     fs.writeFileSync(path.join(root, `authenticated-${name}-before-activity.txt`), await page.locator('body').innerText());
     await page.screenshot({ path: path.join(root, `authenticated-${name}-before-activity.png`), fullPage: true });
     await page.getByRole('tab', { name: 'Activity', exact: true }).click({ timeout: 5000 });
     await page.waitForFunction(() => document.body.innerText.includes('The timeline'), null, { timeout: 5000 });
-    assert.equal(await page.getByText('2500', { exact: true }).count() > 0, true);
+    assert.equal(await page.getByText(String(historyCount), { exact: true }).count() > 0, true);
     assert.deepEqual(errors, []);
-    return { initialQueries, burst, during, writes: writes.map(w => ({ table: w.table, method: w.method })), errors, localHistoryUntouched: true, visibleHistory: 2500 };
+    return { initialQueries, burst, during, writes: writes.map(w => ({ table: w.table, method: w.method })), errors, localHistoryUntouched: true, visibleHistory: historyCount };
   } finally { await context.close(); }
 }
 
@@ -209,10 +240,16 @@ async function verify(browser, name, url) {
   const browser = await chromium.launch({ headless: true, ...(values.chrome ? { executablePath: values.chrome } : {}) });
   results.browser = browser.version();
   try {
-    for (const [name, url] of [['baseline', values.baseline], ['current', values.current]]) {
-      results.variants[name] = await verify(browser, name, url);
-      console.log(JSON.stringify({ name, passed: true }));
-      fs.writeFileSync(resultPath, JSON.stringify(results, null, 2));
+    for (let sample = 0; sample < samples; sample++) {
+      const variants = [['baseline', values.baseline], ['current', values.current]];
+      if (sample % 2) variants.reverse();
+      for (const [name, url] of variants) {
+        const result = await verify(browser, name, url);
+        if (samples === 1) results.variants[name] = result;
+        else (results.variants[name] ??= []).push(result);
+        console.log(JSON.stringify({ name, sample: sample + 1, passed: true, initialRitualMs: result.initialRitualMs }));
+        fs.writeFileSync(resultPath, JSON.stringify(results, null, 2));
+      }
     }
   } catch (error) { results.failure = error.message; throw error; }
   finally { fs.writeFileSync(resultPath, JSON.stringify(results, null, 2)); await browser.close(); }

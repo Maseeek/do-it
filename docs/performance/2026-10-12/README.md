@@ -40,10 +40,13 @@ npm test
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --page-cap 1000 --output .scratch/duel-reload.json
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --page-cap 400 --output .scratch/duel-cap400.json
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --race --output .scratch/duel-race.json
+NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --loading-only --history-days 730 --samples 5 --page-cap 400 --output .scratch/duel-loading-cap400.json
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-entry-performance.cjs --smoke --output .scratch/entry-performance.json
 ```
 
 The reload checks assert full history, counts, filtered queries, twenty-event bursts, one follow-up for events during loading, actual Check-in/undo writes, and unchanged local history. The race check observes the Habit button while a read overlaps a local write: the baseline becomes unchecked temporarily; the current build remains checked. These tests verify client behavior and request amplification against a mock. They do not establish hosted database latency or server-side authorization.
+
+Known-count history now loads in batches of at most three requests. Responses retain their requested order; a changed page size discards later speculative responses and resumes serial reads from the contiguous prefix. Unknown totals remain serial through an empty page. The loading-only scenario uses 14,600 records and five alternating samples in fresh browser contexts. Its browser-local probe ends when Daily Ritual and the Check-in control appear, followed by two animation frames; Activity then verifies the complete record count. This includes localhost JavaScript loading and rendering with 50 ms mock responses.
 
 The entry check uses empty auth for the default account screen, then a synthetic account with an empty Duel for first-run onboarding. It measures the heading with a browser-local probe and two animation frames after document navigation. `--smoke` also switches signup/sign-in modes and saves a new habit plan through the mock. No real account is created.
 
@@ -57,6 +60,7 @@ The entry check uses empty auth for the default account screen, then a synthetic
 - [Duel reloads with a 400-row cap](duel-cap400.json): no history truncation with a lower server limit.
 - [Read/write race](duel-race.json): the same UI reproduction on baseline and current source.
 - [Account entry and onboarding](entry-performance.json): five navigation samples per flow and build, plus mode switching and a saved first plan.
+- [Large authenticated history loading](duel-loading-cap400.json): five samples per build, full 14,600-record history, and a 400-row server cap.
 
 Earlier instrumentation that polled and parsed the entire stored state inside the timed interaction was superseded. The accepted interaction artifact observes one real storage write and parses its value after timing. The mock also exposes `Content-Range` to the browser and waits for quiescence across pagination gaps. These corrections are recorded in the decision trail.
 

@@ -1,0 +1,3434 @@
+{
+  "measuredAt": "2026-10-12T04:32:55.332Z",
+  "pageCap": 400,
+  "historyCount": 14600,
+  "samples": 5,
+  "method": "Production copies configured only for a Playwright-routed localhost Supabase mock. 14600 CheckIns, 50ms per HTTP response, real Phoenix subscriptions/events, no live database or auth. New browser context per sample. Initial rendering measured inside the page from navigation start to Daily Ritual and a Check-in control, followed by two animation frames. Counts verify reload amplification; loading times include localhost JS and rendering, not hosted latency.",
+  "variants": {
+    "baseline": [
+      {
+        "initialRitualMs": 2473.199999988079,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 1,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 2385.7999999970198,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 1,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 2388.4000000059605,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 1,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 2371,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 1,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 2379.2000000029802,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": true,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 1,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      }
+    ],
+    "current": [
+      {
+        "initialRitualMs": 1094,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 3,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 1034.4000000059605,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 3,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 1047.1000000089407,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 3,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 1028.7999999970198,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 3,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      },
+      {
+        "initialRitualMs": 1024.2999999970198,
+        "initialQueries": [
+          {
+            "phase": "initial",
+            "table": "duel_habits",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 20
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_stakes",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_reactions",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_rest_days",
+            "start": 0,
+            "limit": 1000,
+            "exact": true,
+            "rows": 0
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 1600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 2800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 3600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 4800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 5600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 6800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 7600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 8800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 9600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 10800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 11600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 12800,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13200,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 13600,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14000,
+            "limit": 1000,
+            "exact": false,
+            "rows": 400
+          },
+          {
+            "phase": "initial",
+            "table": "duel_check_ins",
+            "start": 14400,
+            "limit": 1000,
+            "exact": false,
+            "rows": 200
+          }
+        ],
+        "peakByTable": {
+          "duel_habits": 1,
+          "duel_check_ins": 3,
+          "duel_stakes": 1,
+          "duel_reactions": 1,
+          "duel_rest_days": 1
+        },
+        "visibleHistory": 14600,
+        "errors": []
+      }
+    ]
+  },
+  "browser": "148.0.7778.178"
+}
