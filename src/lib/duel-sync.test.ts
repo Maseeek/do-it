@@ -1,131 +1,144 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { createClient } from '@supabase/supabase-js';
 import { fetchDuelRows } from './duel-sync';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
-describe('Duel Rows Pagination and Count Elimination Safety', () => {
-  interface MockRow {
-    id: string;
-    duel_id: string;
-    data: { id: string; name: string };
+// Pagination uses the real HTTP client and must never open a realtime socket.
+class HttpOnlyTransport extends EventTarget {
+  readonly CONNECTING = 0;
+  readonly OPEN = 1;
+  readonly CLOSING = 2;
+  readonly CLOSED = 3;
+  readonly readyState = 3;
+  readonly url = '';
+  readonly protocol = '';
+  onopen: WebSocket['onopen'] = null;
+  onmessage: WebSocket['onmessage'] = null;
+  onclose: WebSocket['onclose'] = null;
+  onerror: WebSocket['onerror'] = null;
+  constructor() {
+    super();
+    throw new Error('Pagination must not open a realtime socket');
   }
+  close() { throw new Error('Pagination must not use a realtime socket'); }
+  send() { throw new Error('Pagination must not use a realtime socket'); }
+}
 
-  function createMockSupabaseClient(options: {
+describe('Duel history pagination', () => {
+  function createClientFixture(options: {
     totalRows: number;
-    backendPageCap?: number;
-    onQuery?: (params: { offset: number; pageSize: number; selectCountOption?: { count?: string } }) => void;
-  }): { client: SupabaseClient; getQueries: () => Array<{ offset: number; selectCountOption?: { count?: string } }> } {
-    const allData: MockRow[] = Array.from({ length: options.totalRows }, (_, i) => ({
-      id: `row-${String(i).padStart(6, '0')}`,
-      duel_id: 'duel-test',
-      data: { id: `item-${i}`, name: `Item ${i}` },
+    pageCap?: number;
+    omitCount?: boolean;
+    omitCountHeader?: boolean;
+    failAtOffset?: number;
+  }) {
+    const data = Array.from({ length: options.totalRows }, (_, index) => ({
+      id: 'row-' + String(index).padStart(6, '0'),
+      data: { id: 'item-' + index, name: 'Item ' + index },
     }));
-
-    const queries: Array<{ offset: number; selectCountOption?: { count?: string } }> = [];
-
-    const mockClient = {
-      from(table: string) {
-        assert.ok(table === 'duel_habits' || table === 'duel_check_ins');
-        return {
-          select(columns: string, selectOptions?: { count?: 'exact' }) {
-            assert.equal(columns, 'data');
-            return {
-              eq(column: string, value: string) {
-                assert.equal(column, 'duel_id');
-                assert.equal(value, 'duel-test');
-                return {
-                  order(orderColumn: string) {
-                    assert.equal(orderColumn, 'id');
-                    return {
-                      range(start: number, end: number) {
-                        queries.push({ offset: start, selectCountOption: selectOptions });
-                        options.onQuery?.({ offset: start, pageSize: end - start + 1, selectCountOption: selectOptions });
-
-                        // Apply server-side max-rows cap if specified
-                        const requestedCount = end - start + 1;
-                        const effectiveLimit = options.backendPageCap
-                          ? Math.min(requestedCount, options.backendPageCap)
-                          : requestedCount;
-
-                        const pageRows = allData.slice(start, start + effectiveLimit);
-                        return Promise.resolve({
-                          data: pageRows,
-                          count: selectOptions?.count === 'exact' ? allData.length : null,
-                          error: null,
-                        });
-                      },
-                    };
-                  },
-                };
-              },
-            };
-          },
-        };
+    const queries: { offset: number; exactCount: boolean }[] = [];
+    const client = createClient('http://localhost:54321', 'mock-publishable-key', {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      realtime: { transport: HttpOnlyTransport },
+      global: {
+        fetch: async (input, init) => {
+          const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+          assert.ok(['/rest/v1/duel_habits', '/rest/v1/duel_check_ins'].includes(url.pathname));
+          assert.equal(init?.method, 'GET');
+          assert.equal(url.searchParams.get('select'), 'data');
+          assert.equal(url.searchParams.get('duel_id'), 'eq.duel-test');
+          assert.equal(url.searchParams.get('order'), 'id.asc');
+          const offset = Number(url.searchParams.get('offset') ?? 0);
+          const limit = Number(url.searchParams.get('limit'));
+          assert.equal(limit, 1000);
+          const exactCount = new Headers(init?.headers).get('prefer')?.includes('count=exact') ?? false;
+          queries.push({ offset, exactCount });
+          if (offset === options.failAtOffset) {
+            return new Response(JSON.stringify({ message: 'Database unavailable', code: 'MOCK_FAILURE' }), { status: 400 });
+          }
+          const page = data.slice(offset, offset + Math.min(limit, options.pageCap ?? limit));
+          const total = exactCount && !options.omitCount ? String(data.length) : '*';
+          const range = page.length ? offset + '-' + (offset + page.length - 1) : '*';
+          const headers = new Headers({ 'content-type': 'application/json' });
+          if (!options.omitCountHeader) headers.set('content-range', range + '/' + total);
+          return new Response(JSON.stringify(page), {
+            headers,
+          });
+        },
       },
-    } as unknown as SupabaseClient;
-
-    return { client: mockClient, getQueries: () => queries };
+    });
+    return { client, queries };
   }
 
-  it('pagination returns complete history for 0 rows', async () => {
-    const { client, getQueries } = createMockSupabaseClient({ totalRows: 0 });
-    const rows = await fetchDuelRows<{ id: string; name: string }>(client, 'duel_habits', 'duel-test');
-
-    assert.deepStrictEqual(rows, []);
-    assert.strictEqual(getQueries().length, 1);
-    assert.strictEqual(getQueries()[0].selectCountOption?.count, 'exact');
+  it('loads an empty history with one exact-count request', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 0 });
+    assert.deepEqual(await fetchDuelRows(client, 'duel_habits', 'duel-test'), []);
+    assert.deepEqual(queries, [{ offset: 0, exactCount: true }]);
   });
 
-  it('pagination returns complete history for exactly 1000 rows in single query with count', async () => {
-    const { client, getQueries } = createMockSupabaseClient({ totalRows: 1000 });
-    const rows = await fetchDuelRows<{ id: string; name: string }>(client, 'duel_habits', 'duel-test');
-
-    assert.strictEqual(rows.length, 1000);
-    assert.strictEqual(rows[0].id, 'item-0');
-    assert.strictEqual(rows[999].id, 'item-999');
-    assert.strictEqual(getQueries().length, 1, 'Should complete in 1 page when count matches total rows');
-    assert.strictEqual(getQueries()[0].selectCountOption?.count, 'exact');
+  it('stops at the known count for exactly one full page', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 1000 });
+    const rows = await fetchDuelRows<{ id: string }>(client, 'duel_habits', 'duel-test');
+    assert.equal(rows.length, 1000);
+    assert.equal(rows[0].id, 'item-0');
+    assert.equal(rows[999].id, 'item-999');
+    assert.deepEqual(queries, [{ offset: 0, exactCount: true }]);
   });
 
-  it('pagination returns complete history for >1000 rows without repeated count queries', async () => {
-    const total = 2500;
-    const { client, getQueries } = createMockSupabaseClient({ totalRows: total });
-    const rows = await fetchDuelRows<{ id: string; name: string }>(client, 'duel_check_ins', 'duel-test');
-
-    assert.strictEqual(rows.length, 2500);
-    assert.strictEqual(rows[0].id, 'item-0');
-    assert.strictEqual(rows[2499].id, 'item-2499');
-
-    const queries = getQueries();
-    assert.strictEqual(queries.length, 3, '2500 rows should take 3 pages (1000, 1000, 500)');
-    // First query requests count exact
-    assert.strictEqual(queries[0].selectCountOption?.count, 'exact', 'First query requests count exact');
-    // Subsequent queries must NOT request count exact (safely eliminated!)
-    assert.strictEqual(queries[1].selectCountOption?.count, undefined, 'Second query eliminates count exact');
-    assert.strictEqual(queries[2].selectCountOption?.count, undefined, 'Third query eliminates count exact');
+  it('loads all pages while requesting the exact count only once', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 2500 });
+    const rows = await fetchDuelRows<{ id: string }>(client, 'duel_check_ins', 'duel-test');
+    assert.equal(rows.length, 2500);
+    assert.equal(rows[0].id, 'item-0');
+    assert.equal(rows[2499].id, 'item-2499');
+    assert.deepEqual(queries, [
+      { offset: 0, exactCount: true },
+      { offset: 1000, exactCount: false },
+      { offset: 2000, exactCount: false },
+    ]);
   });
 
-  it('pagination handles PostgREST backend capping page below 1000 without dropping records', async () => {
-    // PostgREST max-rows configured to 400, but table has 1250 rows
-    const total = 1250;
-    const { client, getQueries } = createMockSupabaseClient({
-      totalRows: total,
-      backendPageCap: 400,
+  it('retains full history when the backend caps each page below the requested limit', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 1250, pageCap: 400 });
+    const rows = await fetchDuelRows<{ id: string }>(client, 'duel_check_ins', 'duel-test');
+    assert.equal(rows.length, 1250);
+    assert.equal(rows[0].id, 'item-0');
+    assert.equal(rows[1249].id, 'item-1249');
+    assert.deepEqual(queries, [
+      { offset: 0, exactCount: true },
+      { offset: 400, exactCount: false },
+      { offset: 800, exactCount: false },
+      { offset: 1200, exactCount: false },
+    ]);
+  });
+
+  it('treats a nonnumeric total as unavailable and reads through the empty page', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 2500, omitCount: true });
+    const rows = await fetchDuelRows<{ id: string }>(client, 'duel_check_ins', 'duel-test');
+    assert.equal(rows.length, 2500);
+    assert.deepEqual(queries, [
+      { offset: 0, exactCount: true },
+      { offset: 1000, exactCount: true },
+      { offset: 2000, exactCount: true },
+      { offset: 2500, exactCount: true },
+    ]);
+  });
+
+  it('retains capped history when count headers are missing', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 1250, pageCap: 400, omitCountHeader: true });
+    const rows = await fetchDuelRows<{ id: string }>(client, 'duel_check_ins', 'duel-test');
+    assert.equal(rows.length, 1250);
+    assert.equal(new Set(rows.map(row => row.id)).size, 1250);
+    assert.equal(rows[1249].id, 'item-1249');
+    assert.deepEqual(queries.map(query => query.offset), [0, 400, 800, 1200, 1250]);
+    assert.ok(queries.every(query => query.exactCount));
+  });
+
+  it('propagates a later page failure instead of returning partial history', async () => {
+    const { client, queries } = createClientFixture({ totalRows: 2500, failAtOffset: 1000 });
+    await assert.rejects(fetchDuelRows(client, 'duel_check_ins', 'duel-test'), {
+      message: 'Database unavailable', code: 'MOCK_FAILURE',
     });
-
-    const rows = await fetchDuelRows<{ id: string; name: string }>(client, 'duel_check_ins', 'duel-test');
-
-    // Must return all 1250 rows without dropping any records!
-    assert.strictEqual(rows.length, 1250, 'All 1250 records must be present');
-    assert.strictEqual(rows[0].id, 'item-0');
-    assert.strictEqual(rows[1249].id, 'item-1249');
-
-    const queries = getQueries();
-    // 400 + 400 + 400 + 50 = 1250 (4 queries)
-    assert.strictEqual(queries.length, 4);
-    assert.strictEqual(queries[0].selectCountOption?.count, 'exact', 'Count requested on page 0');
-    assert.strictEqual(queries[1].selectCountOption?.count, undefined, 'Subsequent pages omit count');
-    assert.strictEqual(queries[2].selectCountOption?.count, undefined);
-    assert.strictEqual(queries[3].selectCountOption?.count, undefined);
+    assert.equal(queries.length, 2);
   });
 });

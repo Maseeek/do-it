@@ -14,11 +14,11 @@ export async function fetchDuelRows<T>(client: SupabaseClient, table: string, du
       .order('id')
       .range(offset, offset + pageSize - 1);
     if (error) throw error;
-    if (totalCount === null && typeof count === 'number') {
+    if (totalCount === null && typeof count === 'number' && Number.isFinite(count) && count >= 0) {
       totalCount = count;
     }
     rows.push(...(data || []).map(row => row.data as T));
-    if (!data?.length || (totalCount !== null && rows.length >= totalCount) || (totalCount === null && data.length < pageSize)) return rows;
+    if (!data?.length || (totalCount !== null && rows.length >= totalCount)) return rows;
     offset += data.length;
   }
 }
