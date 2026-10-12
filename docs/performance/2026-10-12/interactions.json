@@ -1,0 +1,1171 @@
+{
+  "measuredAt": "2026-10-12T01:37:31.532Z",
+  "method": "Alternating baseline/current pairs in one Chrome process, 14600 local CheckIns, real button click through persisted mutation and two animation frames. No source profiling instrumentation. Mobile is a 390x844 viewport with 4x CDP CPU throttling, not physical hardware.",
+  "scenarios": {
+    "desktop": {
+      "baseline": {
+        "samples": [
+          {
+            "action": "check-in",
+            "ms": 48.600000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 1
+          },
+          {
+            "action": "undo",
+            "ms": 56.100000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 1
+          },
+          {
+            "action": "check-in",
+            "ms": 55.20000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 2
+          },
+          {
+            "action": "undo",
+            "ms": 53.899999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 2
+          },
+          {
+            "action": "check-in",
+            "ms": 47.899999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 3
+          },
+          {
+            "action": "undo",
+            "ms": 50.80000000447035,
+            "checks": 14600,
+            "points": null,
+            "sample": 3
+          },
+          {
+            "action": "check-in",
+            "ms": 50,
+            "checks": 14601,
+            "points": 40,
+            "sample": 4
+          },
+          {
+            "action": "undo",
+            "ms": 54.5,
+            "checks": 14600,
+            "points": null,
+            "sample": 4
+          },
+          {
+            "action": "check-in",
+            "ms": 53.600000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 5
+          },
+          {
+            "action": "undo",
+            "ms": 54.80000000447035,
+            "checks": 14600,
+            "points": null,
+            "sample": 5
+          },
+          {
+            "action": "check-in",
+            "ms": 48.70000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 6
+          },
+          {
+            "action": "undo",
+            "ms": 52.600000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 6
+          },
+          {
+            "action": "check-in",
+            "ms": 46.100000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 7
+          },
+          {
+            "action": "undo",
+            "ms": 50.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 7
+          },
+          {
+            "action": "check-in",
+            "ms": 52.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 8
+          },
+          {
+            "action": "undo",
+            "ms": 54.5,
+            "checks": 14600,
+            "points": null,
+            "sample": 8
+          },
+          {
+            "action": "check-in",
+            "ms": 48.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 9
+          },
+          {
+            "action": "undo",
+            "ms": 48.70000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 9
+          },
+          {
+            "action": "check-in",
+            "ms": 44.899999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 10
+          },
+          {
+            "action": "undo",
+            "ms": 50.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 10
+          },
+          {
+            "action": "check-in",
+            "ms": 50.20000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 11
+          },
+          {
+            "action": "undo",
+            "ms": 52.79999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 11
+          },
+          {
+            "action": "check-in",
+            "ms": 53.30000000447035,
+            "checks": 14601,
+            "points": 40,
+            "sample": 12
+          },
+          {
+            "action": "undo",
+            "ms": 53.70000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 12
+          },
+          {
+            "action": "check-in",
+            "ms": 44.899999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 13
+          },
+          {
+            "action": "undo",
+            "ms": 50,
+            "checks": 14600,
+            "points": null,
+            "sample": 13
+          },
+          {
+            "action": "check-in",
+            "ms": 53.29999999701977,
+            "checks": 14601,
+            "points": 40,
+            "sample": 14
+          },
+          {
+            "action": "undo",
+            "ms": 54,
+            "checks": 14600,
+            "points": null,
+            "sample": 14
+          },
+          {
+            "action": "check-in",
+            "ms": 44.100000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 15
+          },
+          {
+            "action": "undo",
+            "ms": 48,
+            "checks": 14600,
+            "points": null,
+            "sample": 15
+          },
+          {
+            "action": "check-in",
+            "ms": 46.600000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 16
+          },
+          {
+            "action": "undo",
+            "ms": 53.80000000447035,
+            "checks": 14600,
+            "points": null,
+            "sample": 16
+          },
+          {
+            "action": "check-in",
+            "ms": 45.79999999701977,
+            "checks": 14601,
+            "points": 40,
+            "sample": 17
+          },
+          {
+            "action": "undo",
+            "ms": 55.100000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 17
+          },
+          {
+            "action": "check-in",
+            "ms": 47.899999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 18
+          },
+          {
+            "action": "undo",
+            "ms": 49.399999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 18
+          },
+          {
+            "action": "check-in",
+            "ms": 44.399999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 19
+          },
+          {
+            "action": "undo",
+            "ms": 48.600000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 19
+          },
+          {
+            "action": "check-in",
+            "ms": 54.69999999552965,
+            "checks": 14601,
+            "points": 40,
+            "sample": 20
+          },
+          {
+            "action": "undo",
+            "ms": 55.70000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 20
+          }
+        ],
+        "errors": [],
+        "persistedAfterReload": 14600,
+        "overflow": {
+          "width": 1280,
+          "documentWidth": 1280
+        }
+      },
+      "current": {
+        "samples": [
+          {
+            "action": "check-in",
+            "ms": 41.30000000447035,
+            "checks": 14601,
+            "points": 40,
+            "sample": 1
+          },
+          {
+            "action": "undo",
+            "ms": 47.79999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 1
+          },
+          {
+            "action": "check-in",
+            "ms": 40.399999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 2
+          },
+          {
+            "action": "undo",
+            "ms": 45.30000000447035,
+            "checks": 14600,
+            "points": null,
+            "sample": 2
+          },
+          {
+            "action": "check-in",
+            "ms": 44,
+            "checks": 14601,
+            "points": 40,
+            "sample": 3
+          },
+          {
+            "action": "undo",
+            "ms": 48.099999994039536,
+            "checks": 14600,
+            "points": null,
+            "sample": 3
+          },
+          {
+            "action": "check-in",
+            "ms": 42.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 4
+          },
+          {
+            "action": "undo",
+            "ms": 50.29999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 4
+          },
+          {
+            "action": "check-in",
+            "ms": 45.100000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 5
+          },
+          {
+            "action": "undo",
+            "ms": 44.5,
+            "checks": 14600,
+            "points": null,
+            "sample": 5
+          },
+          {
+            "action": "check-in",
+            "ms": 38.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 6
+          },
+          {
+            "action": "undo",
+            "ms": 43.399999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 6
+          },
+          {
+            "action": "check-in",
+            "ms": 40.79999999701977,
+            "checks": 14601,
+            "points": 40,
+            "sample": 7
+          },
+          {
+            "action": "undo",
+            "ms": 43.899999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 7
+          },
+          {
+            "action": "check-in",
+            "ms": 44.099999994039536,
+            "checks": 14601,
+            "points": 40,
+            "sample": 8
+          },
+          {
+            "action": "undo",
+            "ms": 44.100000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 8
+          },
+          {
+            "action": "check-in",
+            "ms": 45.399999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 9
+          },
+          {
+            "action": "undo",
+            "ms": 48.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 9
+          },
+          {
+            "action": "check-in",
+            "ms": 39,
+            "checks": 14601,
+            "points": 40,
+            "sample": 10
+          },
+          {
+            "action": "undo",
+            "ms": 45.399999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 10
+          },
+          {
+            "action": "check-in",
+            "ms": 39.399999998509884,
+            "checks": 14601,
+            "points": 40,
+            "sample": 11
+          },
+          {
+            "action": "undo",
+            "ms": 44.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 11
+          },
+          {
+            "action": "check-in",
+            "ms": 37.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 12
+          },
+          {
+            "action": "undo",
+            "ms": 45.099999994039536,
+            "checks": 14600,
+            "points": null,
+            "sample": 12
+          },
+          {
+            "action": "check-in",
+            "ms": 47.70000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 13
+          },
+          {
+            "action": "undo",
+            "ms": 50.399999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 13
+          },
+          {
+            "action": "check-in",
+            "ms": 39,
+            "checks": 14601,
+            "points": 40,
+            "sample": 14
+          },
+          {
+            "action": "undo",
+            "ms": 43.600000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 14
+          },
+          {
+            "action": "check-in",
+            "ms": 42.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 15
+          },
+          {
+            "action": "undo",
+            "ms": 42.899999998509884,
+            "checks": 14600,
+            "points": null,
+            "sample": 15
+          },
+          {
+            "action": "check-in",
+            "ms": 41.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 16
+          },
+          {
+            "action": "undo",
+            "ms": 43.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 16
+          },
+          {
+            "action": "check-in",
+            "ms": 44.30000000447035,
+            "checks": 14601,
+            "points": 40,
+            "sample": 17
+          },
+          {
+            "action": "undo",
+            "ms": 51,
+            "checks": 14600,
+            "points": null,
+            "sample": 17
+          },
+          {
+            "action": "check-in",
+            "ms": 38.599999994039536,
+            "checks": 14601,
+            "points": 40,
+            "sample": 18
+          },
+          {
+            "action": "undo",
+            "ms": 46,
+            "checks": 14600,
+            "points": null,
+            "sample": 18
+          },
+          {
+            "action": "check-in",
+            "ms": 45.20000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 19
+          },
+          {
+            "action": "undo",
+            "ms": 46.600000001490116,
+            "checks": 14600,
+            "points": null,
+            "sample": 19
+          },
+          {
+            "action": "check-in",
+            "ms": 40.600000001490116,
+            "checks": 14601,
+            "points": 40,
+            "sample": 20
+          },
+          {
+            "action": "undo",
+            "ms": 45.79999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 20
+          }
+        ],
+        "errors": [],
+        "persistedAfterReload": 14600,
+        "overflow": {
+          "width": 1280,
+          "documentWidth": 1280
+        }
+      }
+    },
+    "mobile-4x-cpu": {
+      "baseline": {
+        "samples": [
+          {
+            "action": "check-in",
+            "ms": 211.10000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 1
+          },
+          {
+            "action": "undo",
+            "ms": 148.10000000149012,
+            "checks": 14600,
+            "points": null,
+            "sample": 1
+          },
+          {
+            "action": "check-in",
+            "ms": 216.39999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 2
+          },
+          {
+            "action": "undo",
+            "ms": 171,
+            "checks": 14600,
+            "points": null,
+            "sample": 2
+          },
+          {
+            "action": "check-in",
+            "ms": 202.89999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 3
+          },
+          {
+            "action": "undo",
+            "ms": 146.10000000149012,
+            "checks": 14600,
+            "points": null,
+            "sample": 3
+          },
+          {
+            "action": "check-in",
+            "ms": 194.59999999403954,
+            "checks": 14601,
+            "points": 40,
+            "sample": 4
+          },
+          {
+            "action": "undo",
+            "ms": 156.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 4
+          },
+          {
+            "action": "check-in",
+            "ms": 204.10000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 5
+          },
+          {
+            "action": "undo",
+            "ms": 225,
+            "checks": 14600,
+            "points": null,
+            "sample": 5
+          },
+          {
+            "action": "check-in",
+            "ms": 194.10000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 6
+          },
+          {
+            "action": "undo",
+            "ms": 154.19999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 6
+          },
+          {
+            "action": "check-in",
+            "ms": 183.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 7
+          },
+          {
+            "action": "undo",
+            "ms": 146.69999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 7
+          },
+          {
+            "action": "check-in",
+            "ms": 224,
+            "checks": 14601,
+            "points": 40,
+            "sample": 8
+          },
+          {
+            "action": "undo",
+            "ms": 169.29999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 8
+          },
+          {
+            "action": "check-in",
+            "ms": 195.39999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 9
+          },
+          {
+            "action": "undo",
+            "ms": 149.69999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 9
+          },
+          {
+            "action": "check-in",
+            "ms": 188.60000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 10
+          },
+          {
+            "action": "undo",
+            "ms": 141.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 10
+          },
+          {
+            "action": "check-in",
+            "ms": 206,
+            "checks": 14601,
+            "points": 40,
+            "sample": 11
+          },
+          {
+            "action": "undo",
+            "ms": 154.70000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 11
+          },
+          {
+            "action": "check-in",
+            "ms": 189.10000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 12
+          },
+          {
+            "action": "undo",
+            "ms": 146.29999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 12
+          },
+          {
+            "action": "check-in",
+            "ms": 193.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 13
+          },
+          {
+            "action": "undo",
+            "ms": 147.30000000447035,
+            "checks": 14600,
+            "points": null,
+            "sample": 13
+          },
+          {
+            "action": "check-in",
+            "ms": 200.79999999701977,
+            "checks": 14601,
+            "points": 40,
+            "sample": 14
+          },
+          {
+            "action": "undo",
+            "ms": 156.89999999850988,
+            "checks": 14600,
+            "points": null,
+            "sample": 14
+          },
+          {
+            "action": "check-in",
+            "ms": 184,
+            "checks": 14601,
+            "points": 40,
+            "sample": 15
+          },
+          {
+            "action": "undo",
+            "ms": 149.20000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 15
+          },
+          {
+            "action": "check-in",
+            "ms": 197.09999999403954,
+            "checks": 14601,
+            "points": 40,
+            "sample": 16
+          },
+          {
+            "action": "undo",
+            "ms": 142.29999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 16
+          },
+          {
+            "action": "check-in",
+            "ms": 202.30000000447035,
+            "checks": 14601,
+            "points": 40,
+            "sample": 17
+          },
+          {
+            "action": "undo",
+            "ms": 153.39999999850988,
+            "checks": 14600,
+            "points": null,
+            "sample": 17
+          },
+          {
+            "action": "check-in",
+            "ms": 191,
+            "checks": 14601,
+            "points": 40,
+            "sample": 18
+          },
+          {
+            "action": "undo",
+            "ms": 150,
+            "checks": 14600,
+            "points": null,
+            "sample": 18
+          },
+          {
+            "action": "check-in",
+            "ms": 185.60000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 19
+          },
+          {
+            "action": "undo",
+            "ms": 148.09999999403954,
+            "checks": 14600,
+            "points": null,
+            "sample": 19
+          },
+          {
+            "action": "check-in",
+            "ms": 205.89999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 20
+          },
+          {
+            "action": "undo",
+            "ms": 160.39999999850988,
+            "checks": 14600,
+            "points": null,
+            "sample": 20
+          }
+        ],
+        "errors": [],
+        "persistedAfterReload": 14600,
+        "overflow": {
+          "width": 390,
+          "documentWidth": 390
+        }
+      },
+      "current": {
+        "samples": [
+          {
+            "action": "check-in",
+            "ms": 181.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 1
+          },
+          {
+            "action": "undo",
+            "ms": 131,
+            "checks": 14600,
+            "points": null,
+            "sample": 1
+          },
+          {
+            "action": "check-in",
+            "ms": 167.90000000596046,
+            "checks": 14601,
+            "points": 40,
+            "sample": 2
+          },
+          {
+            "action": "undo",
+            "ms": 134.69999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 2
+          },
+          {
+            "action": "check-in",
+            "ms": 186.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 3
+          },
+          {
+            "action": "undo",
+            "ms": 128,
+            "checks": 14600,
+            "points": null,
+            "sample": 3
+          },
+          {
+            "action": "check-in",
+            "ms": 160.20000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 4
+          },
+          {
+            "action": "undo",
+            "ms": 121.69999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 4
+          },
+          {
+            "action": "check-in",
+            "ms": 168.10000000149012,
+            "checks": 14601,
+            "points": 40,
+            "sample": 5
+          },
+          {
+            "action": "undo",
+            "ms": 123.80000000447035,
+            "checks": 14600,
+            "points": null,
+            "sample": 5
+          },
+          {
+            "action": "check-in",
+            "ms": 176.69999999552965,
+            "checks": 14601,
+            "points": 40,
+            "sample": 6
+          },
+          {
+            "action": "undo",
+            "ms": 131.39999999850988,
+            "checks": 14600,
+            "points": null,
+            "sample": 6
+          },
+          {
+            "action": "check-in",
+            "ms": 172.69999999552965,
+            "checks": 14601,
+            "points": 40,
+            "sample": 7
+          },
+          {
+            "action": "undo",
+            "ms": 120.90000000596046,
+            "checks": 14600,
+            "points": null,
+            "sample": 7
+          },
+          {
+            "action": "check-in",
+            "ms": 164.20000000298023,
+            "checks": 14601,
+            "points": 40,
+            "sample": 8
+          },
+          {
+            "action": "undo",
+            "ms": 119.19999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 8
+          },
+          {
+            "action": "check-in",
+            "ms": 238.89999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 9
+          },
+          {
+            "action": "undo",
+            "ms": 121.19999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 9
+          },
+          {
+            "action": "check-in",
+            "ms": 171.69999999552965,
+            "checks": 14601,
+            "points": 40,
+            "sample": 10
+          },
+          {
+            "action": "undo",
+            "ms": 125.70000000298023,
+            "checks": 14600,
+            "points": null,
+            "sample": 10
+          },
+          {
+            "action": "check-in",
+            "ms": 169.19999999552965,
+            "checks": 14601,
+            "points": 40,
+            "sample": 11
+          },
+          {
+            "action": "undo",
+            "ms": 121.79999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 11
+          },
+          {
+            "action": "check-in",
+            "ms": 164.39999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 12
+          },
+          {
+            "action": "undo",
+            "ms": 119.60000000149012,
+            "checks": 14600,
+            "points": null,
+            "sample": 12
+          },
+          {
+            "action": "check-in",
+            "ms": 172.29999999701977,
+            "checks": 14601,
+            "points": 40,
+            "sample": 13
+          },
+          {
+            "action": "undo",
+            "ms": 122.40000000596046,
+            "checks": 14600,
+            "points": null,
+            "sample": 13
+          },
+          {
+            "action": "check-in",
+            "ms": 177.29999999701977,
+            "checks": 14601,
+            "points": 40,
+            "sample": 14
+          },
+          {
+            "action": "undo",
+            "ms": 198.60000000149012,
+            "checks": 14600,
+            "points": null,
+            "sample": 14
+          },
+          {
+            "action": "check-in",
+            "ms": 165.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 15
+          },
+          {
+            "action": "undo",
+            "ms": 124.10000000149012,
+            "checks": 14600,
+            "points": null,
+            "sample": 15
+          },
+          {
+            "action": "check-in",
+            "ms": 161.39999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 16
+          },
+          {
+            "action": "undo",
+            "ms": 121.29999999701977,
+            "checks": 14600,
+            "points": null,
+            "sample": 16
+          },
+          {
+            "action": "check-in",
+            "ms": 177.5,
+            "checks": 14601,
+            "points": 40,
+            "sample": 17
+          },
+          {
+            "action": "undo",
+            "ms": 121,
+            "checks": 14600,
+            "points": null,
+            "sample": 17
+          },
+          {
+            "action": "check-in",
+            "ms": 193,
+            "checks": 14601,
+            "points": 40,
+            "sample": 18
+          },
+          {
+            "action": "undo",
+            "ms": 138,
+            "checks": 14600,
+            "points": null,
+            "sample": 18
+          },
+          {
+            "action": "check-in",
+            "ms": 178.69999999552965,
+            "checks": 14601,
+            "points": 40,
+            "sample": 19
+          },
+          {
+            "action": "undo",
+            "ms": 126.5,
+            "checks": 14600,
+            "points": null,
+            "sample": 19
+          },
+          {
+            "action": "check-in",
+            "ms": 168.39999999850988,
+            "checks": 14601,
+            "points": 40,
+            "sample": 20
+          },
+          {
+            "action": "undo",
+            "ms": 117.19999999552965,
+            "checks": 14600,
+            "points": null,
+            "sample": 20
+          }
+        ],
+        "errors": [],
+        "persistedAfterReload": 14600,
+        "overflow": {
+          "width": 390,
+          "documentWidth": 390
+        }
+      }
+    }
+  },
+  "browser": "148.0.7778.178"
+}
