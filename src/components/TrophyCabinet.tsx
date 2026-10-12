@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { calculatePlayerBadges } from '@/lib/badge-utils';
 import { useStore } from '@/lib/store';
 import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { PlayerId } from '@/lib/types';
@@ -23,11 +24,15 @@ import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
 export function TrophyCabinet() {
-  const { maciekBadges, myrnaBadges, activePlayerId, players } = useStore();
+  const { checkIns, habits, stakes, maciekSummary, myrnaSummary, activePlayerId, players } = useStore();
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerId>(activePlayerId || 'maciek');
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
 
-  const badges = selectedPlayer === 'maciek' ? maciekBadges : myrnaBadges;
+  const currentStreak = selectedPlayer === 'maciek' ? maciekSummary.currentStreak : myrnaSummary.currentStreak;
+  const badges = useMemo(
+    () => calculatePlayerBadges(selectedPlayer, checkIns, habits, stakes, currentStreak),
+    [selectedPlayer, checkIns, habits, stakes, currentStreak]
+  );
 
   const filteredBadges = badges.filter((b) => {
     if (filter === 'unlocked') return b.isUnlocked;
