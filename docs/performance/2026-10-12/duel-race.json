@@ -1,7 +1,9 @@
 {
-  "measuredAt": "2026-10-12T02:41:43.860Z",
+  "measuredAt": "2026-10-12T05:52:59.164Z",
   "pageCap": 1000,
-  "method": "Production copies configured only for a Playwright-routed localhost Supabase mock. 2500 CheckIns, 50ms per HTTP response, real Phoenix subscriptions/events, no live database or auth. Counts verify reload amplification, not hosted latency.",
+  "historyCount": 2500,
+  "samples": 1,
+  "method": "Production copies configured only for a Playwright-routed localhost Supabase mock. 2500 CheckIns, 50ms per HTTP response, real Phoenix subscriptions/events, no live database or auth. New browser context per sample. Initial rendering measured inside the page from navigation start to Daily Ritual and a Check-in control, followed by two animation frames. Counts verify reload amplification; loading times include localhost JS and rendering, not hosted latency.",
   "variants": {
     "baseline": {
       "queries": [
@@ -121,15 +123,15 @@
       "trace": [
         {
           "checked": true,
-          "ms": 616.3999999985099
+          "ms": 641.0999999940395
         },
         {
           "checked": false,
-          "ms": 757.1999999955297
+          "ms": 780.7000000029802
         },
         {
           "checked": true,
-          "ms": 823.5
+          "ms": 845.7000000029802
         }
       ],
       "finalChecked": true,
@@ -253,7 +255,7 @@
       "trace": [
         {
           "checked": true,
-          "ms": 638.7000000029802
+          "ms": 592.4000000059605
         }
       ],
       "finalChecked": true,

@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-12T04:32:55.332Z",
+  "measuredAt": "2026-10-12T05:51:52.524Z",
   "pageCap": 400,
   "historyCount": 14600,
   "samples": 5,
@@ -7,7 +7,7 @@
   "variants": {
     "baseline": [
       {
-        "initialRitualMs": 2473.199999988079,
+        "initialRitualMs": 2492.5999999940395,
         "initialQueries": [
           {
             "phase": "initial",
@@ -349,7 +349,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 2385.7999999970198,
+        "initialRitualMs": 2371.3999999910593,
         "initialQueries": [
           {
             "phase": "initial",
@@ -691,7 +691,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 2388.4000000059605,
+        "initialRitualMs": 2365.3999999910593,
         "initialQueries": [
           {
             "phase": "initial",
@@ -1033,7 +1033,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 2371,
+        "initialRitualMs": 2358.4000000059605,
         "initialQueries": [
           {
             "phase": "initial",
@@ -1375,7 +1375,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 2379.2000000029802,
+        "initialRitualMs": 2363.8999999910593,
         "initialQueries": [
           {
             "phase": "initial",
@@ -1719,7 +1719,7 @@
     ],
     "current": [
       {
-        "initialRitualMs": 1094,
+        "initialRitualMs": 1059.699999988079,
         "initialQueries": [
           {
             "phase": "initial",
@@ -2061,7 +2061,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 1034.4000000059605,
+        "initialRitualMs": 1017.1000000089407,
         "initialQueries": [
           {
             "phase": "initial",
@@ -2403,7 +2403,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 1047.1000000089407,
+        "initialRitualMs": 1018.5,
         "initialQueries": [
           {
             "phase": "initial",
@@ -2745,7 +2745,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 1028.7999999970198,
+        "initialRitualMs": 1017.0999999940395,
         "initialQueries": [
           {
             "phase": "initial",
@@ -3087,7 +3087,7 @@
         "errors": []
       },
       {
-        "initialRitualMs": 1024.2999999970198,
+        "initialRitualMs": 1024.8999999910593,
         "initialQueries": [
           {
             "phase": "initial",

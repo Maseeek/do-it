@@ -62,6 +62,18 @@ The entry check uses empty auth for the default account screen, then a synthetic
 - [Account entry and onboarding](entry-performance.json): five navigation samples per flow and build, plus mode switching and a saved first plan.
 - [Large authenticated history loading](duel-loading-cap400.json): five samples per build, full 14,600-record history, and a 400-row server cap.
 
+Final source `69d22fe` passes 170 tests, type checking, lint, and anonymous/configured production builds. The final loading repeat measures medians of 2,365.4 ms before and 1,018.5 ms after. Final Duel fixtures also retain 2,500 records under both caps, reduce normal bursts from 140 to 7 requests and capped bursts from 220 to 11, and keep optimistic Check-ins checked during an overlapping read.
+
+## Independent review and remaining work
+
+[Standards](standards-review.md) and [Spec](spec-review.md) independently review source `69d22fe`. The [final trail review](trail-review.md) extends the [earlier trail review](trail-review-before-paging.md). Reports are retained with their original findings; the parent responses below explain the disposition.
+
+No hard standards or demonstrated correctness failures were reported. Optional code cleanup remains deferred. Two independent deferred wrappers share the JavaScript module cache; moving a wrapper into the imported modal would need care to preserve its lazy boundary. Pointer/focus warming directly supports the authorized loading goal and retains the deployment guard. The removed Apple Health poll always received HTTP 410 at baseline and exited before changing state; functioning wearable paths remain intact.
+
+Hosted database/RLS and physical mobile testing remain unavailable. Mobile measurements use emulation. In-flight read cancellation and further calculation proposals remain follow-up work; their suggested savings are unimplemented estimates. Existing offset pagination does not promise a consistent database snapshot during concurrent remote inserts or deletions.
+
+The final trail reviewer checked the refreshed browser artifact but attributed its newer medians to historical row 53. That row records the earlier 2,385.8→1,034.4 ms sample; row 55 records the final 2,365.4→1,018.5 ms repeat. The append-only trail preserves both measurements. Documentation packaging and final handoff actions follow the source review boundary.
+
 Earlier instrumentation that polled and parsed the entire stored state inside the timed interaction was superseded. The accepted interaction artifact observes one real storage write and parses its value after timing. The mock also exposes `Content-Range` to the browser and waits for quiescence across pagination gaps. These corrections are recorded in the decision trail.
 
 The [decision trail](decisions.tsv) records accepted and abandoned work. Earlier diagnosis logs and quota-interrupted child reports remain local under `.scratch/performance-overnight`; the accepted measurements above and their reusable harnesses are committed here.
