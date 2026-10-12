@@ -19,14 +19,13 @@ import { hapticCelebration, hapticLight } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
-import dynamic from 'next/dynamic';
-import { loadCurrentPage } from '@/lib/load-current-page';
+import { createDeferredView } from './DeferredView';
 
 import { Habit } from '@/lib/types';
 import { calculateHabitStreak } from '@/lib/score-calculator';
 
-const ActivityFeed = dynamic(() => loadCurrentPage(() => import('./ActivityFeed')).then(module => module.ActivityFeed));
-const ProofGalleryModal = dynamic(() => loadCurrentPage(() => import('./ProofGalleryModal')).then(module => module.ProofGalleryModal));
+const { View: ActivityFeed } = createDeferredView(() => import('./ActivityFeed').then(module => module.ActivityFeed));
+const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null);
 
 export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();

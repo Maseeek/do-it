@@ -11,9 +11,10 @@ export type TabType = 'today' | 'duel' | 'progress';
 interface BottomNavProps {
   activeTab: TabType;
   onChangeTab: (tab: TabType) => void;
+  onWarmTab?: (tab: TabType) => void;
 }
 
-export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
+export function BottomNav({ activeTab, onChangeTab, onWarmTab }: BottomNavProps) {
   const tabs = [
     { id: 'today' as TabType, label: 'Today', icon: CheckCircle2 },
     { id: 'duel' as TabType, label: 'Duel', icon: Flame },
@@ -42,6 +43,8 @@ export function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
+              onPointerEnter={() => onWarmTab?.(tab.id)}
+              onFocus={() => onWarmTab?.(tab.id)}
               aria-label={tab.label}
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 ${

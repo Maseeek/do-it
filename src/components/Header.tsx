@@ -7,7 +7,7 @@ import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 import { getPlayerColorStyles } from '@/lib/player-colors';
 
-export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function Header({ onOpenSettings, onWarmSettings }: { onOpenSettings: () => void; onWarmSettings?: () => void }) {
   const { activePlayer, activePlayerSummary, themePreference, effectiveTheme, toggleTheme } = useStore();
 
   const handleProfileClick = () => {
@@ -58,6 +58,8 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
           <button
             type="button"
             onClick={handleProfileClick}
+            onPointerEnter={onWarmSettings}
+            onFocus={onWarmSettings}
             aria-label="Open profile and settings"
             title="Profile and settings"
             className="flex size-11 items-center justify-center rounded-lg border font-mono text-xs font-bold transition-colors hover:brightness-110 active:scale-95"
