@@ -47,6 +47,7 @@ agent-audit-report.json
 !/scripts/benchmark-performance.ts
 !/scripts/benchmark-browser.cjs
 !/scripts/verify-duel-performance.cjs
+!/scripts/verify-entry-performance.cjs
 # scratch & local cache
 /.scratch/
 supabase/.temp/

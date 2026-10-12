@@ -1,0 +1,118 @@
+{
+  "measuredAt": "2026-10-12T03:35:58.495Z",
+  "method": "Configured production copies, isolated contexts, empty local auth for default account creation or a synthetic account with an empty Duel for onboarding. First visit warms HTTP cache; five subsequent document reloads measure navigation start through a browser-local heading readiness probe and two animation frames. Mock requests take 50ms. No accounts are created.",
+  "variants": {
+    "baseline": {
+      "account-entry": {
+        "samples": [
+          {
+            "sample": 1,
+            "ms": 386.59999999403954
+          },
+          {
+            "sample": 2,
+            "ms": 380.09999999403954
+          },
+          {
+            "sample": 3,
+            "ms": 380
+          },
+          {
+            "sample": 4,
+            "ms": 380.20000000298023
+          },
+          {
+            "sample": 5,
+            "ms": 380.79999999701977
+          }
+        ],
+        "errors": []
+      },
+      "onboarding": {
+        "samples": [
+          {
+            "sample": 1,
+            "ms": 502.70000000298023
+          },
+          {
+            "sample": 2,
+            "ms": 496.29999999701977
+          },
+          {
+            "sample": 3,
+            "ms": 497.09999999403954
+          },
+          {
+            "sample": 4,
+            "ms": 497.09999999403954
+          },
+          {
+            "sample": 5,
+            "ms": 480.80000001192093
+          }
+        ],
+        "errors": []
+      }
+    },
+    "current": {
+      "account-entry": {
+        "samples": [
+          {
+            "sample": 1,
+            "ms": 77.29999999701977
+          },
+          {
+            "sample": 2,
+            "ms": 80.5
+          },
+          {
+            "sample": 3,
+            "ms": 80.79999999701977
+          },
+          {
+            "sample": 4,
+            "ms": 80.09999999403954
+          },
+          {
+            "sample": 5,
+            "ms": 80.79999999701977
+          }
+        ],
+        "errors": [],
+        "smoke": {
+          "modeSwitch": true
+        }
+      },
+      "onboarding": {
+        "samples": [
+          {
+            "sample": 1,
+            "ms": 197.70000000298023
+          },
+          {
+            "sample": 2,
+            "ms": 196.59999999403954
+          },
+          {
+            "sample": 3,
+            "ms": 196.70000000298023
+          },
+          {
+            "sample": 4,
+            "ms": 196.79999999701977
+          },
+          {
+            "sample": 5,
+            "ms": 197.09999999403954
+          }
+        ],
+        "errors": [],
+        "smoke": {
+          "savedPlan": true,
+          "ownerWrites": 1
+        }
+      }
+    }
+  },
+  "browser": "148.0.7778.178"
+}

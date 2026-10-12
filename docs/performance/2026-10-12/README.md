@@ -40,9 +40,12 @@ npm test
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --page-cap 1000 --output .scratch/duel-reload.json
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --page-cap 400 --output .scratch/duel-cap400.json
 NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-duel-performance.cjs --race --output .scratch/duel-race.json
+NODE_PATH="$PWD/.scratch/browser-tools/node_modules" node scripts/verify-entry-performance.cjs --smoke --output .scratch/entry-performance.json
 ```
 
 The reload checks assert full history, counts, filtered queries, twenty-event bursts, one follow-up for events during loading, actual Check-in/undo writes, and unchanged local history. The race check observes the Habit button while a read overlaps a local write: the baseline becomes unchecked temporarily; the current build remains checked. These tests verify client behavior and request amplification against a mock. They do not establish hosted database latency or server-side authorization.
+
+The entry check uses empty auth for the default account screen, then a synthetic account with an empty Duel for first-run onboarding. It measures the heading with a browser-local probe and two animation frames after document navigation. `--smoke` also switches signup/sign-in modes and saves a new habit plan through the mock. No real account is created.
 
 ## Recorded artifacts
 
@@ -53,6 +56,7 @@ The reload checks assert full history, counts, filtered queries, twenty-event bu
 - [Duel reloads](duel-reload.json): pagination and request counts with a 1,000-row page cap.
 - [Duel reloads with a 400-row cap](duel-cap400.json): no history truncation with a lower server limit.
 - [Read/write race](duel-race.json): the same UI reproduction on baseline and current source.
+- [Account entry and onboarding](entry-performance.json): five navigation samples per flow and build, plus mode switching and a saved first plan.
 
 Earlier instrumentation that polled and parsed the entire stored state inside the timed interaction was superseded. The accepted interaction artifact observes one real storage write and parses its value after timing. The mock also exposes `Content-Range` to the browser and waits for quiescence across pagination gaps. These corrections are recorded in the decision trail.
 

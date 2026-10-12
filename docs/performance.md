@@ -6,6 +6,8 @@ Compared production builds against `e7b284e` with Chrome 148 on the same machine
 
 The first open of a deferred view waited about 300 ms after its JavaScript was available. The installed React DOM production runtime throttles Suspense fallback replacement. Deferred views now use a guarded import resource and stable external-store snapshots, keeping the deployment check before activation. Tab and Settings imports also warm on pointer entry or keyboard focus. The initial page still loads its existing frame and Today view.
 
+The same loader also removes the remaining delay from default account entry and first-run onboarding. With a browser-local heading probe after document navigation, account entry falls from 379.7 to 80.6 ms and onboarding from 496.9 to 197.1 ms (five samples per flow, mock requests at 50 ms). Signup/sign-in switching and saving a first habit plan pass. The original locator-based timing was superseded because retry polling added a fixed delay to the observation.
+
 First-open medians, five samples per view, document reload before every sample, HTTP cache retained, and two animation frames after content becomes ready:
 
 | View | Before | After |

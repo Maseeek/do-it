@@ -34,9 +34,9 @@ function preloadTab(tab: TabType) {
   if (tab === 'duel') preloadDuel();
   if (tab === 'progress') preloadProgress();
 }
-const MultiplayerGate = dynamic(() => loadCurrentPage(() => import('@/components/MultiplayerGate')).then(module => module.MultiplayerGate), { loading: ViewLoading });
+const { View: MultiplayerGate } = createDeferredView(() => import('@/components/MultiplayerGate').then(module => module.MultiplayerGate));
 const ExistingDuelInviteGate = dynamic(() => loadCurrentPage(() => import('@/components/ExistingDuelInviteGate')).then(module => module.ExistingDuelInviteGate), { loading: ViewLoading });
-const HabitOnboarding = dynamic(() => loadCurrentPage(() => import('@/components/HabitOnboarding')).then(module => module.HabitOnboarding), { loading: ViewLoading });
+const { View: HabitOnboarding } = createDeferredView(() => import('@/components/HabitOnboarding').then(module => module.HabitOnboarding));
 const { View: KeyboardShortcutsModal } = createDeferredView(() => import('@/components/KeyboardShortcutsModal').then(module => module.KeyboardShortcutsModal), null);
 
 function AppContent() {
