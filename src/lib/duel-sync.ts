@@ -1,28 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { applyDuelDelta, checkInPatch, type DuelDelta, type DuelSnapshot } from './duel-data';
 import type { CheckIn, CouplesReaction, Habit, RestDay, Stake } from './types';
 
-async function fetchDuelRows<T>(client: SupabaseClient, table: string, duelId: string): Promise<T[]> {
-  const rows: T[] = [];
-  const pageSize = 1000;
-  for (let offset = 0; ;) {
-    const { data, count, error } = await client.from(table).select('data', { count: 'exact' }).eq('duel_id', duelId)
-      .order('id').range(offset, offset + pageSize - 1);
-    if (error) throw error;
-    rows.push(...(data || []).map(row => row.data as T));
-    if (!data?.length || (count !== null && rows.length >= count) || (count === null && data.length < pageSize)) return rows;
-    offset += data.length;
+export async function syncDuelData(client: SupabaseClient, duelId: string, previous: DuelSnapshot | null) {
+  const { data, error } = await client.rpc('sync_duel', { p_duel_id: duelId, p_after: previous?.cursor ?? null });
+  if (error) {
+    if (error.code === 'PGRST202') throw new Error('Duel synchronization needs its database update. Please try again after the update.');
+    throw error;
   }
+  if (!data || typeof data.cursor !== 'string' || !Array.isArray(data.changes)) throw new Error('Your Duel is unavailable.');
+  return applyDuelDelta(previous, data as DuelDelta);
 }
-
 export async function loadDuelData(client: SupabaseClient, duelId: string) {
-  const [habits, checkIns, stakes, reactions, restDays] = await Promise.all([
-    fetchDuelRows<Habit>(client, 'duel_habits', duelId),
-    fetchDuelRows<CheckIn>(client, 'duel_check_ins', duelId),
-    fetchDuelRows<Stake>(client, 'duel_stakes', duelId),
-    fetchDuelRows<CouplesReaction>(client, 'duel_reactions', duelId),
-    fetchDuelRows<RestDay>(client, 'duel_rest_days', duelId),
-  ]);
-  return { habits, checkIns, stakes, reactions, restDays };
+  return (await syncDuelData(client, duelId, null)).data;
+}
+export async function loadDuelProof(client: SupabaseClient, duelId: string, id: string): Promise<string[]> {
+  const { data, error } = await client.rpc('duel_check_in_proof', { p_duel_id: duelId, p_id: id });
+  if (error) throw error;
+  if (!Array.isArray(data) || !data.every(value => typeof value === 'string')) throw new Error('These proof photos are unavailable.');
+  return data;
 }
 
 export async function saveDuelHabit(client: SupabaseClient, duelId: string, habit: Habit) {
@@ -33,12 +29,18 @@ export async function deleteDuelHabit(client: SupabaseClient, duelId: string, id
   const { error } = await client.from('duel_habits').delete().eq('duel_id', duelId).eq('id', id);
   if (error) throw error;
 }
+export async function saveDuelCheckIns(client: SupabaseClient, duelId: string, checkIns: CheckIn[]) {
+  const unique = [...new Map(checkIns.map(checkIn => [checkIn.id, checkInPatch(checkIn)])).values()];
+  for (let offset = 0; offset < unique.length; offset += 100) {
+    const { error } = await client.rpc('save_duel_check_ins', { p_duel_id: duelId, p_check_ins: unique.slice(offset, offset + 100) });
+    if (error) throw error;
+  }
+}
 export async function saveDuelCheckIn(client: SupabaseClient, duelId: string, checkIn: CheckIn) {
-  const { error } = await client.from('duel_check_ins').upsert({ duel_id: duelId, id: checkIn.id, habit_id: checkIn.habitId, player_slot: checkIn.playerId, data: checkIn });
-  if (error) throw error;
+  await saveDuelCheckIns(client, duelId, [checkIn]);
 }
 export async function deleteDuelCheckIn(client: SupabaseClient, duelId: string, id: string) {
-  const { error } = await client.from('duel_check_ins').delete().eq('duel_id', duelId).eq('id', id);
+  const { error } = await client.rpc('delete_duel_check_in', { p_duel_id: duelId, p_id: id });
   if (error) throw error;
 }
 export async function saveDuelStake(client: SupabaseClient, duelId: string, stake: Stake) {

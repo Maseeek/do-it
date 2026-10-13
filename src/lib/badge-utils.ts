@@ -131,7 +131,7 @@ export function calculatePlayerBadges(
     .filter((h) => h.playerId === playerId && h.category === 'environment')
     .map((h) => h.id);
   const cleanWithPhotoCount = playerLogs.filter(
-    (l) => cleanHabitIds.includes(l.habitId) && ((l.proofUrls && l.proofUrls.length > 0) || l.proofUrl)
+    (l) => cleanHabitIds.includes(l.habitId) && ((l.proofCount ?? 0) > 0 || (l.proofUrls && l.proofUrls.length > 0) || l.proofUrl)
   ).length;
 
   // Gym workouts in single week

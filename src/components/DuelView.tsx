@@ -1,5 +1,7 @@
 'use client';
 
+import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -670,11 +672,7 @@ export function DuelView() {
                 const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
                 const done = !!checkIn;
                 const photos =
-                  checkIn?.proofUrls && checkIn.proofUrls.length > 0
-                    ? checkIn.proofUrls
-                    : checkIn?.proofUrl
-                    ? [checkIn.proofUrl]
-                    : [];
+                  getProofPhotos(checkIn);
 
                 return (
                   <div
@@ -731,11 +729,7 @@ export function DuelView() {
                 const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
                 const done = !!checkIn;
                 const photos =
-                  checkIn?.proofUrls && checkIn.proofUrls.length > 0
-                    ? checkIn.proofUrls
-                    : checkIn?.proofUrl
-                    ? [checkIn.proofUrl]
-                    : [];
+                  getProofPhotos(checkIn);
 
                 return (
                   <div
@@ -1206,11 +1200,7 @@ export function DuelView() {
           playerAvatar={activeProofView.player.avatar}
           habitTitle={activeProofView.habit.title}
           images={
-            activeProofView.checkIn.proofUrls && activeProofView.checkIn.proofUrls.length > 0
-              ? activeProofView.checkIn.proofUrls
-              : activeProofView.checkIn.proofUrl
-              ? [activeProofView.checkIn.proofUrl]
-              : []
+            getProofPhotos(activeProofView.checkIn)
           }
           date={activeProofView.checkIn.date}
           completedAt={activeProofView.checkIn.completedAt}

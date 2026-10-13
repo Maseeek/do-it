@@ -1,0 +1,98 @@
+{
+  "historyRecords": 731,
+  "photoRequestsBeforeViewing": 0,
+  "photoRequestsForGallery": 1,
+  "twentyEventBurstReads": 1,
+  "repeatReopenUsesDelta": true,
+  "noteSavePreservesProof": true,
+  "profileChangeHistoryReads": 0,
+  "optimisticWriteSurvivesStaleRead": true,
+  "warmOfflineView": true,
+  "remoteDeletionApplied": true,
+  "pageErrors": [],
+  "requests": [
+    {
+      "path": "/rest/v1/duels",
+      "method": "GET",
+      "bytes": 324
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 147461,
+      "cursor": null
+    },
+    {
+      "path": "/rest/v1/duels",
+      "method": "GET",
+      "bytes": 324
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 45,
+      "cursor": "734"
+    },
+    {
+      "path": "/rest/v1/rpc/duel_check_in_proof",
+      "method": "POST",
+      "bytes": 118
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 327,
+      "cursor": "734"
+    },
+    {
+      "path": "/rest/v1/rpc/save_duel_check_ins",
+      "method": "POST",
+      "bytes": 4
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 332,
+      "cursor": "736"
+    },
+    {
+      "path": "/rest/v1/duels",
+      "method": "GET",
+      "bytes": 332
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 335,
+      "cursor": "738"
+    },
+    {
+      "path": "/rest/v1/rpc/save_duel_check_ins",
+      "method": "POST",
+      "bytes": 4
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 689,
+      "cursor": "738"
+    },
+    {
+      "path": "/rest/v1/duels",
+      "method": "GET",
+      "bytes": 332
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 45,
+      "cursor": "741"
+    },
+    {
+      "path": "/rest/v1/rpc/sync_duel",
+      "method": "POST",
+      "bytes": 127,
+      "cursor": "741"
+    }
+  ]
+}

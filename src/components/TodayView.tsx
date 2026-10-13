@@ -1,5 +1,7 @@
 'use client';
 
+import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUpRight,
@@ -169,11 +171,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     ? habits.filter((h) => h.playerId === partnerId && h.isActive).reduce((sum, h) => sum + h.points, 0)
     : par;
   const partnerPar = partnerRawPar > 0 ? partnerRawPar : par;
-  const partnerPhotos = partnerCleanSpaceCheckIn?.proofUrls?.length
-    ? partnerCleanSpaceCheckIn.proofUrls
-    : partnerCleanSpaceCheckIn?.proofUrl
-    ? [partnerCleanSpaceCheckIn.proofUrl]
-    : [];
+  const partnerPhotos = getProofPhotos(partnerCleanSpaceCheckIn);
   const todayStr = getTodayDateString();
   const habitStreaks = useMemo(() => new Map(activeHabits.map(habit =>
     [habit.id, calculateHabitStreak(habit, checkIns, restDays, todayStr)]
