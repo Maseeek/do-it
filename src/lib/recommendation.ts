@@ -20,3 +20,14 @@ export function getRecommendationShareData(origin: string, referrerName?: string
     url,
   };
 }
+
+export const RECOMMENDATION_STORAGE_KEY = 'do-it-recommendation-code';
+
+export function isRecommendationCode(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+export function getSignupRecommendationCode(params: URLSearchParams, saved: string | null): string | null {
+  const incoming = extractRecommendationReferrer(params);
+  return isRecommendationCode(incoming) ? incoming : isRecommendationCode(saved) ? saved : null;
+}

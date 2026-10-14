@@ -1,0 +1,108 @@
+process.on('uncaughtException', error => { console.error(error.message); process.exit(1); });
+import { PGlite } from '@electric-sql/pglite';
+import { readFileSync, existsSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const db = new PGlite();
+const id = n => `00000000-0000-0000-0000-${String(n).padStart(12, '0')}`;
+await db.exec(`
+create role anon; create role authenticated;
+create schema auth;
+create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+create table auth.users(id uuid primary key, email text, email_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}', is_anonymous boolean default false);
+create table public.duels(id uuid primary key default gen_random_uuid(), owner_id uuid references auth.users(id), guest_id uuid references auth.users(id), owner_name text, guest_name text, created_at timestamptz default now());
+create table public.duel_check_ins(duel_id uuid, player_slot text, data jsonb);
+`);
+await db.query('insert into auth.users(id,email,email_confirmed_at) values ($1,$2,now()),($3,$4,now()),($5,$6,now())', [id(1),'owner@example.test',id(2),'guest@example.test',id(3),'existing@example.test']);
+await db.query('insert into public.duels(id,owner_id,guest_id) values ($1,$2,$3)', [id(100),id(1),id(2)]);
+const colors=readFileSync('supabase/player-colors.sql','utf8');
+await db.exec(colors);
+if (existsSync('supabase/player-referrals.sql')) {
+  await db.query("update public.duels set owner_invites=7,owner_color='gold' where id=$1",[id(100)]);
+  await db.exec(readFileSync('supabase/player-referrals.sql','utf8'));
+}
+const uid = n => db.query("select set_config('request.jwt.claim.sub',$1,false)", [n ? id(n) : '']);
+const duel = async () => (await db.query('select owner_color,guest_color,owner_invites,guest_invites from public.duels where id=$1',[id(100)])).rows[0];
+await uid(1);
+assert.equal((await duel()).owner_color,'blue','Gold earned by sharing must relock');
+await db.query('select public.record_app_invite()');
+assert.equal((await duel()).owner_invites,0,'Sharing or visiting a link must not grant referral credit');
+await assert.rejects(db.query("select public.set_player_color('purple')"),/already.*(chosen|using|selected)|taken/i,'Partner colour must be reserved');
+
+const code = async () => (await db.query('select public.get_recommendation_code() as code')).rows[0].code;
+const ownerCode = await code();
+assert.equal(await code(),ownerCode,'Recommendation code must persist across devices');
+await uid(2);
+const guestCode = await code();
+assert.notEqual(ownerCode,guestCode);
+const signup = (n,email,ref,confirmed=false) => db.query(
+  'insert into auth.users(id,email,raw_user_meta_data,email_confirmed_at) values ($1,$2,$3,$4)',
+  [id(n),email,JSON.stringify({recommendation_code:ref}),confirmed ? new Date() : null]);
+const confirm = n => db.query('update auth.users set email_confirmed_at=now() where id=$1',[id(n)]);
+await signup(4,'friend@example.test',ownerCode);
+assert.equal((await duel()).owner_invites,0,'Unconfirmed signups must not earn credit');
+await confirm(4);
+assert.equal((await duel()).owner_invites,1);
+assert.equal((await duel()).guest_invites,0);
+await confirm(4);
+assert.equal((await duel()).owner_invites,1,'Repeat confirmation must not earn extra credit');
+await db.query('update auth.users set raw_user_meta_data=$1 where id=$2',[JSON.stringify({recommendation_code:guestCode}),id(4)]);
+await confirm(4);
+assert.equal((await duel()).guest_invites,0,'Editable metadata must not change attribution');
+await db.query('update auth.users set raw_user_meta_data=$1 where id=$2',[JSON.stringify({recommendation_code:ownerCode}),id(3)]);
+await confirm(3);
+assert.equal((await duel()).owner_invites,1,'Existing accounts cannot be referred');
+await signup(5,'OWNER@example.test',ownerCode,true);
+assert.equal((await duel()).owner_invites,1,'Same email is not a unique new account');
+await db.query('delete from auth.users where id=$1',[id(4)]);
+await signup(6,'friend@example.test',guestCode,true);
+assert.equal((await duel()).guest_invites,0,'A unique email can be credited only once');
+await signup(7,'invalid@example.test','not-a-code',true);
+await signup(8,'unknown@example.test',id(999),true);
+assert.equal((await duel()).owner_invites,1,'Invalid codes must not prevent signup or grant credit');
+await uid(1);
+await db.query("select public.set_player_color('gold')");
+await uid(2);
+await assert.rejects(db.query("select public.set_player_color('gold')"),/already using/);
+await signup(9,'guest-friend@example.test',guestCode,true);
+assert.equal((await duel()).guest_invites,1);
+await assert.rejects(db.query("select public.set_player_color('gold')"),/already using/);
+await uid(1); await db.query("select public.set_player_color('blue')");
+await uid(2); await db.query("select public.set_player_color('gold')");
+assert.equal((await duel()).guest_color,'gold');
+await assert.rejects(db.query("update public.duels set owner_color='gold' where id=$1",[id(100)]),/duels_distinct_player_colors/);
+await db.exec(colors); await db.exec(readFileSync('supabase/player-referrals.sql','utf8'));
+assert.deepEqual(await duel(),{owner_color:'blue',guest_color:'gold',owner_invites:1,guest_invites:1},'Reapplying migrations must preserve earned rewards');
+// Reproduce the stale cache left by confirmation concurrent with first pairing.
+await db.query('update public.duels set owner_invites=0 where id=$1',[id(100)]);
+await uid(1);
+assert.equal((await db.query('select (public.get_player_duel_profile()).owner_invites as invites')).rows[0].invites,1,'Profile refresh must use confirmed receipts rather than a stale Duel counter');
+await uid(2); await db.query("select public.set_player_color('purple')");
+await uid(1);
+const rewarded = (await db.query("select (public.set_player_color('gold')).owner_invites as invites")).rows[0];
+assert.equal(rewarded.invites,1,'Gold authorization and the saved profile must use the confirmed ledger');
+await db.exec(readFileSync('supabase/player-referrals.sql','utf8'));
+await db.query("select public.set_player_color('blue')");
+await uid(3); const thirdCode = await code();
+await signup(10,'later-duel@example.test',thirdCode,true);
+await db.query("insert into public.duels(id,owner_id,owner_color,guest_color) values ($1,$2,'purple','purple')",[id(101),id(3)]);
+await db.query('update public.duels set guest_id=$1 where id=$2',[id(7),id(101)]);
+const later = (await db.query('select owner_invites,owner_color,guest_color from public.duels where id=$1',[id(101)])).rows[0];
+assert.deepEqual(later,{owner_invites:1,owner_color:'purple',guest_color:'blue'},'New Duels retain account referral credit and distinct palettes on pairing');
+await uid(null);
+await assert.rejects(db.query('select public.get_recommendation_code()'),/Sign in/);
+await db.exec('set role anon');
+await assert.rejects(db.query('select public.get_recommendation_code()'),/permission denied/);
+await assert.rejects(db.query('select public.get_player_duel_profile()'),/permission denied/);
+await db.exec('reset role; set role authenticated');
+await assert.rejects(db.query("insert into public.player_referrals values ($1,$2,$3,now())",[id(200),id(1),'fake@example.test']),/permission denied/);
+await db.exec('reset role');
+for (const [color,points] of [['teal',250],['orange',500],['pink',1000],['green',2500],['rainbow',10000]]) {
+  await uid(1);
+  await db.query('delete from public.duel_check_ins');
+  await db.query('insert into public.duel_check_ins values ($1,$2,$3)',[id(100),'maciek',JSON.stringify({pointsEarned:points-1})]);
+  await assert.rejects(db.query('select public.set_player_color($1)',[color]),/Earn more/);
+  await db.query('insert into public.duel_check_ins values ($1,$2,$3)',[id(100),'maciek',JSON.stringify({pointsEarned:1})]);
+  await db.query('select public.set_player_color($1)',[color]);
+}
+console.log('PASS: confirmed unique referrals, self/existing/repeat rejection, immutable attribution, independent rewards, colour collisions, pairing defaults, every Karma boundary, migration idempotency and permissions');
+await db.close();

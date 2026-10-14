@@ -115,7 +115,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. Without Sup
    - [`supabase/duels.sql`](supabase/duels.sql) — Core multi-tenant tables (`duels`, `duel_habits`, `duel_check_ins`, `duel_stakes`), RLS policies, and `SECURITY DEFINER` invitation RPCs.
      - *Existing deployments*: If you have already executed `duels.sql`, apply [`supabase/replace-solo-duel.sql`](supabase/replace-solo-duel.sql) to enable switching from an unpaired solo duel to an invitation.
    - [`supabase/duels-extras.sql`](supabase/duels-extras.sql) — Realtime reactions, rest-day streak protection, and the idempotent daily check-in unique index.
-   - [`supabase/player-colors.sql`](supabase/player-colors.sql) — adds per-player colors to existing and new duels, with an authenticated RPC that enforces lifetime-point unlock thresholds. Apply once after `duels.sql`; existing deployments must run it before players can save colors.
+   - [`supabase/player-colors.sql`](supabase/player-colors.sql) — stores each Player’s colour and enforces Karma unlocks and distinct colours within a paired Duel. Apply after `duels.sql`, including on existing deployments.
+   - [`supabase/player-referrals.sql`](supabase/player-referrals.sql) — apply after `player-colors.sql`. Generates account-specific recommendation links and credits each unique new email once, after account confirmation. Sharing, copying, self-referrals and existing-account logins earn no credit. Existing share-only counts are replaced with confirmed referrals; unearned Gold returns to an available default colour.
    - [`supabase/health.sql`](supabase/health.sql) — Isolated `health_connections` vault restricted to `service_role`.
 2. Copy `.env.example` to `.env.local` and configure your environment variables:
    ```env
