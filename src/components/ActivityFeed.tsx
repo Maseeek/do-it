@@ -1,5 +1,8 @@
 'use client';
 
+import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
+import { ProofImage } from './ProofImage';
+
 import React, { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Habit, CheckIn, Player } from '@/lib/types';
@@ -214,11 +217,7 @@ export function ActivityFeed() {
             // Check-in item
             const isMaciek = item.player.id === 'maciek';
             const photos =
-              item.checkIn.proofUrls && item.checkIn.proofUrls.length > 0
-                ? item.checkIn.proofUrls
-                : item.checkIn.proofUrl
-                ? [item.checkIn.proofUrl]
-                : [];
+              getProofPhotos(item.checkIn);
 
             return (
               <React.Fragment key={`checkin:${item.id}`}>{dateHeading}<article
@@ -287,9 +286,7 @@ export function ActivityFeed() {
                         }}
                         className="relative rounded-xl overflow-hidden aspect-video w-20 flex-shrink-0 border border-white/[0.08] hover:border-zinc-400 transition-colors"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo}
+<ProofImage src={photo}
                           alt="Proof preview"
                           className="w-full h-full object-cover"
                         />
@@ -319,11 +316,7 @@ export function ActivityFeed() {
           playerAvatar={activeProofView.player.avatar}
           habitTitle={activeProofView.habit.title}
           images={
-            activeProofView.checkIn.proofUrls && activeProofView.checkIn.proofUrls.length > 0
-              ? activeProofView.checkIn.proofUrls
-              : activeProofView.checkIn.proofUrl
-              ? [activeProofView.checkIn.proofUrl]
-              : []
+            getProofPhotos(activeProofView.checkIn)
           }
           date={activeProofView.checkIn.date}
           completedAt={activeProofView.checkIn.completedAt}

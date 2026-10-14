@@ -1,4 +1,6 @@
 import 'server-only';
+import { saveDuelCheckIn, saveDuelCheckIns, deleteDuelCheckIn } from './duel-sync';
+import { getCurrentWeekDays } from './date-utils';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CheckIn, Habit, HealthTelemetryRecord, PlayerId } from './types';
 import { decryptToken, healthDatabase, localDate } from './health-server';
@@ -67,7 +69,7 @@ async function stepsForDay(date: string, token: string): Promise<number | null> 
 }
 
 async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, habits: Habit[], date: string, values: { sleep: number | null; steps: number | null; exercise: ReturnType<typeof workouts>; exerciseObserved: boolean }) {
-  const { data: rows, error } = await db.from('duel_check_ins').select('id,habit_id,data').eq('duel_id', duelId).eq('player_slot', slot).eq('data->>date', date);
+  const { data: rows, error } = await db.from('duel_check_ins_metadata').select('id,habit_id,data').eq('duel_id', duelId).eq('player_slot', slot).eq('data->>date', date);
   if (error) throw error;
   let changed = 0;
   const telemetry: HealthTelemetryRecord[] = [];
@@ -120,7 +122,7 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
       if (matched) detail = `${matched.label} · ${Math.round(matched.minutes)} min`;
     }
     if (!detail) {
-      if (existing) { const { error: deleteError } = await db.from('duel_check_ins').delete().eq('duel_id', duelId).eq('id', existing.id); if (deleteError) throw deleteError; changed++; }
+      if (existing) { await deleteDuelCheckIn(db, duelId, existing.id); changed++; }
       continue;
     }
     const priorCheckIn: CheckIn | undefined = existing?.data;
@@ -142,23 +144,24 @@ async function applyResults(db: SupabaseClient, duelId: string, slot: PlayerId, 
       const prior = existing.data as CheckIn;
       if (prior.note === checkIn.note && prior.pointsEarned === checkIn.pointsEarned && prior.source === checkIn.source && prior.healthValue === checkIn.healthValue) continue;
     }
-    const { error: saveError } = await db.from('duel_check_ins').upsert({ duel_id: duelId, id: checkIn.id, habit_id: habit.id, player_slot: slot, data: checkIn });
-    if (saveError) throw saveError;
+    await saveDuelCheckIn(db, duelId, checkIn);
     changed++;
   }
   // Weekly habits only award their configured number of sessions. Keep point totals aligned with manual check-ins.
   for (const habit of habits.filter(item => item.weeklyTargetDays)) {
-    const { data: weekRows, error: weekError } = await db.from('duel_check_ins').select('id,data').eq('duel_id', duelId).eq('habit_id', habit.id);
+    const week = getCurrentWeekDays(date);
+    const { data: weekRows, error: weekError } = await db.from('duel_check_ins_metadata').select('id,data').eq('duel_id', duelId).eq('habit_id', habit.id).gte('data->>date', week[0].dateStr).lte('data->>date', week[6].dateStr);
     if (weekError) throw weekError;
     const all = (weekRows || []).map(row => row.data as CheckIn);
     const balanced = rebalanceWeeklyHabitCheckIns(all, habit, getWeekKey(date));
+    const rebalanced: CheckIn[] = [];
     for (const entry of balanced) {
       const prior = all.find(item => item.id === entry.id);
       if (prior && prior.pointsEarned !== entry.pointsEarned) {
-        const { error: updateError } = await db.from('duel_check_ins').update({ data: entry }).eq('duel_id', duelId).eq('id', entry.id);
-        if (updateError) throw updateError;
+        rebalanced.push(entry);
       }
     }
+    await saveDuelCheckIns(db, duelId, rebalanced);
   }
   return { changed, telemetry };
 }

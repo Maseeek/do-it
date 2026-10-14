@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import { createEgressFixture } from './egress-fixture.mjs';
+const {db,owner,guest,outsider,duel,proof,original,migration}=await createEgressFixture();
+
+await db.exec(migration);
+assert.deepEqual((await db.query('select data from public.duel_check_ins')).rows[0].data,original);
+async function asUser(id) { await db.exec(`reset role; set request.jwt.claim.sub = '${id}'; set role authenticated;`); }
+async function sync(cursor=null) { return (await db.query('select public.sync_duel($1,$2) as value',[duel,cursor])).rows[0].value; }
+await asUser(owner);
+const snapshot=await sync();
+assert.equal(snapshot.snapshot.checkIns.length,1);
+assert.equal(snapshot.snapshot.checkIns[0].proofCount,1);
+assert.equal(JSON.stringify(snapshot).includes('data:image'),false);
+const metadataBytes=Buffer.byteLength(JSON.stringify(snapshot));
+assert.deepEqual((await db.query('select public.duel_check_in_proof($1,$2) as value',[duel,'check-1'])).rows[0].value,[proof]);
+await db.query('select public.save_duel_check_ins($1,$2)',[duel,[{id:'check-1',habitId:'habit-1',playerId:'maciek',note:'Kept proof',pointsEarned:15}]]);
+const delta=await sync(snapshot.cursor);
+assert.equal(delta.changes.length,1); assert.equal(delta.changes[0].data.note,'Kept proof');
+assert.equal(delta.changes[0].data.proofCount,1); assert.equal(JSON.stringify(delta).includes('data:image'),false);
+assert.deepEqual((await db.query('select public.duel_check_in_proof($1,$2) as value',[duel,'check-1'])).rows[0].value,[proof]);
+assert.deepEqual((await sync(delta.cursor)).changes,[]);
+await asUser(guest);
+await assert.rejects(db.query('select public.save_duel_check_ins($1,$2)',[duel,[{id:'check-1',habitId:'habit-1',playerId:'maciek',pointsEarned:999}]]));
+assert.equal((await sync()).snapshot.checkIns[0].pointsEarned,15);
+await asUser(outsider);
+assert.equal(await sync(),null);
+assert.equal((await db.query('select count(*)::int as n from public.duel_check_ins_metadata')).rows[0].n,0);
+assert.equal((await db.query('select public.duel_check_in_proof($1,$2) as value',[duel,'check-1'])).rows[0].value,null);
+await assert.rejects(db.query('update public.duel_sync_heads set revision=999 where duel_id=$1',[duel]));
+await asUser(owner);
+const beforeRollback=await sync();
+await db.exec('begin');
+await db.query('select public.save_duel_check_ins($1,$2)',[duel,[{id:'check-1',habitId:'habit-1',playerId:'maciek',note:'rolled back'}]]);
+await db.exec('rollback');
+assert.deepEqual(await sync(),beforeRollback);
+await db.query('select public.delete_duel_check_in($1,$2)',[duel,'check-1']);
+const removal=await sync(delta.cursor);
+assert.equal(removal.changes.length,1); assert.equal(removal.changes[0].deleted,true);
+await db.query('select public.save_duel_check_ins($1,$2)',[duel,[original]]);
+const reinsert=await sync(delta.cursor);
+assert.equal(reinsert.changes.length,1); assert.equal(reinsert.changes[0].deleted,false);
+assert.equal(reinsert.changes[0].data.proofCount,1);
+assert.equal((await sync('999999')).snapshot.checkIns.length,1);
+const unchanged=await sync(reinsert.cursor);
+assert.equal(unchanged.snapshot,null); assert.deepEqual(unchanged.changes,[]);
+console.log(JSON.stringify({migration:'passes twice without changing existing data',checks:['proof preservation','metadata excludes photos','delta update','unchanged delta','RLS for partner and outsider','rollback restores cursor/data','deletion and reinsertion','cursor reset'],originalProofTextBytes:proof.length*2,metadataResponseBytes:metadataBytes,unchangedResponseBytes:Buffer.byteLength(JSON.stringify(unchanged))},null,2));
+await db.close();

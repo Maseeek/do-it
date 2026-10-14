@@ -146,7 +146,7 @@ export function calculatePlayerBadges(
       if (readingHabitSet.has(l.habitId)) {
         totalPages += (l.quantity || l.pointsEarned);
       }
-      if (cleanHabitSet.has(l.habitId) && ((l.proofUrls && l.proofUrls.length > 0) || l.proofUrl)) {
+      if (cleanHabitSet.has(l.habitId) && ((l.proofCount ?? 0) > 0 || (l.proofUrls && l.proofUrls.length > 0) || l.proofUrl)) {
         cleanWithPhotoCount++;
       }
       if (gymHabitSet.has(l.habitId)) {
