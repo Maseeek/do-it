@@ -1,6 +1,7 @@
 'use client';
 
-import { CheckCircle2, Flame, ChartNoAxesColumn } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, Flame, ChartNoAxesColumn, Compass } from 'lucide-react';
 import { TabType } from './BottomNav';
 import { useStore } from '@/lib/store';
 
@@ -42,11 +43,22 @@ export function DesktopSidebar({ activeTab, onChangeTab, onWarmTab }: {
             </kbd>
           </button>
         ))}
+
+        <div className="pt-2">
+          <Link
+            href="/welcome"
+            className="w-full min-h-9 flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors border border-transparent text-zinc-400 hover:text-foreground hover:bg-black/[0.03] dark:hover:bg-zinc-900/40 text-xs font-medium"
+          >
+            <Compass size={15} />
+            <span>Membership & Billing</span>
+          </Link>
+        </div>
       </nav>
+
       <div className="mt-auto border-t border-black/[0.07] dark:border-zinc-800/80 pt-4 px-1 space-y-2">
         <div>
           <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            {activePlayer?.name} · Lifetime Karma
+            {activePlayer?.name} &middot; Lifetime Karma
           </p>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="text-xl font-bold font-mono tabular-nums text-player-400">
