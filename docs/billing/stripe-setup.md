@@ -2,10 +2,14 @@
 
 The welcome page at `/welcome` includes membership pricing and Checkout. `/billing` and Settings provide subscription management. One subscription belongs to a Duel; the owner pays, and both Players see its status. Prices come from Stripe, so the site does not invent a price or trial.
 
+## Confirmed live plan
+
+The owner selected `price_1Sr6z31NPX0knP17OFmNZKMj`, verified with Stripe as an active USD 15/month recurring membership for both Players, with no trial. It belongs to Do It Standard (`prod_TokUo6PF3QMje6`) on account `acct_1SoBvQ1NPX0knP17` (account name: Nothing But Net). Use this monthly price and leave the annual price empty. These live IDs require a matching live API credential; they cannot be used with a test credential.
+
 ## Configure the deployment
 
-1. Select the Stripe account for Do It, starting in a sandbox. The MCP account inspected during implementation was the live Nothing But Net account. Its existing basketball analytics product must not be used for Do It.
-2. In [Products](https://dashboard.stripe.com/products), create a Do It membership product. Set its metadata to `app=do-it`. Add a fixed recurring monthly price and/or annual price in USD, GBP or EUR. Use a quantity of one for both Players. No trial is configured by this integration.
+1. Select the Stripe account for Do It, starting in a sandbox. The owner has confirmed the Do It product in the live Nothing But Net account; use only that product, not its separate basketball analytics product.
+2. For live billing, reuse the confirmed Do It product and monthly price above; its `app=do-it` metadata is configured. For sandbox testing, create a separate equivalent product/price in the sandbox with the same metadata. Use a quantity of one for both Players. No trial is configured by this integration.
 3. Apply [supabase/billing.sql](../../supabase/billing.sql) in the SQL Editor for the Supabase project used by this deployment. This additive migration creates server-only billing tables and fenced lease functions. Run it once.
 4. Set these environment variables in the hosting project's environment settings. Keep secret values out of Git and browser code.
 
