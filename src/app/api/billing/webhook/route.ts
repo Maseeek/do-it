@@ -2,12 +2,15 @@ import { z } from 'zod';
 import { billingConfig, billingDatabase, billingResponseError, billingStripe, verifyBillingAccount, withBillingLease } from '@/lib/billing-server';
 import { billingEventCustomer, verifyBillingEvent } from '@/lib/billing-webhook';
 import { reconcileBilling } from '@/lib/billing-service';
+import { reconcilePurchaseEvent } from '@/lib/billing-purchase-server';
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
   try {
     const config = billingConfig();
     const stripe = billingStripe(config);
     const event = verifyBillingEvent(stripe, await request.text(), request.headers.get('stripe-signature') ?? '', config.signingSecret, config.livemode);
+    // Pending Checkout may have no customer yet (including expiry events).
+    await reconcilePurchaseEvent(event, stripe, config);
     const customer = billingEventCustomer(event);
     if (!customer) return Response.json({ received: true });
     const db = billingDatabase(config);

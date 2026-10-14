@@ -4,26 +4,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useMultiplayer } from '@/lib/multiplayer';
-import { getSupabaseClient } from '@/lib/supabase';
+import { billingRequest, openStripeCheckout } from '@/lib/billing-client';
+import { PurchaseSetup } from './PurchaseSetup';
 import { billingPlansSchema, billingViewSchema, type BillingPlan } from '@/lib/billing-model';
 
 type Plans = z.infer<typeof billingPlansSchema>;
 type View = z.infer<typeof billingViewSchema>;
-const errorSchema = z.object({ error: z.string() });
-
-async function billingRequest(path: string, body?: object) {
-  const { data } = await getSupabaseClient()?.auth.getSession() ?? { data: { session: null } };
-  const response = await fetch(`/api/billing/${path}`, {
-    method: body ? 'POST' : 'GET', cache: 'no-store',
-    headers: { ...(data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  const json: unknown = await response.json();
-  if (!response.ok) throw new Error(errorSchema.safeParse(json).data?.error ?? 'Billing is unavailable. Please retry.');
-  return json;
+export function BillingPanel({ result }: { result?: string }) {
+  return <PurchaseSetup result={result}><DuelBillingPanel result={result} /></PurchaseSetup>;
 }
 
-export function BillingPanel({ result }: { result?: string }) {
+function DuelBillingPanel({ result }: { result?: string }) {
   const { user, duel, loading } = useMultiplayer();
   const [plans, setPlans] = useState<Plans | null>(null);
   const [view, setView] = useState<View | null>(null);
@@ -60,10 +51,7 @@ export function BillingPanel({ result }: { result?: string }) {
     setBusy(true);
     setError(null);
     try {
-      const { url } = z.object({ url: z.string().url() }).parse(await billingRequest(action, plan ? { plan } : {}));
-      const target = new URL(url);
-      if (target.protocol !== 'https:' || !['checkout.stripe.com', 'billing.stripe.com'].includes(target.hostname)) throw new Error('Unexpected billing destination.');
-      window.location.assign(url);
+      openStripeCheckout(await billingRequest(action, plan ? { plan } : {}));
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not open Stripe.'); setBusy(false); }
   }
   const owner = !!user && duel?.owner_id === user.id;

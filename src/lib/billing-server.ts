@@ -15,7 +15,7 @@ export function billingConfig() {
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!secret || !signingSecret || !accountId || !url || !anon || !service || !appUrl) {
-    throw new BillingError('Billing is not available yet. Your existing Duel is unchanged.', 503);
+    throw new BillingError('Membership payments are not available yet. Please try again later.', 503);
   }
   const origin = new URL(appUrl).origin;
   const livemode = /^(sk|rk)_live_/.test(secret);
@@ -114,7 +114,7 @@ export function stripeGateway(stripe: Stripe, config: BillingConfig): BillingGat
   };
 }
 
-export async function withBillingLease<T>(config: BillingConfig, stripe: Stripe, duelId: string, ownerId: string, work: (ctx: BillingContext) => Promise<T>, eventId?: string) {
+export async function withBillingLease<T>(config: BillingConfig, stripe: Stripe, duelId: string, ownerId: string, work: (ctx: BillingContext, leaseToken: string) => Promise<T>, eventId?: string) {
   const db = billingDatabase(config);
   const token = randomUUID();
   const params = { p_duel: duelId, p_live: config.livemode, p_token: token };
@@ -128,7 +128,7 @@ export async function withBillingLease<T>(config: BillingConfig, stripe: Stripe,
       const saved = await db.rpc('billing_save', { ...params, p_state: next, p_event: eventId ?? null });
       if (saved.error) throw new Error('Billing state could not be saved.');
     } };
-    return await work(ctx);
+    return await work(ctx, token);
   } finally {
     const released = await db.rpc('billing_release', params);
     if (released.error) console.error('billing_lease_release_failed');
@@ -156,8 +156,8 @@ export async function billingSummary(request: Request, config: BillingConfig, st
 }
 
 export function billingResponseError(error: unknown) {
-  if (error instanceof BillingError) return Response.json({ error: error.message }, { status: error.status });
+  if (error instanceof BillingError) return Response.json({ error: error.message }, { status: error.status, headers: { 'Cache-Control': 'no-store' } });
   // Stripe/Supabase errors may contain customer data. Do not log raw objects.
   console.error('billing_request_failed', error instanceof Error ? error.name : 'UnknownError');
-  return Response.json({ error: 'Billing could not complete this request. Please retry.' }, { status: 503 });
+  return Response.json({ error: 'Billing could not complete this request. Please retry.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
 }

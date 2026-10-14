@@ -13,6 +13,10 @@ export const billingStateSchema = z.object({
 export type BillingState = z.infer<typeof billingStateSchema>;
 export type BillingPlan = 'monthly' | 'annual';
 export const checkoutInputSchema = z.object({ plan: z.enum(['monthly', 'annual']) }).strict();
+export const purchaseViewSchema = z.object({
+  status: z.enum(['none', 'open', 'pending', 'paid', 'claimed', 'expired']),
+  url: z.string().nullable(),
+});
 export const billingViewSchema = z.object({
   owner: z.boolean(), status: z.string(), subscribed: z.boolean(),
   cancelAtPeriodEnd: z.boolean(), periodEnd: z.number().nullable(),
