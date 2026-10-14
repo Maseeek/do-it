@@ -9,6 +9,7 @@ import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { getSupabaseClient } from '@/lib/supabase';
 import { HealthConnection } from './HealthConnection';
+import { BillingPanel } from './BillingPanel';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
@@ -437,6 +438,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       )}
 
       <HealthConnection onChooseHabits={onChooseHabits} />
+      <BillingPanel />
 
       <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
         <div className="flex items-center justify-between gap-3">

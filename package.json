@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "tsc --project tsconfig.test.json && node --test .scratch/test-build/*.test.js",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm test && npm run test:database",
+    "check": "npm run typecheck && npm run lint && npm test && npm run test:db && npm run test:database",
+    "test:db": "node supabase/egress.test.mjs",
     "test:database": "node scripts/verify-player-referrals.mjs"
   },
   "dependencies": {
@@ -20,10 +21,13 @@
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "tailwind-merge": "^3.7.0"
+    "server-only": "^0.0.1",
+    "stripe": "^23.0.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite": "^0.5.10",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",

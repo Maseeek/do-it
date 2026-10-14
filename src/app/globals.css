@@ -2,14 +2,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Player theme palettes. Slot identities only select the source Player. */
+/* Keep identity accents and fills vivid; smaller text uses readable shades. */
 :root { --accent-text-weight: 55%; --accent-text-mix: black; }
 .dark { --accent-text-weight: 100%; --accent-text-mix: black; }
 @theme inline {
   --color-player-200: color-mix(in srgb, var(--player-base) var(--accent-text-weight), var(--accent-text-mix));
   --color-player-300: color-mix(in srgb, var(--player-base) var(--accent-text-weight), var(--accent-text-mix));
-  --color-player-400: color-mix(in srgb, var(--player-base) var(--accent-text-weight), var(--accent-text-mix));
-  --color-player-500: color-mix(in srgb, var(--player-base) 45%, black);
+  --color-player-400: var(--player-base);
+  --color-player-500: var(--player-base);
   --color-player-600: color-mix(in srgb, var(--player-base) 65%, black);
   --color-player-700: color-mix(in srgb, var(--player-base) 50%, black);
   --color-player-800: color-mix(in srgb, var(--player-base) 35%, black);
@@ -17,8 +17,8 @@
   --color-player-950: color-mix(in srgb, var(--player-base) 12%, black);
   --color-owner-200: color-mix(in srgb, var(--owner-base) var(--accent-text-weight), var(--accent-text-mix));
   --color-owner-300: color-mix(in srgb, var(--owner-base) var(--accent-text-weight), var(--accent-text-mix));
-  --color-owner-400: color-mix(in srgb, var(--owner-base) var(--accent-text-weight), var(--accent-text-mix));
-  --color-owner-500: color-mix(in srgb, var(--owner-base) 45%, black);
+  --color-owner-400: var(--owner-base);
+  --color-owner-500: var(--owner-base);
   --color-owner-600: color-mix(in srgb, var(--owner-base) 65%, black);
   --color-owner-700: color-mix(in srgb, var(--owner-base) 50%, black);
   --color-owner-800: color-mix(in srgb, var(--owner-base) 35%, black);
@@ -26,8 +26,8 @@
   --color-owner-950: color-mix(in srgb, var(--owner-base) 12%, black);
   --color-guest-200: color-mix(in srgb, var(--guest-base) var(--accent-text-weight), var(--accent-text-mix));
   --color-guest-300: color-mix(in srgb, var(--guest-base) var(--accent-text-weight), var(--accent-text-mix));
-  --color-guest-400: color-mix(in srgb, var(--guest-base) var(--accent-text-weight), var(--accent-text-mix));
-  --color-guest-500: color-mix(in srgb, var(--guest-base) 45%, black);
+  --color-guest-400: var(--guest-base);
+  --color-guest-500: var(--guest-base);
   --color-guest-600: color-mix(in srgb, var(--guest-base) 65%, black);
   --color-guest-700: color-mix(in srgb, var(--guest-base) 50%, black);
   --color-guest-800: color-mix(in srgb, var(--guest-base) 35%, black);

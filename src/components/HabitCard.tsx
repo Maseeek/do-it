@@ -1,12 +1,13 @@
 'use client';
 
+import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
 import { getHealthProgressDetails } from '@/lib/health-correlation';
 import { calculateHealthPoints } from '@/lib/health-rewards';
 import { HabitIcon } from './HabitIcon';
-import dynamic from 'next/dynamic';
-import { loadCurrentPage } from '@/lib/load-current-page';
+import { createDeferredView } from './DeferredView';
 
 
 import {
@@ -25,8 +26,8 @@ import {
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
-const ProofModal = dynamic(() => loadCurrentPage(() => import('./ProofModal')).then(module => module.ProofModal));
-const ProofGalleryModal = dynamic(() => loadCurrentPage(() => import('./ProofGalleryModal')).then(module => module.ProofGalleryModal));
+const { View: ProofModal } = createDeferredView(() => import('./ProofModal').then(module => module.ProofModal), null);
+const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null);
 
 interface HabitCardProps {
   habit: Habit;
@@ -105,17 +106,9 @@ export const HabitCard = React.memo(function HabitCard({
   const isPulsing = Boolean(isLocking || localPulse);
   const pulsePoints = localPulse?.points ?? checkIn?.pointsEarned ?? (isWeeklyTargetMet ? 0 : availablePoints);
 
-  const proofPhotos = checkIn?.proofUrls && checkIn.proofUrls.length > 0
-    ? checkIn.proofUrls
-    : checkIn?.proofUrl
-    ? [checkIn.proofUrl]
-    : [];
+  const proofPhotos = getProofPhotos(checkIn);
 
-  const partnerProofPhotos = partnerCleanSpaceCheckIn?.proofUrls && partnerCleanSpaceCheckIn.proofUrls.length > 0
-    ? partnerCleanSpaceCheckIn.proofUrls
-    : partnerCleanSpaceCheckIn?.proofUrl
-    ? [partnerCleanSpaceCheckIn.proofUrl]
-    : [];
+  const partnerProofPhotos = getProofPhotos(partnerCleanSpaceCheckIn);
 
   const isCleanSpace = habit.category === 'environment' && habit.requiresProof;
   const [quantity, setQuantity] = useState<number>(checkIn?.quantity || habit.maxQuantity || 25);

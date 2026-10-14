@@ -46,6 +46,9 @@ agent-audit-report.json
 !/scripts/revoke-legacy-health-tokens.mjs
 !/scripts/benchmark-performance.ts
 !/scripts/verify-player-referrals.mjs
+!/scripts/benchmark-browser.cjs
+!/scripts/verify-duel-performance.cjs
+!/scripts/verify-entry-performance.cjs
 # scratch & local cache
 /.scratch/
 supabase/.temp/

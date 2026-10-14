@@ -77,11 +77,12 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
         let savedRecommendation: string | null = null;
         try { savedRecommendation = sessionStorage.getItem(RECOMMENDATION_STORAGE_KEY); } catch { /* Signup does not require browser storage. */ }
         const recommendationCode = getSignupRecommendationCode(new URLSearchParams(window.location.search), savedRecommendation);
+        const membershipSetup = new URL(window.location.href).searchParams.get('membership') === 'setup';
         const { data, error: authError } = await client.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: validInvite ? window.location.href : window.location.origin,
+            emailRedirectTo: validInvite || membershipSetup ? window.location.href : window.location.origin,
             data: { display_name: name.trim(), ...(validInvite ? { invite_code: validInvite } : {}), ...(recommendationCode ? { recommendation_code: recommendationCode } : {}) },
           },
         });

@@ -1,5 +1,7 @@
 'use client';
 
+import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -544,7 +546,7 @@ export function DuelView() {
                 setIsCreatingStake(true);
               }}
               aria-label="Set new wager"
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-mono font-medium transition-colors"
+              className="flex min-h-10 items-center justify-center gap-1 px-2.5 py-1 rounded-md bg-white hover:bg-zinc-200 text-black text-xs font-mono font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-player-500"
             >
               <Plus className="w-3 h-3" />
               <span>Set wager</span>
@@ -670,11 +672,7 @@ export function DuelView() {
                 const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
                 const done = !!checkIn;
                 const photos =
-                  checkIn?.proofUrls && checkIn.proofUrls.length > 0
-                    ? checkIn.proofUrls
-                    : checkIn?.proofUrl
-                    ? [checkIn.proofUrl]
-                    : [];
+                  getProofPhotos(checkIn);
 
                 return (
                   <div
@@ -731,11 +729,7 @@ export function DuelView() {
                 const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
                 const done = !!checkIn;
                 const photos =
-                  checkIn?.proofUrls && checkIn.proofUrls.length > 0
-                    ? checkIn.proofUrls
-                    : checkIn?.proofUrl
-                    ? [checkIn.proofUrl]
-                    : [];
+                  getProofPhotos(checkIn);
 
                 return (
                   <div
@@ -1135,7 +1129,7 @@ export function DuelView() {
                     onClick={() => setStakePeriod('weekly')}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
                       stakePeriod === 'weekly'
-                        ? 'bg-zinc-800 text-white border-zinc-700 font-semibold'
+                        ? 'bg-white text-black border-transparent font-semibold'
                         : 'bg-zinc-900/50 text-zinc-400 border-zinc-800'
                     }`}
                   >
@@ -1146,7 +1140,7 @@ export function DuelView() {
                     onClick={() => setStakePeriod('monthly')}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
                       stakePeriod === 'monthly'
-                        ? 'bg-zinc-800 text-white border-zinc-700 font-semibold'
+                        ? 'bg-white text-black border-transparent font-semibold'
                         : 'bg-zinc-900/50 text-zinc-400 border-zinc-800'
                     }`}
                   >
@@ -1206,11 +1200,7 @@ export function DuelView() {
           playerAvatar={activeProofView.player.avatar}
           habitTitle={activeProofView.habit.title}
           images={
-            activeProofView.checkIn.proofUrls && activeProofView.checkIn.proofUrls.length > 0
-              ? activeProofView.checkIn.proofUrls
-              : activeProofView.checkIn.proofUrl
-              ? [activeProofView.checkIn.proofUrl]
-              : []
+            getProofPhotos(activeProofView.checkIn)
           }
           date={activeProofView.checkIn.date}
           completedAt={activeProofView.checkIn.completedAt}

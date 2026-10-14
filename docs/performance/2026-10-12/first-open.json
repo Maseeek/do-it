@@ -1,0 +1,323 @@
+{
+  "measuredAt": "2026-10-12T01:58:44.942Z",
+  "mode": "first-open",
+  "samples": 5,
+  "cpu": 1,
+  "mobile": false,
+  "method": "Production builds, 730 prior days across 20 seeded habits (14600 CheckIns), same Chrome process with isolated contexts. First opens follow document reload with HTTP cache retained. Interactions alternate build order, include one observed localStorage write and two animation frames, and parse its value after timing. CPU throttling simulates slower execution; it is not physical mobile hardware.",
+  "variants": {
+    "baseline": {
+      "samples": [
+        {
+          "feature": "Progress",
+          "ms": 334.69999999552965,
+          "sample": 1
+        },
+        {
+          "feature": "Progress",
+          "ms": 326.90000000596046,
+          "sample": 2
+        },
+        {
+          "feature": "Progress",
+          "ms": 337.19999999552965,
+          "sample": 3
+        },
+        {
+          "feature": "Progress",
+          "ms": 331.29999999701977,
+          "sample": 4
+        },
+        {
+          "feature": "Progress",
+          "ms": 326.90000000596046,
+          "sample": 5
+        },
+        {
+          "feature": "Duel",
+          "ms": 326,
+          "sample": 1
+        },
+        {
+          "feature": "Duel",
+          "ms": 331.29999999701977,
+          "sample": 2
+        },
+        {
+          "feature": "Duel",
+          "ms": 331.79999999701977,
+          "sample": 3
+        },
+        {
+          "feature": "Duel",
+          "ms": 329.80000000447035,
+          "sample": 4
+        },
+        {
+          "feature": "Duel",
+          "ms": 337.30000000447035,
+          "sample": 5
+        },
+        {
+          "feature": "Settings",
+          "ms": 335.6000000014901,
+          "sample": 1
+        },
+        {
+          "feature": "Settings",
+          "ms": 334.80000000447035,
+          "sample": 2
+        },
+        {
+          "feature": "Settings",
+          "ms": 331.30000000447035,
+          "sample": 3
+        },
+        {
+          "feature": "Settings",
+          "ms": 335.90000000596046,
+          "sample": 4
+        },
+        {
+          "feature": "Settings",
+          "ms": 334.09999999403954,
+          "sample": 5
+        },
+        {
+          "feature": "Activity",
+          "ms": 356.40000000596046,
+          "sample": 1
+        },
+        {
+          "feature": "Activity",
+          "ms": 327.8999999985099,
+          "sample": 2
+        },
+        {
+          "feature": "Activity",
+          "ms": 333.3999999985099,
+          "sample": 3
+        },
+        {
+          "feature": "Activity",
+          "ms": 334.40000000596046,
+          "sample": 4
+        },
+        {
+          "feature": "Activity",
+          "ms": 331.6000000014901,
+          "sample": 5
+        },
+        {
+          "feature": "Proof",
+          "ms": 350.29999999701977,
+          "sample": 1
+        },
+        {
+          "feature": "Proof",
+          "ms": 350.20000000298023,
+          "sample": 2
+        },
+        {
+          "feature": "Proof",
+          "ms": 348,
+          "sample": 3
+        },
+        {
+          "feature": "Proof",
+          "ms": 374.8999999985099,
+          "sample": 4
+        },
+        {
+          "feature": "Proof",
+          "ms": 346.80000000447035,
+          "sample": 5
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 347.19999999552965,
+          "sample": 1
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 352.8999999985099,
+          "sample": 2
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 369.3999999985099,
+          "sample": 3
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 354.8999999985099,
+          "sample": 4
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 351.70000000298023,
+          "sample": 5
+        }
+      ],
+      "errors": [],
+      "persistedAfterReload": 14600
+    },
+    "current": {
+      "samples": [
+        {
+          "feature": "Progress",
+          "ms": 82.70000000298023,
+          "sample": 1
+        },
+        {
+          "feature": "Progress",
+          "ms": 72.5,
+          "sample": 2
+        },
+        {
+          "feature": "Progress",
+          "ms": 53.600000001490116,
+          "sample": 3
+        },
+        {
+          "feature": "Progress",
+          "ms": 25.700000002980232,
+          "sample": 4
+        },
+        {
+          "feature": "Progress",
+          "ms": 43.400000005960464,
+          "sample": 5
+        },
+        {
+          "feature": "Duel",
+          "ms": 47.19999999552965,
+          "sample": 1
+        },
+        {
+          "feature": "Duel",
+          "ms": 44.80000000447035,
+          "sample": 2
+        },
+        {
+          "feature": "Duel",
+          "ms": 45.20000000298023,
+          "sample": 3
+        },
+        {
+          "feature": "Duel",
+          "ms": 36.19999999552965,
+          "sample": 4
+        },
+        {
+          "feature": "Duel",
+          "ms": 44.29999999701977,
+          "sample": 5
+        },
+        {
+          "feature": "Settings",
+          "ms": 41.29999999701977,
+          "sample": 1
+        },
+        {
+          "feature": "Settings",
+          "ms": 42.79999999701977,
+          "sample": 2
+        },
+        {
+          "feature": "Settings",
+          "ms": 38.5,
+          "sample": 3
+        },
+        {
+          "feature": "Settings",
+          "ms": 42.100000001490116,
+          "sample": 4
+        },
+        {
+          "feature": "Settings",
+          "ms": 40,
+          "sample": 5
+        },
+        {
+          "feature": "Activity",
+          "ms": 41.79999999701977,
+          "sample": 1
+        },
+        {
+          "feature": "Activity",
+          "ms": 39.70000000298023,
+          "sample": 2
+        },
+        {
+          "feature": "Activity",
+          "ms": 40.20000000298023,
+          "sample": 3
+        },
+        {
+          "feature": "Activity",
+          "ms": 43.30000000447035,
+          "sample": 4
+        },
+        {
+          "feature": "Activity",
+          "ms": 38.100000001490116,
+          "sample": 5
+        },
+        {
+          "feature": "Proof",
+          "ms": 38.900000005960464,
+          "sample": 1
+        },
+        {
+          "feature": "Proof",
+          "ms": 39.100000001490116,
+          "sample": 2
+        },
+        {
+          "feature": "Proof",
+          "ms": 44.19999999552965,
+          "sample": 3
+        },
+        {
+          "feature": "Proof",
+          "ms": 36.399999998509884,
+          "sample": 4
+        },
+        {
+          "feature": "Proof",
+          "ms": 42.399999998509884,
+          "sample": 5
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 66.29999999701977,
+          "sample": 1
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 54,
+          "sample": 2
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 31.69999999552965,
+          "sample": 3
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 48.30000000447035,
+          "sample": 4
+        },
+        {
+          "feature": "Shortcuts",
+          "ms": 25.900000005960464,
+          "sample": 5
+        }
+      ],
+      "errors": [],
+      "persistedAfterReload": 14600
+    }
+  },
+  "browser": "148.0.7778.178"
+}

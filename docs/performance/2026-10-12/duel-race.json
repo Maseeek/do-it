@@ -1,0 +1,266 @@
+{
+  "measuredAt": "2026-10-12T05:52:59.164Z",
+  "pageCap": 1000,
+  "historyCount": 2500,
+  "samples": 1,
+  "method": "Production copies configured only for a Playwright-routed localhost Supabase mock. 2500 CheckIns, 50ms per HTTP response, real Phoenix subscriptions/events, no live database or auth. New browser context per sample. Initial rendering measured inside the page from navigation start to Daily Ritual and a Check-in control, followed by two animation frames. Counts verify reload amplification; loading times include localhost JS and rendering, not hosted latency.",
+  "variants": {
+    "baseline": {
+      "queries": [
+        {
+          "phase": "race",
+          "table": "duel_habits",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 20
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_stakes",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_reactions",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_rest_days",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 1000,
+          "limit": 1000,
+          "exact": true,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_habits",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 20
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_stakes",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_reactions",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_rest_days",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 2000,
+          "limit": 1000,
+          "exact": true,
+          "rows": 501
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 1000,
+          "limit": 1000,
+          "exact": true,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 2000,
+          "limit": 1000,
+          "exact": true,
+          "rows": 501
+        }
+      ],
+      "trace": [
+        {
+          "checked": true,
+          "ms": 641.0999999940395
+        },
+        {
+          "checked": false,
+          "ms": 780.7000000029802
+        },
+        {
+          "checked": true,
+          "ms": 845.7000000029802
+        }
+      ],
+      "finalChecked": true,
+      "errors": []
+    },
+    "current": {
+      "queries": [
+        {
+          "phase": "race",
+          "table": "duel_habits",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 20
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_stakes",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_reactions",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_rest_days",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 1000,
+          "limit": 1000,
+          "exact": false,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 2000,
+          "limit": 1000,
+          "exact": false,
+          "rows": 501
+        },
+        {
+          "phase": "race",
+          "table": "duel_habits",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 20
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_stakes",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_reactions",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_rest_days",
+          "start": 0,
+          "limit": 1000,
+          "exact": true,
+          "rows": 0
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 1000,
+          "limit": 1000,
+          "exact": false,
+          "rows": 1000
+        },
+        {
+          "phase": "race",
+          "table": "duel_check_ins",
+          "start": 2000,
+          "limit": 1000,
+          "exact": false,
+          "rows": 501
+        }
+      ],
+      "trace": [
+        {
+          "checked": true,
+          "ms": 592.4000000059605
+        }
+      ],
+      "finalChecked": true,
+      "errors": []
+    }
+  },
+  "browser": "148.0.7778.178"
+}

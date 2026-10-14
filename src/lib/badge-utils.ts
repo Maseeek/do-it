@@ -11,11 +11,11 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     category: 'streak',
   },
   {
-      id: 'perfect_par',
+    id: 'perfect_par',
     title: 'Daily Par Master',
     description: 'Score 240+ points in a single day',
     icon: 'Trophy',
-      targetCount: 240,
+    targetCount: 240,
     category: 'parity',
   },
   {
@@ -107,78 +107,98 @@ export function calculatePlayerBadges(
   stakes: Stake[],
   currentStreak: number
 ): PlayerBadgeStatus[] {
-  const playerLogs = checkIns.filter((c) => c.playerId === playerId);
+  // Pre-classify habits for this player in a single pass over habits
+  const readingHabitSet = new Set<string>();
+  const cleanHabitSet = new Set<string>();
+  const gymHabitSet = new Set<string>();
+  const langHabitSet = new Set<string>();
+  const projectHabitSet = new Set<string>();
 
-  // Daily point sums
-  const dailyPointsMap: Record<string, number> = {};
-  playerLogs.forEach((l) => {
-    dailyPointsMap[l.date] = (dailyPointsMap[l.date] || 0) + l.pointsEarned;
-  });
+  for (let i = 0; i < habits.length; i++) {
+    const h = habits[i];
+    if (h.playerId !== playerId) continue;
+    if (h.isQuantitative || h.iconName === 'BookOpen') readingHabitSet.add(h.id);
+    if (h.category === 'environment') cleanHabitSet.add(h.id);
+    if (h.category === 'physical') gymHabitSet.add(h.id);
+    if (h.category === 'language') langHabitSet.add(h.id);
+    if (h.category === 'deep_work') projectHabitSet.add(h.id);
+  }
 
-  // Check if scored 240+ in any single day
-  const maxDayPoints = Object.values(dailyPointsMap).reduce((max, pts) => Math.max(max, pts), 0);
-
-  // Cumulative pages read
-  const readingHabitIds = habits
-    .filter((h) => h.playerId === playerId && (h.isQuantitative || h.iconName === 'BookOpen'))
-    .map((h) => h.id);
-  const totalPages = playerLogs
-    .filter((l) => readingHabitIds.includes(l.habitId))
-    .reduce((sum, l) => sum + (l.quantity || l.pointsEarned), 0);
-
-  // Clean space with photos
-  const cleanHabitIds = habits
-    .filter((h) => h.playerId === playerId && h.category === 'environment')
-    .map((h) => h.id);
-  const cleanWithPhotoCount = playerLogs.filter(
-    (l) => cleanHabitIds.includes(l.habitId) && ((l.proofUrls && l.proofUrls.length > 0) || l.proofUrl)
-  ).length;
-
-  // Gym workouts in single week
-  const gymHabitIds = habits
-    .filter((h) => h.playerId === playerId && h.category === 'physical')
-    .map((h) => h.id);
-  const weeklyGymCounts: Record<string, number> = {};
-  playerLogs
-    .filter((l) => gymHabitIds.includes(l.habitId))
-    .forEach((l) => {
-      const d = parseDate(l.date);
-      const { year, week } = getISOWeek(d);
-      const key = `${year}-W${week}`;
-      weeklyGymCounts[key] = (weeklyGymCounts[key] || 0) + 1;
-    });
-  const maxGymInSingleWeek = Object.values(weeklyGymCounts).reduce((max, c) => Math.max(max, c), 0);
-
-  // Language count
-  const langHabitIds = habits
-    .filter((h) => h.playerId === playerId && h.category === 'language')
-    .map((h) => h.id);
-  const languageCount = playerLogs.filter((l) => langHabitIds.includes(l.habitId)).length;
-
-  // Deep work project count
-  const projectHabitIds = habits
-    .filter((h) => h.playerId === playerId && h.category === 'deep_work')
-    .map((h) => h.id);
-  const projectCount = playerLogs.filter((l) => projectHabitIds.includes(l.habitId)).length;
-
-  // Iron Couple Synergy check: did both hit 240+ on any same date?
   const partnerId: PlayerId = playerId === 'maciek' ? 'myrna' : 'maciek';
-  const partnerLogs = checkIns.filter((c) => c.playerId === partnerId);
-  const partnerDailyPoints: Record<string, number> = {};
-  partnerLogs.forEach((l) => {
-    partnerDailyPoints[l.date] = (partnerDailyPoints[l.date] || 0) + l.pointsEarned;
-  });
+  const dailyPointsMap: Record<string, number> = Object.create(null);
+  const internalPartnerDailyPoints: Record<string, number> = Object.create(null);
+  const dateToWeekMap = new Map<string, string>();
+  const weeklyGymCounts: Record<string, number> = Object.create(null);
 
+  let playerLogsCount = 0;
+  let totalPages = 0;
+  let cleanWithPhotoCount = 0;
+  let languageCount = 0;
+  let projectCount = 0;
+
+  // Single pass over checkIns
+  for (let i = 0; i < checkIns.length; i++) {
+    const l = checkIns[i];
+    if (l.playerId === playerId) {
+      playerLogsCount++;
+      dailyPointsMap[l.date] = (dailyPointsMap[l.date] || 0) + l.pointsEarned;
+
+      if (readingHabitSet.has(l.habitId)) {
+        totalPages += (l.quantity || l.pointsEarned);
+      }
+      if (cleanHabitSet.has(l.habitId) && ((l.proofCount ?? 0) > 0 || (l.proofUrls && l.proofUrls.length > 0) || l.proofUrl)) {
+        cleanWithPhotoCount++;
+      }
+      if (gymHabitSet.has(l.habitId)) {
+        let weekKey = dateToWeekMap.get(l.date);
+        if (weekKey === undefined) {
+          const d = parseDate(l.date);
+          const { year, week } = getISOWeek(d);
+          weekKey = `${year}-W${week}`;
+          dateToWeekMap.set(l.date, weekKey);
+        }
+        weeklyGymCounts[weekKey] = (weeklyGymCounts[weekKey] || 0) + 1;
+      }
+      if (langHabitSet.has(l.habitId)) {
+        languageCount++;
+      }
+      if (projectHabitSet.has(l.habitId)) {
+        projectCount++;
+      }
+    } else if (l.playerId === partnerId) {
+      internalPartnerDailyPoints[l.date] = (internalPartnerDailyPoints[l.date] || 0) + l.pointsEarned;
+    }
+  }
+
+  // Calculate max day points
+  let maxDayPoints = 0;
+  for (const date in dailyPointsMap) {
+    const pts = dailyPointsMap[date];
+    if (pts > maxDayPoints) maxDayPoints = pts;
+  }
+
+  // Calculate max gym workouts in a single calendar week
+  let maxGymInSingleWeek = 0;
+  for (const weekKey in weeklyGymCounts) {
+    const count = weeklyGymCounts[weekKey];
+    if (count > maxGymInSingleWeek) maxGymInSingleWeek = count;
+  }
+
+  // Check if both hit 240+ on the same day
   let bothHit240OnSameDay = false;
-  for (const [date, pts] of Object.entries(dailyPointsMap)) {
-    if (pts >= 240 && (partnerDailyPoints[date] || 0) >= 240) {
+  for (const date in dailyPointsMap) {
+    if (dailyPointsMap[date] >= 240 && (internalPartnerDailyPoints[date] ?? 0) >= 240) {
       bothHit240OnSameDay = true;
       break;
     }
   }
 
-  // Stakes won
-  const stakesWonCount = stakes.filter((s) => s.winnerId === playerId).length;
+  let stakesWonCount = 0;
+  for (let i = 0; i < stakes.length; i++) {
+    if (stakes[i].winnerId === playerId) {
+      stakesWonCount++;
+    }
+  }
 
   return BADGE_DEFINITIONS.map((def) => {
     let currentVal = 0;
@@ -186,7 +206,7 @@ export function calculatePlayerBadges(
 
     switch (def.id) {
       case 'first_checkin':
-        currentVal = playerLogs.length;
+        currentVal = playerLogsCount;
         unlocked = currentVal >= 1;
         break;
       case 'perfect_par':

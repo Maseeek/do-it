@@ -15,6 +15,7 @@ import {
   parseDate,
   addDays,
 } from './date-utils';
+import type { CheckInIndex } from './check-in-index';
 
 export function calculatePlayerScores(
   playerId: PlayerId,
@@ -262,21 +263,35 @@ export interface DailyDuelPoint {
 
 export function getWeeklyDailyDuelPoints(checkIns: CheckIn[], today = getTodayDateString()): DailyDuelPoint[] {
   const days = getCurrentWeekDays(today);
+  const weekStart = days[0].dateStr;
+  const weekEnd = days[6].dateStr;
+
+  const pointsMap = new Map<string, { maciek: number; myrna: number }>();
+  for (let i = 0; i < days.length; i++) {
+    pointsMap.set(days[i].dateStr, { maciek: 0, myrna: 0 });
+  }
+
+  for (let i = 0; i < checkIns.length; i++) {
+    const c = checkIns[i];
+    if (c.date >= weekStart && c.date <= weekEnd) {
+      const entry = pointsMap.get(c.date);
+      if (entry !== undefined) {
+        if (c.playerId === 'maciek') {
+          entry.maciek += c.pointsEarned;
+        } else if (c.playerId === 'myrna') {
+          entry.myrna += c.pointsEarned;
+        }
+      }
+    }
+  }
 
   return days.map((day) => {
-    const dayLogs = checkIns.filter((c) => c.date === day.dateStr);
-    const maciekPoints = dayLogs
-      .filter((c) => c.playerId === 'maciek')
-      .reduce((sum, c) => sum + c.pointsEarned, 0);
-    const myrnaPoints = dayLogs
-      .filter((c) => c.playerId === 'myrna')
-      .reduce((sum, c) => sum + c.pointsEarned, 0);
-
+    const entry = pointsMap.get(day.dateStr);
     return {
       dayName: day.dayName,
       dateStr: day.dateStr,
-      maciekPoints,
-      myrnaPoints,
+      maciekPoints: entry ? entry.maciek : 0,
+      myrnaPoints: entry ? entry.myrna : 0,
       isToday: day.isToday,
       isFuture: day.isFuture,
     };
@@ -311,7 +326,8 @@ export function getStakesRecord(stakes: Stake[]): StakesRecord {
 export function calculateWeeklyHabitStreak(
   habit: Habit,
   checkIns: CheckIn[],
-  today = getTodayDateString()
+  today = getTodayDateString(),
+  indexed?: CheckInIndex
 ): number {
   if (!habit.weeklyTargetDays || habit.weeklyTargetDays <= 0) return 0;
 
@@ -319,16 +335,25 @@ export function calculateWeeklyHabitStreak(
   const todayDays = getCurrentWeekDays(today);
   const currentWeekMondayStr = todayDays[0].dateStr;
 
-  const weekCompletions = new Map<string, Set<string>>();
-  for (const checkIn of checkIns) {
-    if (checkIn.habitId !== habit.id) continue;
-    const weekKey = getWeekKey(checkIn.date);
-    let completedDates = weekCompletions.get(weekKey);
-    if (!completedDates) {
-      completedDates = new Set<string>();
-      weekCompletions.set(weekKey, completedDates);
+  let weekCompletions: Map<string, Set<string>> | undefined;
+
+  if (indexed) {
+    weekCompletions = indexed.weeklyDates.get(habit.id);
+    if (!weekCompletions || weekCompletions.size === 0) return 0;
+  } else {
+    weekCompletions = new Map<string, Set<string>>();
+    for (let i = 0; i < checkIns.length; i++) {
+      const checkIn = checkIns[i];
+      if (checkIn.habitId !== habit.id) continue;
+      const weekKey = getWeekKey(checkIn.date);
+      let completedDates = weekCompletions.get(weekKey);
+      if (!completedDates) {
+        completedDates = new Set<string>();
+        weekCompletions.set(weekKey, completedDates);
+      }
+      completedDates.add(checkIn.date);
     }
-    completedDates.add(checkIn.date);
+    if (weekCompletions.size === 0) return 0;
   }
 
   let streak = 0;
@@ -355,20 +380,31 @@ export function calculateHabitStreak(
   habit: Habit,
   checkIns: CheckIn[],
   restDays: RestDay[] = [],
-  today = getTodayDateString()
+  today = getTodayDateString(),
+  indexed?: CheckInIndex
 ): number {
   if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
-    return calculateWeeklyHabitStreak(habit, checkIns, today);
+    return calculateWeeklyHabitStreak(habit, checkIns, today, indexed);
   }
 
-  const uniqueDates = new Set<string>();
-  for (const checkIn of checkIns) {
-    if (checkIn.habitId === habit.id) uniqueDates.add(checkIn.date);
+  let dateSource: { has(key: string): boolean };
+  if (indexed) {
+    const habitDates = indexed.byHabitAndDate.get(habit.id);
+    if (!habitDates || habitDates.size === 0) return 0;
+    dateSource = habitDates;
+  } else {
+    const uniqueDates = new Set<string>();
+    for (let i = 0; i < checkIns.length; i++) {
+      const checkIn = checkIns[i];
+      if (checkIn.habitId === habit.id) uniqueDates.add(checkIn.date);
+    }
+    if (uniqueDates.size === 0) return 0;
+    dateSource = uniqueDates;
   }
-  if (uniqueDates.size === 0) return 0;
 
   const playerRestDays = new Set<string>();
-  for (const restDay of restDays) {
+  for (let i = 0; i < restDays.length; i++) {
+    const restDay = restDays[i];
     if (restDay.playerId === habit.playerId) playerRestDays.add(restDay.date);
   }
 
@@ -376,7 +412,7 @@ export function calculateHabitStreak(
   const checkDate = parseDate(today);
 
   // If not completed today and not a rest day, check from yesterday
-  const todayCovered = uniqueDates.has(today) || playerRestDays.has(today);
+  const todayCovered = dateSource.has(today) || playerRestDays.has(today);
   if (!todayCovered) {
     checkDate.setDate(checkDate.getDate() - 1);
   }
@@ -387,7 +423,7 @@ export function calculateHabitStreak(
     const d = String(checkDate.getDate()).padStart(2, '0');
     const dateStr = `${y}-${m}-${d}`;
 
-    if (uniqueDates.has(dateStr)) {
+    if (dateSource.has(dateStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else if (playerRestDays.has(dateStr)) {
@@ -400,5 +436,3 @@ export function calculateHabitStreak(
 
   return streak;
 }
-
-

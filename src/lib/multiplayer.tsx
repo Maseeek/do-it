@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { extractInviteCode, hasMatchedAccount, hasMatchedDuelPartner, isValidInviteCode } from './invite-navigation';
+import { createSyncScheduler } from './sync-scheduler';
 import { getSupabaseClient } from './supabase';
 import type { PlayerColorId, PlayerId } from './types';
 import { isDuelProfile, saveDuelColor, type DuelProfile } from './duel-profile';
@@ -51,6 +52,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       const rawUser = sessionData.session?.user ?? null;
       const currentUser = hasMatchedAccount(rawUser) ? rawUser : null;
       setUser(currentUser);
+      setDuel(previous => previous && currentUser && (previous.owner_id === currentUser.id || previous.guest_id === currentUser.id) ? previous : null);
       if (!currentUser) { setDuel(null); setError(null); return; }
       const { data, error: queryError } = await client.from('duels').select('*')
         .or(`owner_id.eq.${currentUser.id},guest_id.eq.${currentUser.id}`).limit(1).maybeSingle();
@@ -64,8 +66,12 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       setError(null);
     } catch (caught) {
       if (sequence !== refreshSequence.current) return;
-      setDuel(null);
+      const unauthorized = caught && typeof caught === 'object' && (
+        ('status' in caught && (caught.status === 401 || caught.status === 403)) ||
+        ('code' in caught && caught.code === '42501'));
+      if (unauthorized) setDuel(null);
       setError(caught instanceof Error ? caught.message : 'Could not load your account.');
+      throw caught;
     } finally {
       if (sequence >= refreshSequence.current) setLoading(false);
     }
@@ -73,33 +79,30 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!client) return;
-    void refresh();
-    const { data: { subscription } } = client.auth.onAuthStateChange(() => {
-      // Defer Supabase queries until the auth event has released its lock.
-      setTimeout(() => void refresh(), 0);
+    let subscribed = false;
+    const scheduler = createSyncScheduler({
+      read: refresh,
+      active: () => document.visibilityState !== 'hidden' && navigator.onLine,
+      subscribed: () => subscribed,
+      failed: () => {},
     });
-    let isSubscribed = false;
-    const channel = client
-      .channel('multiplayer-duels')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duels' }, () => {
-        void refresh();
-      })
-      .subscribe((status) => {
-        isSubscribed = status === 'SUBSCRIBED';
-      });
-    const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
-    window.addEventListener('focus', onVisible);
-    document.addEventListener('visibilitychange', onVisible);
-    const timer = setInterval(() => {
-      if (!isSubscribed) {
-        void refresh();
-      }
-    }, 15000);
+    const { data: { subscription } } = client.auth.onAuthStateChange(event => {
+      if (event !== 'TOKEN_REFRESHED') scheduler.request();
+    });
+    const channel = client.channel('multiplayer-duels')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duels' }, () => scheduler.request())
+      .subscribe(status => { subscribed = status === 'SUBSCRIBED'; });
+    const wake = () => { if (document.visibilityState === 'hidden' || !navigator.onLine) scheduler.pause(); else scheduler.request(); };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('online', wake);
+    window.addEventListener('offline', wake);
+    scheduler.request();
     return () => {
-      window.removeEventListener('focus', onVisible);
-      document.removeEventListener('visibilitychange', onVisible);
+      scheduler.stop();
       subscription.unsubscribe();
-      clearInterval(timer);
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('online', wake);
+      window.removeEventListener('offline', wake);
       void client.removeChannel(channel);
     };
   }, [refresh]);

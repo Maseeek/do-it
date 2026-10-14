@@ -33,3 +33,5 @@ export function indexCheckIns(checkIns: CheckIn[]) {
   }
   return { byHabitAndDate, weeklyDates };
 }
+
+export type CheckInIndex = ReturnType<typeof indexCheckIns>;
