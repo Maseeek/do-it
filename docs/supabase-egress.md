@@ -1,6 +1,6 @@
 # Supabase egress reduction
 
-Issue #65. Based on main at e7b284e. Existing check-ins, proofs and historical scores remain in their existing tables.
+Issue #65. Reconciled with main after PR #64 (f645415). Existing check-ins, proofs and historical scores remain in their existing tables.
 
 ## Changes
 
@@ -12,7 +12,7 @@ Issue #65. Based on main at e7b284e. Existing check-ins, proofs and historical s
 
 ## Verification
 
-`npm run check` includes typecheck, lint, 139 domain/synchronization tests and an isolated PostgreSQL migration suite. The database suite applies the migration twice, compares the original record, verifies photo-preserving note/point edits, checks partner/outsider RLS, rollback, deletion/reinsertion and cursor resets. PGlite validates PostgreSQL behavior in one session; it does not establish hosted multi-session load capacity.
+`npm run check` includes typecheck, lint, 164 domain/synchronization tests and an isolated PostgreSQL migration suite. The database suite applies the migration twice, compares the original record, verifies photo-preserving note/point edits, checks partner/outsider RLS, rollback, deletion/reinsertion and cursor resets. PGlite validates PostgreSQL behavior in one session; it does not establish hosted multi-session load capacity.
 
 `tests/egress-browser.cjs` runs the production browser against a disposable PostgreSQL fixture and a local HTTP adapter for Supabase request shapes. Playwright handles the local realtime test transport. It uses synthetic accounts and data, never production tokens or records.
 
@@ -35,6 +35,10 @@ To reproduce the browser check, build with `NEXT_PUBLIC_SUPABASE_URL=http://127.
 2. Confirm the SQL transaction succeeds. Deploy the reviewed frontend/server change. Existing clients keep working with the existing schema; newly deployed clients require the new RPCs. Refresh existing app tabs to stop their old full-history subscriptions.
 3. Check a proof gallery, a note edit, the partner view and a reopen. Compare database/realtime egress on Supabase's usage page after enough normal activity accumulates.
 
-Production SQL has not been applied. The computer-use browser connection fails on this host, and available local configuration contains no database-admin credential. No billing setting or live account data was changed. These changes lower future usage; they cannot subtract traffic already counted or clear an existing quota restriction.
+Applied to Supabase project `jyugbkxnqkvhnevxfphm` through MCP on 2026-10-14, migration `20261014175421_reduce_duel_egress_incremental_sync`. Live verification retained all 118 Check-ins and 10 proof-bearing records with the same complete Check-in digest before and after. An authenticated owner receives all 118 metadata records without photo bytes, all proofs resolve, and an unchanged delta is 48 bytes. An outsider receives no metadata or sync heads; anonymous RPC execution is denied. Realtime publication and RLS are enabled, and the security advisor reports no additional findings. No billing setting or existing progress/proof data was changed. These changes lower future usage; they cannot subtract traffic already counted or clear an existing quota restriction.
 
-Rolling back the application does not require deleting any data or added synchronization tables. The former client can continue using the original tables and proofs. Coordinate this change with open PRs #62 and #64 because they also modify store/profile synchronization.
+Rolling back the application does not require deleting any data or added synchronization tables. The former client can continue using the original tables and proofs. PR #64 is incorporated. PR #62 remains open and also modifies store/profile synchronization.
+
+## Integration verification (2026-10-14)
+
+The conflict resolution keeps delta synchronization and its write-epoch barrier, combines metadata proof counts with the faster badge calculation, and retains the other PR #64 view/history optimizations. Tests for the superseded `fetchDuelRows` loader are removed; delta, deletion, caching, proof, scheduler and SQL/RLS tests exercise its replacement. Type checking, lint, the domain suite and PostgreSQL suite pass. The configured production build and browser fixture pass all recorded flow checks with no page errors. Hosted multi-session load and interactive production checks remain unverified; the Vercel connector returns a team-scope 403 and the deployed app is behind Vercel Authentication.

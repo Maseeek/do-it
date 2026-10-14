@@ -21,14 +21,12 @@ import { hapticCelebration, hapticLight } from '@/lib/haptic-utils';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
-import dynamic from 'next/dynamic';
-import { loadCurrentPage } from '@/lib/load-current-page';
+import { createDeferredView } from './DeferredView';
 
 import { Habit } from '@/lib/types';
-import { calculateHabitStreak } from '@/lib/score-calculator';
 
-const ActivityFeed = dynamic(() => loadCurrentPage(() => import('./ActivityFeed')).then(module => module.ActivityFeed));
-const ProofGalleryModal = dynamic(() => loadCurrentPage(() => import('./ProofGalleryModal')).then(module => module.ProofGalleryModal));
+const { View: ActivityFeed } = createDeferredView(() => import('./ActivityFeed').then(module => module.ActivityFeed));
+const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null);
 
 export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
   const multiplayer = useMultiplayer();
@@ -44,7 +42,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     selectedDate,
     isTodaySelected,
     checkIns,
-    restDays,
+    getHabitStreak,
     activePlayer,
     isPartnerConnected,
     partnerId,
@@ -80,9 +78,9 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   }, []);
 
   const context = `${activePlayer?.id}:${selectedDate}`;
-  const points = checkIns
+  const points = useMemo(() => checkIns
     .filter((checkIn) => checkIn.playerId === activePlayer?.id && checkIn.date === selectedDate)
-    .reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
+    .reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0), [checkIns, activePlayer?.id, selectedDate]);
   const rawPar = multiplayer.configured
     ? activeHabits.reduce((sum, habit) => sum + habit.points, 0)
     : 240;
@@ -164,9 +162,9 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   }, []);
 
   const partner = partnerId ? players[partnerId] : null;
-  const partnerPoints = checkIns
+  const partnerPoints = useMemo(() => checkIns
     .filter((checkIn) => checkIn.playerId === partnerId && checkIn.date === selectedDate)
-    .reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
+    .reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0), [checkIns, partnerId, selectedDate]);
   const partnerRawPar = multiplayer.configured
     ? habits.filter((h) => h.playerId === partnerId && h.isActive).reduce((sum, h) => sum + h.points, 0)
     : par;
@@ -174,8 +172,8 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   const partnerPhotos = getProofPhotos(partnerCleanSpaceCheckIn);
   const todayStr = getTodayDateString();
   const habitStreaks = useMemo(() => new Map(activeHabits.map(habit =>
-    [habit.id, calculateHabitStreak(habit, checkIns, restDays, todayStr)]
-  )), [activeHabits, checkIns, restDays, todayStr]);
+    [habit.id, getHabitStreak(habit, todayStr)]
+  )), [activeHabits, getHabitStreak, todayStr]);
   const getHabitCardProps = (habit: Habit) => ({
     habit,
     selectedDate,

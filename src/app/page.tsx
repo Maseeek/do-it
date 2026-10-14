@@ -2,6 +2,7 @@
 
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { createDeferredView } from '@/components/DeferredView';
 import { loadCurrentPage } from '@/lib/load-current-page';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
@@ -25,13 +26,18 @@ function ViewLoading() {
   return <p role="status" className="py-8 text-center text-sm text-zinc-500">Loading...</p>;
 }
 
-const DuelView = dynamic(() => loadCurrentPage(() => import('@/components/DuelView')).then(module => module.DuelView), { loading: ViewLoading });
-const ProgressView = dynamic(() => loadCurrentPage(() => import('@/components/ProgressView')).then(module => module.ProgressView), { loading: ViewLoading });
-const SettingsView = dynamic(() => loadCurrentPage(() => import('@/components/SettingsView')).then(module => module.SettingsView), { loading: ViewLoading });
-const MultiplayerGate = dynamic(() => loadCurrentPage(() => import('@/components/MultiplayerGate')).then(module => module.MultiplayerGate), { loading: ViewLoading });
+const { View: DuelView, preload: preloadDuel } = createDeferredView(() => import('@/components/DuelView').then(module => module.DuelView));
+const { View: ProgressView, preload: preloadProgress } = createDeferredView(() => import('@/components/ProgressView').then(module => module.ProgressView));
+const { View: SettingsView, preload: preloadSettings } = createDeferredView(() => import('@/components/SettingsView').then(module => module.SettingsView));
+
+function preloadTab(tab: TabType) {
+  if (tab === 'duel') preloadDuel();
+  if (tab === 'progress') preloadProgress();
+}
+const { View: MultiplayerGate } = createDeferredView(() => import('@/components/MultiplayerGate').then(module => module.MultiplayerGate));
 const ExistingDuelInviteGate = dynamic(() => loadCurrentPage(() => import('@/components/ExistingDuelInviteGate')).then(module => module.ExistingDuelInviteGate), { loading: ViewLoading });
-const HabitOnboarding = dynamic(() => loadCurrentPage(() => import('@/components/HabitOnboarding')).then(module => module.HabitOnboarding), { loading: ViewLoading });
-const KeyboardShortcutsModal = dynamic(() => loadCurrentPage(() => import('@/components/KeyboardShortcutsModal')).then(module => module.KeyboardShortcutsModal), { loading: ViewLoading });
+const { View: HabitOnboarding } = createDeferredView(() => import('@/components/HabitOnboarding').then(module => module.HabitOnboarding));
+const { View: KeyboardShortcutsModal } = createDeferredView(() => import('@/components/KeyboardShortcutsModal').then(module => module.KeyboardShortcutsModal), null);
 
 function AppContent() {
   const {
@@ -245,8 +251,8 @@ function AppContent() {
       {/* App frame */}
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
-        <DesktopSidebar activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); changeTab(tab); }} />
-        <Header onOpenSettings={() => setShowSettings(true)} />
+        <DesktopSidebar activeTab={activeTab} onWarmTab={preloadTab} onChangeTab={(tab) => { setShowSettings(false); changeTab(tab); }} />
+        <Header onOpenSettings={() => setShowSettings(true)} onWarmSettings={preloadSettings} />
         {/* Floating Quick Action Toast */}
         {toastMessage && (
           <div
@@ -283,7 +289,7 @@ function AppContent() {
           </>}
         </main>
 
-        <BottomNav activeTab={activeTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); changeTab(tab); }} />
+        <BottomNav activeTab={activeTab} onWarmTab={preloadTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); changeTab(tab); }} />
 
         {isShortcutsModalOpen && <KeyboardShortcutsModal
           isOpen={isShortcutsModalOpen}

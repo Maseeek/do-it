@@ -4,7 +4,11 @@ import { CheckCircle2, Flame, ChartNoAxesColumn } from 'lucide-react';
 import { TabType } from './BottomNav';
 import { useStore } from '@/lib/store';
 
-export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType; onChangeTab: (tab: TabType) => void }) {
+export function DesktopSidebar({ activeTab, onChangeTab, onWarmTab }: {
+  activeTab: TabType;
+  onChangeTab: (tab: TabType) => void;
+  onWarmTab?: (tab: TabType) => void;
+}) {
   const { activePlayer, activePlayerSummary } = useStore();
   const tabs = [
     { id: 'today' as const, label: 'Today', icon: CheckCircle2, shortcut: '1' },
@@ -20,6 +24,8 @@ export function DesktopSidebar({ activeTab, onChangeTab }: { activeTab: TabType;
           <button
             key={id}
             onClick={() => onChangeTab(id)}
+            onPointerEnter={() => onWarmTab?.(id)}
+            onFocus={() => onWarmTab?.(id)}
             aria-current={activeTab === id ? 'page' : undefined}
             className={`w-full min-h-10 flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-left transition-colors border ${
               activeTab === id

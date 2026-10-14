@@ -8,7 +8,6 @@ import {
   Habit,
   LeaderboardTier,
   Player,
-  PlayerBadgeStatus,
   PlayerId,
   PlayerScoreSummary,
   RestDay,
@@ -29,8 +28,7 @@ import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
 import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, readLegacyProgress, restoreLegacyDuelProgress } from './legacy-import';
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
-import { calculatePlayerScores, getVersusComparison } from './score-calculator';
-import { calculatePlayerBadges } from './badge-utils';
+import { calculateHabitStreak, calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { indexCheckIns } from './check-in-index';
 import {
   rebalanceWeeklyHabitCheckIns,
@@ -102,9 +100,7 @@ interface StoreContextType {
   maciekSummary: PlayerScoreSummary;
   myrnaSummary: PlayerScoreSummary;
   activePlayerSummary: PlayerScoreSummary;
-  maciekBadges: PlayerBadgeStatus[];
-  myrnaBadges: PlayerBadgeStatus[];
-  activePlayerBadges: PlayerBadgeStatus[];
+  getHabitStreak: (habit: Habit, today?: string) => number;
   soundEnabled: boolean;
   setSoundEnabled: (enabled: boolean) => void;
   selectProfile: (id: PlayerId) => void;
@@ -673,7 +669,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const partnerCleanSpaceCheckIn = partnerCleanSpaceHabit
-    ? state.checkIns.find((c) => c.habitId === partnerCleanSpaceHabit.id && c.date === selectedDate)
+    ? checkInIndex.byHabitAndDate.get(partnerCleanSpaceHabit.id)?.get(selectedDate)
     : undefined;
 
   const getHealthTelemetryOnDate = useCallback(
@@ -722,9 +718,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (quantity !== undefined && (!Number.isFinite(quantity) || quantity <= 0)) return;
   
   const targetWeekKey = getWeekKey(targetDate);
-  const existingCheckIn = state.checkIns.find(
-    (c) => c.habitId === habitId && c.date === targetDate
-  );
+  const existingCheckIn = checkInIndex.byHabitAndDate.get(habitId)?.get(targetDate);
 
   const telemetry = state.healthTelemetry?.[`${habitId}:${targetDate}`];
   const healthProgress = getHealthProgressDetails(habit, telemetry, existingCheckIn);
@@ -1310,55 +1304,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
 
-  // Automatically pull Apple Health check-ins queued by background iOS Shortcuts
-  useEffect(() => {
-    if (!isHydrated || multiplayer.configured) return;
 
-    const pullAppleHealthPending = async () => {
-      try {
-        const res = await fetch('/api/sync/apple-health?pending=true&consume=true');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.pendingCheckIns && Array.isArray(data.pendingCheckIns) && data.pendingCheckIns.length > 0) {
-          setState((prev) => {
-            let nextCheckIns = [...prev.checkIns];
-            for (const incoming of data.pendingCheckIns) {
-              if (!incoming || !incoming.habitId) continue;
-              const idx = nextCheckIns.findIndex(
-                (c) => c.habitId === incoming.habitId && c.date === incoming.date
-              );
-              if (idx >= 0) {
-                nextCheckIns[idx] = incoming;
-              } else {
-                nextCheckIns.push(incoming);
-              }
-            }
-            nextCheckIns = rebalanceAllWeeklyCheckIns(nextCheckIns, prev.habits);
-            return {
-              ...prev,
-              checkIns: nextCheckIns,
-              wearableConfig: {
-                ...prev.wearableConfig,
-                appleConnected: true,
-                appleLastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              },
-            };
-          });
-          soundEngine.playFanfare();
-          hapticSuccess();
-        }
-      } catch {
-        // Silent failure in offline/local
-      }
-    };
-
-    pullAppleHealthPending();
-    const handleFocus = () => {
-      pullAppleHealthPending();
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isHydrated, multiplayer.configured]);
 
 
   const disconnectGoogleHealth = useStableCallback(() => { if (typeof document !== 'undefined') {
@@ -1394,18 +1340,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state.activePlayerId, maciekSummary, myrnaSummary]
   );
 
-  // Badges
-  const maciekBadges = useMemo(
-    () => calculatePlayerBadges('maciek', state.checkIns, state.habits, state.stakes, maciekSummary.currentStreak),
-    [state.checkIns, state.habits, state.stakes, maciekSummary.currentStreak]
+  const getHabitStreak = useCallback(
+    (habit: Habit, today = todayStr) => calculateHabitStreak(habit, state.checkIns, restDays, today, checkInIndex),
+    [state.checkIns, restDays, todayStr, checkInIndex]
   );
-
-  const myrnaBadges = useMemo(
-    () => calculatePlayerBadges('myrna', state.checkIns, state.habits, state.stakes, myrnaSummary.currentStreak),
-    [state.checkIns, state.habits, state.stakes, myrnaSummary.currentStreak]
-  );
-
-  const activePlayerBadges = state.activePlayerId === 'maciek' ? maciekBadges : myrnaBadges;
 
   const activeWeeklyStake = state.stakes.find((s) => s.period === 'weekly' && s.status === 'active');
   const activeMonthlyStake = state.stakes.find((s) => s.period === 'monthly' && s.status === 'active');
@@ -1422,7 +1360,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     players: state.players, habits: state.habits, activeHabits, checkIns: state.checkIns,
     stakes: state.stakes, reactions: state.reactions || [], restDays: state.restDays || [],
     selectedDate, isTodaySelected, setSelectedDate, maciekSummary, myrnaSummary,
-    activePlayerSummary, maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled,
+    activePlayerSummary, getHabitStreak, soundEnabled,
     setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, recordInvite, toggleHabit,
     updateCheckInNote, isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate,
     getHabitCheckInOnDate, getCheckInForHabit, getWeeklyHabitCompletions,
@@ -1438,7 +1376,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }), [
     isHydrated, loadedDuelId, syncStatus, storageError, state, activePlayer, activeHabits,
     selectedDate, isTodaySelected, maciekSummary, myrnaSummary, activePlayerSummary,
-    maciekBadges, myrnaBadges, activePlayerBadges, soundEnabled, setSoundEnabled,
+    getHabitStreak, soundEnabled, setSoundEnabled,
     selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, recordInvite, toggleHabit, updateCheckInNote,
     isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate, getHabitCheckInOnDate,
     getCheckInForHabit, getWeeklyHabitCompletions, isHabitWeeklyTargetMet, isHabitSatisfiedOnDate,
