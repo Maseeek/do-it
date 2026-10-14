@@ -1,7 +1,9 @@
 import { performance } from 'node:perf_hooks';
 import { getInitialState } from '../src/lib/seed';
 import { addDays, getTodayDateString, getWeekKey } from '../src/lib/date-utils';
-import { calculatePlayerScores } from '../src/lib/score-calculator';
+import { calculateHabitStreak, calculatePlayerScores, getWeeklyDailyDuelPoints } from '../src/lib/score-calculator';
+import { calculatePlayerBadges } from '../src/lib/badge-utils';
+import { indexCheckIns } from '../src/lib/check-in-index';
 import { rebalanceAllWeeklyCheckIns, rebalanceWeeklyHabitCheckIns } from '../src/lib/weekly-utils';
 import type { CheckIn } from '../src/lib/types';
 
@@ -38,6 +40,14 @@ bench('both player summaries', () => {
   calculatePlayerScores('maciek', checkIns, state.habits);
   calculatePlayerScores('myrna', checkIns, state.habits);
 });
+bench('Today habit streaks with shared index', () => {
+  const indexed = indexCheckIns(checkIns);
+  for (const habit of state.habits) {
+    if (habit.playerId === 'maciek' && habit.isActive) calculateHabitStreak(habit, checkIns, [], today, indexed);
+  }
+});
+bench('weekly Duel day points', () => getWeeklyDailyDuelPoints(checkIns, today));
+bench('selected Player badges', () => calculatePlayerBadges('maciek', checkIns, state.habits, state.stakes, 365));
 bench('hydrate weekly rebalance', () => rebalanceAllWeeklyCheckIns(checkIns, state.habits));
 
 const habit = state.habits.find(habit => habit.weeklyTargetDays);

@@ -1,0 +1,37 @@
+{
+  "measuredAt": "2026-10-12T01:56:12.353Z",
+  "mode": "offline",
+  "samples": 5,
+  "cpu": 1,
+  "mobile": false,
+  "method": "Production builds, 730 prior days across 20 seeded habits (14600 CheckIns), same Chrome process with isolated contexts. First opens follow document reload with HTTP cache retained. Interactions alternate build order, include one observed localStorage write and two animation frames, and parse its value after timing. CPU throttling simulates slower execution; it is not physical mobile hardware.",
+  "variants": {
+    "baseline": {
+      "samples": [],
+      "errors": [],
+      "offline": {
+        "localMutationAndUndo": true,
+        "warmedViews": [
+          "Progress",
+          "Duel",
+          "Settings"
+        ]
+      },
+      "persistedAfterReload": 14600
+    },
+    "current": {
+      "samples": [],
+      "errors": [],
+      "offline": {
+        "localMutationAndUndo": true,
+        "warmedViews": [
+          "Progress",
+          "Duel",
+          "Settings"
+        ]
+      },
+      "persistedAfterReload": 14600
+    }
+  },
+  "browser": "148.0.7778.178"
+}

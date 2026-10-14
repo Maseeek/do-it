@@ -1,16 +1,91 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CheckIn, CouplesReaction, Habit, RestDay, Stake } from './types';
 
-async function fetchDuelRows<T>(client: SupabaseClient, table: string, duelId: string): Promise<T[]> {
+export async function fetchDuelRows<T>(client: SupabaseClient, table: string, duelId: string): Promise<T[]> {
   const rows: T[] = [];
   const pageSize = 1000;
-  for (let offset = 0; ;) {
-    const { data, count, error } = await client.from(table).select('data', { count: 'exact' }).eq('duel_id', duelId)
-      .order('id').range(offset, offset + pageSize - 1);
+  let totalCount: number | null = null;
+  let offset = 0;
+
+  function queryRange(start: number, countExact = false) {
+    const options: { count?: 'exact' } = countExact ? { count: 'exact' } : {};
+    return client.from(table).select('data', options).eq('duel_id', duelId)
+      .order('id').range(start, start + pageSize - 1);
+  }
+
+  while (true) {
+    const { data, count, error } = await queryRange(offset, totalCount === null);
     if (error) throw error;
-    rows.push(...(data || []).map(row => row.data as T));
-    if (!data?.length || (count !== null && rows.length >= count) || (count === null && data.length < pageSize)) return rows;
+    if (totalCount === null && typeof count === 'number' && Number.isInteger(count) && count >= 0) {
+      totalCount = count;
+    }
+    const pageRows = (data || []).map(row => row.data as T);
+    rows.push(...pageRows);
+    if (!data?.length || (totalCount !== null && rows.length >= totalCount)) {
+      return rows;
+    }
     offset += data.length;
+
+    // Once the exact count is known, read remaining pages in bounded parallel batches of up to 3.
+    if (totalCount !== null) {
+      const stride = data.length;
+      let fellBackToSerial = false;
+
+      while (offset < totalCount && !fellBackToSerial) {
+        const batchStarts: number[] = [];
+        for (let slot = 0; slot < 3 && offset + slot * stride < totalCount; slot++) {
+          batchStarts.push(offset + slot * stride);
+        }
+        if (batchStarts.length === 0) break;
+
+        const responses = await Promise.all(
+          batchStarts.map(async start => {
+            const res = await queryRange(start);
+            if (res.error) throw res.error;
+            return res;
+          })
+        );
+
+        for (let i = 0; i < responses.length; i++) {
+          const start = batchStarts[i];
+          if (start !== offset) {
+            // Unexpected gap or overlap: discard this and later speculative pages.
+            fellBackToSerial = true;
+            break;
+          }
+          const batchData = responses[i].data;
+          if (!batchData?.length) {
+            return rows;
+          }
+          rows.push(...batchData.map(row => row.data as T));
+          offset += batchData.length;
+          if (rows.length >= totalCount) {
+            return rows;
+          }
+          if (batchData.length !== Math.min(stride, totalCount - start)) {
+            // Changed page size: discard later speculative pages and fall back.
+            fellBackToSerial = true;
+            break;
+          }
+        }
+      }
+
+      // If an unexpected short page or gap occurred, complete remaining rows serially.
+      while (offset < totalCount) {
+        const { data: serialData, error: serialError } = await queryRange(offset);
+        if (serialError) throw serialError;
+        if (!serialData?.length) {
+          return rows;
+        }
+        rows.push(...serialData.map(row => row.data as T));
+        offset += serialData.length;
+        if (rows.length >= totalCount) {
+          return rows;
+        }
+      }
+
+      return rows;
+    }
   }
 }
 
