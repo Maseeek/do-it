@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "tsc --project tsconfig.test.json && node --test .scratch/test-build/*.test.js",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test && npm run test:db",
+    "test:db": "node supabase/egress.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",
@@ -22,6 +23,7 @@
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.9",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",

@@ -46,6 +46,19 @@ test('badges retain duplicate records, zero-quantity fallback, proofs and multip
   assert.equal(value('iron_couple'), 1);
 });
 
+test('metadata-only proofs preserve badge values before photos are loaded', () => {
+  const clean = habit('maciek-clean');
+  const photos = Array.from({ length: 5 }, (_, index) =>
+    log(clean, addDays('2026-10-14', -index), { proofUrls: ['photo'] }));
+  const metadata = photos.map(({ proofUrls, ...checkIn }) => ({
+    ...checkIn, proofCount: proofUrls?.length ?? 0,
+  }));
+  const expected = calculatePlayerBadges('maciek', photos, state.habits, [], 5);
+  const actual = calculatePlayerBadges('maciek', metadata, state.habits, [], 5);
+  assert.deepEqual(actual, expected);
+  assert.equal(actual.find(item => item.badge.id === 'clean_space_sentinel')?.isUnlocked, true);
+});
+
 test('weekly Duel points include duplicate records and both sides of the civil New Year', () => {
   const owner = habit('maciek-gym');
   const guest = habit('myrna-gym');

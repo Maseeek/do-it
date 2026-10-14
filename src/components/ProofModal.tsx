@@ -1,5 +1,7 @@
 'use client';
 
+import { useStore } from '@/lib/store';
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Habit } from '@/lib/types';
 import { Check, ImagePlus, Loader2, Upload, X } from 'lucide-react';
@@ -17,6 +19,8 @@ interface ProofModalProps {
 }
 
 export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = [] }: ProofModalProps) {
+  const { resolveProofImages } = useStore();
+  const [proofLoadFailed, setProofLoadFailed] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>(initialPhotos);
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -28,12 +32,19 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
   useEffect(() => {
     const upload = uploadSequence.current;
     if (isOpen) {
-      setPhotoPreviews(openingPhotos.current);
+      const sequence = ++upload.id;
       setUploadError(null);
-      setIsCompressing(false);
+      setProofLoadFailed(false);
+      setIsCompressing(true);
+      setPhotoPreviews([]);
+      resolveProofImages(openingPhotos.current).then(photos => {
+        if (upload.id === sequence) setPhotoPreviews(photos);
+      }).catch(error => {
+        if (upload.id === sequence) { setProofLoadFailed(true); setUploadError(error instanceof Error ? error.message : 'Could not load existing photos. Close and try again.'); }
+      }).finally(() => { if (upload.id === sequence) setIsCompressing(false); });
     }
     return () => { upload.id++; };
-  }, [isOpen]);
+  }, [isOpen, resolveProofImages]);
 
   if (!isOpen) return null;
 
@@ -70,7 +81,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
   };
 
   const handleComplete = () => {
-    if (isCompressing || (habit.requiresProof && photoPreviews.length === 0)) return;
+    if (proofLoadFailed || isCompressing || (habit.requiresProof && photoPreviews.length === 0)) return;
     soundEngine.playCheck();
     hapticMedium();
     onConfirm(photoPreviews.length > 0 ? photoPreviews : undefined);
@@ -208,7 +219,7 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
           </button>
           <button
             onClick={handleComplete}
-            disabled={isCompressing || (habit.requiresProof && photoPreviews.length === 0)}
+            disabled={proofLoadFailed || isCompressing || (habit.requiresProof && photoPreviews.length === 0)}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50"
           >
             <Check className="w-3.5 h-3.5 stroke-[2.5]" />

@@ -1,5 +1,7 @@
 'use client';
 
+import { ProofImage } from './ProofImage';
+
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatFriendlyDate } from '@/lib/date-utils';
@@ -131,9 +133,7 @@ export function ProofGalleryModal({
 
         {/* Main Photo View */}
         <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[60vh] overflow-hidden select-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={currentImage}
+<ProofImage src={currentImage}
             alt={`${habitTitle} proof ${currentIndex + 1}`}
             className="w-full h-full object-contain max-h-[60vh]"
           />
@@ -178,9 +178,7 @@ export function ProofGalleryModal({
                     : 'border-white/[0.08] opacity-50 hover:opacity-100'
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img}
+<ProofImage src={img}
                   alt={`Thumb ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />
