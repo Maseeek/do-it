@@ -73,11 +73,12 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
       if (!client) throw new Error('Supabase is not configured');
       if (mode === 'signup') {
         const validInvite = isValidInviteCode(effectiveInviteCode) ? effectiveInviteCode.trim() : undefined;
+        const membershipSetup = new URL(window.location.href).searchParams.get('membership') === 'setup';
         const { data, error: authError } = await client.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: validInvite ? window.location.href : window.location.origin,
+            emailRedirectTo: validInvite || membershipSetup ? window.location.href : window.location.origin,
             data: { display_name: name.trim(), ...(validInvite ? { invite_code: validInvite } : {}) },
           },
         });

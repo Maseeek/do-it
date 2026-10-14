@@ -74,6 +74,13 @@ function AppContent() {
   const multiplayerEntry = getMultiplayerEntry(multiplayer.configured, !!multiplayer.user, !!multiplayer.duel, inviteCode);
   const pendingDuelId = multiplayer.duel?.id;
   const pendingGuestId = multiplayer.duel?.guest_id;
+  const membershipSetup = searchParams.get('membership') === 'setup';
+
+  useEffect(() => {
+    if (membershipSetup && multiplayer.user && pendingDuelId) {
+      window.location.replace('/billing');
+    }
+  }, [membershipSetup, multiplayer.user, pendingDuelId]);
 
   useEffect(() => {
     if (pendingDuelId && !pendingGuestId && tabParam !== 'today') setActiveTab('duel');
