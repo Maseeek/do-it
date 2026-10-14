@@ -38,6 +38,28 @@ $$;
 revoke all on function public.get_recommendation_code() from public, anon;
 grant execute on function public.get_recommendation_code() to authenticated;
 
+-- Read rewards from the ledger: a confirmation concurrent with first joining
+-- a Duel can leave its cached invite counters behind the committed receipt.
+create or replace function public.get_player_duel_profile()
+returns public.duels language plpgsql security definer set search_path = '' as $$
+declare result public.duels;
+begin
+  if auth.uid() is null then raise exception 'Sign in first'; end if;
+  select d.* into result from public.duels d
+    where d.owner_id = auth.uid() or d.guest_id = auth.uid()
+    order by d.created_at limit 1;
+  if result.id is null then return null; end if;
+  select count(*) filter (where referrer_id = result.owner_id),
+    count(*) filter (where referrer_id = result.guest_id)
+    into result.owner_invites, result.guest_invites
+    from public.player_referrals where confirmed_at is not null
+      and referrer_id in (result.owner_id, result.guest_id);
+  return result;
+end;
+$$;
+revoke all on function public.get_player_duel_profile() from public, anon;
+grant execute on function public.get_player_duel_profile() to authenticated;
+
 create or replace function public.capture_player_referral()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare referral_code text; credited_player uuid;

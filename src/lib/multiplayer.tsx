@@ -54,8 +54,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       setUser(currentUser);
       setDuel(previous => previous && currentUser && (previous.owner_id === currentUser.id || previous.guest_id === currentUser.id) ? previous : null);
       if (!currentUser) { setDuel(null); setError(null); return; }
-      const { data, error: queryError } = await client.from('duels').select('*')
-        .or(`owner_id.eq.${currentUser.id},guest_id.eq.${currentUser.id}`).limit(1).maybeSingle();
+      const { data, error: queryError } = await client.rpc('get_player_duel_profile');
       if (sequence !== refreshSequence.current) return;
       if (queryError) throw queryError;
       const fetchedDuel = isDuelProfile(data) ? data : null;

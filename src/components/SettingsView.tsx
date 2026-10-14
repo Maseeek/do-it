@@ -246,7 +246,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                   value={recommendUrl}
                   placeholder={multiplayer.configured ? 'Loading your link…' : 'Sign in to earn referral rewards'}
                   onFocus={event => event.currentTarget.select()}
-                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-white dark:bg-[#17181b] px-3 text-xs text-foreground outline-none font-mono"
+                  className="min-h-11 min-w-0 basis-full sm:basis-auto flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-white dark:bg-[#17181b] px-3 text-xs text-foreground outline-none font-mono"
                 />
                 <button
                   type="button"

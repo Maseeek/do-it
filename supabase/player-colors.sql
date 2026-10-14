@@ -64,6 +64,7 @@ declare
   v_player_slot text;
   lifetime_points numeric;
   required_points integer;
+  earned_referrals integer;
 begin
   if auth.uid() is null then raise exception 'Sign in first'; end if;
 
@@ -96,8 +97,14 @@ begin
   end if;
 
   if requested_color = 'gold' then
-    if (v_player_slot = 'maciek' and coalesce(target_duel.owner_invites, 0) < 1) or
-       (v_player_slot = 'myrna' and coalesce(target_duel.guest_invites, 0) < 1) then
+    if to_regclass('public.player_referrals') is not null then
+      select count(*) into earned_referrals from public.player_referrals
+        where referrer_id = auth.uid() and confirmed_at is not null;
+    else
+      -- Preserve compatibility while the referral migration is being applied.
+      earned_referrals := case when v_player_slot = 'maciek' then target_duel.owner_invites else target_duel.guest_invites end;
+    end if;
+    if coalesce(earned_referrals, 0) < 1 then
       raise exception 'A new friend must create and confirm an account through your recommendation link to unlock Gold';
     end if;
   else
@@ -115,6 +122,9 @@ begin
     update public.duels set owner_color = requested_color where id = target_duel.id returning * into target_duel;
   else
     update public.duels set guest_color = requested_color where id = target_duel.id returning * into target_duel;
+  end if;
+  if to_regprocedure('public.get_player_duel_profile()') is not null then
+    return public.get_player_duel_profile();
   end if;
   return target_duel;
 end;
