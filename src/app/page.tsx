@@ -14,7 +14,7 @@ import { extractRecommendationReferrer, isRecommendationCode, RECOMMENDATION_STO
 import { Header } from '@/components/Header';
 import { DesktopSidebar } from '@/components/DesktopSidebar';
 import { BottomNav, TabType } from '@/components/BottomNav';
-import { TodayPrototype } from '@/components/prototypes/today/TodayPrototype';
+import { TodayView } from '@/components/TodayView';
 import { ProfileGate } from '@/components/ProfileGate';
 import { getMultiplayerEntry, shouldHoldDuelLoadingScreen } from '@/lib/invite-navigation';
 import { Check } from 'lucide-react';
@@ -278,7 +278,7 @@ function AppContent() {
         <main id="main-content" className="flex-1 w-full px-[var(--page-gutter)] pt-6 lg:pt-10 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] lg:pb-12">
           {storageError && <div role="alert" className="mb-6 rounded-[var(--radius-card)] bg-amber-500/10 px-4 py-3 text-label font-normal text-amber-700 dark:text-amber-300">{storageError}</div>}
           {showSettings ? <SettingsView onBack={() => setShowSettings(false)} onChooseHabits={() => { setShowSettings(false); setOpenPlanner(true); setActiveTab('progress'); }} /> : <>
-            {activeTab === 'today' && <TodayPrototype onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />}
+            {activeTab === 'today' && <TodayView onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />}
             {activeTab === 'duel' && <DuelView />}
             {activeTab === 'progress' && (
               <ProgressView
