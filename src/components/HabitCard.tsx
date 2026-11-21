@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
 import { getHealthProgressDetails } from '@/lib/health-correlation';
 import { calculateHealthPoints } from '@/lib/health-rewards';
-import { HabitIcon } from './HabitIcon';
 import { createDeferredView } from './DeferredView';
 
 
@@ -20,7 +19,6 @@ import {
   MessageSquarePlus,
   Minus,
   Plus,
-  Sparkles,
   X,
 } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
@@ -217,380 +215,304 @@ export const HabitCard = React.memo(function HabitCard({
     setIsEditingNote(true);
   };
 
+  const weeklyLabel = isWeeklyHabit
+    ? isWeeklyTargetMet
+      ? `Weekly goal met · ${weeklyCompletions}/${habit.weeklyTargetDays}`
+      : `${weeklyCompletions} of ${habit.weeklyTargetDays} this week`
+    : null;
+  const detailLabel = completed && checkIn?.quantity
+    ? `Logged ${checkIn.quantity} ${habit.quantityUnit || 'units'}`
+    : habit.description;
+  const secondaryLine = [weeklyLabel, detailLabel].filter(Boolean).join(' · ');
+  const pointsLabel = completed
+    ? checkIn && checkIn.pointsEarned === 0
+      ? '+0'
+      : `+${checkIn?.pointsEarned ?? habit.points}`
+    : isWeeklyTargetMet
+    ? 'Goal met'
+    : `+${availablePoints}`;
+  const pointsTitle =
+    completed && checkIn?.pointsEarned === 0
+      ? 'Weekly target reached · 0 pts awarded'
+      : isWeeklyTargetMet && !completed
+      ? 'Weekly goal met · Target reached'
+      : habit.isQuantitative && completed
+      ? 'Edit pages'
+      : undefined;
+  const pointsTone = isPulsing
+    ? 'text-player-600 dark:text-player-300'
+    : completed
+    ? checkIn?.pointsEarned === 0
+      ? 'text-[var(--text-muted)]'
+      : 'text-player-600 dark:text-player-300'
+    : isHealthLocked
+    ? healthProgress?.classes.text
+    : isWeeklyTargetMet
+    ? 'text-emerald-600 dark:text-emerald-400'
+    : 'text-[var(--text-muted)]';
+
   return (
     <>
+      {/* The check button's ::before stretches over the whole card, so one tap anywhere checks in.
+          Secondary controls sit above it with `relative`. */}
       <div
-        className={`group relative rounded-xl p-3.5 transition-all duration-200 border ${
+        className={`group relative rounded-[var(--radius-card)] border py-2 pl-2 pr-1 transition-[background-color,border-color,box-shadow] duration-200 ${
           isPulsing
-            ? 'bg-player-950/30 border-player-400/90 animate-kinetic-card-player z-10'
+            ? 'z-10 border-player-400/90 bg-player-500/10 animate-kinetic-card-player'
             : satisfied
-            ? `bg-zinc-100/90 dark:bg-[#0b0c0f]/90 border-black/[0.06] dark:border-zinc-800/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
+            ? `border-transparent bg-[var(--surface-2)]/60 ${justSettled ? 'animate-kinetic-settle' : ''}`
             : isHealthLocked
-            ? `bg-white dark:bg-[#0e1013] ${healthProgress?.classes.border} shadow-xs`
-            : 'bg-white dark:bg-[#0e1013] border-black/[0.08] dark:border-zinc-800/90 hover:border-black/15 dark:hover:border-zinc-700 shadow-xs'
+            ? `bg-[var(--surface-1)] ${healthProgress?.classes.border}`
+            : 'border-[var(--border-subtle)] bg-[var(--surface-1)] hover:border-[var(--border-medium)]'
         }`}
       >
-        {/* Recessed Left-Edge Telemetry Channel Bar for Completed State */}
-        {satisfied && !isPulsing && (
-          <div
-            aria-hidden="true"
-            className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${
-              completed
-                ? healthProgress
-                  ? `${healthProgress.classes.bar} ${healthProgress.classes.glow}`
-                  : 'bg-player-500/50'
-                : 'bg-emerald-500/50'
-            }`}
-          />
-        )}
-        {!satisfied && isHealthLocked && !isPulsing && (
-          <div
-            aria-hidden="true"
-            className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r-full ${healthProgress?.classes.bar}`}
-          />
-        )}
-
         {/* Kinetic Score Pulse Surface Overlay (Laser Sweep + Edge Highlight) */}
         {isPulsing && (
           <div
             key={localPulse?.token ?? 'locking'}
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
           >
-            {/* Horizontal laser sweep from checkbox to points counter */}
-            <div
-              className="absolute inset-y-0 w-1/2 animate-kinetic-laser-sweep bg-gradient-to-r from-transparent via-player-400/22 to-transparent"
-            />
-            {/* Top perimeter ignition filament */}
-            <div
-              className="absolute inset-x-4 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-player-300/90 to-transparent"
-            />
+            <div className="absolute inset-y-0 w-1/2 animate-kinetic-laser-sweep bg-gradient-to-r from-transparent via-player-400/22 to-transparent" />
+            <div className="absolute inset-x-4 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-player-300/90 to-transparent" />
           </div>
         )}
 
-        <div className="relative flex items-center gap-3">
-          {/* Precision Telemetry Checkbox with Shockwave Ring & Custom SVG Stroke Draw */}
-          <div className="relative shrink-0">
-            {isPulsing && (
-              <span
-                key={`ring-${localPulse?.token ?? 'lock'}`}
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-lg border-2 animate-kinetic-ring border-player-400"
-              />
-            )}
-
-            <button
-              onClick={handleToggle}
-              aria-label={
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleToggle}
+            aria-label={
+              isHealthLocked
+                ? healthProgress?.lockReason
+                : completed
+                ? `Mark ${habit.title} uncompleted for today`
+                : isWeeklyTargetMet
+                ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
+                : `Mark ${habit.title} completed`
+            }
+            title={isHealthLocked ? healthProgress?.lockReason : undefined}
+            aria-disabled={isHealthLocked}
+            className={`group/check flex size-11 shrink-0 items-center justify-center rounded-full before:absolute before:inset-0 before:rounded-[var(--radius-card)] before:content-[''] ${
+              isHealthLocked ? 'cursor-not-allowed' : ''
+            }`}
+          >
+            <span
+              className={`relative flex size-7 items-center justify-center rounded-full transition-[transform,background-color,border-color] duration-150 ${
+                isHealthLocked ? '' : 'group-active/check:scale-90'
+              } ${isPulsing ? 'animate-kinetic-box-snap ' : ''}${
                 isHealthLocked
-                  ? healthProgress?.lockReason
+                  ? `border-2 ${healthProgress?.classes.border} ${healthProgress?.classes.bg} ${healthProgress?.classes.text}`
                   : completed
-                  ? `Mark ${habit.title} uncompleted for today`
+                  ? 'bg-player-500 text-white'
                   : isWeeklyTargetMet
-                  ? `Weekly goal reached (${weeklyCompletions}/${habit.weeklyTargetDays}). Click to log an extra session.`
-                  : `Mark ${habit.title} completed`
-              }
-              title={isHealthLocked ? healthProgress?.lockReason : undefined}
-              aria-disabled={isHealthLocked}
-              className={`relative before:absolute before:-inset-2 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${
-                isHealthLocked
-                  ? 'cursor-not-allowed opacity-90'
-                  : 'active:scale-90'
-              } ${
-                isPulsing ? 'animate-kinetic-box-snap ' : ''
-              }${
-                isHealthLocked
-                  ? `${healthProgress?.classes.border} ${healthProgress?.classes.bg} ${healthProgress?.classes.text} shadow-xs`
-                  : completed
-                  ? 'bg-player-500 border border-player-300/90 text-white shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.35)]'
-                  : isWeeklyTargetMet
-                  ? 'border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-                  : 'border border-zinc-300 dark:border-zinc-700/90 bg-zinc-100 hover:bg-zinc-200/70 dark:bg-[#090a0d] hover:border-zinc-400 dark:hover:border-zinc-500 text-transparent hover:text-zinc-400 dark:hover:text-zinc-500 shadow-xs dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.55)]'
+                  ? 'border-2 border-emerald-500/60 text-emerald-600 dark:text-emerald-400'
+                  : 'border-2 border-[var(--border-strong)] text-[var(--text-muted)] group-hover:border-[var(--text-muted)]'
               }`}
             >
+              {isPulsing && (
+                <span
+                  key={`ring-${localPulse?.token ?? 'lock'}`}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-0.5 rounded-full border-2 border-player-400 animate-kinetic-ring"
+                />
+              )}
               {isHealthLocked ? (
-                <Lock className={`w-3.5 h-3.5 ${healthProgress?.classes.text}`} />
+                <Lock className="size-3.5" />
               ) : (
                 <svg
                   viewBox="0 0 20 20"
                   fill="none"
                   aria-hidden="true"
-                  className={`w-4 h-4 ${
+                  className={`size-4 ${
                     !completed && !isWeeklyTargetMet
-                      ? 'opacity-0 group-hover:opacity-40 transition-opacity duration-150'
+                      ? 'opacity-0 transition-opacity duration-150 group-hover:opacity-50'
                       : 'opacity-100'
                   }`}
                 >
                   <path
-                    d="M4.5 10.5L8.25 14.25L15.5 6.25"
+                    d="M5 10.5L8.5 14L15 6.5"
                     stroke="currentColor"
-                    strokeWidth="2.6"
-                    strokeLinecap="square"
-                    strokeLinejoin="miter"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     className={isPulsing ? 'animate-kinetic-check-draw' : ''}
                   />
                 </svg>
               )}
-            </button>
-          </div>
+            </span>
+          </button>
 
-          {/* Middle: Metadata + Title + Description */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Title + one secondary line. Taps fall through to the stretched check button. */}
+          <div className="pointer-events-none min-w-0 flex-1 py-1 pl-1">
+            <div className="flex min-w-0 items-center gap-2">
               <span
-                className={`w-3.5 h-3.5 transition-colors ${
+                className={`relative truncate text-body font-medium transition-colors ${
                   isPulsing
-                    ? 'text-player-400'
+                    ? 'text-foreground'
                     : satisfied
-                    ? 'text-zinc-500'
-                    : 'text-zinc-400'
-                }`}
-              >
-                <HabitIcon name={habit.iconName} className="w-3.5 h-3.5" />
-              </span>
-
-              <span
-                className={`text-[10px] uppercase font-mono font-medium tracking-wider transition-colors ${
-                  isPulsing
-                    ? 'text-player-300'
-                    : satisfied
-                    ? 'text-zinc-500'
-                    : 'text-zinc-400'
-                }`}
-              >
-                {habit.category.replace('_', ' ')}
-              </span>
-
-              {isWeeklyHabit && (
-                <span
-                  className={`inline-flex items-center text-[9px] font-mono px-1.5 py-0.2 rounded border ${
-                    isWeeklyTargetMet
-                      ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25 font-semibold'
-                      : 'text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
-                  }`}
-                >
-                  {weeklyCompletions}/{habit.weeklyTargetDays} wk{isWeeklyTargetMet ? ' · met' : ''}
-                </span>
-              )}
-
-              {habitStreak >= 2 && (
-                <span
-                  className="inline-flex items-center gap-0.5 text-[9px] font-mono font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20"
-                  title={`${habitStreak}-day habit streak`}
-                >
-                  <Flame className="w-2.5 h-2.5 text-amber-400" />
-                  {habitStreak}d
-                </span>
-              )}
-
-              {habit.points >= 40 && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-amber-400/90 bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20">
-                  <Sparkles className="w-2.5 h-2.5" />
-                  Key
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 mt-0.5">
-              <span
-                className={`relative inline-block max-w-full text-sm font-medium tracking-tight truncate transition-colors ${
-                  isPulsing
-                    ? 'text-white'
-                    : satisfied
-                    ? 'line-through decoration-zinc-400/80 dark:decoration-zinc-600/80 text-zinc-400 dark:text-zinc-500'
-                    : 'text-zinc-900 dark:text-zinc-100'
+                    ? 'text-[var(--text-muted)] line-through decoration-[var(--border-strong)]'
+                    : 'text-foreground'
                 }`}
               >
                 {habit.title}
                 {isPulsing && (
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1.5px] rounded-full animate-kinetic-strike bg-gradient-to-r from-player-400 via-player-200 to-white shadow-[0_0_8px_color-mix(in_srgb,var(--player-base)_90%,transparent)]"
+                    className="pointer-events-none absolute left-0 right-0 top-1/2 h-[1.5px] -translate-y-1/2 rounded-full bg-gradient-to-r from-player-400 via-player-300 to-player-200 animate-kinetic-strike"
                   />
                 )}
               </span>
+              {habitStreak >= 2 && (
+                <span
+                  className="num inline-flex shrink-0 items-center gap-0.5 text-label text-amber-600 dark:text-amber-400"
+                  title={`${habitStreak}-day habit streak`}
+                >
+                  <Flame className="size-3.5" aria-hidden="true" />
+                  {habitStreak}
+                  <span className="sr-only"> day streak</span>
+                </span>
+              )}
             </div>
 
-            <p className={`text-[11px] truncate mt-0.5 ${satisfied && !isPulsing ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500 dark:text-zinc-400'}`}>
-              {completed && checkIn?.quantity
-                ? `Logged ${checkIn.quantity} ${habit.quantityUnit || 'units'} (+${checkIn.pointsEarned} pts)`
-                : habit.description}
-            </p>
-
-            {/* Google Health Correlation Telemetry Bar */}
-            {healthProgress && (
-              <div
-                className={`mt-2 p-2 rounded-lg border ${healthProgress.classes.border} ${healthProgress.classes.bg} space-y-1.5`}
+            {secondaryLine && (
+              <p
+                className={`mt-0.5 truncate text-label font-normal ${
+                  isWeeklyTargetMet && !completed
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : satisfied && !isPulsing
+                    ? 'text-[var(--text-muted)]'
+                    : 'text-[var(--text-secondary)]'
+                }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-mono">
-                  <span className="flex flex-wrap items-center gap-1.5 font-medium text-zinc-300">
-                    <Activity className={`w-3 h-3 ${healthProgress.classes.text}`} />
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-400">Google Health</span>
-                    <span className="text-zinc-600">·</span>
-                    <span className={`font-semibold ${healthProgress.classes.text}`}>
-                      {healthProgress.formattedValue}
+                {secondaryLine}
+              </p>
+            )}
+
+            {checkIn?.note && (
+              <p className="mt-1 flex min-w-0 items-center gap-1.5 text-label font-normal italic text-[var(--text-secondary)]">
+                <MessageSquare className="size-3.5 shrink-0 text-player-500" aria-hidden="true" />
+                <span className="truncate">{checkIn.note}</span>
+              </p>
+            )}
+
+            {/* Google Health progress: one quiet line and a thin bar */}
+            {healthProgress && (
+              <div className="mt-2 space-y-1.5 pr-2">
+                <div className="flex items-center justify-between gap-2 text-caption text-[var(--text-secondary)]">
+                  <span className="flex min-w-0 items-center gap-1.5 truncate">
+                    <Activity className={`size-3.5 shrink-0 ${healthProgress.classes.text}`} aria-hidden="true" />
+                    <span className="truncate">
+                      Google Health · <span className={`num font-medium ${healthProgress.classes.text}`}>{healthProgress.formattedValue}</span> / {healthProgress.formattedTarget}
                     </span>
-                    <span className="text-zinc-500">/ {healthProgress.formattedTarget}</span>
                   </span>
-                  <span
-                    className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${healthProgress.classes.text} border ${healthProgress.classes.border}`}
-                  >
+                  <span className={`num shrink-0 font-medium ${healthProgress.classes.text}`}>
                     {healthProgress.percentage}% · {healthProgress.label}
                   </span>
                 </div>
-                {/* Visual telemetry progress bar */}
-                <div role="progressbar" aria-label={healthProgress.metric === 'sleep' ? 'Sleep points earned' : 'Health goal progress'} aria-valuenow={healthProgress.barPercentage} aria-valuemin={0} aria-valuemax={100} className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800/80 overflow-hidden">
+                <div role="progressbar" aria-label={healthProgress.metric === 'sleep' ? 'Sleep points earned' : 'Health goal progress'} aria-valuenow={healthProgress.barPercentage} aria-valuemin={0} aria-valuemax={100} className="h-1 w-full overflow-hidden rounded-full bg-[var(--surface-3)]">
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${healthProgress.classes.bar} ${healthProgress.classes.glow}`}
+                    className={`h-full rounded-full transition-all duration-300 ${healthProgress.classes.bar}`}
                     style={{ width: `${healthProgress.barPercentage}%` }}
                   />
                 </div>
               </div>
             )}
-
-            {/* Inline warning alert when user attempts to check off a locked habit */}
-            {lockedAlertMessage && (
-              <div
-                role="alert"
-                className="mt-2 p-2 rounded-lg bg-orange-950/70 border border-orange-600/50 text-[11px] text-orange-200 flex items-start justify-between gap-2 animate-in fade-in duration-150"
-              >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Lock className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                  <span className="leading-tight">{lockedAlertMessage}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setLockedAlertMessage(null)}
-                  aria-label="Dismiss alert"
-                  className="text-orange-400 hover:text-white p-0.5 shrink-0"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-
-            {/* Micro-note preview */}
-            {checkIn?.note && (
-              <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-300 italic bg-zinc-100 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 rounded-md px-2 py-0.5 max-w-full">
-                <MessageSquare className="w-2.5 h-2.5 text-player-400 shrink-0" />
-                <span className="truncate">{checkIn.note}</span>
-              </div>
-            )}
           </div>
 
-          {/* Right: Rectangular Points Badge & Kinetic +PTS Counter Pop */}
-          <div className="relative flex flex-col items-end gap-1.5 shrink-0">
+          {/* Right: quiet points + secondary actions */}
+          <div className="relative flex shrink-0 items-center">
             {isPulsing && pulsePoints > 0 && (
               <span
                 key={`pts-${localPulse?.token ?? 'lock'}`}
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-2 right-0 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-extrabold tracking-tight whitespace-nowrap border shadow-lg animate-kinetic-pts-launch bg-player-500 text-white border-player-300 shadow-player-500/40"
+                className="num pointer-events-none absolute -top-3 right-2 z-20 whitespace-nowrap rounded-full bg-player-500 px-2 py-0.5 text-caption font-semibold text-white shadow-lg shadow-player-500/30 animate-kinetic-pts-launch"
               >
-                <span>↑</span>
-                <span>+{pulsePoints} PTS</span>
+                +{pulsePoints} pts
               </span>
             )}
 
-            <button
-              onClick={() => {
-                if (habit.isQuantitative) {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setShowQtyLogger(true);
-                }
-              }}
-              aria-label={
-                habit.isQuantitative
-                  ? `Log quantity for ${habit.title}`
-                  : `${completed ? checkIn?.pointsEarned ?? availablePoints : availablePoints} points`
-              }
-              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md border transition-all tabular-nums ${
-                isPulsing
-                  ? 'bg-player-500/20 border-player-400 text-player-200 shadow-[0_0_14px_-2px_color-mix(in_srgb,var(--player-base)_50%,transparent)] animate-kinetic-badge-ignite'
-                  : completed
-                  ? checkIn?.pointsEarned === 0
-                    ? 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500'
-                    : 'bg-player-500/10 border-player-500/25 text-player-600 dark:text-player-300/90'
-                  : isHealthLocked
-                  ? `${healthProgress?.classes.bg} ${healthProgress?.classes.border} ${healthProgress?.classes.text}`
-                  : isWeeklyTargetMet
-                  ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/25'
-                  : habit.isQuantitative
-                  ? 'bg-player-500/10 border-player-500/30 text-player-600 dark:text-player-400 hover:bg-player-500/20'
-                  : 'bg-player-500/5 border-player-500/20 text-player-600 dark:text-player-400 hover:border-player-400'
-              }`}
-              title={
-                completed && checkIn?.pointsEarned === 0
-                  ? 'Weekly target reached · 0 pts awarded'
-                  : isWeeklyTargetMet && !completed
-                  ? 'Weekly goal met · Target reached'
-                  : undefined
-              }
-            >
-              {completed
-                ? checkIn && checkIn.pointsEarned === 0
-                  ? '+0 pts (limit)'
-                  : `+${checkIn?.pointsEarned ?? habit.points}`
-                : isWeeklyTargetMet
-                ? 'Goal Met'
-                : `+${availablePoints}`}
-            </button>
-
-            <div className="flex items-center gap-1">
-              {/* Note icon button */}
-              <button
-                onClick={openNoteEditor}
-                aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
-                className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${
-                  checkIn?.note
-                    ? 'text-player-400 bg-player-500/10 border-player-500/25'
-                    : 'text-zinc-400 dark:text-zinc-500 border-transparent hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:border-zinc-200 dark:hover:border-zinc-800'
-                }`}
-                title={checkIn?.note ? 'Edit note' : 'Add note'}
-              >
-                {checkIn?.note ? (
-                  <MessageSquare className="w-3.5 h-3.5" />
-                ) : (
-                  <MessageSquarePlus className="w-3.5 h-3.5" />
-                )}
-              </button>
-
-              {/* Proof icon if exists */}
-              {proofPhotos.length > 0 && (
-                <button
-                  onClick={() => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setShowFullProof(true);
-                  }}
-                  aria-label={`View ${proofPhotos.length} proof photos for ${habit.title}`}
-                  className="flex items-center gap-1 text-[10px] font-mono font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/25 transition-colors"
-                  title="View proof photos"
-                >
-                  <Camera className="w-3 h-3" />
-                  <span>{proofPhotos.length}</span>
-                </button>
-              )}
-            </div>
-
-            {habit.isQuantitative && completed && (
+            {habit.isQuantitative ? (
               <button
                 onClick={() => {
                   soundEngine.playClick();
                   hapticLight();
                   setShowQtyLogger(true);
                 }}
-                className="text-[10px] font-mono text-zinc-400 hover:text-white"
+                aria-label={`Log quantity for ${habit.title}`}
+                title={pointsTitle}
+                className={`num relative flex min-h-11 items-center rounded-full px-2 text-label transition-colors hover:text-foreground ${pointsTone} ${isPulsing ? 'animate-kinetic-badge-ignite' : ''}`}
               >
-                Edit pages
+                {pointsLabel}
+              </button>
+            ) : (
+              <span
+                title={pointsTitle}
+                className={`num px-2 text-label ${pointsTone} ${isPulsing ? 'animate-kinetic-badge-ignite' : ''}`}
+              >
+                {pointsLabel}
+                <span className="sr-only"> points</span>
+              </span>
+            )}
+
+            {proofPhotos.length > 0 && (
+              <button
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setShowFullProof(true);
+                }}
+                aria-label={`View ${proofPhotos.length} proof photos for ${habit.title}`}
+                className="num relative flex min-h-11 items-center gap-1 rounded-full px-2 text-label text-emerald-600 transition-colors hover:text-emerald-500 dark:text-emerald-400"
+                title="View proof photos"
+              >
+                <Camera className="size-4" aria-hidden="true" />
+                <span>{proofPhotos.length}</span>
               </button>
             )}
+
+            <button
+              onClick={openNoteEditor}
+              aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
+              className={`relative flex size-11 items-center justify-center rounded-full transition-colors ${
+                checkIn?.note
+                  ? 'text-player-500'
+                  : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-foreground'
+              }`}
+              title={checkIn?.note ? 'Edit note' : 'Add note'}
+            >
+              {checkIn?.note ? (
+                <MessageSquare className="size-4" />
+              ) : (
+                <MessageSquarePlus className="size-4" />
+              )}
+            </button>
           </div>
         </div>
 
+        {/* Inline warning alert when user attempts to check off a locked habit */}
+        {lockedAlertMessage && (
+          <div
+            role="alert"
+            className="relative mx-1 mt-2 flex items-start justify-between gap-2 rounded-[var(--radius-control)] bg-orange-500/10 py-2 pl-3 text-label font-normal text-orange-700 animate-in fade-in duration-150 dark:text-orange-200"
+          >
+            <div className="flex min-w-0 items-start gap-2 pt-0.5">
+              <Lock className="mt-0.5 size-3.5 shrink-0 text-orange-500" aria-hidden="true" />
+              <span>{lockedAlertMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLockedAlertMessage(null)}
+              aria-label="Dismiss alert"
+              className="-my-2 flex size-11 shrink-0 items-center justify-center text-orange-500 hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
+
         {/* Inline Micro-Note Editor */}
         {isEditingNote && (
-          <form onSubmit={handleSaveNote} className="mt-2.5 pt-2.5 border-t border-zinc-800/80 flex gap-1.5">
+          <form onSubmit={handleSaveNote} className="relative mx-1 mt-2 flex gap-2 border-t border-[var(--border-subtle)] pb-1 pt-3">
             <input
               type="text"
               value={noteText}
@@ -598,12 +520,9 @@ export const HabitCard = React.memo(function HabitCard({
               placeholder="Add reflection or workout details..."
               aria-label={`Reflection note for ${habit.title}`}
               autoFocus
-              className="flex-1 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600"
+              className="field min-w-0 flex-1"
             />
-            <button
-              type="submit"
-              className="px-3 py-1.5 rounded-lg bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition-colors"
-            >
+            <button type="submit" className="control control-primary">
               Save
             </button>
             <button
@@ -614,19 +533,19 @@ export const HabitCard = React.memo(function HabitCard({
                 setIsEditingNote(false);
               }}
               aria-label="Cancel note edit"
-              className="p-1.5 rounded-lg border border-zinc-800 text-zinc-400 hover:text-white"
+              className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border-medium)] text-[var(--text-secondary)] transition-colors hover:text-foreground"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="size-4" />
             </button>
           </form>
         )}
 
         {/* Clean Space Partner Proof Quick Link */}
         {isCleanSpace && partnerCleanSpaceCheckIn && partnerProofPhotos.length > 0 && (
-          <div className="mt-2.5 pt-2 border-t border-zinc-800/70 flex items-center justify-between text-[11px] font-mono">
-            <span className="text-zinc-400 flex items-center gap-1.5">
-              <span>{partnerPlayer?.avatar}</span>
-              <span>{partnerPlayer?.name} checked in Clean Space</span>
+          <div className="relative mx-1 mt-2 flex items-center justify-between gap-2 border-t border-[var(--border-subtle)] pl-1 pt-1 text-label font-normal">
+            <span className="flex min-w-0 items-center gap-1.5 truncate text-[var(--text-secondary)]">
+              <span aria-hidden="true">{partnerPlayer?.avatar}</span>
+              <span className="truncate">{partnerPlayer?.name} checked in Clean Space</span>
             </span>
             <button
               type="button"
@@ -635,9 +554,9 @@ export const HabitCard = React.memo(function HabitCard({
                 hapticLight();
                 setShowPartnerProof(true);
               }}
-              className="text-player-400 hover:text-player-300 font-medium flex items-center gap-1 bg-player-500/10 px-2 py-0.5 rounded border border-player-500/20 transition-colors"
+              className="num flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-2 font-medium text-player-600 transition-colors hover:text-player-500 dark:text-player-300"
             >
-              <Camera className="w-3 h-3" />
+              <Camera className="size-4" aria-hidden="true" />
               <span>Photos ({partnerProofPhotos.length})</span>
             </button>
           </div>
@@ -645,27 +564,26 @@ export const HabitCard = React.memo(function HabitCard({
 
         {/* Inline Quantitative Stepper Logger */}
         {showQtyLogger && habit.isQuantitative && (
-          <div className="mt-3 pt-3 border-t border-zinc-800/80 space-y-2.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-player-400" />
+          <div className="relative mx-1 mt-2 space-y-3 border-t border-[var(--border-subtle)] pb-1 pt-3">
+            <div className="flex items-center justify-between gap-2 text-label">
+              <span className="flex items-center gap-1.5 text-foreground">
+                <BookOpen className="size-4 text-player-500" aria-hidden="true" />
                 How many pages did you read?
               </span>
-              <span className="font-mono font-bold text-player-400">
-                {quantity} {habit.quantityUnit} = +{Math.min(habit.points, quantity)} pts
+              <span className="num shrink-0 text-player-600 dark:text-player-300">
+                +{Math.min(habit.points, quantity)} pts
               </span>
             </div>
 
-            {/* Preset Buttons */}
-            <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-4 gap-2">
               {[10, 15, 20, 25].map((pages) => (
                 <button
                   key={pages}
                   onClick={() => handleLogQuantity(pages)}
-                  className={`flex-1 py-1 rounded-lg text-xs font-mono border transition-colors ${
+                  className={`num min-h-11 rounded-[var(--radius-control)] border text-label transition-colors ${
                     quantity === pages
-                      ? 'bg-player-500/20 border-player-500/50 text-player-300 font-bold'
-                      : 'bg-player-500/5 border-player-500/15 text-zinc-400 hover:text-player-400'
+                      ? 'border-player-500/50 bg-player-500/15 text-player-600 dark:text-player-300'
+                      : 'border-[var(--border-subtle)] bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-foreground'
                   }`}
                 >
                   {pages}p
@@ -673,9 +591,8 @@ export const HabitCard = React.memo(function HabitCard({
               ))}
             </div>
 
-            {/* Stepper + Custom */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center rounded-lg border border-zinc-800 bg-zinc-900/80">
+              <div className="flex items-center rounded-[var(--radius-control)] border border-[var(--border-medium)] bg-[var(--surface-2)]">
                 <button
                   type="button"
                   onClick={() => {
@@ -684,9 +601,9 @@ export const HabitCard = React.memo(function HabitCard({
                     setQuantity((q) => Math.max(1, q - 1));
                   }}
                   aria-label="Decrease quantity"
-                  className="p-1.5 text-zinc-400 hover:text-white"
+                  className="flex size-11 items-center justify-center text-[var(--text-secondary)] hover:text-foreground"
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Minus className="size-4" />
                 </button>
                 <input
                   type="number"
@@ -695,7 +612,7 @@ export const HabitCard = React.memo(function HabitCard({
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
                   aria-label="Quantity value"
-                  className="w-12 text-center text-xs font-mono font-bold bg-transparent text-white focus:outline-none"
+                  className="num w-10 bg-transparent text-center text-base font-semibold text-foreground focus:outline-none"
                 />
                 <button
                   type="button"
@@ -705,15 +622,15 @@ export const HabitCard = React.memo(function HabitCard({
                     setQuantity((q) => Math.min(habit.maxQuantity || 25, q + 1));
                   }}
                   aria-label="Increase quantity"
-                  className="p-1.5 text-zinc-400 hover:text-white"
+                  className="flex size-11 items-center justify-center text-[var(--text-secondary)] hover:text-foreground"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="size-4" />
                 </button>
               </div>
 
               <button
                 onClick={() => handleLogQuantity(quantity)}
-                className="flex-1 py-1.5 rounded-lg bg-player-500 text-white font-semibold text-xs hover:bg-player-600 transition-colors"
+                className="min-h-11 min-w-0 flex-1 rounded-[var(--radius-control)] bg-player-500 px-3 text-label font-semibold text-white transition-[filter] hover:brightness-110"
               >
                 Log {quantity} Pages
               </button>
@@ -724,7 +641,7 @@ export const HabitCard = React.memo(function HabitCard({
                   hapticLight();
                   setShowQtyLogger(false);
                 }}
-                className="px-2.5 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-400 hover:text-white"
+                className="min-h-11 rounded-[var(--radius-control)] border border-[var(--border-medium)] px-3 text-label text-[var(--text-secondary)] transition-colors hover:text-foreground"
               >
                 Cancel
               </button>

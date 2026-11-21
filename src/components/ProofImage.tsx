@@ -33,7 +33,7 @@ export function ProofImage({ src, alt, className }: { src: string; alt: string; 
   /* eslint-disable @next/next/no-img-element */
   return <span ref={container} className={'inline-flex items-center justify-center bg-black/20 ' + (className || '')}>
     {url ? <img src={url} alt={alt} className="h-full w-full [object-fit:inherit]" loading="lazy" /> : current?.error ?
-      <span role="img" aria-label={"Photo unavailable: " + alt} className="text-xs text-white">Photo unavailable</span> :
+      <span role="img" aria-label={"Photo unavailable: " + alt} className="px-2 text-center text-caption text-white">Photo unavailable</span> :
       <span role="img" aria-label={alt} className="text-zinc-400"><Camera size={14} /></span>}
   </span>;
 }

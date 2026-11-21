@@ -881,3 +881,9 @@ html:not(.dark) section.bg-gradient-to-br .bg-white\/\[0\.04\] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Horizontal scrollers that should not show a scrollbar track. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}

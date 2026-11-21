@@ -57,38 +57,44 @@ function DuelBillingPanel({ result }: { result?: string }) {
   const owner = !!user && duel?.owner_id === user.id;
   const subscriptionExists = view && !['none', 'canceled', 'incomplete_expired'].includes(view.status);
   return (
-    <section aria-label="Duel membership and billing" className="rounded-2xl border border-zinc-500/20 bg-zinc-500/5 p-7 space-y-5 text-foreground">
+    <section aria-label="Duel membership and billing" className="surface surface-pad flex flex-col gap-4 text-foreground">
       <div>
-        <p className="text-xs uppercase tracking-widest text-zinc-500">Duel membership</p>
-        <h2 className="text-2xl font-semibold tracking-tight mt-2">One subscription.<br />Both players.</h2>
-        <p className="text-sm leading-relaxed text-zinc-500 mt-3">The Duel owner chooses a plan and pays securely through Stripe. Your partner is included.</p>
+        <p className="text-eyebrow text-muted">Duel membership</p>
+        <h2 className="text-title mt-2">One subscription. Both players.</h2>
+        <p className="text-body text-secondary mt-1.5">The Duel owner chooses a plan and pays securely through Stripe. Your partner is included.</p>
       </div>
-      {result === 'success' && <p role="status" className="text-sm">{view?.subscribed ? 'Your subscription is confirmed for both players.' : 'You returned from Stripe. We are checking your subscription; this page alone does not confirm payment.'}</p>}
-      {result === 'canceled' && <p role="status" className="text-sm">You left Checkout. No new subscription has been confirmed. You can resume the same Checkout below.</p>}
-      {plans?.testMode && <p className="text-sm text-amber-500">Sandbox billing. No real money is charged.</p>}
-      {loading || checking ? <p role="status" className="text-sm text-zinc-500">Checking billing…</p> : null}
-      {error && <p role="alert" className="text-sm text-amber-500">{error}</p>}
+      {result === 'success' && <p role="status" className="text-body">{view?.subscribed ? 'Your subscription is confirmed for both players.' : 'You returned from Stripe. We are checking your subscription; this page alone does not confirm payment.'}</p>}
+      {result === 'canceled' && <p role="status" className="text-body">You left Checkout. No new subscription has been confirmed. You can resume the same Checkout below.</p>}
+      {plans?.testMode && <p className="text-label text-amber-600 dark:text-amber-400">Sandbox billing. No real money is charged.</p>}
+      {loading || checking ? <p role="status" className="text-label text-muted">Checking billing…</p> : null}
+      {error && <p role="alert" className="text-label text-amber-600 dark:text-amber-400">{error}</p>}
       {!loading && !user && <Link className="control control-primary" href="/?tab=today">Sign in and create your Duel</Link>}
       {user && !duel && <Link className="control control-primary" href="/">Create or join a Duel first</Link>}
-      {user && duel && !owner && <p className="text-sm">Your Duel owner manages billing. {view?.subscribed ? 'Their subscription covers you too.' : 'No active subscription has been confirmed.'}</p>}
-      {view && <div className="text-sm text-zinc-500 space-y-1">
-        <p>Subscription: <span className="font-medium text-foreground">{view.status.replaceAll('_', ' ')}</span></p>
-        {view.cancelAtPeriodEnd && view.periodEnd && <p>Cancellation scheduled for {new Date(view.periodEnd * 1000).toLocaleDateString()}.</p>}
-        {view.checkoutPending && <p>A Checkout is pending. Resume it to review its plan and total.</p>}
-      </div>}
-      {plans && !subscriptionExists && <div className="space-y-3">
-        {plans.plans.map(p => <div key={p.plan} className="rounded-xl border border-zinc-500/20 p-4 space-y-3">
-          <h3 className="font-medium">{p.plan === 'monthly' ? 'Monthly membership' : 'Annual membership'}</h3>
-          <p className="text-sm text-zinc-500">{p.label}</p>
-          {owner && view && <button type="button" disabled={busy || checking} onClick={() => void redirect('checkout', p.plan)} className="control control-primary min-h-11 w-full disabled:opacity-50">
+      {user && duel && !owner && <p className="text-body">Your Duel owner manages billing. {view?.subscribed ? 'Their subscription covers you too.' : 'No active subscription has been confirmed.'}</p>}
+      {view && <dl className="text-label space-y-1">
+        <div className="flex justify-between gap-3"><dt className="text-secondary font-normal">Subscription</dt><dd className="font-medium text-foreground capitalize">{view.status.replaceAll('_', ' ')}</dd></div>
+        {view.cancelAtPeriodEnd && view.periodEnd && <div className="text-secondary">Cancellation scheduled for {new Date(view.periodEnd * 1000).toLocaleDateString()}.</div>}
+        {view.checkoutPending && <div className="text-secondary">A Checkout is pending. Resume it to review its plan and total.</div>}
+      </dl>}
+      {plans && !subscriptionExists && <ul className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] divide-y divide-[var(--border-subtle)]">
+        {plans.plans.map(p => <li key={p.plan} className="p-4 flex flex-col gap-3">
+          <div>
+            <h3 className="text-headline">{p.plan === 'monthly' ? 'Monthly membership' : 'Annual membership'}</h3>
+            <p className="text-label text-secondary font-normal mt-0.5">{p.label}</p>
+          </div>
+          {owner && view && <button type="button" disabled={busy || checking} onClick={() => void redirect('checkout', p.plan)} className="control control-primary w-full">
             {busy ? 'Opening Stripe…' : view.checkoutPending ? 'Resume Checkout' : 'Subscribe with Stripe'}
           </button>}
-        </div>)}
-      </div>}
-      {owner && view?.hasCustomer && <button type="button" disabled={busy || checking} onClick={() => void redirect('portal')} className="control min-h-11 disabled:opacity-50">Manage subscription and payment details</button>}
-      <button type="button" disabled={busy || checking || loading} onClick={() => void refresh()} className="control min-h-11 disabled:opacity-50">Refresh billing status</button>
-      {plans && <p className="text-xs text-zinc-500">Stripe shows the final charge before purchase. No free trial is currently offered.</p>}
-      <p className="text-xs leading-relaxed text-zinc-500">Your existing habits and history remain available during the membership rollout.</p>
+        </li>)}
+      </ul>}
+      <div className="flex flex-wrap gap-2">
+        {owner && view?.hasCustomer && <button type="button" disabled={busy || checking} onClick={() => void redirect('portal')} className="control">Manage subscription and payment details</button>}
+        <button type="button" disabled={busy || checking || loading} onClick={() => void refresh()} className="control">Refresh billing status</button>
+      </div>
+      <div className="space-y-1 text-caption text-muted">
+        {plans && <p>Stripe shows the final charge before purchase. No free trial is currently offered.</p>}
+        <p>Your existing habits and history remain available during the membership rollout.</p>
+      </div>
     </section>
   );
 }

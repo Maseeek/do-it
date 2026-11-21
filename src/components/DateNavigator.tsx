@@ -125,68 +125,37 @@ export function DateNavigator() {
   const isRest = isRestDay(selectedDate);
   const isFuture = isFutureDate(addDays(selectedDate, 1));
 
+  const monthLabel = parseDate(selectedDate).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+  const iconButton =
+    'flex size-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-2)] hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-30';
+
   return (
-    <div className="space-y-2">
-      {/* Top Header Controls */}
-      <div className="flex items-center justify-between gap-2 px-0.5">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <button
-            onClick={handlePrevDay}
-            className="w-7 h-7 rounded-md bg-white dark:bg-[#0e1013] border border-black/10 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-black/20 dark:hover:border-zinc-700 flex items-center justify-center transition-colors active:scale-95 shrink-0 shadow-2xs"
-            aria-label="Previous day"
-            title="Previous day"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
+    <div className="space-y-1">
+      {/* One quiet control row: month, rest toggle, back-to-today, day stepping */}
+      <div className="-mx-2 flex items-center justify-between gap-1">
+        <span className="truncate px-2 text-label text-[var(--text-secondary)]">
+          {monthLabel}
+          <span className="sr-only">, {isTodaySelected ? 'today' : formatFriendlyDate(selectedDate)} selected</span>
+        </span>
 
-          <div className="flex items-baseline gap-1.5 px-1 truncate">
-            <span className="text-xs font-mono font-bold tracking-tight text-zinc-900 dark:text-white truncate">
-              {isTodaySelected
-                ? parseDate(selectedDate).toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : formatFriendlyDate(selectedDate)}
-            </span>
-            <span className="hidden sm:inline text-[11px] font-mono text-zinc-500">
-              ({selectedDate})
-            </span>
-            {isTodaySelected && (
-              <span
-                className="text-[9px] font-mono uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border text-player-400 bg-player-500/10 border-player-500/25"
-              >
-                Today
-              </span>
-            )}
-          </div>
-
-          <button
-            onClick={handleNextDay}
-            disabled={isFuture}
-            className="w-7 h-7 rounded-md bg-white dark:bg-[#0e1013] border border-black/10 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-black/20 dark:hover:border-zinc-700 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none transition-colors active:scale-95 shrink-0 shadow-2xs"
-            aria-label="Next day"
-            title="Next day"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex shrink-0 items-center">
           {/* Rest day toggle */}
           <button
             onClick={handleToggleRest}
             aria-pressed={isRest}
             aria-label={isRest ? 'Disable rest day' : 'Enable rest day'}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-all active:scale-95 border ${
+            className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-label transition-colors active:scale-95 ${
               isRest
-                ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-600 dark:text-indigo-300'
-                : 'bg-white dark:bg-[#0e1013] border-black/10 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:border-black/20 dark:hover:border-zinc-700 shadow-2xs'
+                ? 'bg-indigo-500/12 text-indigo-600 dark:text-indigo-300'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-2)] hover:text-foreground'
             }`}
             title="Declare scheduled rest day (protects streak)"
           >
-            <BedDouble className="w-3 h-3 text-indigo-400" />
-            <span>{isRest ? 'Rest Day' : 'Rest'}</span>
+            <BedDouble className="size-4 text-indigo-500 dark:text-indigo-400" aria-hidden="true" />
+            <span>{isRest ? 'Rest day' : 'Rest'}</span>
           </button>
 
           {/* Jump to Today Button */}
@@ -194,22 +163,40 @@ export function DateNavigator() {
             <button
               onClick={handleJumpToday}
               aria-label="Jump to today"
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-colors active:scale-95 border bg-player-500/15 border-player-500/30 text-player-300 hover:bg-player-500/25"
+              className="flex min-h-11 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-player-600 transition-colors hover:bg-player-500/10 active:scale-95 dark:text-player-300"
               title="Return to today (Shortcut: T)"
             >
-              <RotateCcw className="w-2.5 h-2.5" />
-              <span>Today [T]</span>
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              <span>Today</span>
             </button>
           )}
+
+          <button
+            onClick={handlePrevDay}
+            className={iconButton}
+            aria-label="Previous day"
+            title="Previous day"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            onClick={handleNextDay}
+            disabled={isFuture}
+            className={iconButton}
+            aria-label="Next day"
+            title="Next day"
+          >
+            <ChevronRight className="size-5" />
+          </button>
         </div>
       </div>
 
-      {/* Scrollable Horizontal Multi-Week Strip */}
+      {/* Scrollable multi-week strip: no frame, the selected day carries the emphasis */}
       <div
         ref={scrollContainerRef}
         role="tablist"
         aria-label="Calendar dates"
-        className="flex gap-1.5 p-1.5 rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800/90 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shadow-2xs"
+        className="-mx-1 flex snap-x snap-mandatory gap-1 overflow-x-auto bg-transparent! scroll-smooth px-1 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {scrollableDays.map((day) => {
           const isSelected = day.dateStr === selectedDate;
@@ -232,17 +219,17 @@ export function DateNavigator() {
               aria-label={`${day.dayName}, ${day.dateStr}${isSelected ? ', selected' : ''}${isToday ? ', today' : ''}${dayRest ? ', rest day' : ''}${isParAchieved ? ', par achieved' : ''}`}
               onClick={() => handleSelectDay(day.dateStr, day.isFuture)}
               disabled={day.isFuture}
-              className={`${day.dayName === 'Mon' ? 'snap-start' : ''} shrink-0 min-w-[calc((100%-2.25rem)/7)] flex flex-col items-center justify-between py-2 px-1 rounded-lg transition-all relative border ${
+              className={`${day.dayName === 'Mon' ? 'snap-start' : ''} relative flex min-h-16 min-w-[calc((100%-1.5rem)/7)] shrink-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] py-2 transition-colors ${
                 day.isFuture
-                  ? 'opacity-25 cursor-not-allowed border-transparent'
+                  ? 'cursor-not-allowed opacity-30'
                   : isSelected
-                  ? 'bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-white border-zinc-200 dark:border-zinc-600 shadow-xs'
-                  : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900/70 hover:border-zinc-200 dark:hover:border-zinc-800/80'
+                  ? 'bg-foreground text-background'
+                  : 'text-foreground hover:bg-[var(--surface-2)]'
               }`}
             >
               <span
-                className={`text-[9px] font-mono uppercase tracking-wider ${
-                  isSelected ? 'font-bold text-zinc-600 dark:text-zinc-200' : 'text-zinc-500'
+                className={`text-caption ${
+                  isSelected ? 'font-medium opacity-80' : 'text-[var(--text-muted)]'
                 }`}
               >
                 {showMonthTag
@@ -251,58 +238,39 @@ export function DateNavigator() {
               </span>
 
               <span
-                className={`text-xs font-mono tabular-nums my-0.5 ${
-                  isToday
-                    ? 'font-extrabold text-player-300 dark:text-player-400'
-                    : isSelected
-                    ? 'font-bold text-zinc-900 dark:text-white'
-                    : 'font-medium text-zinc-700 dark:text-zinc-300'
+                className={`num text-body leading-none ${
+                  isSelected
+                    ? 'font-semibold'
+                    : isToday
+                    ? 'font-semibold text-player-600 dark:text-player-300'
+                    : 'font-medium'
                 }`}
               >
                 {day.dayNumber}
               </span>
 
-              {/* Linear-style status bar / dot */}
-              <div className="h-1.5 flex items-center justify-center">
+              {/* Status dot */}
+              <span className="flex h-1.5 items-center justify-center" aria-hidden="true">
                 {dayRest ? (
-                  <span
-                    className="w-2.5 h-1 rounded-xs bg-indigo-400"
-                    title="Rest Day"
-                  />
+                  <span className="size-1.5 rounded-full bg-indigo-400" title="Rest Day" />
                 ) : isParAchieved ? (
                   <span
-                    className="w-3 h-1 rounded-xs bg-emerald-400"
+                    className="size-1.5 rounded-full bg-emerald-400"
                     title={`Daily Par Achieved (${totalPoints} pts)`}
                   />
                 ) : completedCount > 0 ? (
                   <span
-                    className="w-2 h-1 rounded-xs bg-player-400/80"
+                    className="size-1.5 rounded-full bg-player-400"
                     title={`${completedCount} logged (${totalPoints} pts)`}
                   />
                 ) : (
-                  <span className="w-1 h-1 rounded-xs bg-zinc-300 dark:bg-zinc-800" />
+                  <span className={`size-1 rounded-full ${isSelected ? 'bg-current opacity-30' : 'bg-[var(--border-strong)]'}`} />
                 )}
-              </div>
+              </span>
             </button>
           );
         })}
       </div>
-
-      {/* Historical date notice bar */}
-      {!isTodaySelected && (
-        <div className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-mono">
-          <div className="flex items-center gap-2 truncate">
-            <span className="w-1.5 h-1.5 rounded-xs bg-amber-400 animate-pulse shrink-0" />
-            <span className="truncate">Viewing historical date: {selectedDate}</span>
-          </div>
-          <button
-            onClick={handleJumpToday}
-            className="text-[11px] underline hover:text-white shrink-0 ml-2"
-          >
-            Return to Today
-          </button>
-        </div>
-      )}
     </div>
   );
 }

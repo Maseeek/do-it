@@ -20,85 +20,65 @@ export function ProfileGate() {
     selectProfile(id);
   };
 
+  const profiles = [
+    { id: 'maciek' as const, summary: maciekSummary },
+    { id: 'myrna' as const, summary: myrnaSummary },
+  ];
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-gate-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background px-4 transition-colors"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-background px-4 py-10 transition-colors"
     >
       <div className="w-full max-w-sm">
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <DoLogo size="lg" className="mb-3.5 shadow-2xl" />
-          <h1 id="profile-gate-title" className="text-2xl font-bold tracking-tight text-foreground">
+        <div className="mb-8 text-center">
+          <DoLogo size="lg" className="mb-5 shadow-lg" />
+          <h1 id="profile-gate-title" className="text-display text-foreground">
             Select Profile
           </h1>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="mt-1.5 text-body text-secondary">
             do: habit tracker
           </p>
         </div>
 
-        {/* Profile cards */}
-        <div className="space-y-3">
-          {/* Maciek */}
-          <button
-            onClick={() => handleSelect('maciek')}
-            aria-label={`Select ${players.maciek.name}, ${maciekSummary.weekly} points this week, ${maciekSummary.karma} karma, ${players.maciek.inviteCount ?? 0} invites`}
-            className="w-full text-left p-4 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] transition-all active:scale-[0.98] shadow-sm"
-            style={{ borderColor: players.maciek.accentBorder }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={getPlayerColorStyles(players.maciek)}>
-                  {players.maciek.name[0]?.toUpperCase()}
-                </div>
-                <div>
-                  <div className="text-base font-semibold text-foreground">
-                    {players.maciek.name}
-                  </div>
-                  <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
-                    {maciekSummary.weekly} pts this week &middot; {maciekSummary.karma} karma &middot; {players.maciek.inviteCount ?? 0} {players.maciek.inviteCount === 1 ? 'invite' : 'invites'}
-                  </div>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-400" />
-            </div>
-          </button>
-
-          {/* Myrna */}
-          <button
-            onClick={() => handleSelect('myrna')}
-            aria-label={`Select ${players.myrna.name}, ${myrnaSummary.weekly} points this week, ${myrnaSummary.karma} karma, ${players.myrna.inviteCount ?? 0} invites`}
-            className="w-full text-left p-4 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] transition-all active:scale-[0.98] shadow-sm"
-            style={{ borderColor: players.myrna.accentBorder }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full border flex items-center justify-center font-bold text-base" style={getPlayerColorStyles(players.myrna)}>
-                  {players.myrna.name[0]?.toUpperCase()}
-                </div>
-                <div>
-                  <div className="text-base font-semibold text-foreground">
-                    {players.myrna.name}
-                  </div>
-                  <div className="text-xs text-zinc-400 mt-0.5 tabular-nums">
-                    {myrnaSummary.weekly} pts this week &middot; {myrnaSummary.karma} karma &middot; {players.myrna.inviteCount ?? 0} {players.myrna.inviteCount === 1 ? 'invite' : 'invites'}
-                  </div>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-400" />
-            </div>
-          </button>
+        <div className="surface overflow-hidden divide-y divide-[var(--border-subtle)] shadow-sm">
+          {profiles.map(({ id, summary }) => {
+            const player = players[id];
+            const invites = player.inviteCount ?? 0;
+            return (
+              <button
+                key={id}
+                onClick={() => handleSelect(id)}
+                aria-label={`Select ${player.name}, ${summary.weekly} points this week, ${summary.karma} karma, ${invites} invites`}
+                className="flex min-h-18 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-2)]/60 active:bg-[var(--surface-2)]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full border text-headline"
+                  style={getPlayerColorStyles(player)}
+                >
+                  {player.name[0]?.toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-headline text-foreground">{player.name}</span>
+                  <span className="mt-0.5 block truncate text-caption text-muted num">
+                    {summary.weekly} pts this week &middot; {summary.karma} karma &middot; {invites} {invites === 1 ? 'invite' : 'invites'}
+                  </span>
+                </span>
+                <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted" />
+              </button>
+            );
+          })}
         </div>
 
-        {/* Link to Homepage & Onboarding */}
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <Link
             href="/welcome"
-            className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-label text-secondary hover:text-foreground transition-colors"
           >
-            <Compass className="w-3.5 h-3.5" />
+            <Compass className="size-4" />
             <span>Explore Do It & Membership &rarr;</span>
           </Link>
         </div>

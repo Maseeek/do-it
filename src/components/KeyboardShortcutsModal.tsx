@@ -40,40 +40,40 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
         role="dialog"
         aria-modal="true"
         aria-labelledby="shortcuts-modal-title"
-        className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.12] p-5 shadow-2xl space-y-3"
+        className="w-full max-w-sm rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-2 border-b border-black/[0.08] dark:border-white/[0.08]">
-          <div className="flex items-center gap-2">
-            <Keyboard className="w-4 h-4 text-player-400" />
-            <h3 id="shortcuts-modal-title" className="text-sm font-semibold text-zinc-900 dark:text-white">Shortcuts</h3>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <h3 id="shortcuts-modal-title" className="flex items-center gap-2 text-title text-foreground">
+            <Keyboard aria-hidden="true" className="h-5 w-5 text-player-400" />
+            Shortcuts
+          </h3>
           <button
+            type="button"
             onClick={() => {
               soundEngine.playClick();
               hapticLight();
               onClose();
             }}
             aria-label="Close shortcuts modal"
-            className="text-zinc-400 hover:text-white p-1 rounded-full transition-colors"
+            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-secondary transition-colors hover:bg-[var(--surface-2)] hover:text-foreground"
           >
-            <X className="w-4 h-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="space-y-1.5">
-          {SHORTCUTS.map((s, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between py-1.5 px-2 text-xs"
-            >
-              <span className="text-zinc-700 dark:text-zinc-300">{s.desc}</span>
-              <kbd className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-[#2c2c2e] border border-black/10 dark:border-white/[0.1] font-mono text-[11px] text-zinc-900 dark:text-white font-semibold">
-                {s.key}
-              </kbd>
+        <dl className="mt-4 divide-y divide-[var(--border-subtle)]">
+          {SHORTCUTS.map((s) => (
+            <div key={s.key} className="flex min-h-11 items-center justify-between gap-3">
+              <dt className="text-body text-secondary">{s.desc}</dt>
+              <dd>
+                <kbd className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-[var(--border-medium)] bg-[var(--surface-2)] px-2 font-sans text-caption font-semibold text-foreground">
+                  {s.key}
+                </kbd>
+              </dd>
             </div>
           ))}
-        </div>
+        </dl>
       </div>
     </div>
   );

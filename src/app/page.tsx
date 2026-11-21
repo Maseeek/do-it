@@ -23,7 +23,7 @@ import { hapticLight } from '@/lib/haptic-utils';
 import { DoLogo } from '@/components/DoLogo';
 
 function ViewLoading() {
-  return <p role="status" className="py-8 text-center text-sm text-zinc-500">Loading...</p>;
+  return <p role="status" className="py-8 text-center text-label font-normal text-[var(--text-muted)]">Loading…</p>;
 }
 
 const { View: DuelView, preload: preloadDuel } = createDeferredView(() => import('@/components/DuelView').then(module => module.DuelView));
@@ -212,8 +212,8 @@ function AppContent() {
     return (
       <div className="relative z-10 min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3 px-4">
         {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
-        <p role="alert">{storageError || 'Could not load your duel.'}</p>
-        <button className="rounded-xl bg-white text-black px-4 py-2" onClick={() => window.location.reload()}>Retry</button>
+        <p role="alert" className="text-body">{storageError || 'Could not load your duel.'}</p>
+        <button className="control control-primary" onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
@@ -222,7 +222,7 @@ function AppContent() {
       <div className="relative z-10 min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-3">
         {showInviteConflictModal && <ExistingDuelInviteGate inviteCode={inviteCode!} onDismiss={() => setDismissedInvite(rawInviteCode)} />}
         <DoLogo size="md" className="animate-pulse" />
-        <span className="text-xs font-mono text-zinc-500">loading do...</span>
+        <span className="text-label font-normal text-[var(--text-muted)]">Loading…</span>
       </div>
     );
   }
@@ -270,15 +270,15 @@ function AppContent() {
               hapticLight();
               setToastMessage(null);
             }}
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.12] text-foreground px-4 py-2 rounded-2xl text-xs font-medium shadow-2xl flex items-center gap-2 backdrop-blur-xl animate-in fade-in slide-in-from-top-3 duration-200 cursor-pointer active:scale-95"
+            className="fixed top-[calc(env(safe-area-inset-top)+4rem)] left-1/2 z-50 flex min-h-11 max-w-[calc(100vw-2rem)] -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full border border-[var(--border-medium)] bg-[var(--surface-1)] px-4 py-2 text-label text-foreground shadow-xl animate-in fade-in slide-in-from-top-3 duration-200 active:scale-95"
           >
-            <Check className="w-4 h-4 text-emerald-500 stroke-[2.5]" />
+            <Check className="size-4 shrink-0 text-emerald-500 stroke-[2.5]" aria-hidden="true" />
             <span>{toastMessage}</span>
           </div>
         )}
 
-        <main id="main-content" className="flex-1 w-full px-4 lg:px-10 pt-5 lg:pt-9 pb-28 lg:pb-12">
-          {storageError && <div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-500">{storageError}</div>}
+        <main id="main-content" className="flex-1 w-full px-[var(--page-gutter)] pt-6 lg:pt-10 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] lg:pb-12">
+          {storageError && <div role="alert" className="mb-6 rounded-[var(--radius-card)] bg-amber-500/10 px-4 py-3 text-label font-normal text-amber-700 dark:text-amber-300">{storageError}</div>}
           {showSettings ? <SettingsView onBack={() => setShowSettings(false)} onChooseHabits={() => { setShowSettings(false); setOpenPlanner(true); setActiveTab('progress'); }} /> : <>
             {activeTab === 'today' && <TodayPrototype onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} />}
             {activeTab === 'duel' && <DuelView />}

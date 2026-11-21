@@ -103,25 +103,26 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
         role="dialog"
         aria-modal="true"
         aria-labelledby="proof-modal-title"
-        className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.12] p-5 shadow-2xl max-h-[90vh] flex flex-col"
+        className="flex max-h-[90vh] w-full max-w-sm flex-col rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-3 flex-shrink-0">
-          <div>
-            <h2 id="proof-modal-title" className="text-sm font-semibold text-zinc-900 dark:text-white">Attach Proof</h2>
-            <span className="text-xs text-zinc-400">{habit.title}</span>
+        <div className="mb-4 flex shrink-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="proof-modal-title" className="text-title text-foreground">Attach Proof</h2>
+            <p className="mt-0.5 truncate text-label font-normal text-secondary">{habit.title}</p>
           </div>
           <button
+            type="button"
             onClick={() => {
               soundEngine.playClick();
               hapticLight();
               onClose();
             }}
             aria-label="Close attach proof dialog"
-            className="text-zinc-400 hover:text-white p-1 rounded-full transition-colors"
+            className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-[var(--surface-2)] hover:text-foreground"
           >
-            <X className="w-4 h-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -138,55 +139,57 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
         />
 
         {/* Content Area */}
-        <p className="text-xs text-zinc-400 mb-3">{habit.requiresProof ? 'Add a photo to check off this habit. ' : ''}Up to {MAX_PROOF_PHOTOS} photos, 20 MB each.</p>
-        {uploadError && <p role="alert" className="text-xs text-amber-300 mb-3">{uploadError}</p>}
-        <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-0.5">
+        <p className="mb-4 text-caption text-muted">{habit.requiresProof ? 'Add a photo to check off this habit. ' : ''}Up to {MAX_PROOF_PHOTOS} photos, 20 MB each.</p>
+        {uploadError && <p role="alert" className="mb-4 text-label font-normal text-amber-700 dark:text-amber-300">{uploadError}</p>}
+        <div className="mb-5 min-h-0 flex-1 overflow-y-auto">
           {photoPreviews.length === 0 ? (
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isCompressing}
-              className="w-full flex flex-col items-center justify-center aspect-video rounded-2xl border border-dashed border-white/[0.15] hover:border-zinc-400 bg-white/[0.02] hover:bg-white/[0.04] transition-all cursor-pointer"
+              className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-2)] transition-colors hover:border-[var(--text-muted)]"
             >
               {isCompressing ? (
                 <>
-                  <Loader2 className="w-6 h-6 text-player-400 animate-spin mb-1.5" />
-                  <span className="text-xs font-medium text-zinc-300">Processing...</span>
+                  <Loader2 className="h-6 w-6 animate-spin text-player-400" />
+                  <span className="text-label text-secondary">Processing...</span>
                 </>
               ) : (
                 <>
-                  <Upload className="w-6 h-6 text-zinc-400 mb-1.5" />
-                  <span className="text-xs font-medium text-zinc-200">Tap to upload photos</span>
+                  <Upload className="h-6 w-6 text-muted" />
+                  <span className="text-label text-foreground">Tap to upload photos</span>
                 </>
               )}
             </button>
           ) : (
             <div className="space-y-2">
-              <div className="text-[11px] text-zinc-400 px-1">
+              <p className="num text-caption text-muted">
                 {photoPreviews.length} {photoPreviews.length === 1 ? 'photo' : 'photos'}
-              </div>
+              </p>
 
               <div className="grid grid-cols-2 gap-2">
                 {photoPreviews.map((preview, index) => (
                   <div
                     key={index}
-                    className="relative rounded-2xl overflow-hidden border border-white/[0.08] aspect-video bg-black group"
+                    className="group relative aspect-video overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-black"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={preview}
                       alt={`Proof preview ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
 
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(index)}
-                      className="absolute top-1.5 right-1.5 bg-black/80 hover:bg-red-500 text-white p-1 rounded-full text-xs transition-colors"
+                      className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center"
                       title="Remove photo"
                       aria-label={`Remove proof photo ${index + 1}`}
                     >
-                      <X className="w-3 h-3" />
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-red-500">
+                        <X className="h-3.5 w-3.5" />
+                      </span>
                     </button>
                   </div>
                 ))}
@@ -195,10 +198,10 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isCompressing || photoPreviews.length >= MAX_PROOF_PHOTOS}
-                  className="flex flex-col items-center justify-center aspect-video rounded-2xl border border-dashed border-white/[0.12] hover:border-zinc-400 bg-white/[0.02] text-zinc-400 hover:text-white transition-colors"
+                  className="flex aspect-video flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border-strong)] text-secondary transition-colors hover:text-foreground disabled:opacity-45"
                 >
-                  <ImagePlus className="w-5 h-5 mb-1" />
-                  <span className="text-[11px] font-medium">+ Add More</span>
+                  <ImagePlus className="h-5 w-5" />
+                  <span className="text-caption font-medium">Add more</span>
                 </button>
               </div>
             </div>
@@ -206,23 +209,25 @@ export function ProofModal({ habit, isOpen, onClose, onConfirm, initialPhotos = 
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-white/[0.06]">
+        <div className="flex shrink-0 gap-2">
           <button
+            type="button"
             onClick={() => {
               soundEngine.playClick();
               hapticLight();
               onClose();
             }}
-            className="px-3.5 py-2 rounded-xl border border-white/[0.08] text-xs font-medium text-zinc-400 hover:text-white"
+            className="control"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleComplete}
             disabled={proofLoadFailed || isCompressing || (habit.requiresProof && photoPreviews.length === 0)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50"
+            className="control control-primary flex-1"
           >
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+            <Check className="h-4 w-4 stroke-[2.5]" />
             {photoPreviews.length > 0 ? 'Submit Proof' : 'Check Off'}
           </button>
         </div>

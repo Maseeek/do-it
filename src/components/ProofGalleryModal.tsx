@@ -95,23 +95,23 @@ export function ProofGalleryModal({
         role="dialog"
         aria-modal="true"
         aria-label="Proof photo gallery"
-        className="w-full max-w-lg rounded-3xl bg-[#1c1c1e] border border-white/[0.1] overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3.5 border-b border-white/[0.08] bg-[#1c1c1e]">
-          <div className="flex items-center gap-2.5">
-            <span className="text-base">{playerAvatar}</span>
-            <div>
+        <div className="flex items-center justify-between gap-3 py-3 pl-5 pr-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <span aria-hidden="true" className="text-xl">{playerAvatar}</span>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-white">
+                <h2 className="truncate text-headline text-foreground">
                   {playerName} · {habitTitle}
-                </span>
-                <span className="text-[10px] text-zinc-400 bg-white/[0.06] px-1.5 py-0.2 rounded-full">
+                </h2>
+                <span className="num shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-caption text-secondary">
                   {currentIndex + 1}/{images.length}
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="mt-0.5 text-caption text-muted">
                 {date ? formatFriendlyDate(date) : 'Today'}
                 {formattedTime ? ` · ${formattedTime}` : ''}
               </p>
@@ -125,15 +125,16 @@ export function ProofGalleryModal({
               onClose();
             }}
             aria-label="Close proof photo gallery"
-            className="p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-[var(--surface-2)] hover:text-foreground"
           >
-            <X className="w-4 h-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Main Photo View */}
         <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[60vh] overflow-hidden select-none">
-<ProofImage src={currentImage}
+          <ProofImage
+            src={currentImage}
             alt={`${habitTitle} proof ${currentIndex + 1}`}
             className="w-full h-full object-contain max-h-[60vh]"
           />
@@ -142,7 +143,7 @@ export function ProofGalleryModal({
             <>
               <button
                 onClick={handlePrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all border border-white/[0.1] active:scale-95"
+                className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/90 active:scale-95"
                 aria-label="Previous"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -150,7 +151,7 @@ export function ProofGalleryModal({
 
               <button
                 onClick={handleNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all border border-white/[0.1] active:scale-95"
+                className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/90 active:scale-95"
                 aria-label="Next"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -161,7 +162,7 @@ export function ProofGalleryModal({
 
         {/* Thumbnail Strip */}
         {images.length > 1 && (
-          <div className="p-3 border-t border-white/[0.08] bg-[#1c1c1e] flex items-center gap-2 overflow-x-auto justify-center">
+          <div className="flex items-center justify-center gap-2 overflow-x-auto p-3">
             {images.map((img, idx) => (
               <button
                 key={idx}
@@ -174,11 +175,12 @@ export function ProofGalleryModal({
                 }}
                 className={`relative rounded-xl overflow-hidden flex-shrink-0 w-11 h-11 border transition-all ${
                   currentIndex === idx
-                    ? 'border-white scale-105 ring-1 ring-white/40'
-                    : 'border-white/[0.08] opacity-50 hover:opacity-100'
+                    ? 'border-[var(--text-primary)] ring-1 ring-[var(--border-strong)]'
+                    : 'border-[var(--border-subtle)] opacity-50 hover:opacity-100'
                 }`}
               >
-<ProofImage src={img}
+                <ProofImage
+                  src={img}
                   alt={`Thumb ${idx + 1}`}
                   className="w-full h-full object-cover"
                 />

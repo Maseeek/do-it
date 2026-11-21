@@ -107,18 +107,20 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     }
   }
 
+  const collapsed = firstRun && !showMore;
+  const Root = firstRun ? 'main' : 'div';
+  const saveDisabled = saving || checkingPrevious || activeCount === 0 || (partnerTotal > 0 && difference !== 0);
+  const saveLabel = checkingPrevious ? 'Checking previous habits…' : saving ? 'Saving your plan…' : firstRun ? 'Start with these habits' : 'Save habit plan';
+
   return (
-    <main className="relative z-10 min-h-screen bg-background text-foreground px-4 py-8 lg:py-12 transition-colors">
-      <div className="mx-auto max-w-2xl space-y-6">
+    <Root className={firstRun ? 'relative z-10 min-h-dvh bg-background text-foreground px-4 pt-10 lg:pt-16 transition-colors' : 'w-full text-foreground'}>
+      <div className="mx-auto max-w-xl flex flex-col gap-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">
-              {firstRun ? 'Welcome to do' : 'Your habits'}
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <h1 className={`${firstRun ? 'text-display' : 'text-title-lg'} text-foreground`}>
               Choose your habits.
             </h1>
-            <p className="text-sm text-zinc-400 mt-2">
+            <p className="text-body text-secondary mt-2">
               Start with one habit. You can add more later.
             </p>
           </div>
@@ -126,79 +128,85 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
             <button
               aria-label="Close habit planner"
               onClick={onDone}
-              className="p-2 rounded-full bg-black/5 dark:bg-white/5 text-zinc-400 hover:text-foreground transition-colors"
+              className="-mr-1 flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-secondary hover:text-foreground transition-colors"
             >
               <X size={18} />
             </button>
           )}
         </div>
         {importedCount > 0 && (
-          <p role="status" className="text-xs text-emerald-500">
+          <p role="status" className="text-label text-emerald-600 dark:text-emerald-400">
             Found {importedCount} of your previous habits. Review them below, then save to your account.
           </p>
         )}
 
         {(!firstRun || partnerTotal > 0) && (
-          <div className="sticky top-0 z-10 rounded-2xl border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur p-4 flex items-center justify-between gap-4">
+          <div className="sticky top-2 z-10 flex items-center justify-between gap-4 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-1)]/95 px-4 py-3 shadow-sm backdrop-blur">
             <div>
-              <div className="text-xs text-zinc-400">Weekly potential · {activeCount} habits</div>
-              <div className="text-2xl font-semibold tabular-nums text-foreground">{total} <span className="text-sm text-zinc-500">pts</span></div>
+              <div className="text-caption text-muted">Weekly potential · {activeCount} habits</div>
+              <div className="text-title num text-foreground">{total} <span className="text-label font-normal text-muted">pts</span></div>
             </div>
-            <div className={`text-right text-xs font-medium tabular-nums ${partnerTotal > 0 && difference === 0 ? 'text-emerald-500' : 'text-zinc-400'}`}>
+            <div className={`text-right text-label num ${partnerTotal > 0 && difference === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-secondary'}`}>
               {partnerTotal > 0 ? (
                 <>
                   {difference === 0 ? 'Matched' : difference > 0 ? `${difference} pts below` : `${-difference} pts above`}
-                  <span className="block text-zinc-500 font-normal">Partner: {partnerTotal} pts</span>
+                  <span className="block text-caption text-muted">Partner: {partnerTotal} pts</span>
                 </>
               ) : (
-                <span className="text-zinc-400">You set the first total</span>
+                <span>You set the first total</span>
               )}
             </div>
           </div>
         )}
         {partnerTotal > 0 && difference !== 0 && activeCount > 0 && (
-          <button
-            type="button"
-            onClick={balance}
-            className="w-full rounded-xl border border-black/10 dark:border-white/20 bg-black/5 dark:bg-white/[0.06] py-2.5 text-sm font-medium hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-          >
+          <button type="button" onClick={balance} className="control w-full">
             Balance points for me
           </button>
         )}
 
         {visibleSections.filter(section => section.entries.length > 0).map(section => {
+          const headingId = `section-${section.title.replaceAll(' ', '-')}`;
           return (
-            <section key={section.title} className="space-y-2" aria-labelledby={`section-${section.title.replaceAll(' ', '-')}`}>
-              <h2 id={`section-${section.title.replaceAll(' ', '-')}`} className="text-xs font-semibold uppercase tracking-widest text-zinc-400 px-1">
+            <section key={section.title} aria-labelledby={headingId}>
+              <h2 id={headingId} className={collapsed ? 'sr-only' : 'mb-2 px-1 text-eyebrow text-muted'}>
                 {section.title}
               </h2>
-              <div className="space-y-2">
+              <ul className="surface overflow-hidden divide-y divide-[var(--border-subtle)]">
                 {section.entries.map(habit => (
-                  <div
-                    key={habit.id}
-                    className={`rounded-xl border p-3 flex items-center gap-3 transition-colors ${
-                      habit.isActive
-                        ? 'border-black/10 dark:border-white/20 bg-white dark:bg-[#1c1c1e] shadow-xs'
-                        : 'border-black/5 dark:border-white/[0.07] bg-black/[0.02] dark:bg-white/[0.02]'
-                    }`}
-                  >
+                  <li key={habit.id}>
                     <button
                       type="button"
                       aria-label={`${habit.isActive ? 'Remove' : 'Select'} ${habit.title}`}
                       aria-pressed={habit.isActive}
                       onClick={() => changeHabit(habit.id, { isActive: !habit.isActive })}
-                      className={`w-11 h-11 shrink-0 rounded-lg border flex items-center justify-center transition-all ${
-                        habit.isActive
-                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-black border-transparent'
-                          : 'border-black/15 dark:border-white/20 text-zinc-500'
-                      }`}
+                      className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-2)]/50 transition-colors"
                     >
-                      {habit.isActive ? <Check size={16} /> : <Plus size={16} />}
+                      <span
+                        aria-hidden="true"
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+                          habit.isActive ? 'bg-player-500/15 text-player-400' : 'bg-[var(--surface-2)] text-secondary'
+                        }`}
+                      >
+                        <HabitIcon name={habit.iconName} className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-body font-medium text-foreground">{habit.title}</span>
+                        {habit.description && <span className="block truncate text-caption text-muted">{habit.description}</span>}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`flex size-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          habit.isActive
+                            ? 'border-transparent bg-foreground text-background'
+                            : 'border-[var(--border-strong)] text-muted'
+                        }`}
+                      >
+                        {habit.isActive ? <Check size={15} strokeWidth={2.5} /> : <Plus size={15} />}
+                      </span>
                     </button>
-                    <HabitIcon name={habit.iconName} className="w-4 h-4 text-zinc-400 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate text-foreground">{habit.title}</div>
-                      <div className="flex items-center gap-1.5 min-w-0">
+
+                    {habit.isActive && (!firstRun || habit.automation?.metric === 'steps') && (
+                      <div className="-mt-1 flex flex-wrap items-center gap-2 pb-3 pl-[4.25rem] pr-4">
                         {!firstRun && (
                           <select
                             aria-label={`Frequency for ${habit.title}`}
@@ -208,102 +216,107 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                               const days = Number(event.target.value);
                               changeHabit(habit.id, { weeklyTargetDays: days === 7 ? undefined : days, frequency: days === 7 ? 'daily' : 'weekly' });
                             }}
-                            className="max-w-20 shrink-0 bg-transparent text-[11px] text-zinc-400 disabled:opacity-60"
+                            className="min-h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 text-label text-foreground disabled:opacity-60"
                           >
                             <option value={7}>Daily</option>
                             {[1, 2, 3, 4, 5, 6].map(days => <option key={days} value={days}>{days}×/week</option>)}
                           </select>
                         )}
-                        {habit.description && <span className="text-[11px] text-zinc-500 truncate">{habit.description}</span>}
+                        {!firstRun && (
+                          <label className="flex items-center gap-1.5 text-label text-secondary">
+                            <span className="sr-only">Points for {habit.title}</span>
+                            <input
+                              type="number"
+                              min={5}
+                              max={maximumHabitPoints(habit)}
+                              step={1}
+                              value={habit.points}
+                              onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })}
+                              className="min-h-11 w-16 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 text-right text-body text-foreground num"
+                            />
+                            <span>pts</span>
+                          </label>
+                        )}
+                        {habit.automation?.metric === 'steps' && (
+                          <div className="flex gap-1.5" role="group" aria-label="Daily step goal">
+                            {[6000, 10000, 14000].map(target => (
+                              <button
+                                key={target}
+                                type="button"
+                                onClick={() => changeHabit(habit.id, { automation: { metric: 'steps', target } })}
+                                aria-pressed={habit.automation?.target === target}
+                                className={`min-h-11 min-w-12 rounded-full px-3 text-label num transition-colors ${habit.automation?.target === target ? 'bg-foreground text-background' : 'bg-[var(--surface-2)] text-foreground'}`}
+                              >
+                                {target / 1000}k
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      {habit.automation?.metric === 'steps' && habit.isActive && (
-                        <div className="mt-1 flex gap-1" aria-label="Daily step goal">
-                          {[6000, 10000, 14000].map(target => (
-                            <button
-                              key={target}
-                              type="button"
-                              onClick={() => changeHabit(habit.id, { automation: { metric: 'steps', target } })}
-                              aria-pressed={habit.automation?.target === target}
-                              className={`min-h-11 rounded-full px-3 text-xs ${habit.automation?.target === target ? 'bg-zinc-900 text-white dark:bg-white dark:text-black' : 'bg-black/5 dark:bg-white/10 text-foreground'}`}
-                            >
-                              {target / 1000}k
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {habit.isActive && !firstRun && (
-                      <label className="flex items-center gap-1 shrink-0 text-xs text-zinc-400">
-                        <span className="sr-only">Points for {habit.title}</span>
-                        <input
-                          type="number"
-                          min={5}
-                          max={maximumHabitPoints(habit)}
-                          step={1}
-                          value={habit.points}
-                          onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })}
-                          className="w-14 rounded-lg border border-black/10 dark:border-white/15 bg-[#f1f3f6] dark:bg-black px-2 py-1.5 text-right text-foreground tabular-nums"
-                        />
-                        <span>pts</span>
-                      </label>
                     )}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           );
         })}
-        {firstRun && !showMore && (
+        {collapsed && (
           <button
             type="button"
             onClick={() => setShowMore(true)}
-            className="min-h-11 w-full rounded-xl border border-black/10 dark:border-white/15 text-sm text-zinc-400 hover:text-foreground transition-colors"
+            className="-mt-2 flex min-h-11 items-center justify-center gap-1 self-center rounded-xl px-3 text-label text-secondary hover:text-foreground transition-colors"
           >
-            See more habits
+            <Plus size={15} /> See more habits
           </button>
         )}
 
-        <form onSubmit={addCustom} className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#1c1c1e] p-4 space-y-3 shadow-xs">
-          <h2 className="text-sm font-semibold text-foreground">Add your own</h2>
-          <div className="flex gap-2">
-            <input
-              aria-label="New habit name"
-              value={customTitle}
-              onChange={event => setCustomTitle(event.target.value)}
-              maxLength={70}
-              placeholder="A habit that matters to you"
-              className="min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/15 bg-[#f1f3f6] dark:bg-black px-3 py-2 text-sm text-foreground outline-none focus:border-blue-500"
-            />
-            <button className="rounded-xl bg-black/10 dark:bg-white/10 px-3 text-sm font-medium hover:bg-black/15 dark:hover:bg-white/15 transition-colors">
-              Add
-            </button>
-          </div>
-          <select
-            aria-label="New habit category"
-            value={customCategory}
-            onChange={event => setCustomCategory(event.target.value as HabitCategory)}
-            className="rounded-lg bg-[#f1f3f6] dark:bg-black border border-black/10 dark:border-white/15 px-2 py-1 text-xs text-foreground"
-          >
-            {HABIT_SECTIONS.flatMap(section => section.categories).map(category => (
-              <option key={category} value={category}>{category.replaceAll('_', ' ')}</option>
-            ))}
-          </select>
-        </form>
+        {!collapsed && (
+          <form onSubmit={addCustom} className="surface surface-pad flex flex-col gap-3">
+            <h2 className="text-headline text-foreground">Add your own</h2>
+            <div className="flex gap-2">
+              <input
+                aria-label="New habit name"
+                value={customTitle}
+                onChange={event => setCustomTitle(event.target.value)}
+                maxLength={70}
+                placeholder="A habit that matters to you"
+                className="field min-w-0 flex-1 outline-none focus:border-blue-500"
+              />
+              <button className="control shrink-0">
+                Add
+              </button>
+            </div>
+            <select
+              aria-label="New habit category"
+              value={customCategory}
+              onChange={event => setCustomCategory(event.target.value as HabitCategory)}
+              className="min-h-11 self-start rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 text-label capitalize text-foreground"
+            >
+              {HABIT_SECTIONS.flatMap(section => section.categories).map(category => (
+                <option key={category} value={category}>{category.replaceAll('_', ' ')}</option>
+              ))}
+            </select>
+          </form>
+        )}
 
-        <div className="pb-8 space-y-3">
-          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+        <p className="px-1 text-caption text-muted">
+          Daily habits count seven times; weekly habits count their target sessions. {partnerTotal > 0 ? 'Match your partner’s weekly potential.' : 'Your partner will match the weekly potential you choose.'} Past check-ins stay in your history.
+        </p>
+
+        <div className={firstRun
+          ? 'sticky bottom-0 z-10 -mx-4 mt-auto flex flex-col gap-2 bg-gradient-to-t from-background from-70% to-transparent px-4 pt-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]'
+          : 'flex flex-col gap-2 pb-4'}
+        >
+          {error && <p role="alert" className="text-label text-red-600 dark:text-red-400">{error}</p>}
           <button
             onClick={() => void save()}
-            disabled={saving || checkingPrevious || activeCount === 0 || (partnerTotal > 0 && difference !== 0)}
-            className="w-full rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-black py-3 text-sm font-semibold disabled:opacity-40"
+            disabled={saveDisabled}
+            className="control control-primary w-full !min-h-13 !text-[0.9375rem]"
           >
-            {checkingPrevious ? 'Checking previous habits…' : saving ? 'Saving your plan…' : firstRun ? 'Start with these habits' : 'Save habit plan'}
+            {saveLabel}
           </button>
-          <p className="text-center text-xs text-zinc-500">
-            Daily habits count seven times; weekly habits count their target sessions. {partnerTotal > 0 ? 'Match your partner’s weekly potential.' : 'Your partner will match the weekly potential you choose.'} Past check-ins stay in your history.
-          </p>
         </div>
       </div>
-    </main>
+    </Root>
   );
 }

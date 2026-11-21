@@ -32,9 +32,9 @@ export function BottomNav({ activeTab, onChangeTab, onWarmTab }: BottomNavProps)
   return (
     <nav
       aria-label="Main navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#f6f7fa]/90 dark:bg-[#08090a]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-zinc-800/80 py-1.5 px-6 safe-area-bottom transition-colors"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border-subtle)] bg-[#f6f7fa]/90 px-4 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-2xl transition-colors dark:bg-[#08090a]/90"
     >
-      <div className="max-w-md mx-auto flex items-center justify-around gap-2">
+      <div className="mx-auto grid max-w-md grid-cols-3">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -47,14 +47,18 @@ export function BottomNav({ activeTab, onChangeTab, onWarmTab }: BottomNavProps)
               onFocus={() => onWarmTab?.(tab.id)}
               aria-label={tab.label}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex min-h-11 min-w-16 flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 ${
-                isActive
-                  ? 'bg-player-500/15 text-player-400 font-semibold shadow-xs'
-                  : 'text-zinc-500 hover:text-foreground'
+              className={`group flex min-h-12 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] transition-colors ${
+                isActive ? 'text-player-600 dark:text-player-300' : 'text-[var(--text-muted)] hover:text-foreground'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2] text-player-400' : 'stroke-[1.75]'}`} />
-              <span className={`text-[10px] font-mono tracking-tight ${isActive ? 'font-semibold text-player-400' : 'font-medium'}`}>
+              <span
+                className={`flex h-7 w-14 items-center justify-center rounded-full transition-[background-color,transform] group-active:scale-95 ${
+                  isActive ? 'bg-player-500/15' : ''
+                }`}
+              >
+                <Icon className="size-5" strokeWidth={isActive ? 2.25 : 1.75} aria-hidden="true" />
+              </span>
+              <span className={`text-caption ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}
               </span>
             </button>

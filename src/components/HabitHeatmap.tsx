@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { getPlayerThemeStyles } from '@/lib/player-colors';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -13,8 +13,7 @@ import {
 import { CheckIn, PlayerId } from '@/lib/types';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
-import { ArrowUpRight, BedDouble, Calendar, CheckCircle2, Sparkles, X } from 'lucide-react';
-import { HabitIcon } from './HabitIcon';
+import { ArrowUpRight, BedDouble, Check, ChevronDown, Sparkles, X } from 'lucide-react';
 
 export interface HabitHeatmapProps {
   selectedHabitId?: string | null;
@@ -23,9 +22,9 @@ export interface HabitHeatmapProps {
 }
 
 const WEEK_RANGES = [
-  { weeks: 12, label: '12W' },
-  { weeks: 24, label: '24W' },
-  { weeks: 52, label: '52W' },
+  { weeks: 12, label: '12w', name: '12 weeks' },
+  { weeks: 24, label: '24w', name: '24 weeks' },
+  { weeks: 52, label: '52w', name: '52 weeks' },
 ] as const;
 
 const WEEKDAY_LABELS: { row: number; label: string }[] = [
@@ -143,15 +142,15 @@ export function HabitHeatmap({
 
   const getIntensityClass = (points: number, isRest: boolean, isFuture: boolean) => {
     if (isFuture) {
-      return 'bg-black/[0.03] dark:bg-[#14161a]/60 border border-dashed border-black/10 dark:border-zinc-800/50 opacity-40 cursor-default';
+      return 'bg-[var(--surface-2)] opacity-40 cursor-default';
     }
     if (points === 0) {
       if (isRest) {
         return 'bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-300 dark:border-indigo-500/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/70';
       }
-      return 'bg-zinc-200/80 dark:bg-[#22252b] border border-black/[0.04] dark:border-white/[0.04] hover:bg-zinc-300/80 dark:hover:bg-[#2c3038]';
+      return 'bg-[var(--surface-3)] hover:bg-[var(--border-strong)]';
     }
-    return 'border border-player-500/30 hover:border-player-500';
+    return 'bg-[var(--surface-3)]';
   };
 
   const canSwitchPlayers = !multiplayer.configured || isPartnerConnected;
@@ -159,213 +158,134 @@ export function HabitHeatmap({
   const inspectedStats = dayStatsMap[inspectedDateStr] || { points: 0, count: 0, items: [] };
   const inspectedIsRest = restDaySet.has(inspectedDateStr);
   const inspectedCalendarDate = heatmapDateFormatter.format(parseDate(inspectedDateStr));
+  const inspectedLabel = formatFriendlyDate(inspectedDateStr);
+
+  // Recent weeks sit on the right; keep them in view when the range widens.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [weekCount]);
+
+  const playerOptions: { id: PlayerId; tone: string }[] = [
+    { id: 'maciek', tone: 'text-owner-300' },
+    { id: 'myrna', tone: 'text-guest-300' },
+  ];
 
   return (
     <section style={getPlayerThemeStyles(players[selectedPlayer])}
       aria-label="Consistency contribution calendar"
-      className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800/90 p-4 space-y-3.5 shadow-xs"
+      className="surface surface-pad space-y-5"
     >
-      {/* Top Header Row: Title + Range Selector + Player Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 shrink-0 text-player-400" />
-            <h2 className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-900 dark:text-zinc-200 truncate">
-              {filteredHabit ? filteredHabit.title : 'Consistency Graph'}
-            </h2>
+      {/* Title + habit filter */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-headline text-foreground">Consistency</h2>
+        {playerHabits.length > 0 && (
+          <div className="relative min-w-0 max-w-[60%]">
+            <select
+              aria-label="Filter calendar by habit"
+              value={activeHabitFilter ?? ''}
+              onChange={(event) => {
+                soundEngine.playClick();
+                hapticLight();
+                setHabitFilter(event.target.value || null);
+              }}
+              className={`min-h-11 w-full appearance-none truncate rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] py-2 pl-3 pr-8 text-label ${
+                filteredHabit ? 'text-player-300' : 'text-foreground'
+              }`}
+            >
+              <option value="">All habits</option>
+              {playerHabits.map((habit) => (
+                <option key={habit.id} value={habit.id}>
+                  {habit.title}
+                </option>
+              ))}
+            </select>
+            <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
           </div>
-          <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
-            {filteredHabit
-              ? `${activeDaysCount} check-ins in the last ${weekCount} weeks`
-              : `${windowTotalPoints.toLocaleString()} pts across ${activeDaysCount} active days (${weekCount}w)`}
-          </p>
+        )}
+      </div>
+
+      {/* Range + player, one row */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div
+          role="group"
+          aria-label="Select calendar timeframe"
+          className="flex rounded-[var(--radius-control)] bg-[var(--surface-2)] p-0.5"
+        >
+          {WEEK_RANGES.map((range) => (
+            <button
+              key={range.weeks}
+              type="button"
+              aria-pressed={weekCount === range.weeks}
+              aria-label={range.name}
+              onClick={() => {
+                if (weekCount !== range.weeks) {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setWeekCount(range.weeks);
+                }
+              }}
+              className={`h-10 min-w-11 rounded-[10px] px-2.5 text-label num transition-colors ${
+                weekCount === range.weeks
+                  ? 'bg-[var(--surface-1)] text-foreground font-semibold shadow-xs'
+                  : 'text-secondary hover:text-foreground'
+              }`}
+            >
+              {range.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Week Horizon Selector (12W / 24W / 52W) */}
+        {canSwitchPlayers && (
           <div
-            role="group"
-            aria-label="Select calendar timeframe"
-            className="flex p-0.5 rounded-lg bg-zinc-100 dark:bg-[#08090a] border border-zinc-200 dark:border-zinc-800/90 text-[11px] font-mono"
+            role="tablist"
+            aria-label="Select player for consistency heatmap"
+            className="flex rounded-[var(--radius-control)] bg-[var(--surface-2)] p-0.5"
           >
-            {WEEK_RANGES.map((range) => (
+            {playerOptions.map(({ id, tone }) => (
               <button
-                key={range.weeks}
+                key={id}
                 type="button"
-                aria-pressed={weekCount === range.weeks}
+                role="tab"
+                aria-selected={selectedPlayer === id}
                 onClick={() => {
-                  if (weekCount !== range.weeks) {
+                  if (selectedPlayer !== id) {
                     soundEngine.playClick();
                     hapticLight();
-                    setWeekCount(range.weeks);
+                    setSelectedPlayer(id);
                   }
                 }}
-                className={`px-2 py-0.5 rounded-md transition-colors ${
-                  weekCount === range.weeks
-                    ? 'bg-white text-zinc-900 shadow-xs dark:bg-zinc-800 dark:text-white font-semibold'
-                    : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                className={`h-10 max-w-28 truncate rounded-[10px] px-3 text-label transition-colors ${
+                  selectedPlayer === id
+                    ? `bg-[var(--surface-1)] font-semibold shadow-xs ${tone}`
+                    : 'text-secondary hover:text-foreground'
                 }`}
               >
-                {range.label}
+                {players[id].name}
               </button>
             ))}
           </div>
-
-          {/* Player Toggle */}
-          {canSwitchPlayers && (
-            <div
-              role="tablist"
-              aria-label="Select player for consistency heatmap"
-              className="flex p-0.5 rounded-lg bg-zinc-100 dark:bg-[#08090a] border border-zinc-200 dark:border-zinc-800/90 text-xs font-mono"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={selectedPlayer === 'maciek'}
-                onClick={() => {
-                  if (selectedPlayer !== 'maciek') {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setSelectedPlayer('maciek');
-                  }
-                }}
-                className={`px-2.5 py-0.5 rounded-md border transition-colors ${
-                  selectedPlayer === 'maciek'
-                    ? 'bg-owner-500/20 border-owner-500/35 text-owner-300 font-semibold'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
-                }`}
-              >
-                {players.maciek.name}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={selectedPlayer === 'myrna'}
-                onClick={() => {
-                  if (selectedPlayer !== 'myrna') {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setSelectedPlayer('myrna');
-                  }
-                }}
-                className={`px-2.5 py-0.5 rounded-md border transition-colors ${
-                  selectedPlayer === 'myrna'
-                    ? 'bg-guest-500/20 border-guest-500/35 text-guest-300 font-semibold'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
-                }`}
-              >
-                {players.myrna.name}
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Habit Filter Strip */}
-      {playerHabits.length > 0 && (
-        <div
-          role="group"
-          aria-label="Filter calendar by habit"
-          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"
-        >
-          <button
-            type="button"
-            aria-pressed={activeHabitFilter === null}
-            onClick={() => {
-              soundEngine.playClick();
-              hapticLight();
-              setHabitFilter(null);
-            }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
-              activeHabitFilter === null
-                ? 'bg-player-500/20 border-player-500/40 text-player-200 font-semibold'
-                : 'bg-zinc-100 dark:bg-[#08090a] border-zinc-200 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-            }`}
-          >
-            <span>All Habits</span>
-          </button>
-          {playerHabits.map((habit) => {
-            const isSelected = activeHabitFilter === habit.id;
-            return (
-              <button
-                key={habit.id}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setHabitFilter(isSelected ? null : habit.id);
-                }}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono shrink-0 transition-colors ${
-                  isSelected
-                    ? 'bg-player-500/20 border-player-500/40 text-player-200 font-semibold'
-                    : 'bg-zinc-100 dark:bg-[#08090a] border-zinc-200 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <HabitIcon
-                  name={habit.iconName}
-                  className={`w-3 h-3 ${
-                    isSelected
-                      ? 'text-player-300'
-                      : 'text-zinc-500'
-                  }`}
-                />
-                <span>{habit.title}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Summary numbers, inline */}
+      <dl className="grid grid-cols-4 gap-2">
+        <Stat label="Active days" value={<>{activeDaysCount}<span className="text-label font-normal text-muted">/{allVisibleDays.length}</span></>} />
+        <Stat label={filteredHabit ? 'Full target' : 'Par days'} value={parDaysCount} accent />
+        <Stat label="Best run" value={`${bestWindowStreak}d`} />
+        <Stat label="Points" value={windowTotalPoints.toLocaleString()} />
+      </dl>
 
-      {/* Summary Telemetry Strip */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            Active Days
-          </div>
-          <div className="mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums text-zinc-200">
-            {activeDaysCount}{' '}
-            <span className="text-[10px] font-normal text-zinc-500">/ {allVisibleDays.length}</span>
-          </div>
-        </div>
-        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            {filteredHabit ? 'Full Target' : 'Par Days'}
-          </div>
-          <div
-            className="mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums text-player-300"
-          >
-            {parDaysCount}
-          </div>
-        </div>
-        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            Best Run
-          </div>
-          <div className="mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums text-zinc-200">
-            {bestWindowStreak}d
-          </div>
-        </div>
-        <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 px-2.5 py-2">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            Window Pts
-          </div>
-          <div className="mt-0.5 text-xs sm:text-sm font-mono font-bold tabular-nums text-zinc-200">
-            {windowTotalPoints.toLocaleString()}
-          </div>
-        </div>
-      </div>
-
-      {/* GitHub-Style Calendar Matrix (Month headers + Weekday axis + Week columns) */}
-      <div className="overflow-x-auto no-scrollbar">
+      {/* Calendar matrix (month headers + weekday axis + week columns) */}
+      <div ref={scrollRef} className="-mx-1 overflow-x-auto px-1 pb-1">
         <div className="inline-flex min-w-full justify-center">
-          <div className="inline-flex flex-col gap-1.5 p-3 rounded-lg bg-zinc-50/70 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80">
-            {/* Month Labels Row */}
-            <div className="flex items-center gap-1.5 pl-8">
+          <div className="inline-flex flex-col gap-1.5">
+            <div aria-hidden="true" className="flex items-center gap-1.5 pl-9">
               {calendarWeeks.map((week) => (
                 <div
                   key={`month-${week.startDateStr}`}
-                  className="w-4 sm:w-4.5 relative h-3.5 text-[10px] font-mono text-zinc-400 select-none"
+                  className="relative h-4 w-4 text-caption text-muted select-none"
                 >
                   {week.monthLabel && (
                     <span className="absolute left-0 top-0 whitespace-nowrap">
@@ -376,33 +296,24 @@ export function HabitHeatmap({
               ))}
             </div>
 
-            {/* Grid Body: Left Weekday Labels + Week Columns */}
             <div className="flex items-start gap-2">
-              {/* Weekday Labels (Mon, Wed, Fri, Sun) */}
               <div
                 aria-hidden="true"
-                className="grid grid-rows-7 gap-1.5 pr-0.5 text-[10px] font-mono text-zinc-500 select-none"
+                className="grid w-7 grid-rows-7 gap-1.5 text-caption text-muted select-none"
               >
                 {Array.from({ length: 7 }, (_, rowIdx) => {
                   const found = WEEKDAY_LABELS.find((w) => w.row === rowIdx);
                   return (
-                    <div
-                      key={rowIdx}
-                      className="h-4 sm:h-4.5 flex items-center justify-end leading-none"
-                    >
+                    <div key={rowIdx} className="flex h-4 items-center justify-end leading-none">
                       {found ? found.label : ''}
                     </div>
                   );
                 })}
               </div>
 
-              {/* Week Columns (Monday = row 0 .. Sunday = row 6) */}
               <div className="flex items-start gap-1.5">
                 {calendarWeeks.map((week) => (
-                  <div
-                    key={week.startDateStr}
-                    className="grid grid-rows-7 gap-1.5"
-                  >
+                  <div key={week.startDateStr} className="grid grid-rows-7 gap-1.5">
                     {week.days.map((d) => {
                       const stats = dayStatsMap[d.dateStr] || {
                         points: 0,
@@ -427,15 +338,15 @@ export function HabitHeatmap({
                           }}
                           aria-label={`${formatFriendlyDate(d.dateStr)} (${d.dateStr}): ${stats.points} points, ${stats.count} habits${isRest ? ', Rest Day' : ''}`}
                           aria-pressed={isSelected && !d.isFuture}
-                          className={`relative w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-[3px] transition-[transform,box-shadow,border-color,background-color] duration-150 ${getIntensityClass(
+                          className={`relative size-4 rounded-[4px] transition-[transform,box-shadow,background-color] duration-150 ${getIntensityClass(
                             stats.points,
                             isRest,
                             d.isFuture
                           )} ${
                             isSelected && !d.isFuture
-                              ? 'scale-110 ring-2 ring-zinc-900 dark:ring-white shadow-lg z-10'
+                              ? 'z-10 scale-110 ring-2 ring-foreground'
                               : d.isToday
-                              ? 'ring-1 ring-zinc-300/70 hover:scale-110'
+                              ? 'ring-1 ring-[var(--border-strong)] hover:scale-110'
                               : !d.isFuture
                               ? 'hover:scale-110'
                               : ''
@@ -449,7 +360,7 @@ export function HabitHeatmap({
                           {stats.points > 0 && !d.isFuture && (
                             <span
                               aria-hidden="true"
-                              className="pointer-events-none absolute inset-0 rounded-[2px] bg-player-500"
+                              className="pointer-events-none absolute inset-0 rounded-[4px] bg-player-500"
                               style={{ opacity: getFillOpacity(stats.points) }}
                             />
                           )}
@@ -464,81 +375,62 @@ export function HabitHeatmap({
         </div>
       </div>
 
-      {/* Legend Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-zinc-500">
+      {/* Legend */}
+      <div aria-hidden="true" className="-mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-caption text-muted">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-300 dark:border-indigo-500/40" />
-            <span>Rest day</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2.5 rounded-[3px] bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-300 dark:border-indigo-500/40" />
+            Rest
           </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-zinc-200/80 dark:bg-[#22252b] ring-1 ring-zinc-300/70" />
-            <span>Today</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2.5 rounded-[3px] bg-[var(--surface-3)] ring-1 ring-[var(--border-strong)]" />
+            Today
           </span>
         </div>
-
-        <div className="flex items-center gap-1 shrink-0">
-          <span>Less</span>
-          <span className="w-2.5 h-2.5 rounded-[2px] bg-zinc-200/80 dark:bg-[#22252b] border border-black/[0.04] dark:border-white/[0.04]" />
+        <div className="flex items-center gap-1">
+          <span className="mr-0.5">Less</span>
+          <span className="size-2.5 rounded-[3px] bg-[var(--surface-3)]" />
           {[0.0625, 0.3125, 0.625, 1].map((ratio) => (
             <span
               key={ratio}
-              className="w-2.5 h-2.5 rounded-[2px] bg-player-500"
+              className="size-2.5 rounded-[3px] bg-player-500"
               style={{ opacity: getFillOpacity(dailyPar * ratio) }}
             />
           ))}
-          <span>{dailyPar} Par</span>
+          <span className="ml-0.5 num">{dailyPar} par</span>
         </div>
       </div>
 
-      {/* Interactive Day Inspector Panel */}
-      <div className="rounded-lg bg-zinc-50 dark:bg-[#08090a] border border-zinc-200/80 dark:border-zinc-800/80 p-3 space-y-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-wrap">
-            <span className="text-xs font-mono font-semibold text-zinc-200">
-              {formatFriendlyDate(inspectedDateStr)}
-            </span>
-            {inspectedDateStr === todayStr && (
-              <span className="text-[10px] font-mono text-zinc-500">
-                ({inspectedCalendarDate})
+      {/* Selected day */}
+      <div className="border-t border-[var(--border-subtle)] pt-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="text-label font-semibold text-foreground">{inspectedLabel}</span>
+              {inspectedLabel !== inspectedCalendarDate && (
+                <span className="text-caption text-muted">{inspectedCalendarDate}</span>
+              )}
+            </div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption">
+              <span className="num font-semibold text-player-300">
+                {inspectedStats.points} / {dailyPar} pts
               </span>
-            )}
-            <span
-              className="text-xs font-mono font-bold tabular-nums text-player-300"
-            >
-              {inspectedStats.points} / {dailyPar} pts
-            </span>
-            {inspectedStats.points >= dailyPar && (
-              <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border bg-player-500/15 border-player-500/35 text-player-300"
-              >
-                <Sparkles className="w-2.5 h-2.5" />
-                {filteredHabit ? 'Completed' : 'Par Hit'}
-              </span>
-            )}
-            {inspectedIsRest && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-indigo-500/15 border border-indigo-500/30 text-indigo-300">
-                <BedDouble className="w-2.5 h-2.5" />
-                Rest Day
-              </span>
-            )}
+              {inspectedStats.points >= dailyPar && (
+                <span className="inline-flex items-center gap-1 text-player-300">
+                  <Sparkles className="size-3" />
+                  {filteredHabit ? 'Completed' : 'Par Hit'}
+                </span>
+              )}
+              {inspectedIsRest && (
+                <span className="inline-flex items-center gap-1 text-indigo-500 dark:text-indigo-300">
+                  <BedDouble className="size-3" />
+                  Rest Day
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {onOpenDateInToday && selectedPlayer === activePlayerId && (
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  onOpenDateInToday(inspectedDateStr);
-                }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
-              >
-                <span>Open day</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </button>
-            )}
+          <div className="flex shrink-0 items-center gap-1">
             {selectedDayStr && selectedDayStr !== todayStr && (
               <button
                 type="button"
@@ -547,52 +439,67 @@ export function HabitHeatmap({
                   setSelectedDayStr(todayStr);
                 }}
                 aria-label="Reset to today"
-                className="text-zinc-500 hover:text-zinc-300 p-1 rounded transition-colors"
+                className="flex size-11 items-center justify-center rounded-xl text-muted hover:text-foreground transition-colors"
                 title="Reset to today"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="size-4" />
+              </button>
+            )}
+            {onOpenDateInToday && selectedPlayer === activePlayerId && (
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  onOpenDateInToday(inspectedDateStr);
+                }}
+                className="control"
+              >
+                Open day
+                <ArrowUpRight className="size-4" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Completed habits chips for the inspected day */}
         {inspectedStats.items.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <ul className="space-y-1.5">
             {inspectedStats.items.map((item) => {
               const habit = habits.find((h) => h.id === item.habitId);
               if (!habit) return null;
               return (
-                <div
-                  key={item.id}
-                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-white dark:bg-[#12141a] border border-zinc-200 dark:border-zinc-800/90 text-[11px] font-mono text-zinc-900 dark:text-zinc-200 shadow-2xs"
-                >
-                  <CheckCircle2
-                    className="w-3 h-3 shrink-0 text-player-400"
-                  />
-                  <span className="truncate max-w-44">{habit.title}</span>
-                  {typeof item.quantity === 'number' && (
-                    <span className="text-zinc-400">
-                      ({item.quantity}{habit.quantityUnit ? ` ${habit.quantityUnit}` : ''})
-                    </span>
-                  )}
-                  <span
-                    className="font-semibold tabular-nums text-player-300"
-                  >
-                    +{item.pointsEarned}
+                <li key={item.id} className="flex items-center gap-2 text-label text-foreground">
+                  <Check className="size-3.5 shrink-0 text-player-400" />
+                  <span className="min-w-0 flex-1 truncate font-normal">
+                    {habit.title}
+                    {typeof item.quantity === 'number' && (
+                      <span className="text-muted">
+                        {' '}({item.quantity}{habit.quantityUnit ? ` ${habit.quantityUnit}` : ''})
+                      </span>
+                    )}
                   </span>
-                </div>
+                  <span className="shrink-0 num font-semibold text-player-300">+{item.pointsEarned}</span>
+                </li>
               );
             })}
-          </div>
+          </ul>
         ) : (
-          <p className="text-[11px] font-mono text-zinc-500">
+          <p className="text-caption text-muted">
             {inspectedIsRest
               ? 'Recovery day active — streak protected with no penalty.'
-              : 'No habit check-ins recorded on this date. Tap any square above to inspect.'}
+              : 'No check-ins on this date. Tap any square to inspect another day.'}
           </p>
         )}
       </div>
     </section>
+  );
+}
+
+function Stat({ label, value, accent = false }: { label: string; value: React.ReactNode; accent?: boolean }) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="mt-0.5 truncate text-caption text-muted">{label}</dt>
+      <dd className={`text-headline num ${accent ? 'text-player-300' : 'text-foreground'}`}>{value}</dd>
+    </div>
   );
 }

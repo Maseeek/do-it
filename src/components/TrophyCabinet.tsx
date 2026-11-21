@@ -43,7 +43,7 @@ export function TrophyCabinet() {
   const unlockedCount = badges.filter((b) => b.isUnlocked).length;
 
   const renderBadgeIcon = (iconName: string) => {
-    const props = { className: 'w-4 h-4' };
+    const props = { className: 'h-[18px] w-[18px]' };
     switch (iconName) {
       case 'Zap':
         return <Zap {...props} />;
@@ -87,139 +87,109 @@ export function TrophyCabinet() {
     }
   };
 
+  const segmentTrack =
+    'grid gap-0.5 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] p-0.5';
+  const segment = (active: boolean) =>
+    `min-h-10 min-w-0 truncate rounded-[10px] px-3 text-label transition-colors ${
+      active
+        ? 'bg-[var(--surface-1)] font-semibold text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12)] dark:bg-[var(--surface-3)]'
+        : 'text-secondary hover:text-foreground'
+    }`;
+
   return (
-    <div style={getPlayerThemeStyles(players[selectedPlayer])} className="space-y-3">
+    <div style={getPlayerThemeStyles(players[selectedPlayer])} className="stack-cards">
       {/* Top Controls: Player & Filter */}
-      <div className="flex items-center justify-between gap-2">
-        <div role="tablist" aria-label="Select player for badges" className="flex p-0.5 rounded-full bg-zinc-100 dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] text-xs">
-          <button
-            role="tab"
-            aria-selected={selectedPlayer === 'maciek'}
-            onClick={() => handlePlayerChange('maciek')}
-            className={`px-3 py-1 rounded-full transition-colors ${
-              selectedPlayer === 'maciek'
-                ? 'bg-owner-500/20 text-owner-300 font-semibold'
-                : 'text-zinc-400'
-            }`}
-          >
-            {players.maciek.name}
-          </button>
-          <button
-            role="tab"
-            aria-selected={selectedPlayer === 'myrna'}
-            onClick={() => handlePlayerChange('myrna')}
-            className={`px-3 py-1 rounded-full transition-colors ${
-              selectedPlayer === 'myrna'
-                ? 'bg-guest-500/20 text-guest-300 font-semibold'
-                : 'text-zinc-400'
-            }`}
-          >
-            {players.myrna.name}
-          </button>
+      <div className="flex items-center justify-between gap-3">
+        <div role="tablist" aria-label="Select player for badges" className={`${segmentTrack} grid-cols-2`}>
+          {(['maciek', 'myrna'] as const).map((id) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={selectedPlayer === id}
+              onClick={() => handlePlayerChange(id)}
+              className={`${segment(selectedPlayer === id)} ${
+                selectedPlayer === id ? (id === 'maciek' ? '!text-owner-300' : '!text-guest-300') : ''
+              }`}
+            >
+              {players[id].name}
+            </button>
+          ))}
         </div>
 
-        <span className="text-xs text-zinc-400 font-medium">
+        <span className="num shrink-0 text-caption text-muted">
           {unlockedCount} of {badges.length} unlocked
         </span>
       </div>
 
       {/* Filter Tabs */}
-      <div role="tablist" aria-label="Filter badges by unlock state" className="flex p-0.5 rounded-full bg-zinc-100 dark:bg-[#1c1c1e] border border-black/10 dark:border-white/[0.08] text-xs">
-        <button
-          role="tab"
-          aria-selected={filter === 'all'}
-          onClick={() => handleFilterChange('all')}
-          className={`flex-1 py-1 rounded-full transition-colors ${
-            filter === 'all' ? 'bg-white text-zinc-900 shadow-xs dark:bg-[#2c2c2e] dark:text-white font-medium' : 'text-zinc-400'
-          }`}
-        >
-          All
-        </button>
-        <button
-          role="tab"
-          aria-selected={filter === 'unlocked'}
-          onClick={() => handleFilterChange('unlocked')}
-          className={`flex-1 py-1 rounded-full transition-colors ${
-            filter === 'unlocked' ? 'bg-white text-emerald-600 shadow-xs dark:bg-[#2c2c2e] dark:text-emerald-400 font-medium' : 'text-zinc-400'
-          }`}
-        >
-          Unlocked
-        </button>
-        <button
-          role="tab"
-          aria-selected={filter === 'locked'}
-          onClick={() => handleFilterChange('locked')}
-          className={`flex-1 py-1 rounded-full transition-colors ${
-            filter === 'locked' ? 'bg-white text-zinc-900 shadow-xs dark:bg-[#2c2c2e] dark:text-white font-medium' : 'text-zinc-400'
-          }`}
-        >
-          Locked
-        </button>
-      </div>
-
-      {/* Badges Grid (Apple Activity Awards style) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {filteredBadges.map(({ badge, isUnlocked, progress, currentValue }) => (
-          <div
-            key={badge.id}
-            className={`p-3.5 rounded-2xl border transition-all shadow-xs ${
-              isUnlocked
-                ? 'bg-white dark:bg-[#1c1c1e] border-black/[0.08] dark:border-white/[0.08]'
-                : 'bg-zinc-50/70 dark:bg-[#1c1c1e]/40 border-black/[0.04] dark:border-white/[0.04] opacity-60'
-            }`}
+      <div role="tablist" aria-label="Filter badges by unlock state" className={`${segmentTrack} grid-cols-3`}>
+        {([
+          { id: 'all', label: 'All' },
+          { id: 'unlocked', label: 'Unlocked' },
+          { id: 'locked', label: 'Locked' },
+        ] as const).map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            role="tab"
+            aria-selected={filter === option.id}
+            onClick={() => handleFilterChange(option.id)}
+            className={segment(filter === option.id)}
           >
-            <div className="flex items-start gap-3">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border ${
-                  isUnlocked
-                    ? 'bg-player-500/15 border-player-500/30 text-player-400'
-                    : 'bg-[#2c2c2e] border-white/[0.06] text-zinc-600'
-                }`}
-              >
-                {isUnlocked ? renderBadgeIcon(badge.icon) : <Lock className="w-4 h-4" />}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1">
-                  <h4 className="text-xs font-semibold text-white truncate">{badge.title}</h4>
-                  {isUnlocked ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                  ) : (
-                    <span className="text-[10px] text-zinc-500 flex-shrink-0">
-                      {progress}%
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
-                  {badge.description}
-                </p>
-
-                {!isUnlocked && (
-                  <div
-                    role="progressbar"
-                    aria-valuenow={currentValue}
-                    aria-valuemin={0}
-                    aria-valuemax={badge.targetCount}
-                    aria-label={`${badge.title} progress: ${currentValue} of ${badge.targetCount}`}
-                    className="mt-2 space-y-1"
-                  >
-                    <div className="h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-player-500"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <div className="text-[9px] text-zinc-500 text-right tabular-nums">
-                      {currentValue} / {badge.targetCount}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            {option.label}
+          </button>
         ))}
       </div>
+
+      {/* Badges: one surface, hairline rows */}
+      <ul className="surface divide-y divide-[var(--border-subtle)] px-4">
+        {filteredBadges.map(({ badge, isUnlocked, progress, currentValue }) => (
+          <li key={badge.id} className="flex items-start gap-3 py-3.5">
+            <div
+              aria-hidden="true"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                isUnlocked ? 'bg-player-500/15 text-player-300' : 'bg-[var(--surface-2)] text-muted'
+              }`}
+            >
+              {isUnlocked ? renderBadgeIcon(badge.icon) : <Lock className="h-4 w-4" />}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className={`truncate text-label font-semibold ${isUnlocked ? 'text-foreground' : 'text-secondary'}`}>
+                  {badge.title}
+                </h4>
+                {isUnlocked ? (
+                  <CheckCircle2 aria-label="Unlocked" className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <span className="num shrink-0 text-caption text-muted">{progress}%</span>
+                )}
+              </div>
+
+              <p className="mt-0.5 text-caption text-secondary">{badge.description}</p>
+
+              {!isUnlocked && (
+                <div
+                  role="progressbar"
+                  aria-valuenow={currentValue}
+                  aria-valuemin={0}
+                  aria-valuemax={badge.targetCount}
+                  aria-label={`${badge.title} progress: ${currentValue} of ${badge.targetCount}`}
+                  className="mt-2 flex items-center gap-3"
+                >
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                    <div className="h-full rounded-full bg-player-500" style={{ width: `${progress}%` }} />
+                  </div>
+                  <span className="num shrink-0 text-caption text-muted">
+                    {currentValue} / {badge.targetCount}
+                  </span>
+                </div>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

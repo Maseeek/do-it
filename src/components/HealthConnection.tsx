@@ -54,12 +54,12 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
 
   if (!multiplayer.configured) return null;
   if (status?.available === false) {
-    return compact ? null : <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] shadow-xs p-4 space-y-2"><h2 className="text-sm font-semibold">Google Health</h2><p role="status" className="text-xs leading-5 text-zinc-400">{status.message}</p></section>;
+    return compact ? null : <section className="surface surface-pad flex flex-col gap-1"><h2 className="text-headline">Google Health</h2><p role="status" className="text-body text-secondary">{status.message}</p></section>;
   }
   if (compact) {
     if (!status) return null;
     if (!activeHabits.some(habit => habit.automation) || (status?.connected && !status.needsAttention && !error)) return null;
-    return <div role="status" className="rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-xs text-amber-200">{status?.message || error || 'Connect Google Health from your profile to automate selected habits.'}</div>;
+    return <div role="status" className="rounded-xl border border-amber-400/25 bg-amber-400/[0.08] px-3 py-2.5 text-label text-amber-700 dark:text-amber-200">{status?.message || error || 'Connect Google Health from your profile to automate selected habits.'}</div>;
   }
 
   async function connect() {
@@ -116,58 +116,52 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     clearHealthTelemetry(sleepHabit.id, selectedDate);
   }
 
-  return <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] shadow-xs p-4 space-y-4">
-    <div className="flex items-center gap-3"><Activity size={20} className="text-emerald-300"/><div className="flex-1"><h2 className="text-sm font-semibold">Google Health</h2><p className="text-xs text-zinc-400">{status?.connected ? status.needsAttention ? 'Needs attention' : 'Connected' : 'Connect to complete selected habits automatically'}</p></div></div>
-    {status?.connected ? <>
-      <p className="text-xs text-zinc-400">{status.lastCheckedAt ? `Last checked ${new Date(status.lastCheckedAt).toLocaleString()}` : 'Waiting for first check'} · Manual check-ins remain available.</p>
-      {status.message && <p role="status" className="text-xs text-amber-300">{status.message}</p>}
-      <div className="flex flex-wrap gap-2"><button className="control control-primary min-h-11" disabled={busy} onClick={sync}><RefreshCw size={15}/>{busy ? 'Checking…' : 'Check now'}</button><button className="control min-h-11" disabled={busy} onClick={connect}>Reconnect</button><button className="control min-h-11" disabled={busy} onClick={disconnect}>Disconnect & delete connection</button></div>
-    </> : <>
-      <p className="text-xs leading-5 text-zinc-400">Do It reads only the sleep and activity needed for your selected automatic habits. Your partner can see completed habits and basic results such as sleep hours, workout type and duration, or steps. Raw health records stay private. Disconnect any time to delete this connection; imported check-ins stay until you delete them below.</p>
-      {activeHabits.some(habit => habit.automation) ? <button className="control control-primary min-h-11" disabled={busy} onClick={connect}>{busy ? 'Connecting…' : 'Connect Google Health'}<ArrowUpRight size={15}/></button> : <button className="control control-primary min-h-11" onClick={onChooseHabits}>Choose an automatic habit<ArrowUpRight size={15}/></button>}
-      <details className="text-xs text-zinc-400"><summary className="cursor-pointer">Phone setup</summary><p className="mt-2 leading-5">On iPhone, allow Apple Health to share with Google Health. On Android, allow Health Connect to share with Google Health. Your fitness apps must also send their data to the phone health store. Some apps and metrics may not be supported.</p><a className="mt-2 inline-flex underline" href="https://support.google.com/googlehealth/answer/14236613?hl=en" target="_blank" rel="noreferrer">Google’s connection guide</a></details>
-    </>}
+  const pill = 'inline-flex min-h-11 items-center rounded-[var(--radius-control)] border px-3 text-label num transition-colors';
 
-    <details className="border-t border-white/[0.08] pt-3 text-xs text-zinc-400">
-      <summary className="cursor-pointer font-medium text-zinc-300">Test sleep points</summary>
-      <p className="mt-2 text-zinc-400">Try sleep readings for {selectedDate} in your local progress:</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => simulateSleepTelemetry(8.5)}
-          className="px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 font-mono text-[11px]"
-        >
-          8.5h · 100%
-        </button>
-        {[8, 7.5, 7, 6.5].map((hours, index) => (
-          <button key={hours} type="button" onClick={() => simulateSleepTelemetry(hours)} className="control text-xs">
-            {hours}h · {[90, 60, 40, 20][index]}%
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => simulateSleepTelemetry(3.0)}
-          className="px-2.5 py-1.5 rounded-lg border border-orange-600/50 bg-orange-600/15 text-orange-300 hover:bg-orange-600/25 font-mono text-[11px]"
-        >
-          3h · 0%
-        </button>
-        <button
-          type="button"
-          onClick={() => simulateSleepTelemetry(1.5)}
-          className="px-2.5 py-1.5 rounded-lg border border-red-600/50 bg-red-600/15 text-red-300 hover:bg-red-600/25 font-mono text-[11px]"
-        >
-          1.5h · 0%
-        </button>
-        <button
-          type="button"
-          onClick={simulateNoWatchData}
-          className="px-2.5 py-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 font-mono text-[11px]"
-        >
-          ○ Watch Not Worn (Blank · Allow Check-in)
-        </button>
+  return <section className="surface surface-pad flex flex-col gap-4">
+    <div className="flex items-center gap-3">
+      <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"><Activity size={20}/></span>
+      <div className="min-w-0 flex-1">
+        <h2 className="text-headline">Google Health</h2>
+        <p className={`text-label font-normal ${status?.connected && !status.needsAttention ? 'text-emerald-600 dark:text-emerald-400' : status?.needsAttention ? 'text-amber-600 dark:text-amber-300' : 'text-secondary'}`}>{status?.connected ? status.needsAttention ? 'Needs attention' : 'Connected' : 'Connect to complete selected habits automatically'}</p>
       </div>
-    </details>
-    <details className="border-t border-white/[0.08] pt-3 text-xs text-zinc-400"><summary className="cursor-pointer">Privacy</summary><button className="control mt-3 min-h-11" disabled={busy} onClick={deleteHistory}>Delete imported check-ins</button></details>
-    {error && <p role="alert" className="text-xs text-amber-300">{error}</p>}
+    </div>
+    {status?.connected ? <>
+      <p className="text-label font-normal text-secondary">{status.lastCheckedAt ? `Last checked ${new Date(status.lastCheckedAt).toLocaleString()}` : 'Waiting for first check'} · Manual check-ins remain available.</p>
+      {status.message && <p role="status" className="text-label text-amber-600 dark:text-amber-300">{status.message}</p>}
+      <div className="flex flex-wrap gap-2"><button className="control control-primary" disabled={busy} onClick={sync}><RefreshCw size={16}/>{busy ? 'Checking…' : 'Check now'}</button><button className="control" disabled={busy} onClick={connect}>Reconnect</button><button className="control" disabled={busy} onClick={disconnect}>Disconnect & delete connection</button></div>
+    </> : <>
+      <p className="text-body text-secondary">Do It reads only the sleep and activity needed for your selected automatic habits. Your partner can see completed habits and basic results such as sleep hours, workout type and duration, or steps. Raw health records stay private. Disconnect any time to delete this connection; imported check-ins stay until you delete them below.</p>
+      {activeHabits.some(habit => habit.automation) ? <button className="control control-primary w-full" disabled={busy} onClick={connect}>{busy ? 'Connecting…' : 'Connect Google Health'}<ArrowUpRight size={16}/></button> : <button className="control control-primary w-full" onClick={onChooseHabits}>Choose an automatic habit<ArrowUpRight size={16}/></button>}
+    </>}
+    {error && <p role="alert" className="text-label text-amber-600 dark:text-amber-300">{error}</p>}
+
+    <div className="-mx-[var(--card-pad)] -mb-[var(--card-pad)] divide-y divide-[var(--border-subtle)] border-t border-[var(--border-subtle)] text-label">
+      {!status?.connected && <details className="group px-[var(--card-pad)]"><summary className="flex min-h-12 items-center text-foreground">Phone setup</summary><p className="pb-4 font-normal text-secondary">On iPhone, allow Apple Health to share with Google Health. On Android, allow Health Connect to share with Google Health. Your fitness apps must also send their data to the phone health store. Some apps and metrics may not be supported.</p><a className="mb-4 inline-flex min-h-11 items-center underline text-secondary" href="https://support.google.com/googlehealth/answer/14236613?hl=en" target="_blank" rel="noreferrer">Google’s connection guide</a></details>}
+      <details className="px-[var(--card-pad)]">
+        <summary className="flex min-h-12 items-center text-foreground">Test sleep points</summary>
+        <p className="font-normal text-secondary">Try sleep readings for {selectedDate} in your local progress:</p>
+        <div className="mt-3 mb-4 flex flex-wrap gap-2">
+          <button type="button" onClick={() => simulateSleepTelemetry(8.5)} className={`${pill} border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20`}>
+            8.5h · 100%
+          </button>
+          {[8, 7.5, 7, 6.5].map((hours, index) => (
+            <button key={hours} type="button" onClick={() => simulateSleepTelemetry(hours)} className={`${pill} border-[var(--border-medium)] text-foreground hover:bg-[var(--surface-2)]`}>
+              {hours}h · {[90, 60, 40, 20][index]}%
+            </button>
+          ))}
+          <button type="button" onClick={() => simulateSleepTelemetry(3.0)} className={`${pill} border-orange-600/50 bg-orange-600/10 text-orange-700 dark:text-orange-300 hover:bg-orange-600/20`}>
+            3h · 0%
+          </button>
+          <button type="button" onClick={() => simulateSleepTelemetry(1.5)} className={`${pill} border-red-600/50 bg-red-600/10 text-red-700 dark:text-red-300 hover:bg-red-600/20`}>
+            1.5h · 0%
+          </button>
+          <button type="button" onClick={simulateNoWatchData} className={`${pill} border-[var(--border-medium)] text-secondary hover:bg-[var(--surface-2)]`}>
+            ○ Watch Not Worn (Blank · Allow Check-in)
+          </button>
+        </div>
+      </details>
+      <details className="px-[var(--card-pad)]"><summary className="flex min-h-12 items-center text-foreground">Privacy</summary><button className="control mb-4" disabled={busy} onClick={deleteHistory}>Delete imported check-ins</button></details>
+    </div>
   </section>;
 }

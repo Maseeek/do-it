@@ -19,7 +19,7 @@ export function DesktopSidebar({ activeTab, onChangeTab, onWarmTab }: {
   const inviteCount = activePlayer?.inviteCount ?? 0;
 
   return (
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 border-r border-black/[0.07] dark:border-zinc-800/80 bg-white dark:bg-[#0b0c0e] flex-col p-5 z-40 transition-colors">
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-60 flex-col border-r border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-5 transition-colors">
       <nav aria-label="Desktop navigation" className="space-y-1">
         {tabs.map(({ id, label, icon: Icon, shortcut }) => (
           <button
@@ -28,48 +28,48 @@ export function DesktopSidebar({ activeTab, onChangeTab, onWarmTab }: {
             onPointerEnter={() => onWarmTab?.(id)}
             onFocus={() => onWarmTab?.(id)}
             aria-current={activeTab === id ? 'page' : undefined}
-            className={`w-full min-h-10 flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-left transition-colors border ${
+            className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-[var(--radius-control)] px-3 text-left transition-colors ${
               activeTab === id
-                ? 'bg-player-500/15 border-player-500/30 text-player-400 font-semibold shadow-xs'
-                : 'border-transparent text-zinc-500 hover:bg-black/[0.03] dark:hover:bg-zinc-900/40 hover:text-foreground'
+                ? 'bg-player-500/12 text-player-600 dark:text-player-300'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-2)] hover:text-foreground'
             }`}
           >
-            <span className="flex items-center gap-2.5">
-              <Icon size={16} />
-              <span className="text-xs font-medium">{label}</span>
+            <span className="flex items-center gap-3">
+              <Icon size={18} strokeWidth={activeTab === id ? 2.25 : 1.75} aria-hidden="true" />
+              <span className={`text-body ${activeTab === id ? 'font-semibold' : 'font-medium'}`}>{label}</span>
             </span>
-            <kbd className="text-[10px] font-mono text-zinc-500 bg-black/[0.05] dark:bg-zinc-900 px-1.5 py-0.2 rounded border border-black/10 dark:border-zinc-800">
+            <kbd className="num rounded-md bg-[var(--surface-2)] px-1.5 text-caption text-[var(--text-muted)]">
               {shortcut}
             </kbd>
           </button>
         ))}
 
-        <div className="pt-2">
+        <div className="mt-2 border-t border-[var(--border-subtle)] pt-2">
           <Link
             href="/welcome"
-            className="w-full min-h-9 flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors border border-transparent text-zinc-400 hover:text-foreground hover:bg-black/[0.03] dark:hover:bg-zinc-900/40 text-xs font-medium"
+            className="flex min-h-11 w-full items-center gap-3 rounded-[var(--radius-control)] px-3 text-left text-label text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-2)] hover:text-foreground"
           >
-            <Compass size={15} />
+            <Compass size={18} strokeWidth={1.75} aria-hidden="true" />
             <span>Membership & Billing</span>
           </Link>
         </div>
       </nav>
 
-      <div className="mt-auto border-t border-black/[0.07] dark:border-zinc-800/80 pt-4 px-1 space-y-2">
+      <div className="mt-auto space-y-3 border-t border-[var(--border-subtle)] px-3 pt-4">
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+          <p className="truncate text-caption text-[var(--text-secondary)]">
             {activePlayer?.name} &middot; Lifetime Karma
           </p>
-          <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="text-xl font-bold font-mono tabular-nums text-player-400">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="num text-title text-player-600 dark:text-player-300">
               {activePlayerSummary.karma.toLocaleString()}
             </span>
-            <span className="text-[11px] font-mono text-zinc-500">pts</span>
+            <span className="text-caption text-[var(--text-muted)]">pts</span>
           </div>
         </div>
-        <div className="flex items-center justify-between border-t border-black/[0.05] dark:border-white/[0.05] pt-2 text-xs font-mono text-zinc-400">
+        <div className="flex items-center justify-between text-label font-normal text-[var(--text-secondary)]">
           <span>Invites</span>
-          <span className="font-semibold text-foreground tabular-nums">{inviteCount}</span>
+          <span className="num font-semibold text-foreground">{inviteCount}</span>
         </div>
       </div>
     </aside>

@@ -17,11 +17,12 @@ import {
   ChevronUp,
   Clock,
   Crown,
+  Pencil,
   Plus,
   Share2,
-  Sliders,
   Trash2,
   Trophy,
+  UserPlus,
   X,
 } from 'lucide-react';
 import { ProofGalleryModal } from './ProofGalleryModal';
@@ -32,6 +33,54 @@ import { shareScorecardImage } from '@/lib/scorecard-image';
 import { useMultiplayer } from '@/lib/multiplayer';
 
 type DuelSubsegment = 'habits' | 'battles' | 'categories';
+
+const SEGMENT_TRACK =
+  'grid w-full gap-0.5 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] p-0.5';
+const SEGMENT_BASE =
+  'min-h-10 min-w-0 truncate whitespace-nowrap rounded-[10px] px-2 text-label transition-colors focus-visible:outline-offset-0';
+const SEGMENT_ON =
+  'bg-[var(--surface-1)] font-semibold text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.12)] dark:bg-[var(--surface-3)]';
+const SEGMENT_OFF = 'text-secondary hover:text-foreground';
+
+/** Compact iOS-style segmented control. Labels never wrap. */
+function SegmentedTabs<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className={SEGMENT_TRACK}
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          role="tab"
+          aria-selected={value === option.id}
+          onClick={() => onChange(option.id)}
+          className={`${SEGMENT_BASE} ${value === option.id ? SEGMENT_ON : SEGMENT_OFF}`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const ICON_BUTTON =
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-[var(--surface-2)] hover:text-foreground';
+const MODAL_PANEL =
+  'w-full max-w-sm rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 shadow-2xl';
 
 export function DuelView() {
   const multiplayer = useMultiplayer();
@@ -137,13 +186,13 @@ export function DuelView() {
   const subsegmentOptions = useMemo(() => {
     if (selectedTier === 'weekly') {
       return [
-        { id: 'habits' as const, label: "Today's Habits" },
-        { id: 'battles' as const, label: 'Daily Battles' },
+        { id: 'habits' as const, label: 'Today' },
+        { id: 'battles' as const, label: 'Battles' },
         { id: 'categories' as const, label: 'Categories' },
       ];
     }
     return [
-      { id: 'habits' as const, label: "Today's Habits" },
+      { id: 'habits' as const, label: 'Today' },
       { id: 'categories' as const, label: 'Categories' },
     ];
   }, [selectedTier]);
@@ -230,277 +279,165 @@ export function DuelView() {
     checkIns.some((c) => c.habitId === h.id && c.date === todayStr)
   ).length;
 
-  return (
-    <div className="w-full space-y-4">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-              {isPartnerConnected ? 'Head to Head Duel' : 'Head to Head'}
-            </p>
-            {multiplayer.duel && isPartnerConnected && (
-              <button
-                type="button"
-                onClick={() => setShowInvitePanel((prev) => !prev)}
-                className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-2 transition-colors"
-              >
-                {showInvitePanel ? 'Hide invite' : 'Invite details'}
-              </button>
-            )}
-          </div>
-          {selectedTier === 'weekly' && (
-            <button
-              onClick={handleShareScorecardCard}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0e1013] text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white sm:w-auto sm:px-2.5"
-              aria-label={shareCardStatus || 'Share scorecard'}
-              title="Export & Share Scorecard"
-            >
-              <Share2 className="h-3.5 w-3.5 text-player-400" />
-              <span className="hidden sm:inline">{shareCardStatus || 'Share'}</span>
-            </button>
-          )}
-        </div>
+  const tierLabel =
+    selectedTier === 'karma' ? 'All-time karma' : selectedTier === 'weekly' ? 'Weekly duel' : 'Monthly duel';
+  const timeLeft =
+    selectedTier === 'weekly'
+      ? `${weekRemaining.days}d ${weekRemaining.hours}h left`
+      : selectedTier === 'monthly'
+      ? `${monthRemainingDays}d left`
+      : null;
 
-        {isPartnerConnected ? (
-          <h1 className="grid min-h-[82px] w-full grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-center px-1">
-            <span className="min-w-0">
-              <span aria-hidden="true" className="mb-2.5 block h-0.5 w-[26px] rounded bg-owner-500" />
-              <span className="block truncate text-[clamp(21px,6.3vw,26px)] font-bold tracking-[-0.045em] text-owner-400">
-                {ownerDisplayName}
-              </span>
-            </span>
-            <span className="relative flex h-full items-center justify-center font-mono text-[9px] text-zinc-400">
-              <span aria-hidden="true" className="absolute inset-y-[15px] left-1/2 w-px -translate-x-1/2 bg-zinc-200 dark:bg-zinc-800" />
-              <span className="relative bg-background px-1 py-1 text-zinc-500">VS</span>
-            </span>
-            <span className="min-w-0 text-right">
-              <span aria-hidden="true" className="mb-2.5 ml-auto block h-0.5 w-[26px] rounded bg-guest-500" />
-              <span className="block truncate text-[clamp(21px,6.3vw,26px)] font-bold tracking-[-0.045em] text-guest-400">
-                {guestDisplayName}
-              </span>
-            </span>
-          </h1>
+  const renderParityColumn = (playerId: PlayerId) => {
+    const isOwner = playerId === 'maciek';
+    const player = isOwner ? players.maciek : players.myrna;
+    const columnHabits = isOwner ? maciekHabits : myrnaHabits;
+    const doneCount = isOwner ? maciekDoneHabitsCount : myrnaDoneHabitsCount;
+    const todayPoints = isOwner ? maciekSummary.today : myrnaSummary.today;
+
+    return (
+      <div className="min-w-0">
+        <div className="flex items-baseline justify-between gap-2 border-b border-[var(--border-subtle)] pb-2">
+          <span className={`truncate text-label font-semibold ${isOwner ? 'text-owner-300' : 'text-guest-300'}`}>
+            {player.name}
+          </span>
+          <span className="num shrink-0 text-caption text-muted">
+            {doneCount}/{columnHabits.length} · {todayPoints} pts
+          </span>
+        </div>
+        {columnHabits.length > 0 ? (
+          <ul className="divide-y divide-[var(--border-subtle)]">
+            {columnHabits.map((h) => {
+              const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
+              const done = !!checkIn;
+              const photos = getProofPhotos(checkIn);
+
+              return (
+                <li key={h.id} className="flex min-h-11 items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                      done
+                        ? `${isOwner ? 'bg-owner-500' : 'bg-guest-500'} text-white`
+                        : 'border-[1.5px] border-[var(--border-strong)]'
+                    }`}
+                  >
+                    {done && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                  </span>
+                  <span className={`relative min-w-0 flex-1 truncate text-label ${done ? 'text-foreground' : 'text-secondary'}`}>
+                    {h.title}
+                    <span className="sr-only">{done ? ' (done)' : ' (pending)'}</span>
+                  </span>
+
+                  {photos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEngine.playClick();
+                        hapticLight();
+                        setActiveProofView({ habit: h, checkIn: checkIn!, player });
+                      }}
+                      aria-label={`View proof photos for ${h.title}`}
+                      className="-mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-emerald-600 transition-colors hover:bg-[var(--surface-2)] dark:text-emerald-400"
+                      title="View proof photos"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         ) : (
-          <h1 className="min-h-[82px] pt-3 text-2xl font-semibold tracking-tight text-white">Duel</h1>
+          <p className="pt-3 text-caption text-muted">
+            {isOwner
+              ? 'No active habits.'
+              : isPartnerConnected
+              ? 'No active habits added yet.'
+              : 'Waiting for opponent account to join.'}
+          </p>
         )}
-
-        <div
-          role="tablist"
-          aria-label="Leaderboard timeframe"
-          className="grid w-full grid-cols-3 gap-0.5 rounded-lg border border-black/[0.06] dark:border-zinc-800 bg-zinc-200/70 dark:bg-[#0e1013] p-[3px]"
-        >
-          {(
-            [
-              { id: 'weekly', label: 'Week' },
-              { id: 'monthly', label: 'Month' },
-              { id: 'karma', label: 'All-Time' },
-            ] as { id: LeaderboardTier; label: string }[]
-          ).map((t) => (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={selectedTier === t.id}
-              onClick={() => handleSelectTier(t.id)}
-              className={`min-h-9 rounded-md px-2 text-xs font-mono font-medium transition-colors ${
-                selectedTier === t.id
-                  ? 'bg-white text-zinc-900 shadow-xs font-semibold dark:bg-zinc-800/90 dark:text-white'
-                  : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
       </div>
+    );
+  };
 
-      {/* Invite Panel (when requested or unpaired) */}
-      {multiplayer.duel && (!isPartnerConnected || showInvitePanel) && (
-        <section className="rounded-xl border border-player-500/25 bg-white dark:bg-[#0e1013] shadow-xs p-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-white">{isPartnerConnected ? `${ownerDisplayName} vs ${guestDisplayName}` : `Duel invite for ${ownerDisplayName}`}</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                {isPartnerConnected
-                  ? `Paired with ${partnerDisplayName}. You can also join a different invitation link below.`
-                  : 'No opponent account is matched to this duel yet. Share your private invitation link so your partner can sign in and join.'}
-              </p>
-              {multiplayer.user?.email && (
-                <p className="text-[11px] font-mono text-zinc-400 mt-1">
-                  Your matched account: <span className="text-zinc-200">{multiplayer.user.email}</span>
-                </p>
+  return (
+    <div className="w-full stack-section">
+      <div className="stack-cards">
+        {/* Scoreboard: names, scores, split bar, time left, period switch */}
+        <section aria-label="Scoreboard" className="surface surface-pad">
+          <div className="flex min-h-11 items-center justify-between gap-2">
+            <p className="text-eyebrow text-muted">{tierLabel}</p>
+            <div className="-mr-2 flex items-center gap-1">
+              {timeLeft && (
+                <span className="num mr-1 flex items-center gap-1 text-caption text-secondary">
+                  <Clock aria-hidden="true" className="h-3.5 w-3.5" />
+                  {timeLeft}
+                </span>
+              )}
+              {multiplayer.duel && isPartnerConnected && (
+                <button
+                  type="button"
+                  onClick={() => setShowInvitePanel((prev) => !prev)}
+                  aria-label={showInvitePanel ? 'Hide invite' : 'Invite details'}
+                  aria-expanded={showInvitePanel}
+                  title={showInvitePanel ? 'Hide invite' : 'Invite details'}
+                  className={ICON_BUTTON}
+                >
+                  <UserPlus className="h-[18px] w-[18px]" />
+                </button>
+              )}
+              {selectedTier === 'weekly' && (
+                <button
+                  type="button"
+                  onClick={handleShareScorecardCard}
+                  className={`${ICON_BUTTON} sm:w-auto sm:gap-1.5 sm:px-3 sm:text-label`}
+                  aria-label={shareCardStatus || 'Share scorecard'}
+                  title="Export & Share Scorecard"
+                >
+                  <Share2 className="h-[18px] w-[18px]" />
+                  <span className="hidden sm:inline">{shareCardStatus || 'Share'}</span>
+                </button>
               )}
             </div>
-            {isPartnerConnected && (
-              <button
-                type="button"
-                onClick={() => setShowInvitePanel(false)}
-                className="text-xs text-zinc-400 hover:text-white"
-              >
-                Close
-              </button>
-            )}
           </div>
-          <label className="block text-xs font-mono text-zinc-400">
-            Invitation link
-            <input
-              readOnly
-              value={inviteLink}
-              onFocus={(event) => event.currentTarget.select()}
-              className="mt-1 w-full rounded-lg border border-zinc-800 bg-black/60 p-2 text-xs font-mono text-white"
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={!inviteLink}
-              className="rounded-lg bg-white text-black px-3.5 py-1.5 text-xs font-mono font-semibold disabled:opacity-50 hover:bg-zinc-200 transition-colors"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(inviteLink);
-                  setInviteStatus('Invitation link copied');
-                } catch {
-                  setInviteStatus('Select and copy the invitation link above.');
-                }
-              }}
-            >
-              Copy invitation link
-            </button>
-            {typeof navigator !== 'undefined' && 'share' in navigator && inviteLink && (
-              <button
-                type="button"
-                className="rounded-lg border border-zinc-800 px-3.5 py-1.5 text-xs font-mono font-medium text-white hover:bg-zinc-800 transition-colors"
-                onClick={async () => {
-                  try {
-                    await navigator.share({ title: multiplayer.duel?.guest_name ? `${ownerDisplayName} vs ${guestDisplayName} Duel on do` : `Join ${ownerDisplayName}'s duel on do`, url: inviteLink });
-                  } catch {
-                    // user cancelled
-                  }
-                }}
-              >
-                Share link
-              </button>
-            )}
-          </div>
-          {inviteStatus && <p role="status" className="text-xs font-mono text-player-300">{inviteStatus}</p>}
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              const code = extractInviteCode(joinLinkInput);
-              router.push(`/?invite=${encodeURIComponent(code ?? '')}`);
-            }}
-            className="pt-2 border-t border-zinc-800/80 space-y-2"
-          >
-            <label className="block text-xs font-mono text-zinc-400">
-              Have an opponent&apos;s invitation link or code?
-              <div className="mt-1 flex flex-wrap gap-2">
-                <input
-                  type="text"
-                  placeholder="Paste invite link or code…"
-                  value={joinLinkInput}
-                  onChange={(event) => setJoinLinkInput(event.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-black/60 p-2 text-xs font-mono text-white"
-                />
-                <button
-                  type="submit"
-                  className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-mono font-semibold text-white hover:bg-zinc-800 transition-colors"
-                >
-                  Open invite
-                </button>
-              </div>
-            </label>
-          </form>
-        </section>
-      )}
 
-      {/* Onboarding Empty State */}
-      {multiplayer.duel && habits.length === 0 && (
-        <section className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] shadow-xs p-4">
-          <h2 className="text-sm font-semibold text-white">Start with a habit</h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            Each player adds their own habits. Check-ins will appear here as you go.
-          </p>
-          <Link
-            className="inline-block mt-3 rounded-lg bg-white text-black px-4 py-2 text-xs font-semibold hover:bg-zinc-200 transition-colors"
-            href="/?tab=progress&section=habits"
-          >
-            Add your first habit
-          </Link>
-        </section>
-      )}
-
-      {/* Main Head-to-Head Competition Card */}
-      <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-4">
-        {/* Top: Tier Name + Countdown */}
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
-            {selectedTier === 'karma'
-              ? 'All-Time Karma'
-              : `${selectedTier === 'weekly' ? 'Weekly' : 'Monthly'} Duel`}
-          </span>
-
-          {selectedTier === 'weekly' && (
-            <span className="text-zinc-400 flex items-center gap-1 text-[11px] font-mono">
-              <Clock className="w-3 h-3 text-zinc-500" />
-              {weekRemaining.days}d {weekRemaining.hours}h left
-            </span>
+          {isPartnerConnected ? (
+            <h1 className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-3 text-headline">
+              <span className="truncate text-owner-300">{ownerDisplayName}</span>
+              <span className="text-caption font-normal text-muted">vs</span>
+              <span className="truncate text-right text-guest-300">{guestDisplayName}</span>
+            </h1>
+          ) : (
+            <h1 className="mt-3 text-title text-foreground">Duel</h1>
           )}
 
-          {selectedTier === 'monthly' && (
-            <span className="text-zinc-400 flex items-center gap-1 text-[11px] font-mono">
-              <Clock className="w-3 h-3 text-zinc-500" />
-              {monthRemainingDays}d left
-            </span>
-          )}
-        </div>
-
-        {/* Head-to-Head Scores */}
-        <div className="flex items-center justify-between">
-          {/* Maciek (Blue) */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="w-2 h-2 rounded-full bg-owner-500" />
-              <span className="text-xs font-mono font-semibold text-zinc-300">
-                {players.maciek.name}
-              </span>
+          <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+            <div className="min-w-0">
+              {!isPartnerConnected && (
+                <p className="truncate text-label text-secondary">{players.maciek.name}</p>
+              )}
+              <p className="num truncate text-display text-owner-400">{comparison.maciekScore.toLocaleString()}</p>
             </div>
-            <div className="text-3xl font-bold font-mono tracking-tight text-owner-400 tabular-nums">
-              {comparison.maciekScore.toLocaleString()}
-            </div>
-          </div>
-
-          {/* Lead Delta Pill */}
-          <div className="text-center">
             <span
-              className={`inline-block px-3 py-1 rounded-full text-xs font-mono font-semibold border ${
+              className={`num rounded-full px-2.5 py-1 text-caption font-semibold ${
                 comparison.leader === 'maciek'
-                  ? 'bg-owner-500/15 border-owner-500/30 text-owner-300'
+                  ? 'bg-owner-500/15 text-owner-300'
                   : comparison.leader === 'myrna'
-                  ? 'bg-guest-500/15 border-guest-500/30 text-guest-300'
-                  : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                  ? 'bg-guest-500/15 text-guest-300'
+                  : 'bg-[var(--surface-2)] text-secondary'
               }`}
             >
-              {comparison.leader === 'maciek' && `+${comparison.delta} pts`}
-              {comparison.leader === 'myrna' && `+${comparison.delta} pts`}
-              {comparison.leader === 'tie' && 'Tied'}
+              {comparison.leader === 'tie' ? 'Tied' : `+${comparison.delta} pts`}
             </span>
-          </div>
-
-          {/* Myrna (Purple) */}
-          <div className="text-right">
-            <div className="flex items-center justify-end gap-1.5 mb-1">
-              <span className="text-xs font-mono font-semibold text-zinc-300">
-                {players.myrna.name}
-              </span>
-              <span className="w-2 h-2 rounded-full bg-guest-500" />
-            </div>
-            <div className="text-3xl font-bold font-mono tracking-tight text-guest-400 tabular-nums">
-              {comparison.myrnaScore.toLocaleString()}
+            <div className="min-w-0 text-right">
+              {!isPartnerConnected && (
+                <p className="truncate text-label text-secondary">{players.myrna.name}</p>
+              )}
+              <p className="num truncate text-display text-guest-400">{comparison.myrnaScore.toLocaleString()}</p>
             </div>
           </div>
-        </div>
 
-        {/* Two-tone Telemetry Bar */}
-        <div className="space-y-1">
           <div
             role="meter"
             aria-label="Score share"
@@ -508,88 +445,207 @@ export function DuelView() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuetext={`${players.maciek.name} ${comparison.maciekPct}%, ${players.myrna.name} ${comparison.myrnaPct}%`}
-            className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex"
+            className="mt-4 flex h-2 w-full gap-0.5 overflow-hidden rounded-full"
           >
             <div
-              className="h-full bg-owner-500 transition-all duration-500"
+              className="h-full rounded-l-full bg-owner-500 transition-all duration-500"
               style={{ width: `${comparison.maciekPct}%` }}
             />
             <div
-              className="h-full bg-guest-500 transition-all duration-500"
+              className="h-full rounded-r-full bg-guest-500 transition-all duration-500"
               style={{ width: `${comparison.myrnaPct}%` }}
             />
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-zinc-500 font-medium tabular-nums">
+          <div aria-hidden="true" className="num mt-2 flex justify-between text-caption text-muted">
             <span>{comparison.maciekPct}%</span>
             <span>{comparison.myrnaPct}%</span>
           </div>
-        </div>
-      </div>
 
-      {/* Wager Card (Ultra-compact inline when empty, full card when active) */}
-      {!activeStake ? (
-        <div className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] shadow-xs p-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="text-xs font-mono text-zinc-400 truncate">
-              No active wager for this {selectedTier === 'monthly' ? 'month' : 'week'}
-            </span>
+          <div className="mt-4">
+            <SegmentedTabs
+              label="Leaderboard timeframe"
+              value={selectedTier}
+              onChange={handleSelectTier}
+              options={[
+                { id: 'weekly', label: 'Week' },
+                { id: 'monthly', label: 'Month' },
+                { id: 'karma', label: 'All-time' },
+              ]}
+            />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="hidden sm:inline text-[10px] font-mono text-zinc-500 tabular-nums">
-              Wins: {players.maciek.name} {stakesRecord.maciekWins} · {players.myrna.name} {stakesRecord.myrnaWins}
-            </span>
-            <button
-              onClick={() => {
-                soundEngine.playClick();
-                hapticLight();
-                setIsCreatingStake(true);
+        </section>
+
+        {/* Invite Panel (when requested or unpaired) */}
+        {multiplayer.duel && (!isPartnerConnected || showInvitePanel) && (
+          <section className="surface surface-pad space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <h2 className="text-headline text-foreground">
+                  {isPartnerConnected ? `${ownerDisplayName} vs ${guestDisplayName}` : `Duel invite for ${ownerDisplayName}`}
+                </h2>
+                <p className="text-body text-secondary">
+                  {isPartnerConnected
+                    ? `Paired with ${partnerDisplayName}. You can also join a different invitation link below.`
+                    : 'No opponent account is matched to this duel yet. Share your private invitation link so your partner can sign in and join.'}
+                </p>
+                {multiplayer.user?.email && (
+                  <p className="text-caption text-muted">
+                    Your matched account: <span className="text-secondary">{multiplayer.user.email}</span>
+                  </p>
+                )}
+              </div>
+              {isPartnerConnected && (
+                <button
+                  type="button"
+                  onClick={() => setShowInvitePanel(false)}
+                  className="-mr-2 -mt-2 min-h-11 shrink-0 rounded-full px-3 text-label text-secondary hover:text-foreground"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+            <label className="block text-label text-secondary">
+              Invitation link
+              <input
+                readOnly
+                value={inviteLink}
+                onFocus={(event) => event.currentTarget.select()}
+                className="field mt-1.5"
+              />
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={!inviteLink}
+                className="control control-primary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(inviteLink);
+                    setInviteStatus('Invitation link copied');
+                  } catch {
+                    setInviteStatus('Select and copy the invitation link above.');
+                  }
+                }}
+              >
+                Copy invitation link
+              </button>
+              {typeof navigator !== 'undefined' && 'share' in navigator && inviteLink && (
+                <button
+                  type="button"
+                  className="control"
+                  onClick={async () => {
+                    try {
+                      await navigator.share({ title: multiplayer.duel?.guest_name ? `${ownerDisplayName} vs ${guestDisplayName} Duel on do` : `Join ${ownerDisplayName}'s duel on do`, url: inviteLink });
+                    } catch {
+                      // user cancelled
+                    }
+                  }}
+                >
+                  Share link
+                </button>
+              )}
+            </div>
+            {inviteStatus && <p role="status" className="text-label text-player-300">{inviteStatus}</p>}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const code = extractInviteCode(joinLinkInput);
+                router.push(`/?invite=${encodeURIComponent(code ?? '')}`);
               }}
-              aria-label="Set new wager"
-              className="flex min-h-10 items-center justify-center gap-1 px-2.5 py-1 rounded-md bg-white hover:bg-zinc-200 text-black text-xs font-mono font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-player-500"
+              className="border-t border-[var(--border-subtle)] pt-4"
             >
-              <Plus className="w-3 h-3" />
-              <span>Set wager</span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] shadow-xs p-3.5 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-amber-400" />
-              <span className="text-[10px] font-mono uppercase tracking-wider font-semibold text-amber-400">
-                {activeStake.period === 'weekly' ? 'Weekly' : 'Monthly'} Wager
+              <label className="block text-label text-secondary">
+                Have an opponent&apos;s invitation link or code?
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    placeholder="Paste invite link or code…"
+                    value={joinLinkInput}
+                    onChange={(event) => setJoinLinkInput(event.target.value)}
+                    className="field min-w-0 flex-1 !w-auto"
+                  />
+                  <button type="submit" className="control">
+                    Open invite
+                  </button>
+                </div>
+              </label>
+            </form>
+          </section>
+        )}
+
+        {/* Onboarding Empty State */}
+        {multiplayer.duel && habits.length === 0 && (
+          <section className="surface surface-pad">
+            <h2 className="text-headline text-foreground">Start with a habit</h2>
+            <p className="mt-1 text-body text-secondary">
+              Each player adds their own habits. Check-ins will appear here as you go.
+            </p>
+            <Link className="control control-primary mt-4" href="/?tab=progress&section=habits">
+              Add your first habit
+            </Link>
+          </section>
+        )}
+
+        {/* Wager */}
+        {!activeStake ? (
+          <section className="surface flex items-center justify-between gap-3 py-2 pl-4 pr-2">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Trophy aria-hidden="true" className="h-4 w-4 shrink-0 text-amber-500" />
+              <span className="truncate text-label text-secondary">
+                No wager this {selectedTier === 'monthly' ? 'month' : 'week'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-zinc-500 tabular-nums">
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="num hidden text-caption text-muted sm:inline">
+                Wins: {players.maciek.name} {stakesRecord.maciekWins} · {players.myrna.name} {stakesRecord.myrnaWins}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playClick();
+                  hapticLight();
+                  setIsCreatingStake(true);
+                }}
+                aria-label="Set new wager"
+                className="control !px-3.5"
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                <span>Set wager</span>
+              </button>
+            </div>
+          </section>
+        ) : (
+          <section className="surface surface-pad">
+            <div className="flex items-center justify-between gap-3">
+              <p className="flex items-center gap-1.5 text-eyebrow text-amber-600 dark:text-amber-400">
+                <Trophy aria-hidden="true" className="h-3.5 w-3.5" />
+                {activeStake.period === 'weekly' ? 'Weekly' : 'Monthly'} wager
+              </p>
+              <span className="num truncate text-caption text-muted">
                 Wins: {players.maciek.name} {stakesRecord.maciekWins} · {players.myrna.name} {stakesRecord.myrnaWins}
               </span>
             </div>
-          </div>
 
-          <div className="flex items-start justify-between gap-3 pt-0.5">
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-white truncate">{activeStake.title}</div>
-              {activeStake.description && (
-                <p className="text-xs text-zinc-400 mt-0.5 line-clamp-2">{activeStake.description}</p>
-              )}
-            </div>
+            <h2 className="mt-2 text-headline text-foreground">{activeStake.title}</h2>
+            {activeStake.description && (
+              <p className="mt-0.5 line-clamp-3 text-body text-secondary">{activeStake.description}</p>
+            )}
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="mt-4 flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   hapticLight();
                   setIsResolvingStake(true);
                 }}
                 aria-label="Resolve wager"
-                className="px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono font-medium hover:bg-amber-500/25 transition-colors"
+                className="min-h-11 rounded-[var(--radius-control)] bg-amber-500/15 px-5 text-label font-semibold text-amber-700 transition-colors hover:bg-amber-500/25 dark:text-amber-300"
               >
                 Resolve
               </button>
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   hapticLight();
@@ -598,12 +654,13 @@ export function DuelView() {
                   setIsEditingStake(true);
                 }}
                 aria-label="Edit wager"
-                className="p-1 rounded-md text-zinc-400 hover:text-white transition-colors"
+                className={`${ICON_BUTTON} ml-auto`}
                 title="Edit wager"
               >
-                <Sliders className="w-3.5 h-3.5" />
+                <Pencil className="h-4 w-4" />
               </button>
               <button
+                type="button"
                 onClick={() => {
                   if (confirm('Delete this wager?')) {
                     soundEngine.playClick();
@@ -612,393 +669,231 @@ export function DuelView() {
                   }
                 }}
                 aria-label="Delete wager"
-                className="p-1 rounded-md text-zinc-500 hover:text-red-400 transition-colors"
+                className={`${ICON_BUTTON} -mr-2 hover:!text-red-500`}
                 title="Delete wager"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Subsegment Switcher Pills */}
-      <div
-        role="tablist"
-        aria-label="Duel sections"
-        className="flex p-0.5 rounded-lg bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs"
-      >
-        {subsegmentOptions.map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            aria-selected={activeSubsegment === tab.id}
-            onClick={() => {
-              soundEngine.playClick();
-              hapticLight();
-              setActiveSubsegment(tab.id);
-            }}
-            className={`flex-1 py-1.5 px-3 rounded-md text-xs font-mono font-medium transition-colors text-center ${
-              activeSubsegment === tab.id
-                ? 'bg-zinc-800/90 text-white shadow-xs font-semibold'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+          </section>
+        )}
       </div>
 
-      {/* Subsegment View 1: Today's Habits */}
-      {activeSubsegment === 'habits' && (
-        <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
-              Today&apos;s Habits Parity
-            </span>
-            <span className="text-zinc-500 text-[11px]">{todayStr}</span>
-          </div>
+      <div className="stack-cards">
+        <SegmentedTabs
+          label="Duel sections"
+          value={activeSubsegment}
+          onChange={(id) => {
+            soundEngine.playClick();
+            hapticLight();
+            setActiveSubsegment(id);
+          }}
+          options={subsegmentOptions}
+        />
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            {/* Maciek */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800 text-[11px] font-mono">
-                <span className="font-semibold text-owner-400">{players.maciek.name}</span>
-                <span className="text-zinc-400 tabular-nums">
-                  {maciekDoneHabitsCount}/{maciekHabits.length} · {maciekSummary.today} pts
-                </span>
-              </div>
-              {maciekHabits.map((h) => {
-                const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
-                const done = !!checkIn;
-                const photos =
-                  getProofPhotos(checkIn);
+        {/* Today: side-by-side parity list */}
+        {activeSubsegment === 'habits' && (
+          <section aria-label="Today's habits" className="surface surface-pad">
+            <div className="grid grid-cols-2 gap-x-5">
+              {renderParityColumn('maciek')}
+              {renderParityColumn('myrna')}
+            </div>
+          </section>
+        )}
+
+        {/* Battles: 7-day strip + selected day */}
+        {activeSubsegment === 'battles' && selectedTier === 'weekly' && (
+          <section aria-label="Daily battles this week" className="surface surface-pad">
+            <p className="text-caption text-muted">Tap a day to see its score</p>
+
+            <div className="mt-3 grid grid-cols-7 gap-1">
+              {dailyDuelPoints.map((point) => {
+                const total = point.maciekPoints + point.myrnaPoints;
+                const isSelected = selectedBattleDay?.dateStr === point.dateStr;
+                const maciekWon = point.maciekPoints > point.myrnaPoints;
+                const myrnaWon = point.myrnaPoints > point.maciekPoints;
 
                 return (
-                  <div
-                    key={h.id}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
-                      done
-                        ? 'bg-owner-500/10 border-owner-500/25 text-white'
-                        : 'bg-zinc-900/30 border-zinc-800/60 text-zinc-400'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
-                        done ? 'bg-owner-500 text-white' : 'border border-zinc-700'
-                      }`}
-                    >
-                      {done && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                    </div>
-                    <span className="truncate flex-1 font-medium">{h.title}</span>
-
-                    {photos.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundEngine.playClick();
-                          hapticLight();
-                          setActiveProofView({ habit: h, checkIn: checkIn!, player: players.maciek });
-                        }}
-                        aria-label={`View proof photos for ${h.title}`}
-                        className="text-emerald-400 p-0.5 hover:text-emerald-300 transition-colors"
-                        title="View proof photos"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {maciekHabits.length === 0 && (
-                <div className="p-2.5 rounded-lg border border-zinc-800 text-[11px] font-mono text-zinc-500">
-                  No active habits.
-                </div>
-              )}
-            </div>
-
-            {/* Myrna */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800 text-[11px] font-mono">
-                <span className="font-semibold text-guest-400">{players.myrna.name}</span>
-                <span className="text-zinc-400 tabular-nums">
-                  {myrnaDoneHabitsCount}/{myrnaHabits.length} · {myrnaSummary.today} pts
-                </span>
-              </div>
-              {myrnaHabits.map((h) => {
-                const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
-                const done = !!checkIn;
-                const photos =
-                  getProofPhotos(checkIn);
-
-                return (
-                  <div
-                    key={h.id}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
-                      done
-                        ? 'bg-guest-500/10 border-guest-500/25 text-white'
-                        : 'bg-zinc-900/30 border-zinc-800/60 text-zinc-400'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
-                        done ? 'bg-guest-500 text-white' : 'border border-zinc-700'
-                      }`}
-                    >
-                      {done && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                    </div>
-                    <span className="truncate flex-1 font-medium">{h.title}</span>
-
-                    {photos.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundEngine.playClick();
-                          hapticLight();
-                          setActiveProofView({ habit: h, checkIn: checkIn!, player: players.myrna });
-                        }}
-                        aria-label={`View proof photos for ${h.title}`}
-                        className="text-emerald-400 p-0.5 hover:text-emerald-300 transition-colors"
-                        title="View proof photos"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {myrnaHabits.length === 0 && (
-                <div className="p-2.5 rounded-lg border border-zinc-800 text-[11px] font-mono text-zinc-500">
-                  {isPartnerConnected
-                    ? 'No active habits added yet.'
-                    : 'Waiting for opponent account to join.'}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Subsegment View 2: Daily Battles (Horizontal 7-Day Strip + Inspector) */}
-      {activeSubsegment === 'battles' && selectedTier === 'weekly' && (
-        <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
-              Weekly Daily Battles
-            </span>
-            <span className="text-[11px] text-zinc-500">Tap day to inspect</span>
-          </div>
-
-          {/* 7-Column Strip */}
-          <div className="grid grid-cols-7 gap-1.5">
-            {dailyDuelPoints.map((point) => {
-              const total = point.maciekPoints + point.myrnaPoints;
-              const isSelected = selectedBattleDay?.dateStr === point.dateStr;
-              const maciekWon = point.maciekPoints > point.myrnaPoints;
-              const myrnaWon = point.myrnaPoints > point.maciekPoints;
-
-              return (
-                <button
-                  key={point.dateStr}
-                  type="button"
-                  onClick={() => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setSelectedBattleDayDate(point.dateStr);
-                  }}
-                  className={`p-2 rounded-lg border text-center transition-all ${
-                    isSelected
-                      ? 'border-zinc-500 bg-zinc-800/80 shadow-xs'
-                      : point.isToday
-                      ? 'border-zinc-700 bg-zinc-900/60'
-                      : point.isFuture
-                      ? 'border-zinc-800/40 bg-zinc-900/10 opacity-40'
-                      : 'border-zinc-800/70 bg-zinc-900/30 hover:border-zinc-700'
-                  }`}
-                >
-                  <div
-                    className={`text-[10px] font-mono uppercase font-semibold ${
-                      point.isToday ? 'text-white' : 'text-zinc-400'
-                    }`}
-                  >
-                    {point.dayName}
-                  </div>
-
-                  <div className="my-1.5 flex items-center justify-center">
-                    {point.isFuture ? (
-                      <span className="w-2 h-2 rounded-full bg-zinc-700/50" />
-                    ) : total === 0 ? (
-                      <span className="w-2 h-2 rounded-full bg-zinc-600" />
-                    ) : maciekWon ? (
-                      <span className="w-2 h-2 rounded-full bg-owner-500 shadow-xs shadow-owner-500/50" />
-                    ) : myrnaWon ? (
-                      <span className="w-2 h-2 rounded-full bg-guest-500 shadow-xs shadow-guest-500/50" />
-                    ) : (
-                      <span className="w-2 h-2 rounded-full bg-zinc-400" />
-                    )}
-                  </div>
-
-                  <div className="text-[10px] font-mono text-zinc-400 tabular-nums truncate">
-                    {point.isFuture ? '—' : `${point.maciekPoints}:${point.myrnaPoints}`}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Inspector Detail for Selected Day */}
-          {selectedBattleDay && (
-            <div className="rounded-lg bg-zinc-900/40 border border-zinc-800 p-2.5 space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="font-semibold text-white">
-                  {selectedBattleDay.dayName} · {selectedBattleDay.dateStr}
-                  {selectedBattleDay.isToday && ' (Today)'}
-                </span>
-                <div className="flex items-center gap-2 tabular-nums">
-                  <span className="text-owner-400 font-semibold">{selectedBattleDay.maciekPoints} pts</span>
-                  <span className="text-zinc-600">:</span>
-                  <span className="text-guest-400 font-semibold">{selectedBattleDay.myrnaPoints} pts</span>
-                </div>
-              </div>
-
-              {selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints > 0 ? (
-                <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex">
-                  <div
-                    className="h-full bg-owner-500 transition-all duration-300"
-                    style={{
-                      width: `${Math.round(
-                        (selectedBattleDay.maciekPoints /
-                          (selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints)) *
-                          100
-                      )}%`,
+                  <button
+                    key={point.dateStr}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setSelectedBattleDayDate(point.dateStr);
                     }}
-                  />
-                  <div
-                    className="h-full bg-guest-500 transition-all duration-300"
-                    style={{
-                      width: `${
-                        100 -
-                        Math.round(
+                    className={`flex min-h-[72px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl text-center transition-colors ${
+                      isSelected
+                        ? 'bg-[var(--surface-2)] ring-1 ring-[var(--border-medium)]'
+                        : 'hover:bg-[var(--surface-2)]'
+                    } ${point.isFuture ? 'opacity-40' : ''}`}
+                  >
+                    <span
+                      className={`text-caption ${point.isToday ? 'font-semibold text-foreground' : 'text-secondary'}`}
+                    >
+                      {point.dayName}
+                    </span>
+                    {point.isFuture ? (
+                      <span className="h-2 w-2 rounded-full bg-[var(--surface-3)]" />
+                    ) : total === 0 ? (
+                      <span className="h-2 w-2 rounded-full bg-[var(--border-strong)]" />
+                    ) : maciekWon ? (
+                      <span className="h-2 w-2 rounded-full bg-owner-500" />
+                    ) : myrnaWon ? (
+                      <span className="h-2 w-2 rounded-full bg-guest-500" />
+                    ) : (
+                      <span className="h-2 w-2 rounded-full bg-[var(--text-muted)]" />
+                    )}
+                    <span className="num max-w-full truncate text-caption text-muted">
+                      {point.isFuture ? '—' : `${point.maciekPoints}:${point.myrnaPoints}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedBattleDay && (
+              <div className="mt-4 space-y-2 border-t border-[var(--border-subtle)] pt-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-label text-foreground">
+                    {selectedBattleDay.dayName} · <span className="num">{selectedBattleDay.dateStr}</span>
+                    {selectedBattleDay.isToday && ' (Today)'}
+                  </span>
+                  <span className="num flex items-center gap-1.5 text-label font-semibold">
+                    <span className="text-owner-300">{selectedBattleDay.maciekPoints} pts</span>
+                    <span className="text-muted">:</span>
+                    <span className="text-guest-300">{selectedBattleDay.myrnaPoints} pts</span>
+                  </span>
+                </div>
+
+                {selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints > 0 ? (
+                  <div className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full">
+                    <div
+                      className="h-full rounded-l-full bg-owner-500 transition-all duration-300"
+                      style={{
+                        width: `${Math.round(
                           (selectedBattleDay.maciekPoints /
                             (selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints)) *
                             100
-                        )
-                      }%`,
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="text-[11px] font-mono text-zinc-500">
-                  {selectedBattleDay.isFuture ? 'Future battle day' : 'No points scored yet'}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Subsegment View 3: Categories (Active categories + collapsible inactive) */}
-      {activeSubsegment === 'categories' && (
-        <div className="rounded-xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-4 space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
-              Category Breakdown ({selectedTier === 'karma' ? 'All-Time' : selectedTier})
-            </span>
-            <span className="text-zinc-500 text-[11px]">
-              {activeCategories.length} active
-            </span>
-          </div>
-
-          {activeCategories.length > 0 ? (
-            <div className="space-y-2">
-              {activeCategories.map((cat) => {
-                const total = cat.maciekPoints + cat.myrnaPoints;
-                const mPct = total === 0 ? 50 : Math.round((cat.maciekPoints / total) * 100);
-                const yPct = total === 0 ? 50 : 100 - mPct;
-
-                return (
-                  <div
-                    key={cat.category}
-                    className="p-2.5 rounded-lg bg-zinc-900/30 border border-zinc-800/80 space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-white">{cat.label}</span>
-                      <div className="flex items-center gap-2 font-mono tabular-nums text-xs">
-                        <span className="text-owner-400 font-semibold">{cat.maciekPoints}</span>
-                        <span className="text-zinc-600">:</span>
-                        <span className="text-guest-400 font-semibold">{cat.myrnaPoints}</span>
-                      </div>
-                    </div>
-
+                        )}%`,
+                      }}
+                    />
                     <div
-                      role="meter"
-                      aria-label={`${cat.label} score share`}
-                      aria-valuenow={cat.maciekPoints}
-                      aria-valuemin={0}
-                      aria-valuemax={Math.max(1, total)}
-                      className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex"
-                    >
-                      <div
-                        className="h-full bg-owner-500 transition-all duration-300"
-                        style={{ width: `${mPct}%` }}
-                      />
-                      <div
-                        className="h-full bg-guest-500 transition-all duration-300"
-                        style={{ width: `${yPct}%` }}
-                      />
-                    </div>
+                      className="h-full rounded-r-full bg-guest-500 transition-all duration-300"
+                      style={{
+                        width: `${
+                          100 -
+                          Math.round(
+                            (selectedBattleDay.maciekPoints /
+                              (selectedBattleDay.maciekPoints + selectedBattleDay.myrnaPoints)) *
+                              100
+                          )
+                        }%`,
+                      }}
+                    />
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-3 rounded-lg border border-zinc-800 text-xs font-mono text-zinc-500">
-              No category points logged in this timeframe yet.
-            </div>
-          )}
-
-          {/* Collapsible Inactive Categories Toggle */}
-          {inactiveCategories.length > 0 && (
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setShowInactiveCategories((prev) => !prev);
-                }}
-                className="flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-white transition-colors"
-              >
-                {showInactiveCategories ? (
-                  <>
-                    <ChevronUp className="w-3.5 h-3.5" />
-                    <span>Hide {inactiveCategories.length} inactive categories</span>
-                  </>
                 ) : (
-                  <>
-                    <ChevronDown className="w-3.5 h-3.5" />
-                    <span>+ {inactiveCategories.length} inactive categories</span>
-                  </>
+                  <p className="text-caption text-muted">
+                    {selectedBattleDay.isFuture ? 'Future battle day' : 'No points scored yet'}
+                  </p>
                 )}
-              </button>
+              </div>
+            )}
+          </section>
+        )}
 
-              {showInactiveCategories && (
-                <div className="mt-2 space-y-1.5 border-t border-zinc-800/80 pt-2">
-                  {inactiveCategories.map((cat) => (
-                    <div
-                      key={cat.category}
-                      className="flex items-center justify-between p-2 rounded-md bg-zinc-900/20 text-xs text-zinc-500 font-mono"
-                    >
-                      <span>{cat.label}</span>
-                      <span>0 : 0</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+        {/* Categories: active categories + collapsible inactive */}
+        {activeSubsegment === 'categories' && (
+          <section aria-label="Category breakdown" className="surface surface-pad">
+            <p className="text-caption text-muted">
+              {activeCategories.length} active ·{' '}
+              {selectedTier === 'karma' ? 'all time' : selectedTier === 'monthly' ? 'this month' : 'this week'}
+            </p>
+
+            {activeCategories.length > 0 ? (
+              <ul className="mt-1 divide-y divide-[var(--border-subtle)]">
+                {activeCategories.map((cat) => {
+                  const total = cat.maciekPoints + cat.myrnaPoints;
+                  const mPct = total === 0 ? 50 : Math.round((cat.maciekPoints / total) * 100);
+                  const yPct = total === 0 ? 50 : 100 - mPct;
+
+                  return (
+                    <li key={cat.category} className="space-y-2 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="truncate text-label text-foreground">{cat.label}</span>
+                        <span className="num flex shrink-0 items-center gap-1.5 text-label font-semibold">
+                          <span className="text-owner-300">{cat.maciekPoints}</span>
+                          <span className="text-muted">:</span>
+                          <span className="text-guest-300">{cat.myrnaPoints}</span>
+                        </span>
+                      </div>
+
+                      <div
+                        role="meter"
+                        aria-label={`${cat.label} score share`}
+                        aria-valuenow={cat.maciekPoints}
+                        aria-valuemin={0}
+                        aria-valuemax={Math.max(1, total)}
+                        className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full"
+                      >
+                        <div
+                          className="h-full rounded-l-full bg-owner-500 transition-all duration-300"
+                          style={{ width: `${mPct}%` }}
+                        />
+                        <div
+                          className="h-full rounded-r-full bg-guest-500 transition-all duration-300"
+                          style={{ width: `${yPct}%` }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="mt-3 text-label font-normal text-secondary">No category points logged in this timeframe yet.</p>
+            )}
+
+            {inactiveCategories.length > 0 && (
+              <div className="mt-1 border-t border-[var(--border-subtle)] pt-1">
+                <button
+                  type="button"
+                  aria-expanded={showInactiveCategories}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    setShowInactiveCategories((prev) => !prev);
+                  }}
+                  className="-ml-1 flex min-h-11 items-center gap-1.5 px-1 text-label text-secondary transition-colors hover:text-foreground"
+                >
+                  {showInactiveCategories ? (
+                    <>
+                      <ChevronUp aria-hidden="true" className="h-4 w-4" />
+                      <span>Hide {inactiveCategories.length} inactive categories</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown aria-hidden="true" className="h-4 w-4" />
+                      <span>+ {inactiveCategories.length} inactive categories</span>
+                    </>
+                  )}
+                </button>
+
+                {showInactiveCategories && (
+                  <ul className="divide-y divide-[var(--border-subtle)]">
+                    {inactiveCategories.map((cat) => (
+                      <li key={cat.category} className="flex min-h-10 items-center justify-between text-label text-muted">
+                        <span>{cat.label}</span>
+                        <span className="num">0 : 0</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
 
       {/* Resolve Wager Modal */}
       {isResolvingStake && activeStake && (
@@ -1014,55 +909,55 @@ export function DuelView() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="resolve-wager-title"
-            className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-5 shadow-2xl space-y-4"
+            className={`${MODAL_PANEL} space-y-5`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Crown className="w-4 h-4 text-amber-400" />
-                <h3 id="resolve-wager-title" className="text-sm font-semibold text-white">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <h3 id="resolve-wager-title" className="flex items-center gap-2 text-title text-foreground">
+                  <Crown aria-hidden="true" className="h-5 w-5 text-amber-500" />
                   Resolve Wager
                 </h3>
+                <p className="text-body text-secondary">
+                  Award victory for <span className="font-medium text-foreground">{activeStake.title}</span>
+                </p>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   hapticLight();
                   setIsResolvingStake(false);
                 }}
                 aria-label="Close dialog"
-                className="text-zinc-400 hover:text-white p-1"
+                className={`${ICON_BUTTON} -mr-2 -mt-2`}
               >
-                <X className="w-4 h-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-1">
-              <div className="text-xs text-zinc-400">Award victory for:</div>
-              <div className="text-sm font-medium text-white">{activeStake.title}</div>
-            </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleResolveStake('maciek')}
+                  className="min-h-12 truncate rounded-[var(--radius-control)] bg-owner-500/15 px-3 text-label font-semibold text-owner-300 transition-colors hover:bg-owner-500/25"
+                >
+                  {players.maciek.name} Won
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleResolveStake('myrna')}
+                  className="min-h-12 truncate rounded-[var(--radius-control)] bg-guest-500/15 px-3 text-label font-semibold text-guest-300 transition-colors hover:bg-guest-500/25"
+                >
+                  {players.myrna.name} Won
+                </button>
+              </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleResolveStake('maciek')}
-                className="py-2.5 px-3 rounded-xl bg-owner-500/15 border border-owner-500/30 hover:bg-owner-500/25 text-owner-300 text-xs font-mono font-semibold transition-colors"
-              >
-                {players.maciek.name} Won
-              </button>
-              <button
-                onClick={() => handleResolveStake('myrna')}
-                className="py-2.5 px-3 rounded-xl bg-guest-500/15 border border-guest-500/30 hover:bg-guest-500/25 text-guest-300 text-xs font-mono font-semibold transition-colors"
-              >
-                {players.myrna.name} Won
+              <button type="button" onClick={() => handleResolveStake('tie')} className="control w-full">
+                Mark as Draw / Push
               </button>
             </div>
-
-            <button
-              onClick={() => handleResolveStake('tie')}
-              className="w-full py-2 rounded-xl border border-zinc-800 text-zinc-400 text-xs font-mono hover:text-white hover:bg-zinc-800 transition-colors"
-            >
-              Mark as Draw / Push
-            </button>
           </div>
         </div>
       )}
@@ -1082,14 +977,15 @@ export function DuelView() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="stake-modal-title"
-            className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 shadow-xs p-5 shadow-2xl space-y-3.5"
+            className={`${MODAL_PANEL} space-y-5`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between">
-              <h3 id="stake-modal-title" className="text-sm font-semibold text-white">
+            <div className="flex items-center justify-between gap-3">
+              <h3 id="stake-modal-title" className="text-title text-foreground">
                 {isEditingStake ? 'Edit Wager' : 'New Wager'}
               </h3>
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   hapticLight();
@@ -1097,9 +993,9 @@ export function DuelView() {
                   setIsCreatingStake(false);
                 }}
                 aria-label="Close wager dialog"
-                className="text-zinc-400 hover:text-white p-1"
+                className={`${ICON_BUTTON} -mr-2`}
               >
-                <X className="w-4 h-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -1123,29 +1019,18 @@ export function DuelView() {
               className="space-y-3"
             >
               {isCreatingStake && (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStakePeriod('weekly')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
-                      stakePeriod === 'weekly'
-                        ? 'bg-white text-black border-transparent font-semibold'
-                        : 'bg-zinc-900/50 text-zinc-400 border-zinc-800'
-                    }`}
-                  >
-                    Weekly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStakePeriod('monthly')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
-                      stakePeriod === 'monthly'
-                        ? 'bg-white text-black border-transparent font-semibold'
-                        : 'bg-zinc-900/50 text-zinc-400 border-zinc-800'
-                    }`}
-                  >
-                    Monthly
-                  </button>
+                <div role="group" aria-label="Wager period" className={`${SEGMENT_TRACK} grid-cols-2`}>
+                  {(['weekly', 'monthly'] as const).map((period) => (
+                    <button
+                      key={period}
+                      type="button"
+                      aria-pressed={stakePeriod === period}
+                      onClick={() => setStakePeriod(period)}
+                      className={`${SEGMENT_BASE} ${stakePeriod === period ? SEGMENT_ON : SEGMENT_OFF}`}
+                    >
+                      {period === 'weekly' ? 'Weekly' : 'Monthly'}
+                    </button>
+                  ))}
                 </div>
               )}
 
@@ -1154,19 +1039,21 @@ export function DuelView() {
                 value={stakeTitle}
                 onChange={(e) => setStakeTitle(e.target.value)}
                 placeholder="Title (e.g. Sunday Dinner Date)"
-                className="w-full px-3 py-2 rounded-lg bg-black/60 border border-zinc-800 text-white text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500"
+                aria-label="Wager title"
+                className="field"
                 required
               />
 
               <textarea
                 value={stakeDesc}
                 onChange={(e) => setStakeDesc(e.target.value)}
-                rows={2}
+                rows={3}
                 placeholder="Terms and reward"
-                className="w-full px-3 py-2 rounded-lg bg-black/60 border border-zinc-800 text-white text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500"
+                aria-label="Wager terms"
+                className="field resize-none"
               />
 
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -1175,14 +1062,11 @@ export function DuelView() {
                     setIsEditingStake(false);
                     setIsCreatingStake(false);
                   }}
-                  className="flex-1 py-2 rounded-lg border border-zinc-800 text-zinc-400 text-xs font-mono font-medium hover:text-white"
+                  className="control flex-1"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 rounded-lg bg-white text-black text-xs font-mono font-semibold hover:bg-zinc-200"
-                >
+                <button type="submit" className="control control-primary flex-1">
                   Save
                 </button>
               </div>

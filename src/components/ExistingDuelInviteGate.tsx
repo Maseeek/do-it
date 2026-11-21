@@ -112,27 +112,27 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
       tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6"
     >
-      <div className="w-full max-w-md rounded-3xl border border-white/15 bg-[#16181d] text-white p-6 space-y-5 shadow-2xl">
+      <div className="w-full max-w-md max-h-full overflow-y-auto rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] text-foreground p-6 flex flex-col gap-5 shadow-2xl">
         <div className="text-center">
-          <DoLogo size="lg" className="mx-auto mb-3" />
-          <h1 id="invite-dialog-title" className="text-xl font-bold tracking-tight text-white">
+          <DoLogo size="lg" className="mx-auto mb-4" />
+          <h1 id="invite-dialog-title" className="text-title text-foreground text-balance">
             {title}
           </h1>
           {user.email && (
-            <p className="text-xs font-mono text-zinc-400 mt-1">
+            <p className="text-caption text-muted mt-1">
               Signed in as {user.email}
             </p>
           )}
         </div>
 
         {(outcome === 'empty-invite' || outcome === 'invalid-invite') && (
-          <div className="space-y-3 text-sm text-zinc-300">
+          <div className="space-y-3 text-body text-secondary">
             <p>
               {outcome === 'empty-invite'
                 ? 'This invitation link does not contain an invitation code. It may have been cut off when copied or shared.'
                 : 'This invitation link is invalid or incomplete. It does not match a valid duel invitation token.'}
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-label font-normal text-muted">
               Ask your opponent to copy a fresh invitation link from their Duel tab, or press Cancel to return to your duel.
             </p>
           </div>
@@ -140,14 +140,14 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
 
         {outcome === 'own-invite' && (
           <div className="space-y-3">
-            <p className="text-sm text-zinc-300">
+            <p className="text-body text-secondary">
               You cannot join your own invitation link. This link belongs to your duel ({user.email}). Share it with your opponent on a separate account so they can join you.
             </p>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 disabled={busy}
-                className="w-full rounded-xl border border-white/20 bg-white/10 hover:bg-white/15 p-2.5 text-xs font-semibold text-white disabled:opacity-50"
+                className="control w-full"
                 onClick={() => void copyInvite()}
               >
                 {copied ? 'Link copied!' : 'Copy invitation link'}
@@ -155,7 +155,7 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
               <button
                 type="button"
                 disabled={busy}
-                className="w-full rounded-xl border border-white/15 p-2.5 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-50"
+                className="flex min-h-11 w-full items-center justify-center rounded-xl text-label text-secondary hover:text-foreground transition-colors disabled:opacity-50"
                 onClick={() => void switchAccount()}
               >
                 Sign out and use another account
@@ -166,7 +166,7 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
 
         {outcome === 'already-joined' && (
           <div className="space-y-3">
-            <p className="text-sm text-zinc-300">
+            <p className="text-body text-secondary">
               You cannot re-join this invitation because your account ({user.email}) is already connected to this duel with {partnerName}.
             </p>
           </div>
@@ -174,27 +174,27 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
 
         {outcome === 'paired-conflict' && (
           <div className="space-y-3">
-            <p className="text-sm text-zinc-300">
+            <p className="text-body text-secondary">
               You cannot join this invitation on {user.email} because you are already competing in an active duel with {partnerName}. Each account can belong to one duel at a time.
             </p>
-            <p className="text-xs text-zinc-400">
-              Press <strong className="text-white">OK</strong> to sign out and accept this invitation with another account, or press <strong className="text-white">Cancel</strong> to stay in your current duel.
+            <p className="text-label font-normal text-muted">
+              Press <strong className="text-foreground">OK</strong> to sign out and accept this invitation with another account, or press <strong className="text-foreground">Cancel</strong> to stay in your current duel.
             </p>
           </div>
         )}
 
         {outcome === 'solo-replaceable' && (
           <div className="space-y-3">
-            <p className="text-sm text-zinc-300">
-              Your account ({user.email}) currently has an unpaired solo duel. Press <strong className="text-white">OK</strong> to replace your solo duel and join this invitation, or <strong className="text-white">Cancel</strong> to keep your current duel.
+            <p className="text-body text-secondary">
+              Your account ({user.email}) currently has an unpaired solo duel. Press <strong className="text-foreground">OK</strong> to replace your solo duel and join this invitation, or <strong className="text-foreground">Cancel</strong> to keep your current duel.
             </p>
-            <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+            <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-label font-normal text-amber-800 dark:text-amber-200">
               Joining will permanently delete your unpaired solo duel and any solo habits, check-ins, and wagers on it. To keep a copy, press Cancel and export a backup first.
             </p>
             <button
               type="button"
               disabled={busy}
-              className="w-full rounded-xl border border-white/15 p-2.5 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-50"
+              className="flex min-h-11 w-full items-center justify-center rounded-xl text-label text-secondary hover:text-foreground transition-colors disabled:opacity-50"
               onClick={() => void switchAccount()}
             >
               Sign out and use another account instead
@@ -203,17 +203,17 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
         )}
 
         {error && (
-          <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200 space-y-1">
+          <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-label font-normal text-red-700 dark:text-red-200 space-y-1">
             <p className="font-semibold">Why joining failed:</p>
             <p>{error}</p>
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             disabled={busy}
-            className="flex-1 rounded-xl border border-white/20 bg-transparent hover:bg-white/5 p-3 text-sm font-semibold text-zinc-200 disabled:opacity-50"
+            className="control flex-1 !min-h-12"
             onClick={continueToCurrentDuel}
           >
             Cancel
@@ -221,7 +221,7 @@ export function ExistingDuelInviteGate({ inviteCode, onDismiss }: { inviteCode: 
           <button
             type="button"
             disabled={busy}
-            className="flex-1 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-black hover:opacity-90 p-3 text-sm font-semibold disabled:opacity-50"
+            className="control control-primary flex-1 !min-h-12"
             onClick={handlePrimaryOk}
           >
             {busy ? 'Please wait…' : 'OK'}

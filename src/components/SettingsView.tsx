@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { PLAYER_COLORS } from '@/lib/types';
 import { getPlayerColorStyles, isPlayerColorUnlocked } from '@/lib/player-colors';
 import { getRecommendationShareData, getRecommendationUrl } from '@/lib/recommendation';
-import { ArrowLeft, Copy, Gift, LogOut, Monitor, Moon, Share2, Sparkles, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
+import { ArrowLeft, Copy, Gift, LogOut, Monitor, Moon, Palette, Share2, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { HealthConnection } from './HealthConnection';
@@ -137,132 +137,68 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   };
 
   const inviteCount = activePlayer?.inviteCount ?? 0;
+  const themeOptions = [
+    { id: 'system', label: 'Auto', Icon: Monitor },
+    { id: 'light', label: 'Light', Icon: Sun },
+    { id: 'dark', label: 'Dark', Icon: Moon },
+  ] as const;
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-5">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto w-full max-w-2xl space-y-3">
+      <div className="mb-5 flex items-center gap-2">
         <button
-          className="flex size-11 items-center justify-center rounded-xl text-zinc-400 hover:text-foreground active:scale-95 transition-all"
+          className="-ml-2 flex size-11 items-center justify-center rounded-xl text-secondary hover:text-foreground active:scale-95 transition-all"
           onClick={onBack}
           aria-label="Back"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={22} />
         </button>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <h1 className="text-title-lg text-foreground">Settings</h1>
       </div>
 
       {activePlayer && (
-        <section className="rounded-2xl border border-white/[0.08] bg-[#17181b] p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <UserRound size={17} /> Profile
-            </h2>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-300">
-                <Gift size={13} className="text-amber-400" />
-                <span>{inviteCount} {inviteCount === 1 ? 'invite' : 'invites'} done</span>
-              </span>
-            </div>
-          </div>
-
-          {!multiplayer.configured && (
-            <button
-              type="button"
-              className="control min-h-11"
-              onClick={switchProfile}
-            >
-              Switch Player
-            </button>
-          )}
-
-          <form onSubmit={saveName} className="space-y-3">
-            <label htmlFor="profile-name" className="block text-xs text-zinc-400">Username</label>
-            <div className="flex flex-wrap gap-2">
-              <input
-                id="profile-name"
-                value={name}
-                maxLength={40}
-                onChange={event => { setName(event.target.value); setNameMessage(null); }}
-                autoComplete="nickname"
-                className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-zinc-100 dark:bg-[#101113] px-3 text-sm text-foreground outline-none focus:border-player-400"
-              />
-              <button
-                type="submit"
-                className="control min-h-11"
-                disabled={savingName || name.trim() === activePlayer.name}
-              >
-                {savingName ? 'Saving…' : 'Save name'}
-              </button>
-            </div>
-            {nameMessage && <p role="status" className="text-xs text-zinc-300">{nameMessage}</p>}
-          </form>
-
-          {/* App Recommendation & Invite Counter */}
-          <div className="space-y-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-zinc-100 dark:bg-[#101113] p-3.5 shadow-2xs">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <Sparkles size={14} className="text-amber-400" />
-                  <span>Recommend do it. to friends</span>
-                </div>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-400">
-                  {inviteCount >= 1
-                    ? `You've invited ${inviteCount} ${inviteCount === 1 ? 'person' : 'people'}. The unique Gold palette is unlocked!`
-                    : 'Recommend the app to a friend to unlock the exclusive Gold colour palette! (Separate from 1v1 duel invites)'}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <span className="text-xl font-bold font-mono text-amber-400 tabular-nums">
-                  {inviteCount}
-                </span>
-                <span className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                  {inviteCount === 1 ? 'invite' : 'invites'}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <label htmlFor="settings-recommend-link" className="block text-[11px] text-zinc-400">
-                Your recommendation link
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  id="settings-recommend-link"
-                  readOnly
-                  value={recommendUrl}
-                  onFocus={event => event.currentTarget.select()}
-                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-white dark:bg-[#17181b] px-3 text-xs text-foreground outline-none font-mono"
-                />
-                <button
-                  type="button"
-                  className="control control-primary min-h-11"
-                  onClick={handleShareRecommendation}
-                >
-                  <Share2 size={15} />
-                  {recommendShared ? 'Shared!' : 'Share app'}
+        <section className="settings-panel flex flex-col gap-5">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 !mb-0">
+                <UserRound size={18} className="text-secondary" /> Profile
+              </h2>
+              {!multiplayer.configured && (
+                <button type="button" className="control" onClick={switchProfile}>
+                  Switch Player
                 </button>
-                <button
-                  type="button"
-                  className="control min-h-11"
-                  onClick={handleCopyRecommendation}
-                >
-                  <Copy size={15} />
-                  {recommendCopied ? 'Copied!' : 'Copy link'}
-                </button>
-              </div>
-              {(recommendCopied || recommendShared) && (
-                <p role="status" className="text-xs text-emerald-400">
-                  {recommendShared ? 'Shared!' : 'Link copied!'} +1 invite registered.
-                </p>
               )}
             </div>
+
+            <form onSubmit={saveName} className="space-y-2">
+              <label htmlFor="profile-name" className="block text-label text-secondary">Username</label>
+              <div className="flex gap-2">
+                <input
+                  id="profile-name"
+                  value={name}
+                  maxLength={40}
+                  onChange={event => { setName(event.target.value); setNameMessage(null); }}
+                  autoComplete="nickname"
+                  className="field min-w-0 flex-1 outline-none focus:border-player-400"
+                />
+                <button
+                  type="submit"
+                  className="control shrink-0"
+                  disabled={savingName || name.trim() === activePlayer.name}
+                >
+                  {savingName ? 'Saving…' : 'Save name'}
+                </button>
+              </div>
+              {nameMessage && <div role="status" className="text-caption text-secondary">{nameMessage}</div>}
+            </form>
           </div>
 
-          {/* Color Palettes Section */}
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs text-zinc-400">Player color</span>
-              <span className="text-[11px] text-zinc-500">{activePlayerSummary.karma.toLocaleString()} lifetime points</span>
+          <div className="space-y-3 border-t border-[var(--border-subtle)] pt-5">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="flex items-center gap-2 text-label font-semibold text-foreground">
+                <Palette size={16} className="text-secondary" /> Player color
+              </span>
+              <span className="text-caption text-muted num">{activePlayerSummary.karma.toLocaleString()} lifetime points</span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {PLAYER_COLORS.map(option => {
@@ -286,14 +222,14 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                       void savePlayerColor(option.id);
                     }}
                     aria-pressed={selected}
-                    className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-left text-xs ${
-                      selected ? 'border-player-400 bg-player-500/15 text-player-400' : 'border-white/[0.08]'
-                    } disabled:cursor-not-allowed disabled:opacity-45`}
+                    className={`flex min-h-13 items-center gap-2.5 rounded-[var(--radius-control)] border px-3 text-left transition-colors ${
+                      selected ? 'border-player-400 bg-player-500/10' : 'border-[var(--border-subtle)] hover:bg-[var(--surface-2)]'
+                    } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent`}
                   >
-                    <span className="size-3.5 rounded-full border border-white/20" style={getPlayerColorStyles(option)} />
+                    <span className="size-4 shrink-0 rounded-full border border-[var(--border-medium)]" style={getPlayerColorStyles(option)} />
                     <span className="min-w-0">
-                      <span className="block font-medium">{option.name}</span>
-                      <span className="text-[10px] text-zinc-500">
+                      <span className={`block text-label ${selected ? 'text-player-300' : 'text-foreground'}`}>{option.name}</span>
+                      <span className="block truncate text-caption text-muted">
                         {unlocked ? (selected ? 'Selected' : 'Unlocked') : lockLabel}
                       </span>
                     </span>
@@ -301,113 +237,143 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                 );
               })}
             </div>
-            {colorMessage && <p role="status" className="text-xs text-zinc-300">{colorMessage}</p>}
+            {colorMessage && <div role="status" className="text-caption text-secondary">{colorMessage}</div>}
           </div>
         </section>
       )}
 
-      {/* Theme / Appearance Section */}
-      <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <SunMedium size={17} /> Appearance
-          </span>
-          <div
-            role="radiogroup"
-            aria-label="Select theme"
-            className="flex p-0.5 rounded-xl bg-black/5 dark:bg-[#2c2c2e] border border-black/5 dark:border-white/[0.08]"
-          >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={themePreference === 'system'}
-              onClick={() => handleSelectTheme('system')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                themePreference === 'system'
-                  ? 'bg-white dark:bg-zinc-800 text-foreground font-semibold shadow-xs'
-                  : 'text-zinc-500 hover:text-foreground'
-              }`}
-            >
-              <Monitor size={14} />
-              <span>Auto</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={themePreference === 'light'}
-              onClick={() => handleSelectTheme('light')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                themePreference === 'light'
-                  ? 'bg-white dark:bg-zinc-800 text-foreground font-semibold shadow-xs'
-                  : 'text-zinc-500 hover:text-foreground'
-              }`}
-            >
-              <Sun size={14} />
-              <span>Light</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={themePreference === 'dark'}
-              onClick={() => handleSelectTheme('dark')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                themePreference === 'dark'
-                  ? 'bg-white dark:bg-zinc-800 text-foreground font-semibold shadow-xs'
-                  : 'text-zinc-500 hover:text-foreground'
-              }`}
-            >
-              <Moon size={14} />
-              <span>Dark</span>
-            </button>
+      {/* App recommendation & invite counter */}
+      {activePlayer && (
+        <section className="settings-panel flex flex-col gap-4">
+          <div>
+            <h2>Recommend do it. to friends</h2>
+            <p>
+              {inviteCount >= 1
+                ? `You've invited ${inviteCount} ${inviteCount === 1 ? 'person' : 'people'}. The unique Gold palette is unlocked!`
+                : 'Recommend the app to a friend to unlock the exclusive Gold colour palette! (Separate from 1v1 duel invites)'}
+            </p>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="settings-recommend-link" className="block text-label text-secondary">
+                Your recommendation link
+              </label>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-caption font-medium text-amber-700 dark:text-amber-300 num">
+                <Gift size={13} />
+                {inviteCount} {inviteCount === 1 ? 'invite' : 'invites'} done
+              </span>
+            </div>
+            <input
+              id="settings-recommend-link"
+              readOnly
+              value={recommendUrl}
+              onFocus={event => event.currentTarget.select()}
+              className="field outline-none text-secondary"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="control control-primary"
+                onClick={handleShareRecommendation}
+              >
+                <Share2 size={16} />
+                {recommendShared ? 'Shared!' : 'Share app'}
+              </button>
+              <button
+                type="button"
+                className="control"
+                onClick={handleCopyRecommendation}
+              >
+                <Copy size={16} />
+                {recommendCopied ? 'Copied!' : 'Copy link'}
+              </button>
+            </div>
+            {(recommendCopied || recommendShared) && (
+              <div role="status" className="text-caption text-emerald-600 dark:text-emerald-400">
+                {recommendShared ? 'Shared!' : 'Link copied!'} +1 invite registered.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Theme / Appearance */}
+      <section className="settings-panel flex flex-col gap-3">
+        <h2 className="flex items-center gap-2">
+          <SunMedium size={18} className="text-secondary" /> Appearance
+        </h2>
+        <div
+          role="radiogroup"
+          aria-label="Select theme"
+          className="grid grid-cols-3 rounded-[var(--radius-control)] bg-[var(--surface-2)] p-0.5"
+        >
+          {themeOptions.map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={themePreference === id}
+              onClick={() => handleSelectTheme(id)}
+              className={`flex h-10 items-center justify-center gap-1.5 rounded-[10px] text-label transition-colors ${
+                themePreference === id
+                  ? 'bg-[var(--surface-1)] text-foreground font-semibold shadow-xs'
+                  : 'text-secondary hover:text-foreground'
+              }`}
+            >
+              <Icon size={15} />
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
       </section>
 
       {multiplayer.configured && multiplayer.user && (
-        <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Share2 size={17} /> Account &amp; Duel Invitation
+        <section className="settings-panel flex flex-col gap-4">
+          <h2 className="flex items-center gap-2">
+            <Share2 size={18} className="text-secondary" /> Account &amp; Duel Invitation
           </h2>
-          <div className="space-y-1 text-xs text-zinc-400">
-            <p>Signed-in account: <span className="font-mono text-zinc-200">{multiplayer.user.email}</span></p>
-            <p>
-              Opponent status:{' '}
-              <span className={isPartnerConnected ? 'text-emerald-400 font-medium' : 'text-amber-300 font-medium'}>
+          <dl className="space-y-2 text-label">
+            <div className="flex flex-wrap justify-between gap-x-3">
+              <dt className="text-secondary font-normal">Signed-in account</dt>
+              <dd className="min-w-0 truncate text-foreground">{multiplayer.user.email}</dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-x-3">
+              <dt className="text-secondary font-normal">Opponent status</dt>
+              <dd className={isPartnerConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-300'}>
                 {isPartnerConnected
                   ? `Paired with ${multiplayer.slot === 'maciek' ? players.myrna.name : players.maciek.name}`
                   : 'No opponent account matched yet — waiting for partner to accept invite'}
-              </span>
-            </p>
-          </div>
+              </dd>
+            </div>
+          </dl>
           {multiplayer.duel && (
-            <div className="space-y-2 pt-1">
-              <label htmlFor="settings-invite-link" className="block text-xs text-zinc-400">Invitation link</label>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  id="settings-invite-link"
-                  readOnly
-                  value={inviteUrl}
-                  onFocus={event => event.currentTarget.select()}
-                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-black/10 dark:border-white/[0.15] bg-zinc-100 dark:bg-[#101113] px-3 text-xs text-foreground outline-none"
-                />
-                <button
-                  type="button"
-                  className="control control-primary min-h-11"
-                  onClick={async () => {
-                    if (!inviteUrl) return;
-                    try {
-                      await navigator.clipboard.writeText(inviteUrl);
-                      setInviteCopied(true);
-                      setTimeout(() => setInviteCopied(false), 2500);
-                    } catch {
-                      setError('Select and copy the invitation link above.');
-                    }
-                  }}
-                >
-                  <Copy size={15} />
-                  {inviteCopied ? 'Copied!' : 'Copy invite link'}
-                </button>
-              </div>
+            <div className="space-y-2 border-t border-[var(--border-subtle)] pt-4">
+              <label htmlFor="settings-invite-link" className="block text-label text-secondary">Invitation link</label>
+              <input
+                id="settings-invite-link"
+                readOnly
+                value={inviteUrl}
+                onFocus={event => event.currentTarget.select()}
+                className="field outline-none text-secondary"
+              />
+              <button
+                type="button"
+                className="control control-primary w-full"
+                onClick={async () => {
+                  if (!inviteUrl) return;
+                  try {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2500);
+                  } catch {
+                    setError('Select and copy the invitation link above.');
+                  }
+                }}
+              >
+                <Copy size={16} />
+                {inviteCopied ? 'Copied!' : 'Copy invite link'}
+              </button>
             </div>
           )}
         </section>
@@ -416,34 +382,40 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
       <HealthConnection onChooseHabits={onChooseHabits} />
       <BillingPanel />
 
-      <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
+      <section className="settings-panel flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2 text-sm text-foreground">
-            <Volume2 size={17} /> Sounds
+          <span id="settings-sounds-label" className="flex items-center gap-2 text-body text-foreground">
+            <Volume2 size={18} className="text-secondary" /> Sounds
           </span>
           <button
             role="switch"
             aria-checked={!!soundEnabled}
+            aria-labelledby="settings-sounds-label"
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className={`min-h-11 min-w-16 rounded-full px-3 text-xs font-semibold ${
-              soundEnabled ? 'bg-emerald-400 text-black' : 'bg-zinc-700 text-white'
-            }`}
+            className="-mr-1 flex h-11 w-15 shrink-0 items-center justify-center"
           >
-            {soundEnabled ? 'On' : 'Off'
-          }</button>
+            <span
+              aria-hidden="true"
+              className={`relative h-7 w-12 rounded-full transition-colors ${soundEnabled ? 'bg-emerald-500' : 'bg-[var(--surface-3)]'}`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 size-6 rounded-full bg-white shadow-sm transition-transform ${soundEnabled ? 'translate-x-5' : ''}`}
+              />
+            </span>
+          </button>
         </div>
         {multiplayer.user && (
-          <div className="border-t border-white/[0.08] pt-3">
-            <p className="mb-3 text-xs text-zinc-500">{multiplayer.user.email}</p>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-4">
+            <span className="min-w-0 truncate text-label text-secondary">{multiplayer.user.email}</span>
             <button
-              className="control min-h-11"
+              className="control"
               onClick={() => multiplayer.signOut().catch(caught => setError(caught instanceof Error ? caught.message : 'Could not sign out.'))}
             >
-              <LogOut size={15} /> Sign out
+              <LogOut size={16} /> Sign out
             </button>
           </div>
         )}
-        {error && <p role="alert" className="text-xs text-amber-300">{error}</p>}
+        {error && <div role="alert" className="text-label text-amber-600 dark:text-amber-300">{error}</div>}
       </section>
     </div>
   );

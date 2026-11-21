@@ -205,28 +205,28 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
   }, [context, points, allDone, par]);
 
   const formattedLongDate = parseDate(selectedDate).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
   });
+  const isComplete = allDone || progress >= 100;
+  const pointsToGo = Math.max(0, par - points);
 
   return (
-    <div className="w-full space-y-4">
-      {/* Top Header Row + Segmented View Switcher */}
+    <div className="mx-auto w-full max-w-2xl space-y-6">
+      {/* Page title + view switcher */}
       <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-            {formattedLongDate}
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-white mt-0.5">
-            {isTodaySelected ? 'Daily Ritual' : formatFriendlyDate(selectedDate)}
+        <div className="min-w-0">
+          <p className="text-label text-[var(--text-secondary)]">{formattedLongDate}</p>
+          <h1 className="mt-0.5 truncate text-title-lg text-foreground">
+            {isTodaySelected ? 'Today' : formatFriendlyDate(selectedDate)}
           </h1>
         </div>
 
         <div
           role="tablist"
           aria-label="Today views"
-          className="flex p-0.5 rounded-lg bg-zinc-200/70 dark:bg-[#0e1013] border border-black/[0.06] dark:border-zinc-800"
+          className="flex shrink-0 rounded-full bg-[var(--surface-2)] p-0.5"
         >
           {([
             { id: 'ritual', label: 'Ritual' },
@@ -241,10 +241,10 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                 hapticLight();
                 setActiveSubTab(tab.id);
               }}
-              className={`px-3 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
+              className={`min-h-9 rounded-full px-3.5 text-label transition-colors ${
                 activeSubTab === tab.id
-                  ? 'bg-white text-zinc-900 shadow-xs dark:bg-zinc-800/90 dark:text-white'
-                  : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  ? 'bg-[var(--surface-1)] text-foreground shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -256,37 +256,25 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
       {activeSubTab === 'feed' ? (
         <ActivityFeed />
       ) : (
-        <div className="space-y-4">
-          {/* Top Scrollable Calendar Strip */}
+        <div className="space-y-6">
           <DateNavigator />
 
-          {/* Rest Day Banner */}
+          {/* Rest Day note */}
           {isRest && (
-            <div className="rounded-xl bg-indigo-950/30 border border-indigo-500/25 p-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-300 shrink-0">
-                  <BedDouble className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-indigo-200">
-                    Rest &amp; Recovery Day
-                  </div>
-                  <div className="text-[11px] font-mono text-indigo-300/70 truncate">
-                    Streak protected for {formatFriendlyDate(selectedDate)}
-                  </div>
-                </div>
-              </div>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-medium text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-500/25 shrink-0">
-                Active
-              </span>
+            <div className="flex items-center gap-3 rounded-[var(--radius-card)] bg-indigo-500/10 px-4 py-3">
+              <BedDouble className="size-4 shrink-0 text-indigo-500 dark:text-indigo-300" aria-hidden="true" />
+              <p className="min-w-0 text-label">
+                <span className="text-indigo-700 dark:text-indigo-200">Rest &amp; Recovery Day</span>
+                <span className="font-normal text-[var(--text-secondary)]"> · streak protected for {isTodaySelected ? 'today' : formatFriendlyDate(selectedDate)}</span>
+              </p>
             </div>
           )}
 
-          {/* Daily Target Overview Card (Linear / Kinetic Telemetry Framing) */}
+          {/* Daily target: one number, one bar, one line; partner as a single row */}
           <section
             key={activeTargetPulse ? `target-${activeTargetPulse.token}` : 'target-idle'}
             aria-label="Today progress"
-            className={`relative rounded-xl bg-white dark:bg-gradient-to-b dark:from-[#12141a] dark:to-[#0c0d10] border border-black/[0.08] dark:border-zinc-800/90 p-4 shadow-xs transition-colors ${
+            className={`surface surface-pad relative transition-colors ${
               activeTargetPulse
                 ? progress >= 100
                   ? 'animate-target-pulse-emerald'
@@ -294,162 +282,120 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                 : ''
             }`}
           >
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-                  {isTodaySelected ? 'Daily Target' : `Score · ${formatFriendlyDate(selectedDate)}`}
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className={`num text-display text-foreground ${
+                  activeTargetPulse ? 'animate-target-score-bump' : ''
+                }`}
+              >
+                {points}
+              </span>
+              <span className="num text-body text-[var(--text-secondary)]">/ {par} pts</span>
+              {activeTargetPulse && activeTargetPulse.delta > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={`num ml-1 rounded-full px-2 py-0.5 text-caption font-semibold animate-target-delta-flare ${
+                    progress >= 100
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+                      : 'bg-player-500/15 text-player-600 dark:text-player-300'
+                  }`}
+                >
+                  +{activeTargetPulse.delta}
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
-                  <span
-                    className={`text-3xl font-bold font-mono tracking-tight tabular-nums text-zinc-900 dark:text-white ${
-                      activeTargetPulse ? 'animate-target-score-bump' : ''
-                    }`}
-                  >
-                    {points}
-                  </span>
-                  <span className="text-xs font-mono text-zinc-400">/ {par} pts</span>
-                  {activeTargetPulse && activeTargetPulse.delta > 0 && (
-                    <span
-                      aria-hidden="true"
-                      className={`inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold tracking-tight border animate-target-delta-flare ${
-                        progress >= 100
-                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                          : 'bg-player-500/15 text-player-300 border-player-400/40 shadow-[0_0_12px_color-mix(in_srgb,var(--player-base)_30%,transparent)]'
-                      }`}
-                    >
-                      +{activeTargetPulse.delta} PTS
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
-                  Habits Done
-                </span>
-                <div className="mt-1">
-                  <span
-                    className={`inline-flex items-center text-xs font-mono font-semibold px-2 py-0.5 rounded border tabular-nums transition-colors ${
-                      activeTargetPulse
-                        ? 'text-player-200 bg-player-500/15 border-player-400/40'
-                        : 'text-zinc-900 bg-zinc-100 border-zinc-200 dark:text-white dark:bg-zinc-900/90 dark:border-zinc-800'
-                    }`}
-                  >
-                    {satisfiedHabits.length} / {activeHabits.length}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Linear progress bar with Kinetic Energy Surge */}
             <div
               role="progressbar"
               aria-label={`Today's progress: ${points} of ${par} points`}
               aria-valuenow={points}
               aria-valuemin={0}
               aria-valuemax={Math.max(1, par)}
-              className="relative w-full h-2 rounded-full bg-zinc-200 dark:bg-zinc-800/90 overflow-hidden"
+              className="relative mt-3 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-3)]"
             >
               <div
                 className={`relative h-full rounded-full transition-[width] duration-500 ease-out ${
-                  progress >= 100
-                    ? 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]'
-                    : 'bg-player-500 shadow-[0_0_12px_color-mix(in_srgb,var(--player-base)_45%,transparent)]'
+                  progress >= 100 ? 'bg-emerald-500' : 'bg-player-500'
                 }`}
                 style={{ width: `${progress}%` }}
               >
                 {activeTargetPulse && progress > 0 && (
-                  <>
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent animate-target-bar-surge"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_2px_rgba(255,255,255,0.95)]"
-                    />
-                  </>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-target-bar-surge"
+                  />
                 )}
               </div>
             </div>
 
-            {allDone || progress >= 100 ? (
-              <div className="mt-3 flex items-center justify-between gap-2 text-xs font-mono font-medium text-emerald-400 bg-emerald-500/10 py-1.5 px-2.5 rounded-lg border border-emerald-500/20">
-                <span className="flex items-center gap-1.5 truncate">
-                  <Trophy className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">
-                    {allDone
-                      ? 'Daily Par Complete · All habits checked in'
-                      : `Daily Par Achieved (+${points} pts)`}
-                  </span>
-                </span>
-                <span className="tabular-nums shrink-0">{progress}%</span>
-              </div>
-            ) : (
-              <div className="mt-2.5 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
-                <span>{Math.max(0, par - points)} pts to daily par</span>
-                <span className="tabular-nums text-zinc-300">{progress}%</span>
-              </div>
-            )}
+            <p
+              className={`mt-3 flex items-center gap-1.5 text-label font-normal ${
+                isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'
+              }`}
+            >
+              {isComplete && <Trophy className="size-4 shrink-0" aria-hidden="true" />}
+              <span className="num truncate">
+                {allDone
+                  ? 'Daily par complete · all habits checked in'
+                  : progress >= 100
+                  ? `Daily par achieved · ${satisfiedHabits.length} of ${activeHabits.length} habits`
+                  : `${pointsToGo} pts to daily par · ${satisfiedHabits.length} of ${activeHabits.length} habits`}
+              </span>
+            </p>
 
-            {/* Integrated Partner Accountability Row */}
+            {/* Partner, one line */}
             {partner ? (
-              <div style={getPlayerThemeStyles(partner)} className="mt-3.5 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
+              <div
+                style={getPlayerThemeStyles(partner)}
+                className="-mb-2 mt-4 flex items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-2"
+              >
+                <div className="flex min-w-0 items-center gap-2.5 py-2.5">
                   <span
-                    className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-mono font-bold border shrink-0 bg-player-500/10 border-player-500/25 text-player-300"
+                    aria-hidden="true"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-full bg-player-500/15 text-caption font-semibold text-player-600 dark:text-player-300"
                   >
                     {partner.name[0]}
                   </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-200">
-                      <span className="truncate">{partner.name}&apos;s day</span>
-                      <span className="text-zinc-600">·</span>
-                      <span className="font-mono text-[11px] text-zinc-400 tabular-nums">
-                        {partnerPoints}/{partnerPar} pts
-                      </span>
-                    </div>
-                  </div>
+                  <p className="min-w-0 truncate text-label">
+                    <span className="text-foreground">{partner.name}</span>
+                    <span className="num font-normal text-[var(--text-secondary)]"> · {partnerPoints}/{partnerPar} pts</span>
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {partnerPhotos.length > 0 ? (
-                    <button
-                      onClick={() => {
-                        soundEngine.playClick();
-                        hapticLight();
-                        setProofIndex(0);
-                      }}
-                      className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/25 transition-colors"
-                    >
-                      <Camera className="w-3 h-3" />
-                      <span>Proof ({partnerPhotos.length})</span>
-                      <ArrowUpRight className="w-3 h-3" />
-                    </button>
-                  ) : partnerCleanSpaceCheckIn ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Verified
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                      <Clock className="w-3 h-3 text-zinc-500" />
-                      Pending
-                    </span>
-                  )}
-                </div>
+                {partnerPhotos.length > 0 ? (
+                  <button
+                    onClick={() => {
+                      soundEngine.playClick();
+                      hapticLight();
+                      setProofIndex(0);
+                    }}
+                    className="-mr-2 flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-2 text-label text-emerald-600 transition-colors hover:bg-emerald-500/10 dark:text-emerald-400"
+                  >
+                    <Camera className="size-4" aria-hidden="true" />
+                    <span className="num">Proof ({partnerPhotos.length})</span>
+                    <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                  </button>
+                ) : partnerCleanSpaceCheckIn ? (
+                  <span className="flex shrink-0 items-center gap-1.5 text-label font-normal text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="flex shrink-0 items-center gap-1.5 text-label font-normal text-[var(--text-muted)]">
+                    <Clock className="size-4" aria-hidden="true" />
+                    Pending
+                  </span>
+                )}
               </div>
             ) : multiplayer.configured && multiplayer.duel && !isPartnerConnected ? (
-              <div className="mt-3.5 pt-3 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-xs font-medium text-zinc-200">
-                    No opponent account matched yet
-                  </div>
-                  <div className="text-[11px] font-mono text-zinc-400">
+              <div className="mt-4 space-y-3 border-t border-[var(--border-subtle)] pt-4">
+                <p className="text-label">
+                  <span className="text-foreground">No opponent account matched yet</span>
+                  <span className="block font-normal text-[var(--text-secondary)]">
                     Invite someone with an account to join your duel
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+                  </span>
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={async () => {
@@ -464,7 +410,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                         if (onOpenDuel) onOpenDuel();
                       }
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-black bg-white hover:bg-zinc-200 px-2.5 py-1 rounded-lg transition-colors"
+                    className="control control-primary"
                   >
                     <span>{inviteCopied ? 'Invite copied!' : 'Copy invite link'}</span>
                   </button>
@@ -476,7 +422,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                         hapticLight();
                         onOpenDuel();
                       }}
-                      className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-300 bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-800 transition-colors"
+                      className="control"
                     >
                       <span>Invite options</span>
                     </button>
@@ -488,20 +434,18 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
 
           {/* Habits Lists */}
           {activeHabits.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <section aria-labelledby="pending-heading" className="space-y-2">
-                <div className="flex items-center justify-between px-0.5">
-                  <h2
-                    id="pending-heading"
-                    className="text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-400"
-                  >
-                    Incomplete ({pending.length})
+                <div className="flex items-center justify-between">
+                  <h2 id="pending-heading" className="text-headline text-foreground">
+                    Incomplete{' '}
+                    <span className="num font-normal text-[var(--text-muted)]">{pending.length}</span>
                   </h2>
                   <button
                     onClick={onOpenHabits}
-                    className="text-[11px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+                    className="-mr-3 flex min-h-11 items-center gap-1 rounded-full px-3 text-label text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-2)] hover:text-foreground"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="size-4" aria-hidden="true" />
                     <span>Manage</span>
                   </button>
                 </div>
@@ -519,24 +463,19 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3.5 text-xs font-mono text-emerald-300">
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                  <p className="flex items-center gap-2.5 rounded-[var(--radius-card)] bg-emerald-500/10 px-4 py-3.5 text-label font-normal text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="size-4 shrink-0 text-emerald-500" aria-hidden="true" />
                     <span>All rituals completed for {isTodaySelected ? 'today' : formatFriendlyDate(selectedDate)}.</span>
-                  </div>
+                  </p>
                 )}
               </section>
 
               {done.length > 0 && (
-                <section aria-labelledby="done-heading" className="space-y-2 pt-1">
-                  <div className="flex items-center gap-1.5 px-0.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500" />
-                    <h2
-                      id="done-heading"
-                      className="text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500"
-                    >
-                      Completed ({done.length})
-                    </h2>
-                  </div>
+                <section aria-labelledby="done-heading" className="space-y-2">
+                  <h2 id="done-heading" className="flex min-h-11 items-center text-headline text-[var(--text-secondary)]">
+                    Completed&nbsp;
+                    <span className="num font-normal text-[var(--text-muted)]">{done.length}</span>
+                  </h2>
                   <div className="space-y-2">
                     {done.map((habit) => (
                       <HabitCard
@@ -552,11 +491,11 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-black/[0.08] dark:border-zinc-800 bg-white dark:bg-[#0e1013] px-5 py-7 shadow-xs">
-              <h2 className="text-sm font-semibold">Start with one habit.</h2>
-              <p className="mt-1 text-xs text-zinc-400">Add something you want to do today.</p>
+            <div className="surface px-5 py-7">
+              <h2 className="text-headline">Start with one habit.</h2>
+              <p className="mt-1 text-body text-[var(--text-secondary)]">Add something you want to do today.</p>
               <button onClick={onOpenHabits} className="control control-primary mt-5">
-                <Plus size={15} /> Add a habit
+                <Plus size={16} /> Add a habit
               </button>
             </div>
           )}
