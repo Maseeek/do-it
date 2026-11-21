@@ -98,20 +98,20 @@ button:disabled { cursor: not-allowed; }
 .settings-panel {
   border: 1px solid var(--border-subtle);
   background: var(--surface-1);
-  border-radius: 1rem;
-  padding: 1.25rem;
+  border-radius: var(--radius-card, 1.125rem);
+  padding: var(--card-pad, 1rem);
 }
-.settings-panel h2 { font-size: .875rem; font-weight: 600; margin-bottom: .35rem; }
-.settings-panel p { font-size: .75rem; line-height: 1.7; color: var(--text-secondary); }
+.settings-panel h2 { font-size: 1.0625rem; line-height: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: .25rem; }
+.settings-panel p { font-size: .875rem; line-height: 1.35rem; color: var(--text-secondary); }
 
 .control {
-  min-height: 38px;
-  padding: .55rem .85rem;
+  min-height: 44px;
+  padding: .625rem 1rem;
   border: 1px solid var(--border-medium);
   background: var(--surface-1);
   color: var(--foreground);
-  border-radius: .5rem;
-  font-size: .75rem;
+  border-radius: var(--radius-control, .75rem);
+  font-size: .875rem;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -145,13 +145,13 @@ button:disabled { cursor: not-allowed; }
 .field {
   display: block;
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--border-medium);
   background: var(--surface-2);
   color: var(--foreground);
-  padding: .6rem .8rem;
-  font-size: .8rem;
-  border-radius: .5rem;
+  padding: .625rem .875rem;
+  font-size: 1rem; /* 16px stops iOS zooming on focus */
+  border-radius: var(--radius-control, .75rem);
 }
 
 @theme inline {
@@ -160,6 +160,49 @@ button:disabled { cursor: not-allowed; }
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+/* ============================================================
+   TYPE & SPACING FOUNDATION
+   One sans family for words; mono only for numbers that line up.
+   Scale (px): 12 caption · 13 label · 15 body · 17 headline · 20 title · 28 title-lg · 34 display
+   Rhythm: 4px grid. Inside a card 16px; between cards 12px; between sections 32px.
+   ============================================================ */
+:root {
+  --page-gutter: 1rem;
+  --card-pad: 1rem;
+  --card-gap: 0.75rem;
+  --section-gap: 2rem;
+  --radius-card: 1.125rem;
+  --radius-control: 0.75rem;
+}
+@media (min-width: 1024px) {
+  :root { --page-gutter: 2.5rem; --card-pad: 1.25rem; --section-gap: 2.5rem; }
+}
+
+@utility text-display { font-size: 2.125rem; line-height: 2.5rem; font-weight: 700; letter-spacing: -0.03em; }
+@utility text-title-lg { font-size: 1.75rem; line-height: 2.125rem; font-weight: 700; letter-spacing: -0.025em; }
+@utility text-title { font-size: 1.25rem; line-height: 1.625rem; font-weight: 650; letter-spacing: -0.015em; }
+@utility text-headline { font-size: 1.0625rem; line-height: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+@utility text-body { font-size: 0.9375rem; line-height: 1.375rem; font-weight: 400; }
+@utility text-label { font-size: 0.8125rem; line-height: 1.125rem; font-weight: 500; }
+@utility text-caption { font-size: 0.75rem; line-height: 1rem; font-weight: 400; }
+/* Section/eyebrow label: sans, gentle tracking. Replaces uppercase mono eyebrows. */
+@utility text-eyebrow { font-size: 0.75rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+/* Numbers that should line up (scores, points, counts). */
+@utility num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+@utility text-secondary { color: var(--text-secondary); }
+@utility text-muted { color: var(--text-muted); }
+
+/* Standard card surface: one border, one radius, one padding. Avoid nesting cards in cards. */
+@utility surface {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+@utility surface-pad { padding: var(--card-pad); }
+@utility stack-section { display: flex; flex-direction: column; gap: var(--section-gap); }
+@utility stack-cards { display: flex; flex-direction: column; gap: var(--card-gap); }
 
 body {
   background: var(--background);
