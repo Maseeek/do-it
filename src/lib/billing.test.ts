@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import Stripe from 'stripe';
-import { BillingError, checkoutInputSchema, emptyBillingState, requireFreshAttempt, subscriptionEntitled } from './billing-model';
+import { BillingError, checkoutInputSchema, emptyBillingState, parseBillingConfig, requireFreshAttempt, resolveBillingSurface, subscriptionEntitled } from './billing-model';
 import { openPortal, reconcileBilling, startCheckout, type BillingContext, type BillingGateway } from './billing-service';
 import { billingEventCustomer, verifyBillingEvent } from './billing-webhook';
 
@@ -118,6 +118,34 @@ describe('Duel billing security and recovery', () => {
   it('grants subscription entitlement only for active or trialing; cancellation at period end stays active', () => {
     assert.equal(subscriptionEntitled('active'), true);
     for (const status of ['past_due', 'unpaid', 'canceled', 'incomplete', 'paused']) assert.equal(subscriptionEntitled(status), false);
+  });
+  it('trims env config values and rejects invalid URLs, keys, or non-HTTPS live origins cleanly', () => {
+    const base = {
+      STRIPE_SECRET_KEY: ' sk_test_abc123 \n',
+      STRIPE_WEBHOOK_SECRET: ' whsec_test_123 \n',
+      STRIPE_ACCOUNT_ID: ' acct_123 \n',
+      NEXT_PUBLIC_SUPABASE_URL: ' https://example.supabase.co ',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ' anon_key ',
+      SUPABASE_SERVICE_ROLE_KEY: ' service_key ',
+      NEXT_PUBLIC_APP_URL: ' http://localhost:3000/welcome \n',
+    };
+    const parsed = parseBillingConfig(base);
+    assert.equal(parsed.secret, 'sk_test_abc123');
+    assert.equal(parsed.accountId, 'acct_123');
+    assert.equal(parsed.origin, 'http://localhost:3000');
+    assert.equal(parsed.livemode, false);
+    assert.throws(() => parseBillingConfig({ ...base, NEXT_PUBLIC_APP_URL: 'not-a-url' }), (e: unknown) => e instanceof BillingError && e.status === 503);
+    assert.throws(() => parseBillingConfig({ ...base, STRIPE_SECRET_KEY: 'pk_test_wrong' }), (e: unknown) => e instanceof BillingError && e.status === 503);
+    assert.throws(() => parseBillingConfig({ ...base, STRIPE_SECRET_KEY: 'sk_live_abc123' }), (e: unknown) => e instanceof BillingError && /HTTPS/.test(e.message));
+  });
+  it('routes signed-in Duel owners returning from Checkout success to Duel billing instead of anonymous pending', () => {
+    assert.equal(resolveBillingSurface({ hasDuel: true, purchaseStatus: 'none', result: 'success' }), 'duel');
+    assert.equal(resolveBillingSurface({ hasDuel: true, purchaseStatus: null, result: 'success' }), 'duel');
+    assert.equal(resolveBillingSurface({ hasDuel: true, purchaseStatus: 'paid', result: 'success' }), 'paid');
+    assert.equal(resolveBillingSurface({ hasDuel: true, purchaseStatus: 'pending', result: 'success' }), 'pending');
+    assert.equal(resolveBillingSurface({ hasDuel: false, purchaseStatus: 'none', result: 'success' }), 'pending');
+    assert.equal(resolveBillingSurface({ hasDuel: false, purchaseStatus: 'claimed', result: 'success' }), 'offer');
+    assert.equal(resolveBillingSurface({ hasDuel: false, purchaseStatus: 'open', result: 'canceled' }), 'offer');
   });
 });
 

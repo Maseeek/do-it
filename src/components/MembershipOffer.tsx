@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, LockKeyhole } from 'lucide-react';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { billingRequest, openStripeCheckout, purchaseViewSchema } from '@/lib/billing-client';
+import { billingPlansSchema } from '@/lib/billing-model';
 
 const included = [
   ['Two players, one membership', 'Your partner joins at no extra cost.'],
@@ -18,7 +19,26 @@ export function MembershipOffer() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offerPrice, setOfferPrice] = useState<{ amount: string; currency: string; testMode: boolean } | null>(null);
   const guest = !!user && !!duel && duel.owner_id !== user.id;
+
+  useEffect(() => {
+    let active = true;
+    void billingRequest('plans')
+      .then(json => {
+        if (!active) return;
+        const parsed = billingPlansSchema.parse(json);
+        const monthly = parsed.plans.find(p => p.plan === 'monthly');
+        if (monthly?.amount && monthly.currency) {
+          setOfferPrice({ amount: monthly.amount, currency: monthly.currency, testMode: parsed.testMode });
+        }
+      })
+      .catch(() => { /* Keep fallback display until the user initiates Checkout. */ });
+    return () => { active = false; };
+  }, []);
+
+  const displayAmount = offerPrice?.amount ?? '$15';
+  const displayCurrency = offerPrice?.currency ?? 'USD';
 
   async function startMembership() {
     setBusy(true);
@@ -50,9 +70,10 @@ export function MembershipOffer() {
       </div>
       <h2 id="membership-title" className="mt-6 text-2xl font-semibold tracking-tight text-[#19231e] dark:text-[#f4f7f4]">One commitment. Both of you.</h2>
       <div className="mt-7 flex items-baseline gap-2">
-        <span className="text-[64px] font-semibold leading-none tracking-[-0.06em] text-[#19231e] dark:text-[#f4f7f4]">$15</span>
-        <span className="text-sm text-[#657067] dark:text-[#95a498]">USD / month</span>
+        <span className="text-[64px] font-semibold leading-none tracking-[-0.06em] text-[#19231e] dark:text-[#f4f7f4]">{displayAmount}</span>
+        <span className="text-sm text-[#657067] dark:text-[#95a498]">{displayCurrency} / month</span>
       </div>
+      {offerPrice?.testMode && <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">Sandbox billing. No real money is charged.</p>}
       <p className="mt-3 text-sm text-[#657067] dark:text-[#95a498]">One monthly subscription covers both players.</p>
       <div className="my-8 h-px bg-[#e7eae4] dark:bg-[#263129]" />
       <ul className="space-y-5">
@@ -72,7 +93,7 @@ export function MembershipOffer() {
       </div>
       <div className="mt-7 border-t border-[#e7eae4] dark:border-[#263129] pt-5 text-center">
         <p className="text-xs leading-relaxed text-[#657067] dark:text-[#95a498]">Pay first. Then set up your account and invite your person.</p>
-        <p className="mt-2 text-[11px] text-[#849087] dark:text-[#7d8f80]">$15 charged today. No free trial.</p>
+        <p className="mt-2 text-[11px] text-[#849087] dark:text-[#7d8f80]">{displayAmount} charged today. No free trial.</p>
       </div>
     </section>
   );

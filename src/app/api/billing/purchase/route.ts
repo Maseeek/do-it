@@ -1,16 +1,14 @@
 import { BillingError, checkoutInputSchema } from '@/lib/billing-model';
-import { purchaseView, startPurchase } from '@/lib/billing-purchase';
-import { purchaseBrowser, requirePurchaseOrigin, withPurchaseLease } from '@/lib/billing-purchase-server';
-import { billingConfig, billingResponseError, billingStripe, configuredPlans, verifyBillingAccount } from '@/lib/billing-server';
+import { startPurchase } from '@/lib/billing-purchase';
+import { purchaseBrowser, readPurchaseView, requirePurchaseOrigin, withPurchaseLease } from '@/lib/billing-purchase-server';
+import { billingConfig, billingResponseError, billingStripe, configuredPlans } from '@/lib/billing-server';
 export const runtime = 'nodejs';
 
 export async function GET() {
   try {
     const config = billingConfig();
-    const stripe = billingStripe(config);
-    await verifyBillingAccount(stripe, config);
     const hash = await purchaseBrowser(config, true);
-    const view = await withPurchaseLease(config, stripe, hash, purchaseView);
+    const view = await readPurchaseView(config, billingStripe(config), hash);
     return Response.json(view, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return billingResponseError(error); }
 }
