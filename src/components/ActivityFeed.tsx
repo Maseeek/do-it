@@ -12,7 +12,6 @@ import { ProofGalleryModal } from './ProofGalleryModal';
 import { Camera, ChevronDown, Heart, MessageSquare, Search, Send, Sparkles, X } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticSuccess, hapticLight } from '@/lib/haptic-utils';
-import { fireCelebrationConfetti } from '@/lib/confetti';
 import { buildTimelineItems, filterTimelineItems } from '@/lib/activity-timeline';
 
 export function ActivityFeed() {
@@ -56,7 +55,6 @@ export function ActivityFeed() {
     if (!partnerId) return;
     soundEngine.playCheck();
     hapticSuccess();
-    fireCelebrationConfetti();
     addReaction({
       toPlayerId: partnerId,
       emoji,

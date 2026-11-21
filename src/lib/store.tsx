@@ -35,9 +35,8 @@ import {
   rebalanceWeeklyHabitCheckIns,
   rebalanceAllWeeklyCheckIns,
 } from './weekly-utils';
-import { fireCelebrationConfetti } from './confetti';
 import { soundEngine } from './sound-utils';
-import { hapticCelebration, hapticLight, hapticMedium, hapticSuccess } from './haptic-utils';
+import { hapticLight, hapticMedium, hapticSuccess } from './haptic-utils';
 import { getSupabaseClient } from './supabase';
 import { useMultiplayer } from './multiplayer';
 import { loadDuelData, syncDuelData, loadDuelProof, saveDuelCheckIns, saveDuelHabit, deleteDuelHabit, saveDuelCheckIn, deleteDuelCheckIn, saveDuelStake, deleteDuelStake, saveDuelReaction, saveDuelRestDay, deleteDuelRestDay } from './duel-sync';
@@ -849,15 +848,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       completedAt: targetDate === todayStr ? new Date().toISOString() : `${targetDate}T20:00:00.000Z`,
     };
   
-    // Sound & feedback
-    if (pointsToAward >= 40) {
-      soundEngine.playFanfare();
-      fireCelebrationConfetti();
-      hapticCelebration();
-    } else {
-      soundEngine.playCheck();
-      hapticSuccess();
-    }
+    // Sound & feedback: every check-in gets the same quiet confirmation; reaching par is celebrated on Today.
+    soundEngine.playCheck();
+    hapticSuccess();
   
     let nextCheckIns = [...state.checkIns, newCheckIn];
     const syncedCheckIns: CheckIn[] = [];
@@ -1242,7 +1235,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (data.checkInsCreated && data.checkInsCreated.length > 0) {
           soundEngine.playFanfare();
           hapticMedium();
-          fireCelebrationConfetti();
           return {
             success: true,
             message: `Synced! Completed ${data.checkInsCreated.length} habit(s) from Google Health.`,

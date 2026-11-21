@@ -18,7 +18,6 @@ import { useMultiplayer } from '@/lib/multiplayer';
 import { formatFriendlyDate, getTodayDateString, parseDate } from '@/lib/date-utils';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticCelebration, hapticLight } from '@/lib/haptic-utils';
-import { fireCelebrationConfetti } from '@/lib/confetti';
 import { HabitCard } from './HabitCard';
 import { DateNavigator } from './DateNavigator';
 import { createDeferredView } from './DeferredView';
@@ -198,7 +197,6 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
       ((points >= par && previous.current.points < par) || (allDone && !previous.current.allDone))
     ) {
       soundEngine.playFanfare();
-      fireCelebrationConfetti();
       hapticCelebration();
     }
     previous.current = { context, points, allDone };

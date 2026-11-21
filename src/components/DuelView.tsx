@@ -28,7 +28,6 @@ import {
 import { ProofGalleryModal } from './ProofGalleryModal';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess, hapticCelebration } from '@/lib/haptic-utils';
-import { fireCelebrationConfetti } from '@/lib/confetti';
 import { shareScorecardImage } from '@/lib/scorecard-image';
 import { useMultiplayer } from '@/lib/multiplayer';
 
@@ -200,7 +199,6 @@ export function DuelView() {
   const handleResolveStake = (winner: PlayerId | 'tie') => {
     if (!activeStake) return;
     soundEngine.playFanfare();
-    fireCelebrationConfetti();
     hapticCelebration();
     updateStake({
       ...activeStake,
