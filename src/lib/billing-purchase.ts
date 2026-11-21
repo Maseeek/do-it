@@ -36,18 +36,18 @@ export function receiptPaid(receipt: PurchaseReceipt) {
 }
 const stripeCustomerSchema = z.union([z.string(), z.object({ id: z.string(), deleted: z.boolean().optional() })]);
 const stripePurchaseSchema = z.object({
-  id: z.string(), mode: z.string().nullable(), status: z.string().nullable(), url: z.string().nullable(),
-  livemode: z.boolean(), payment_status: z.string(), client_reference_id: z.string().nullable(),
+  id: z.string(), mode: z.string().nullish(), status: z.string().nullish(), url: z.string().nullish(),
+  livemode: z.boolean(), payment_status: z.string(), client_reference_id: z.string().nullish(),
   metadata: z.object({ app: z.string(), purchase_id: z.string(), attempt_id: z.string() }),
-  customer: stripeCustomerSchema.nullable(), customer_details: z.object({ email: z.string().nullable() }).nullable(),
+  customer: stripeCustomerSchema.nullish(), customer_details: z.object({ email: z.string().nullish() }).nullish(),
   subscription: z.union([z.string(), z.object({
     id: z.string(), status: z.string(), livemode: z.boolean(), customer: stripeCustomerSchema,
     metadata: z.object({ app: z.string(), purchase_id: z.string() }),
-    trial_start: z.number().nullable(), cancel_at_period_end: z.boolean(),
-    items: z.object({ data: z.array(z.object({ price: z.object({ id: z.string() }), quantity: z.number().nullable().optional(), current_period_end: z.number().optional() })) }),
-  })]).nullable(),
+    trial_start: z.number().nullish(), cancel_at_period_end: z.boolean(),
+    items: z.object({ data: z.array(z.object({ price: z.object({ id: z.string() }), quantity: z.number().nullish(), current_period_end: z.number().nullish() })) }),
+  })]).nullish(),
 });
-function customerId(customer: z.infer<typeof stripeCustomerSchema> | null) {
+function customerId(customer: z.infer<typeof stripeCustomerSchema> | null | undefined) {
   if (!customer) return null;
   if (typeof customer === 'string') return customer;
   return customer.deleted ? null : customer.id;
@@ -70,13 +70,13 @@ export function parsePurchaseReceipt(raw: unknown, state: PurchaseState, livemod
     const item = sub.items.data[0];
     if (sub.livemode !== livemode || customerId(sub.customer) !== customer ||
         sub.metadata.app !== 'do-it' || sub.metadata.purchase_id !== state.id || sub.items.data.length !== 1 ||
-        item?.price.id !== state.attempt?.priceId || item.quantity !== 1 || sub.trial_start !== null) {
+        item?.price.id !== state.attempt?.priceId || item.quantity !== 1 || sub.trial_start != null) {
       throw new BillingError('The subscription does not match this membership attempt.', 403);
     }
     subscription = { id: sub.id, status: sub.status, priceId: item.price.id, periodEnd: item.current_period_end ?? null, cancelAtPeriodEnd: sub.cancel_at_period_end };
   }
   return {
-    id: session.id, status: session.status, url: session.url, paid: session.payment_status === 'paid',
+    id: session.id, status: session.status ?? null, url: session.url ?? null, paid: session.payment_status === 'paid',
     customerId: customer, email: session.customer_details?.email ?? null, subscription,
   };
 }

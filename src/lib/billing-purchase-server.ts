@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 import { z } from 'zod';
 import { BillingError, emptyBillingState, requireBillingOwner } from './billing-model';
 import { billingDatabase, billingMember, verifyBillingAccount, withBillingLease, type BillingConfig } from './billing-server';
-import { emptyPurchaseState, parsePurchaseReceipt, purchaseStateSchema, purchaseToken, purchaseTokenHash, requirePurchaseIdentity, type PurchaseContext, type PurchaseReceipt } from './billing-purchase';
+import { emptyPurchaseState, parsePurchaseReceipt, purchaseStateSchema, purchaseToken, purchaseTokenHash, purchaseView, requirePurchaseIdentity, type PurchaseContext, type PurchaseReceipt, type PurchaseView } from './billing-purchase';
 
 const COOKIE = 'do_it_purchase';
 export async function purchaseBrowser(config: BillingConfig, create = false) {
@@ -69,6 +69,16 @@ export async function withPurchaseLease<T>(config: BillingConfig, stripe: Stripe
   }
 }
 
+export async function readPurchaseView(config: BillingConfig, stripe: Stripe, hash: string): Promise<PurchaseView> {
+  // Avoid inserting empty rows or calling Stripe when a browser has never started checkout.
+  const existing = await billingDatabase(config).from('billing_purchases').select('token_hash')
+    .eq('token_hash', hash).eq('livemode', config.livemode).maybeSingle();
+  if (existing.error) throw new Error('Membership lookup failed.');
+  if (!existing.data) return { status: 'none', url: null };
+  await verifyBillingAccount(stripe, config);
+  return withPurchaseLease(config, stripe, hash, purchaseView);
+}
+
 export async function claimPurchase(request: Request, config: BillingConfig, stripe: Stripe, hash: string) {
   const { user, duel } = await billingMember(request, config);
   requireBillingOwner(user.id, duel.owner_id);
@@ -118,7 +128,8 @@ export async function reconcilePurchaseEvent(event: Stripe.Event, stripe: Stripe
   await verifyBillingAccount(stripe, config);
   await withPurchaseLease(config, stripe, hash, async ctx => {
     if (ctx.state.claimed || ctx.state.attempt?.id !== object.metadata.attempt_id) return;
-    if (ctx.state.attempt.sessionId && ctx.state.attempt.sessionId !== object.id) throw new Error('Membership session binding changed.');
+    if (ctx.state.attempt.sessionId === object.id) return;
+    if (ctx.state.attempt.sessionId) throw new Error('Membership session binding changed.');
     // Retrieve canonical Stripe data before binding a lost create response.
     await canonicalReceipt(stripe, config, ctx, object.id);
     await ctx.save({ ...ctx.state, attempt: { ...ctx.state.attempt, sessionId: object.id } });
