@@ -97,6 +97,9 @@ describe('payment before signup', () => {
       customer: 'cus_membership', customer_details: { email: 'buyer@example.com' }, subscription: sub,
     };
     assert.deepEqual(parsePurchaseReceipt(session, state, false), paid);
+    assert.deepEqual(parsePurchaseReceipt({ ...session, url: undefined, customer_details: undefined, subscription: { ...sub, trial_start: undefined, items: { data: [{ price: { id: 'price_monthly' }, quantity: 1 }] } } }, state, false), {
+      ...paid, email: null, subscription: { ...paid.subscription!, periodEnd: null },
+    });
     for (const tampered of [
       { ...session, id: 'cs_different' }, { ...session, livemode: true }, { ...session, mode: 'payment' },
       { ...session, metadata: { ...session.metadata, app: 'other-product' } },

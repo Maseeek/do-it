@@ -6,6 +6,7 @@ import { getSupabaseClient } from '@/lib/supabase';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { extractInviteCode, isValidInviteCode } from '@/lib/invite-navigation';
 import { useModalFocus } from '@/lib/use-modal-focus';
+import { getSignupRecommendationCode, RECOMMENDATION_STORAGE_KEY } from '@/lib/recommendation';
 import { DoLogo } from './DoLogo';
 
 export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: string | null; onDismissInvite?: () => void }) {
@@ -73,16 +74,22 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
       if (!client) throw new Error('Supabase is not configured');
       if (mode === 'signup') {
         const validInvite = isValidInviteCode(effectiveInviteCode) ? effectiveInviteCode.trim() : undefined;
+        let savedRecommendation: string | null = null;
+        try { savedRecommendation = sessionStorage.getItem(RECOMMENDATION_STORAGE_KEY); } catch { /* Signup does not require browser storage. */ }
+        const recommendationCode = getSignupRecommendationCode(new URLSearchParams(window.location.search), savedRecommendation);
         const membershipSetup = new URL(window.location.href).searchParams.get('membership') === 'setup';
         const { data, error: authError } = await client.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: validInvite || membershipSetup ? window.location.href : window.location.origin,
-            data: { display_name: name.trim(), ...(validInvite ? { invite_code: validInvite } : {}) },
+            data: { display_name: name.trim(), ...(validInvite ? { invite_code: validInvite } : {}), ...(recommendationCode ? { recommendation_code: recommendationCode } : {}) },
           },
         });
         if (authError) throw authError;
+        if (data.user?.identities?.length) {
+          try { sessionStorage.removeItem(RECOMMENDATION_STORAGE_KEY); } catch { /* No persisted referral to clear. */ }
+        }
         if (!data.session) setMessage('Check your email to confirm your account, then sign in.');
       } else {
         const { error: authError } = await client.auth.signInWithPassword({ email, password });

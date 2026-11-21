@@ -3,27 +3,13 @@ import { randomUUID } from 'node:crypto';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { BillingError, billingStateSchema, emptyBillingState, subscriptionEntitled, type BillingPlan } from './billing-model';
+import { BillingError, billingStateSchema, emptyBillingState, parseBillingConfig, subscriptionEntitled, type BillingConfig, type BillingPlan } from './billing-model';
 import { reconcileBilling, type BillingContext, type BillingGateway } from './billing-service';
 
-export function billingConfig() {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  const signingSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  const accountId = process.env.STRIPE_ACCOUNT_ID;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!secret || !signingSecret || !accountId || !url || !anon || !service || !appUrl) {
-    throw new BillingError('Membership payments are not available yet. Please try again later.', 503);
-  }
-  const origin = new URL(appUrl).origin;
-  const livemode = /^(sk|rk)_live_/.test(secret);
-  if (!/^(sk|rk)_(live|test)_/.test(secret)) throw new BillingError('Billing key is invalid.', 503);
-  if (livemode && !origin.startsWith('https://')) throw new BillingError('Live billing requires HTTPS.', 503);
-  return { secret, signingSecret, accountId, url, anon, service, origin, livemode };
+export function billingConfig(): BillingConfig {
+  return parseBillingConfig(process.env);
 }
-export type BillingConfig = ReturnType<typeof billingConfig>;
+export type { BillingConfig };
 export function billingStripe(config: BillingConfig) {
   return new Stripe(config.secret, { timeout: 20000, maxNetworkRetries: 1 });
 }
@@ -51,10 +37,10 @@ export async function billingMember(request: Request, config: BillingConfig) {
 }
 
 export async function configuredPlans(stripe: Stripe, config: BillingConfig) {
-  if (config.livemode && process.env.BILLING_LIVE_ENABLED !== 'true') throw new BillingError('Live billing has not been activated.', 503);
+  if (config.livemode && process.env.BILLING_LIVE_ENABLED?.trim() !== 'true') throw new BillingError('Live billing has not been activated.', 503);
   await verifyBillingAccount(stripe, config);
   const ids: [BillingPlan, string | undefined][] = [
-    ['monthly', process.env.STRIPE_PRICE_MONTHLY], ['annual', process.env.STRIPE_PRICE_ANNUAL],
+    ['monthly', process.env.STRIPE_PRICE_MONTHLY?.trim()], ['annual', process.env.STRIPE_PRICE_ANNUAL?.trim()],
   ];
   const plans = await Promise.all(ids.filter((entry): entry is [BillingPlan, string] => !!entry[1]).map(async ([plan, id]) => {
     const price = await stripe.prices.retrieve(id, { expand: ['product'] });
@@ -66,8 +52,13 @@ export async function configuredPlans(stripe: Stripe, config: BillingConfig) {
         typeof product === 'string' || product.deleted || !product.active || product.metadata.app !== 'do-it') {
       throw new BillingError('The configured price is not a Do It subscription.', 503);
     }
-    const amount = new Intl.NumberFormat('en-US', { style: 'currency', currency: price.currency }).format(price.unit_amount / 100);
-    return { plan, id, label: `${amount}/${plan === 'monthly' ? 'month' : 'year'} for both players` };
+    const amount = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: price.currency,
+      ...(price.unit_amount % 100 === 0 ? { maximumFractionDigits: 0 } : {}),
+    }).format(price.unit_amount / 100);
+    const currency = price.currency.toUpperCase();
+    return { plan, id, amount, currency, label: `${amount}/${plan === 'monthly' ? 'month' : 'year'} for both players` };
   }));
   if (!plans.length) throw new BillingError('Subscription pricing is not available yet.', 503);
   return plans;
@@ -105,9 +96,10 @@ export function stripeGateway(stripe: Stripe, config: BillingConfig): BillingGat
       return { id: s.id, status: s.status, url: s.url, subscriptionId: typeof s.subscription === 'string' ? s.subscription : s.subscription?.id ?? null };
     },
     async createPortal(customer) {
+      const configuration = process.env.STRIPE_PORTAL_CONFIGURATION?.trim();
       const session = await stripe.billingPortal.sessions.create({
         customer, return_url: `${config.origin}/billing`,
-        ...(process.env.STRIPE_PORTAL_CONFIGURATION ? { configuration: process.env.STRIPE_PORTAL_CONFIGURATION } : {}),
+        ...(configuration ? { configuration } : {}),
       });
       return session.url;
     },

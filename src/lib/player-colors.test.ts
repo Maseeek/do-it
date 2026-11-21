@@ -32,17 +32,17 @@ describe('Domain: Recommendation-gated Gold player color', () => {
     assert.equal(isPlayerColorUnlocked('gold', 50000, 0), false);
   });
 
-  it('unlocks Gold when the user has invited at least one person', () => {
+  it('unlocks Gold after a unique new account confirms its referral', () => {
     assert.equal(isPlayerColorUnlocked('gold', 0, 1), true);
     assert.equal(isPlayerColorUnlocked('gold', 150, 3), true);
   });
 
-  it('keeps Gold locked for an invited person until they recommend the app to someone else', () => {
+  it('keeps Gold locked for an invited person until their own referral completes', () => {
     // Person B received an invite (their own inviteCount is 0)
     const invitedPersonInviteCount = 0;
     assert.equal(isPlayerColorUnlocked('gold', 0, invitedPersonInviteCount), false);
 
-    // Person B now recommends the app to another person (their inviteCount becomes 1)
+    // A unique new account completes Person B’s referral (inviteCount becomes 1)
     const afterRecommendingInviteCount = 1;
     assert.equal(isPlayerColorUnlocked('gold', 0, afterRecommendingInviteCount), true);
   });

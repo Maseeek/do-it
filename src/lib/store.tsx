@@ -21,6 +21,7 @@ import {
   PLAYER_COLORS,
 } from './types';
 import { isPlayerColorUnlocked } from './player-colors';
+import { getDuelPlayers } from './duel-profile';
 import { getInitialState } from './seed';
 import { getHealthProgressDetails } from './health-correlation';
 import { reconcileSleepTelemetry } from './health-rewards';
@@ -107,7 +108,6 @@ interface StoreContextType {
   switchProfile: () => void;
   updateLocalPlayerName: (name: string) => void;
   updatePlayerColor: (colorId: PlayerColorId) => Promise<void>;
-  recordInvite: (playerId?: PlayerId) => Promise<void>;
   toggleHabit: (
     habitId: string,
     proofUrl?: string | string[],
@@ -168,10 +168,6 @@ const StoreContext = createContext<StoreContextType | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const multiplayer = useMultiplayer();
   const duelId = multiplayer.duel?.id || null;
-  const duelOwnerName = multiplayer.duel?.owner_name || '';
-  const duelGuestName = multiplayer.duel?.guest_name || '';
-  const duelOwnerColor = multiplayer.duel?.owner_color || 'blue';
-  const duelGuestColor = multiplayer.duel?.guest_color || 'purple';
   const [state, setState] = useState<AppState>(getInitialState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [loadedDuelId, setLoadedDuelId] = useState<string | null>(null);
@@ -477,7 +473,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setState(prev => ({
         ...(sameDuel ? prev : getInitialState()),
         activePlayerId: playerSlot,
-        players: prev.players,
+        players: sameDuel ? prev.players : getInitialState().players,
         habits: paired ? data.habits : data.habits.filter(h => h.playerId === playerSlot),
         checkIns: paired ? data.checkIns : data.checkIns.filter(c => c.playerId === playerSlot),
         stakes: data.stakes,
@@ -542,18 +538,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isHydrated, multiplayer.configured, duelId, playerSlot, accountId, paired, multiplayer.user?.email]);
 
-  // Profile changes update Player presentation independently of history synchronization.
-  useEffect(() => {
-    if (!multiplayer.configured || !duelId) return;
-    const initial = getInitialState();
-    const owner = PLAYER_COLORS.find(color => color.id === duelOwnerColor) || PLAYER_COLORS[0];
-    const guest = PLAYER_COLORS.find(color => color.id === duelGuestColor) || PLAYER_COLORS[1];
-    setState(prev => ({ ...prev, players: {
-      maciek: { ...initial.players.maciek, name: duelOwnerName || initial.players.maciek.name, color: owner.color, accentBg: owner.accentBg, accentBorder: owner.accentBorder, inviteCount: multiplayer.duel?.owner_invites ?? 0 },
-      myrna: { ...initial.players.myrna, name: paired ? (duelGuestName || 'Invited player') : 'Waiting for opponent', color: guest.color, accentBg: guest.accentBg, accentBorder: guest.accentBorder, inviteCount: multiplayer.duel?.guest_invites ?? 0 },
-    } }));
-  }, [multiplayer.configured, duelId, duelOwnerName, duelGuestName, duelOwnerColor, duelGuestColor, paired, multiplayer.duel?.owner_invites, multiplayer.duel?.guest_invites]);
-
   const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
     const client = getSupabaseClient();
     if (!multiplayer.configured || !client || !duelId) return;
@@ -601,7 +585,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     soundEngine.playClick();
   } });
 
-  const activePlayer = state.activePlayerId ? state.players[state.activePlayerId] : null;
+  const players = useMemo(() => multiplayer.configured && multiplayer.duel
+    ? getDuelPlayers(state.players, multiplayer.duel) : state.players,
+  [state.players, multiplayer.configured, multiplayer.duel]);
+  const activePlayer = state.activePlayerId ? players[state.activePlayerId] : null;
 
   const activeHabits = useMemo(
     () => state.activePlayerId
@@ -1021,39 +1008,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (trimmed.length < 1 || trimmed.length > 40) throw new Error('Name must be 1 to 40 characters.');
   const id = state.activePlayerId;
   setState(prev => ({ ...prev, players: { ...prev.players, [id]: { ...prev.players[id], name: trimmed } } })); });
-  const recordInvite = useStableCallback(async (playerId?: PlayerId) => {
-    const targetId = playerId ?? state.activePlayerId;
-    if (!targetId) return;
-    soundEngine.playCheck();
-    hapticSuccess();
-    if (multiplayer.configured && multiplayer.duel) {
-      try {
-        await multiplayer.recordAppInvite();
-      } catch (err) {
-        console.error("Failed to record app invite remotely", err);
-      }
-    }
-    setState(prev => {
-      const current = prev.players[targetId]?.inviteCount ?? 0;
-      return {
-        ...prev,
-        players: {
-          ...prev.players,
-          [targetId]: {
-            ...prev.players[targetId],
-            inviteCount: current + 1,
-          },
-        },
-      };
-    });
-  });
-
   const updatePlayerColor = useStableCallback(async (colorId: PlayerColorId) => {
     if (!state.activePlayerId) throw new Error('Choose a profile first.');
     const color = PLAYER_COLORS.find(option => option.id === colorId);
     const karma = state.checkIns.filter(checkIn => checkIn.playerId === state.activePlayerId).reduce((sum, checkIn) => sum + checkIn.pointsEarned, 0);
-    const inviteCount = state.players[state.activePlayerId]?.inviteCount ?? 0;
+    const inviteCount = players[state.activePlayerId]?.inviteCount ?? 0;
     if (!color || !isPlayerColorUnlocked(colorId, karma, inviteCount)) throw new Error('That color is still locked.');
+    const opponentId = state.activePlayerId === 'maciek' ? 'myrna' : 'maciek';
+    if (isPartnerConnected && players[opponentId].color === color.color) throw new Error('Your opponent is already using that colour. Choose another.');
     if (multiplayer.configured) {
       if (state.activePlayerId !== multiplayer.slot) throw new Error('Choose your own profile first.');
       await multiplayer.updatePlayerColor(colorId);
@@ -1357,11 +1319,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const contextValue = useMemo<StoreContextType>(() => ({
     isHydrated, loadedDuelId, syncStatus, storageError,
     supabaseConfig: state.supabaseConfig, activePlayerId: state.activePlayerId, activePlayer,
-    players: state.players, habits: state.habits, activeHabits, checkIns: state.checkIns,
+    players, habits: state.habits, activeHabits, checkIns: state.checkIns,
     stakes: state.stakes, reactions: state.reactions || [], restDays: state.restDays || [],
     selectedDate, isTodaySelected, setSelectedDate, maciekSummary, myrnaSummary,
     activePlayerSummary, getHabitStreak, soundEnabled,
-    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, recordInvite, toggleHabit,
+    setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit,
     updateCheckInNote, isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate,
     getHabitCheckInOnDate, getCheckInForHabit, getWeeklyHabitCompletions,
     isHabitWeeklyTargetMet, isHabitSatisfiedOnDate, isPartnerConnected, partnerId,
@@ -1374,10 +1336,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     syncGoogleHealth, disconnectGoogleHealth,
     themePreference, effectiveTheme, setThemePreference, toggleTheme,
   }), [
-    isHydrated, loadedDuelId, syncStatus, storageError, state, activePlayer, activeHabits,
+    isHydrated, loadedDuelId, syncStatus, storageError, state, players, activePlayer, activeHabits,
     selectedDate, isTodaySelected, maciekSummary, myrnaSummary, activePlayerSummary,
     getHabitStreak, soundEnabled, setSoundEnabled,
-    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, recordInvite, toggleHabit, updateCheckInNote,
+    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit, updateCheckInNote,
     isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate, getHabitCheckInOnDate,
     getCheckInForHabit, getWeeklyHabitCompletions, isHabitWeeklyTargetMet, isHabitSatisfiedOnDate,
     isPartnerConnected, partnerId, partnerCleanSpaceHabit, partnerCleanSpaceCheckIn, addReaction,

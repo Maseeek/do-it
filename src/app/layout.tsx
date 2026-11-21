@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 import { MultiplayerProvider } from "@/lib/multiplayer";
+import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = localFont({
   src: './fonts/geist-latin.woff2',
@@ -105,6 +106,7 @@ export default function RootLayout({
         <MultiplayerProvider>
           <StoreProvider>{children}</StoreProvider>
         </MultiplayerProvider>
+        <Analytics />
       </body>
     </html>
   );

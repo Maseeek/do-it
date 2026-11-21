@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { PLAYER_COLORS } from '@/lib/types';
 import { getPlayerColorStyles, isPlayerColorUnlocked } from '@/lib/player-colors';
-import { getRecommendationShareData, getRecommendationUrl } from '@/lib/recommendation';
+import { getRecommendationShareData, getRecommendationUrl, isRecommendationCode } from '@/lib/recommendation';
 import { ArrowLeft, Copy, Gift, LogOut, Monitor, Moon, Palette, Share2, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
+import { getSupabaseClient } from '@/lib/supabase';
 import { HealthConnection } from './HealthConnection';
 import { BillingPanel } from './BillingPanel';
 import { soundEngine } from '@/lib/sound-utils';
@@ -23,7 +24,6 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     setSoundEnabled,
     updateLocalPlayerName,
     updatePlayerColor,
-    recordInvite,
     activePlayerSummary,
     themePreference,
     setThemePreference,
@@ -38,13 +38,29 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   const [inviteCopied, setInviteCopied] = useState(false);
   const [recommendCopied, setRecommendCopied] = useState(false);
   const [recommendShared, setRecommendShared] = useState(false);
+  const [recommendationCode, setRecommendationCode] = useState<string | null>(null);
+  const recommendationPlayerId = multiplayer.user?.id;
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client || !recommendationPlayerId) return;
+    let cancelled = false;
+    void Promise.resolve(client.rpc('get_recommendation_code')).then(({ data, error: rpcError }) => {
+      if (cancelled) return;
+      if (rpcError || !isRecommendationCode(data)) {
+        setError('Could not load your recommendation link. Reopen settings to try again.');
+        return;
+      }
+      setRecommendationCode(data);
+    }).catch(() => { if (!cancelled) setError('Could not load your recommendation link. Reopen settings to try again.'); });
+    return () => { cancelled = true; };
+  }, [recommendationPlayerId]);
 
   const inviteUrl = typeof window !== 'undefined' && multiplayer.duel
     ? `${window.location.origin}/?invite=${multiplayer.duel.invite_code}`
     : '';
 
-  const recommendUrl = typeof window !== 'undefined'
-    ? getRecommendationUrl(window.location.origin, activePlayer?.id)
+  const recommendUrl = typeof window !== 'undefined' && recommendationCode
+    ? getRecommendationUrl(window.location.origin, recommendationCode)
     : '';
 
   useEffect(() => {
@@ -94,21 +110,19 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     if (!recommendUrl || !activePlayer) return;
     soundEngine.playClick();
     hapticLight();
-    const shareData = getRecommendationShareData(window.location.origin, activePlayer.name, activePlayer.id);
+    const shareData = getRecommendationShareData(window.location.origin, activePlayer.name, recommendationCode ?? undefined);
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await navigator.share(shareData);
-        await recordInvite(activePlayer.id);
         setRecommendShared(true);
         setTimeout(() => setRecommendShared(false), 3000);
         return;
       } catch (err) {
-        if ((err as Error).name === 'AbortError') return;
+        if (err instanceof Error && err.name === 'AbortError') return;
       }
     }
     try {
       await navigator.clipboard.writeText(recommendUrl);
-      await recordInvite(activePlayer.id);
       setRecommendCopied(true);
       setTimeout(() => setRecommendCopied(false), 3000);
     } catch {
@@ -122,7 +136,6 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     hapticLight();
     try {
       await navigator.clipboard.writeText(recommendUrl);
-      await recordInvite(activePlayer.id);
       setRecommendCopied(true);
       setTimeout(() => setRecommendCopied(false), 3000);
     } catch {
@@ -137,6 +150,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   };
 
   const inviteCount = activePlayer?.inviteCount ?? 0;
+  const opponent = activePlayer && isPartnerConnected ? players[activePlayer.id === 'maciek' ? 'myrna' : 'maciek'] : null;
   const themeOptions = [
     { id: 'system', label: 'Auto', Icon: Monitor },
     { id: 'light', label: 'Light', Icon: Sun },
@@ -204,18 +218,19 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
               {PLAYER_COLORS.map(option => {
                 const unlocked = isPlayerColorUnlocked(option.id, activePlayerSummary.karma, inviteCount);
                 const selected = activePlayer.color === option.color;
+                const occupied = opponent?.color === option.color;
                 const lockLabel = 'requiredInvites' in option && typeof option.requiredInvites === 'number'
-                  ? 'Share app to unlock'
+                  ? '1 confirmed referral'
                   : `${option.unlockAt.toLocaleString()} points`;
                 return (
                   <button
                     key={option.id}
                     type="button"
-                    disabled={!unlocked || savingColor}
+                    disabled={!unlocked || savingColor || occupied || selected}
                     onClick={() => {
                       if (!unlocked) {
                         if ('requiredInvites' in option) {
-                          setColorMessage('Share or recommend the app above to unlock the Gold palette!');
+                          setColorMessage('A new friend must confirm an account through your link to unlock Gold.');
                         }
                         return;
                       }
@@ -224,19 +239,25 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
                     aria-pressed={selected}
                     className={`flex min-h-13 items-center gap-2.5 rounded-[var(--radius-control)] border px-3 text-left transition-colors ${
                       selected ? 'border-player-400 bg-player-500/10' : 'border-[var(--border-subtle)] hover:bg-[var(--surface-2)]'
-                    } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent`}
+                    } ${!selected && !occupied ? 'disabled:opacity-60' : ''} disabled:cursor-not-allowed disabled:hover:bg-transparent`}
                   >
                     <span className="size-4 shrink-0 rounded-full border border-[var(--border-medium)]" style={getPlayerColorStyles(option)} />
                     <span className="min-w-0">
                       <span className={`block text-label ${selected ? 'text-player-300' : 'text-foreground'}`}>{option.name}</span>
                       <span className="block truncate text-caption text-muted">
-                        {unlocked ? (selected ? 'Selected' : 'Unlocked') : lockLabel}
+                        {occupied ? `Used by ${opponent.name}` : unlocked ? (selected ? 'Selected' : 'Unlocked') : lockLabel}
                       </span>
                     </span>
+                    {occupied && (
+                      <span aria-label={`${opponent.name}'s colour`} className="ml-auto flex size-7 shrink-0 items-center justify-center rounded-lg border text-caption font-semibold" style={getPlayerColorStyles(opponent)}>
+                        {opponent.name[0]?.toUpperCase()}
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
+            {savingColor && <div role="status" className="text-caption text-muted">Saving colour…</div>}
             {colorMessage && <div role="status" className="text-caption text-secondary">{colorMessage}</div>}
           </div>
         </section>
@@ -249,8 +270,8 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
             <h2>Recommend do it. to friends</h2>
             <p>
               {inviteCount >= 1
-                ? `You've invited ${inviteCount} ${inviteCount === 1 ? 'person' : 'people'}. The unique Gold palette is unlocked!`
-                : 'Recommend the app to a friend to unlock the exclusive Gold colour palette! (Separate from 1v1 duel invites)'}
+                ? `${inviteCount} ${inviteCount === 1 ? 'person' : 'people'} confirmed a new account through your link. Gold is unlocked!`
+                : 'Gold unlocks when a new friend creates and confirms a unique account through your link. Sharing or opening your own link does not count.'}
             </p>
           </div>
 
@@ -261,13 +282,14 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
               </label>
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-caption font-medium text-amber-700 dark:text-amber-300 num">
                 <Gift size={13} />
-                {inviteCount} {inviteCount === 1 ? 'invite' : 'invites'} done
+                {inviteCount} confirmed {inviteCount === 1 ? 'referral' : 'referrals'}
               </span>
             </div>
             <input
               id="settings-recommend-link"
               readOnly
               value={recommendUrl}
+              placeholder={multiplayer.configured ? 'Loading your link…' : 'Sign in to earn referral rewards'}
               onFocus={event => event.currentTarget.select()}
               className="field outline-none text-secondary"
             />
@@ -275,6 +297,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
               <button
                 type="button"
                 className="control control-primary"
+                disabled={!recommendUrl}
                 onClick={handleShareRecommendation}
               >
                 <Share2 size={16} />
@@ -283,6 +306,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
               <button
                 type="button"
                 className="control"
+                disabled={!recommendUrl}
                 onClick={handleCopyRecommendation}
               >
                 <Copy size={16} />
@@ -291,7 +315,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
             </div>
             {(recommendCopied || recommendShared) && (
               <div role="status" className="text-caption text-emerald-600 dark:text-emerald-400">
-                {recommendShared ? 'Shared!' : 'Link copied!'} +1 invite registered.
+                {recommendShared ? 'Shared!' : 'Link copied!'} Credit arrives when a new friend confirms their account.
               </div>
             )}
           </div>

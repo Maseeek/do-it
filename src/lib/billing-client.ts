@@ -12,7 +12,7 @@ export async function billingRequest(path: string, body?: object) {
     headers: { ...(data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  const json: unknown = await response.json();
+  const json: unknown = await response.json().catch(() => null);
   if (!response.ok) throw new Error(errorSchema.safeParse(json).data?.error ?? 'Billing is unavailable. Please retry.');
   return json;
 }

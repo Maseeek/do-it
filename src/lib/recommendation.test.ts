@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractRecommendationReferrer, getRecommendationShareData, getRecommendationUrl } from './recommendation';
+import { extractRecommendationReferrer, getRecommendationShareData, getRecommendationUrl, getSignupRecommendationCode } from './recommendation';
 import { extractInviteCode, getMultiplayerEntry } from './invite-navigation';
 
 describe('App Recommendation & Referrals', () => {
@@ -42,5 +42,15 @@ describe('App Recommendation & Referrals', () => {
     // Recommendation links do not trigger multiplayer invite-conflict gate
     const entry = getMultiplayerEntry(true, true, true, null);
     assert.equal(entry, 'app');
+  });
+});
+
+describe('Signup recommendation attribution', () => {
+  const code = '12345678-1234-1234-1234-123456789abc';
+  it('keeps a valid account-specific code through signup and rejects old slot labels', () => {
+    assert.equal(getSignupRecommendationCode(new URLSearchParams(`ref=${code}`), null), code);
+    assert.equal(getSignupRecommendationCode(new URLSearchParams(), code), code);
+    assert.equal(getSignupRecommendationCode(new URLSearchParams('ref=maciek'), 'myrna'), null);
+    assert.equal(getSignupRecommendationCode(new URLSearchParams('ref=invalid'), null), null);
   });
 });
