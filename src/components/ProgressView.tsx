@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { Pencil, ChevronRight, Flame, TrendingUp } from 'lucide-react';
+import { Pencil, Flame, TrendingUp } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
@@ -67,12 +67,6 @@ export function ProgressView({
             </h2>
             <p className="text-caption text-muted mt-0.5">Tap a habit to filter the calendar</p>
           </div>
-          <button
-            onClick={() => setPlanner(true)}
-            className="-mr-2 flex min-h-11 shrink-0 items-center gap-0.5 rounded-xl px-2 text-label text-secondary hover:text-foreground transition-colors"
-          >
-            Manage <ChevronRight size={16} />
-          </button>
         </div>
 
         <ul className="surface overflow-hidden divide-y divide-[var(--border-subtle)]">

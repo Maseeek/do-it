@@ -456,12 +456,7 @@ export function DuelView() {
               style={{ width: `${comparison.myrnaPct}%` }}
             />
           </div>
-          <div aria-hidden="true" className="num mt-2 flex justify-between text-caption text-muted">
-            <span>{comparison.maciekPct}%</span>
-            <span>{comparison.myrnaPct}%</span>
-          </div>
-
-          <div className="mt-4">
+          <div className="mt-5">
             <SegmentedTabs
               label="Leaderboard timeframe"
               value={selectedTier}

@@ -276,7 +276,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <label htmlFor="settings-recommend-link" className="block text-label text-secondary">
                 Your recommendation link
               </label>
