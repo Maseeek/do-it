@@ -217,6 +217,7 @@ export function getCategoryBreakdown(
     'mind',
     'language',
     'finance',
+    'other',
   ];
 
   const categoryLabels: Record<HabitCategory, string> = {
@@ -231,6 +232,7 @@ export function getCategoryBreakdown(
     mind: 'Mind & Meditation',
     language: 'Language Study',
     finance: 'Finance',
+    other: 'Other',
   };
 
   return categories.map((cat) => {

@@ -36,7 +36,8 @@ export type HabitCategory =
   | 'language'
   | 'nutrition'
   | 'environment'
-  | 'finance';
+  | 'finance'
+  | 'other';
 
 export type HabitFrequency = 'daily' | 'weekly';
 export type HealthMetric = 'sleep' | 'workout' | 'cardio' | 'steps';

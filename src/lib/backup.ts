@@ -3,7 +3,7 @@ import { getInitialState } from './seed';
 import { isValidDateString } from './date-utils';
 import { rebalanceAllWeeklyCheckIns } from './weekly-utils';
 
-const categories: HabitCategory[] = ['foundation', 'physical', 'cardio', 'mind', 'intellect', 'skills', 'deep_work', 'language', 'nutrition', 'environment', 'finance'];
+const categories: HabitCategory[] = ['foundation', 'physical', 'cardio', 'mind', 'intellect', 'skills', 'deep_work', 'language', 'nutrition', 'environment', 'finance', 'other'];
 const player = (value: unknown) => value === 'maciek' || value === 'myrna';
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown) => typeof value === 'string';

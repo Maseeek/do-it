@@ -6,6 +6,7 @@ export const HABIT_SECTIONS: { title: string; categories: HabitCategory[] }[] = 
   { title: 'Studying', categories: ['skills', 'deep_work'] },
   { title: 'Self-improvement', categories: ['mind', 'environment'] },
   { title: 'Finance', categories: ['finance'] },
+  { title: 'Other', categories: ['other'] },
 ];
 
 const CATALOG: Omit<Habit, 'id' | 'playerId' | 'order' | 'isActive'>[] = [
@@ -30,6 +31,18 @@ const CATALOG: Omit<Habit, 'id' | 'playerId' | 'order' | 'isActive'>[] = [
   { title: 'Save or invest', description: 'Make a planned contribution to a financial goal', category: 'finance', points: 25, iconName: 'Briefcase', frequency: 'weekly', weeklyTargetDays: 1 },
   { title: 'Learn about money', description: 'Read or complete a personal finance lesson', category: 'finance', points: 20, iconName: 'BookOpen', frequency: 'weekly', weeklyTargetDays: 2 },
 ];
+
+/** The section a category is shown under; unknown categories fall under Other. */
+export function habitSectionTitle(category: HabitCategory): string {
+  return HABIT_SECTIONS.find(section => section.categories.includes(category))?.title ?? 'Other';
+}
+
+/** Category to store when a section is picked: keeps the current one if it already belongs there. */
+export function categoryForSection(title: string, current: HabitCategory): HabitCategory {
+  const section = HABIT_SECTIONS.find(item => item.title === title);
+  if (!section) return current;
+  return section.categories.includes(current) ? current : section.categories[0];
+}
 
 export function catalogHabits(playerId: PlayerId): Habit[] {
   return CATALOG.map((habit, index) => ({ ...habit, id: `catalog-${playerId}-${index}`, playerId, order: index + 1, isActive: false }));
