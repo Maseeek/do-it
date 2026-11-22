@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { extractInviteCode } from '@/lib/invite-navigation';
-import { LeaderboardTier, Habit, CheckIn, Player, PlayerId, StakePeriod } from '@/lib/types';
+import { LeaderboardTier, Habit, CheckIn, Player, PlayerId, Stake, StakePeriod } from '@/lib/types';
 import { getCategoryBreakdown, getStakesRecord, getWeeklyDailyDuelPoints } from '@/lib/score-calculator';
 import { getDaysRemainingInMonth, getDaysRemainingInWeek, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import {
@@ -16,18 +16,13 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Crown,
-  Pencil,
-  Plus,
   Share2,
-  Trash2,
-  Trophy,
   UserPlus,
-  X,
 } from 'lucide-react';
 import { ProofGalleryModal } from './ProofGalleryModal';
+import { WagerSection } from './WagerSection';
 import { soundEngine } from '@/lib/sound-utils';
-import { hapticLight, hapticSuccess, hapticCelebration } from '@/lib/haptic-utils';
+import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 import { shareScorecardImage } from '@/lib/scorecard-image';
 import { useMultiplayer } from '@/lib/multiplayer';
 
@@ -78,8 +73,6 @@ function SegmentedTabs<T extends string>({
 
 const ICON_BUTTON =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-secondary transition-colors hover:bg-[var(--surface-2)] hover:text-foreground';
-const MODAL_PANEL =
-  'w-full max-w-sm rounded-3xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 shadow-2xl';
 
 export function DuelView() {
   const multiplayer = useMultiplayer();
@@ -97,13 +90,6 @@ export function DuelView() {
   const [activeSubsegment, setActiveSubsegment] = useState<DuelSubsegment>('habits');
   const [selectedBattleDayDate, setSelectedBattleDayDate] = useState<string | null>(null);
   const [showInactiveCategories, setShowInactiveCategories] = useState(false);
-
-  const [isEditingStake, setIsEditingStake] = useState(false);
-  const [isCreatingStake, setIsCreatingStake] = useState(false);
-  const [isResolvingStake, setIsResolvingStake] = useState(false);
-  const [stakeTitle, setStakeTitle] = useState('');
-  const [stakeDesc, setStakeDesc] = useState('');
-  const [stakePeriod, setStakePeriod] = useState<StakePeriod>('weekly');
   const [activeProofView, setActiveProofView] = useState<{
     habit: Habit;
     checkIn: CheckIn;
@@ -133,13 +119,6 @@ export function DuelView() {
   const weekRemaining = getDaysRemainingInWeek();
   const monthRemainingDays = getDaysRemainingInMonth();
   const todayStr = getTodayDateString();
-
-  const activeStake =
-    selectedTier === 'monthly'
-      ? activeMonthlyStake
-      : selectedTier === 'weekly'
-      ? activeWeeklyStake
-      : null;
 
   const maciekHabits = habits.filter((h) => h.playerId === 'maciek' && h.isActive);
   const myrnaHabits = habits.filter((h) => h.playerId === 'myrna' && h.isActive);
@@ -196,37 +175,32 @@ export function DuelView() {
     ];
   }, [selectedTier]);
 
-  const handleResolveStake = (winner: PlayerId | 'tie') => {
-    if (!activeStake) return;
-    soundEngine.playFanfare();
-    hapticCelebration();
+  const handleResolveStake = (stakeItem: Stake, winner: PlayerId | 'tie') => {
     updateStake({
-      ...activeStake,
+      ...stakeItem,
       status: 'completed',
       winnerId: winner,
     });
-    setIsResolvingStake(false);
   };
 
-  const handleSaveNewStake = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stakeTitle.trim()) return;
-
-    soundEngine.playCheck();
-    hapticSuccess();
-    const periodKey = stakePeriod === 'weekly' ? getWeekKey(todayStr) : getMonthKey(todayStr);
+  const handleCreateStake = ({
+    period,
+    title,
+    description,
+  }: {
+    period: StakePeriod;
+    title: string;
+    description: string;
+  }) => {
+    const periodKey = period === 'weekly' ? getWeekKey(todayStr) : getMonthKey(todayStr);
     addStake({
-      period: stakePeriod,
+      period,
       periodKey,
-      title: stakeTitle.trim(),
-      description: stakeDesc.trim(),
+      title: title.trim(),
+      description: description.trim(),
       status: 'active',
       dueDate: todayStr,
     });
-
-    setStakeTitle('');
-    setStakeDesc('');
-    setIsCreatingStake(false);
   };
 
   const [shareCardStatus, setShareCardStatus] = useState<string | null>(null);
@@ -580,96 +554,26 @@ export function DuelView() {
         )}
 
         {/* Wager */}
-        {!activeStake ? (
-          <section className="surface flex items-center justify-between gap-3 py-2 pl-4 pr-2">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <Trophy aria-hidden="true" className="h-4 w-4 shrink-0 text-amber-500" />
-              <span className="truncate text-label text-secondary">
-                No wager this {selectedTier === 'monthly' ? 'month' : 'week'}
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="num hidden text-caption text-muted sm:inline">
-                Wins: {players.maciek.name} {stakesRecord.maciekWins} · {players.myrna.name} {stakesRecord.myrnaWins}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setIsCreatingStake(true);
-                }}
-                aria-label="Set new wager"
-                className="control !px-3.5"
-              >
-                <Plus aria-hidden="true" className="h-4 w-4" />
-                <span>Set wager</span>
-              </button>
-            </div>
-          </section>
-        ) : (
-          <section className="surface surface-pad">
-            <div className="flex items-center justify-between gap-3">
-              <p className="flex items-center gap-1.5 text-eyebrow text-amber-600 dark:text-amber-400">
-                <Trophy aria-hidden="true" className="h-3.5 w-3.5" />
-                {activeStake.period === 'weekly' ? 'Weekly' : 'Monthly'} wager
-              </p>
-              <span className="num truncate text-caption text-muted">
-                Wins: {players.maciek.name} {stakesRecord.maciekWins} · {players.myrna.name} {stakesRecord.myrnaWins}
-              </span>
-            </div>
-
-            <h2 className="mt-2 text-headline text-foreground">{activeStake.title}</h2>
-            {activeStake.description && (
-              <p className="mt-0.5 line-clamp-3 text-body text-secondary">{activeStake.description}</p>
-            )}
-
-            <div className="mt-4 flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setIsResolvingStake(true);
-                }}
-                aria-label="Resolve wager"
-                className="min-h-11 rounded-[var(--radius-control)] bg-amber-500/15 px-5 text-label font-semibold text-amber-700 transition-colors hover:bg-amber-500/25 dark:text-amber-300"
-              >
-                Resolve
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setStakeTitle(activeStake.title);
-                  setStakeDesc(activeStake.description);
-                  setIsEditingStake(true);
-                }}
-                aria-label="Edit wager"
-                className={`${ICON_BUTTON} ml-auto`}
-                title="Edit wager"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('Delete this wager?')) {
-                    soundEngine.playClick();
-                    hapticLight();
-                    deleteStake(activeStake.id);
-                  }
-                }}
-                aria-label="Delete wager"
-                className={`${ICON_BUTTON} -mr-2 hover:!text-red-500`}
-                title="Delete wager"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </section>
-        )}
+        <WagerSection
+          selectedTier={selectedTier}
+          activeWeeklyStake={activeWeeklyStake}
+          activeMonthlyStake={activeMonthlyStake}
+          stakes={stakes}
+          stakesRecord={stakesRecord}
+          players={players}
+          comparison={comparison}
+          countdownLabel={
+            selectedTier === 'weekly'
+              ? `${weekRemaining.days}d ${weekRemaining.hours}h left`
+              : selectedTier === 'monthly'
+                ? `${monthRemainingDays}d left`
+                : 'All-Time'
+          }
+          onCreateStake={handleCreateStake}
+          onUpdateStake={updateStake}
+          onResolveStake={handleResolveStake}
+          onDeleteStake={deleteStake}
+        />
       </div>
 
       <div className="stack-cards">
@@ -887,186 +791,6 @@ export function DuelView() {
           </section>
         )}
       </div>
-
-      {/* Resolve Wager Modal */}
-      {isResolvingStake && activeStake && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
-          onClick={() => {
-            soundEngine.playClick();
-            hapticLight();
-            setIsResolvingStake(false);
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="resolve-wager-title"
-            className={`${MODAL_PANEL} space-y-5`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
-                <h3 id="resolve-wager-title" className="flex items-center gap-2 text-title text-foreground">
-                  <Crown aria-hidden="true" className="h-5 w-5 text-amber-500" />
-                  Resolve Wager
-                </h3>
-                <p className="text-body text-secondary">
-                  Award victory for <span className="font-medium text-foreground">{activeStake.title}</span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setIsResolvingStake(false);
-                }}
-                aria-label="Close dialog"
-                className={`${ICON_BUTTON} -mr-2 -mt-2`}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleResolveStake('maciek')}
-                  className="min-h-12 truncate rounded-[var(--radius-control)] bg-owner-500/15 px-3 text-label font-semibold text-owner-300 transition-colors hover:bg-owner-500/25"
-                >
-                  {players.maciek.name} Won
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleResolveStake('myrna')}
-                  className="min-h-12 truncate rounded-[var(--radius-control)] bg-guest-500/15 px-3 text-label font-semibold text-guest-300 transition-colors hover:bg-guest-500/25"
-                >
-                  {players.myrna.name} Won
-                </button>
-              </div>
-
-              <button type="button" onClick={() => handleResolveStake('tie')} className="control w-full">
-                Mark as Draw / Push
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit / New Stake Modal */}
-      {(isEditingStake || isCreatingStake) && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
-          onClick={() => {
-            soundEngine.playClick();
-            hapticLight();
-            setIsEditingStake(false);
-            setIsCreatingStake(false);
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="stake-modal-title"
-            className={`${MODAL_PANEL} space-y-5`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <h3 id="stake-modal-title" className="text-title text-foreground">
-                {isEditingStake ? 'Edit Wager' : 'New Wager'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playClick();
-                  hapticLight();
-                  setIsEditingStake(false);
-                  setIsCreatingStake(false);
-                }}
-                aria-label="Close wager dialog"
-                className={`${ICON_BUTTON} -mr-2`}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                if (isEditingStake && activeStake) {
-                  e.preventDefault();
-                  if (!stakeTitle.trim()) return;
-                  soundEngine.playCheck();
-                  hapticSuccess();
-                  updateStake({
-                    ...activeStake,
-                    title: stakeTitle,
-                    description: stakeDesc,
-                  });
-                  setIsEditingStake(false);
-                } else {
-                  handleSaveNewStake(e);
-                }
-              }}
-              className="space-y-3"
-            >
-              {isCreatingStake && (
-                <div role="group" aria-label="Wager period" className={`${SEGMENT_TRACK} grid-cols-2`}>
-                  {(['weekly', 'monthly'] as const).map((period) => (
-                    <button
-                      key={period}
-                      type="button"
-                      aria-pressed={stakePeriod === period}
-                      onClick={() => setStakePeriod(period)}
-                      className={`${SEGMENT_BASE} ${stakePeriod === period ? SEGMENT_ON : SEGMENT_OFF}`}
-                    >
-                      {period === 'weekly' ? 'Weekly' : 'Monthly'}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <input
-                type="text"
-                value={stakeTitle}
-                onChange={(e) => setStakeTitle(e.target.value)}
-                placeholder="Title (e.g. Sunday Dinner Date)"
-                aria-label="Wager title"
-                className="field"
-                required
-              />
-
-              <textarea
-                value={stakeDesc}
-                onChange={(e) => setStakeDesc(e.target.value)}
-                rows={3}
-                placeholder="Terms and reward"
-                aria-label="Wager terms"
-                className="field resize-none"
-              />
-
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundEngine.playClick();
-                    hapticLight();
-                    setIsEditingStake(false);
-                    setIsCreatingStake(false);
-                  }}
-                  className="control flex-1"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="control control-primary flex-1">
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Proof Gallery Modal */}
       {activeProofView && (

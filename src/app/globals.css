@@ -887,3 +887,192 @@ html:not(.dark) section.bg-gradient-to-br .bg-white\/\[0\.04\] {
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+/* ============================================================
+   WAGER SECTION & SEAL CEREMONY MOTION PRIMITIVES
+   ============================================================ */
+
+@keyframes wager-modal-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes wager-backdrop-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes wager-stagger-in {
+  0% {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wager-sheen-sweep {
+  0% {
+    transform: translateX(-115%) skewX(-18deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.95;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(225%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes wager-stamp-slam {
+  0% {
+    opacity: 0;
+    transform: scale(1.38) rotate(-14deg);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(0.95) rotate(-5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+  }
+}
+
+@keyframes wager-card-ignite {
+  0% {
+    transform: scale(0.985);
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.72), 0 0 36px -4px rgba(245, 158, 11, 0.45);
+  }
+  45% {
+    transform: scale(1.008);
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.55), 0 14px 36px -6px rgba(245, 158, 11, 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.24), 0 8px 24px -8px rgba(245, 158, 11, 0.14);
+  }
+}
+
+@keyframes wager-beacon-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes wager-dice-roll {
+  0% { transform: rotate(0deg) scale(1); }
+  45% { transform: rotate(195deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes wager-swap-blur {
+  0% {
+    opacity: 0.45;
+    filter: blur(2.5px);
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+  }
+}
+
+.wager-backdrop-enter {
+  animation: wager-backdrop-in 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.wager-modal-enter {
+  animation: wager-modal-in 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.wager-stagger-1 { animation: wager-stagger-in 240ms cubic-bezier(0.23, 1, 0.32, 1) 35ms both; }
+.wager-stagger-2 { animation: wager-stagger-in 240ms cubic-bezier(0.23, 1, 0.32, 1) 75ms both; }
+.wager-stagger-3 { animation: wager-stagger-in 240ms cubic-bezier(0.23, 1, 0.32, 1) 115ms both; }
+.wager-stagger-4 { animation: wager-stagger-in 240ms cubic-bezier(0.23, 1, 0.32, 1) 155ms both; }
+
+.wager-sheen-sweep {
+  animation: wager-sheen-sweep 680ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.wager-stamp-slam {
+  animation: wager-stamp-slam 360ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.wager-card-ignite {
+  animation: wager-card-ignite 680ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.wager-beacon-ring {
+  animation: wager-beacon-ring 1.9s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
+.wager-dice-spin {
+  animation: wager-dice-roll 300ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.wager-swap-blur {
+  animation: wager-swap-blur 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+/* Asymmetric Hold-to-Seal fill: deliberate on hold (650ms linear), snappy on release (200ms ease-out) */
+.wager-hold-fill {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.wager-hold-fill[data-holding="true"] {
+  clip-path: inset(0 0% 0 0);
+  transition: clip-path 650ms linear;
+}
+
+.wager-hold-fill[data-sealed="true"] {
+  clip-path: inset(0 0% 0 0);
+  transition: clip-path 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Gate hover lift for fine-pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+  .wager-chip-hover {
+    transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1), border-color 150ms ease, background-color 150ms ease;
+  }
+  .wager-chip-hover:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wager-modal-enter,
+  .wager-stagger-1,
+  .wager-stagger-2,
+  .wager-stagger-3,
+  .wager-stagger-4,
+  .wager-stamp-slam,
+  .wager-swap-blur {
+    animation: wager-backdrop-in 150ms ease both !important;
+  }
+  .wager-sheen-sweep,
+  .wager-beacon-ring,
+  .wager-dice-spin,
+  .wager-card-ignite {
+    animation: none !important;
+  }
+}
