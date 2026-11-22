@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, RefreshCw } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -26,10 +26,10 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     setHealthTelemetry,
     clearHealthTelemetry,
     syncGoogleHealth,
+    disconnectGoogleHealth,
   } = useStore();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
-  const lastAttempt = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const refresh = useCallback(async () => {
     if (!multiplayer.user || !multiplayer.duel) return;
@@ -38,19 +38,6 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
   }, [multiplayer.user, multiplayer.duel, compact]);
 
   useEffect(() => { void refresh(); }, [refresh]);
-  useEffect(() => {
-    if (!compact || !status?.connected || Date.now() - lastAttempt.current < 10 * 60_000) return;
-    if (status.lastCheckedAt && Date.now() - Date.parse(status.lastCheckedAt) < 10 * 60_000) return;
-    let cancelled = false;
-    lastAttempt.current = Date.now();
-    syncGoogleHealth().then(async result => {
-      if (!cancelled) {
-        if (!result.success) setError(result.message);
-        await refresh();
-      }
-    });
-    return () => { cancelled = true; };
-  }, [compact, status?.connected, status?.lastCheckedAt, refresh, syncGoogleHealth]);
 
   if (!multiplayer.configured) return null;
   if (status?.available === false) {
@@ -81,7 +68,7 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
   }
   async function disconnect() {
     setBusy(true); setError(null);
-    try { const result = await healthRequest('/api/auth/disconnect', 'POST'); await refresh(); if (!result.revoked) setError('Disconnected here. Remove Do It in your Google account to revoke its access.'); }
+    try { const result = await healthRequest('/api/auth/disconnect', 'POST'); disconnectGoogleHealth(); await refresh(); if (!result.revoked) setError('Disconnected here. Remove Do It in your Google account to revoke its access.'); }
     catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not disconnect.'); }
     finally { setBusy(false); }
   }
@@ -127,7 +114,7 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
       </div>
     </div>
     {status?.connected ? <>
-      <p className="text-label font-normal text-secondary">{status.lastCheckedAt ? `Last checked ${new Date(status.lastCheckedAt).toLocaleString()}` : 'Waiting for first check'} · Manual check-ins remain available.</p>
+      <p className="text-label font-normal text-secondary">{status.lastCheckedAt ? `Last checked ${new Date(status.lastCheckedAt).toLocaleString()}` : 'Waiting for first check'} · Auto-checks when you open Do It · Manual check-ins remain available.</p>
       {status.message && <p role="status" className="text-label text-amber-600 dark:text-amber-300">{status.message}</p>}
       <div className="flex flex-wrap gap-2"><button className="control control-primary" disabled={busy} onClick={sync}><RefreshCw size={16}/>{busy ? 'Checking…' : 'Check now'}</button><button className="control" disabled={busy} onClick={connect}>Reconnect</button><button className="control" disabled={busy} onClick={disconnect}>Disconnect & delete connection</button></div>
     </> : <>

@@ -165,6 +165,12 @@ export interface HealthTelemetryRecord {
 export interface GoogleHealthSyncResult {
   success: boolean;
   date: string;
+  dates?: string[];
+  available?: boolean;
+  connected?: boolean;
+  skipped?: boolean;
+  reason?: 'unavailable' | 'not_connected' | 'needs_attention' | 'cooldown' | 'in_flight' | 'no_habits';
+  lastCheckedAt?: string | null;
   provider?: string;
   simulated?: boolean;
   sleepHours?: number;
@@ -191,6 +197,7 @@ export interface GoogleHealthSyncResult {
 export interface WearableConfig {
   googleConnected?: boolean;
   googleLastSync?: string;
+  googleLastCheckedAt?: string | null;
   googleLastResult?: GoogleHealthSyncResult;
   appleConnected?: boolean;
   appleLastSync?: string;

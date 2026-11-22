@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticatedDuel } from '@/lib/health-server';
+import { authenticatedDuel, validTimeZone } from '@/lib/health-server';
 import { healthEnabled } from '@/lib/health-access';
 import { syncUserHealth } from '@/lib/health-sync';
 import { healthScopes } from '@/lib/health-sync';
@@ -7,6 +7,20 @@ import type { CheckIn, Habit, HealthTelemetryRecord } from '@/lib/types';
 
 function unavailable() {
   return NextResponse.json({ available: false, connected: false, scopes: [], message: 'Automatic health check-ins are not available yet. You can keep checking off habits manually.' });
+}
+
+function autoUnavailable() {
+  return NextResponse.json({
+    success: true,
+    available: false,
+    connected: false,
+    skipped: true,
+    reason: 'unavailable',
+    date: '',
+    changed: 0,
+    telemetry: [],
+    message: 'Google Health is not available yet.',
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -28,11 +42,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const targetDate = request.nextUrl.searchParams.get('date') || new Date().toISOString().slice(0, 10);
+  const requestedDate = request.nextUrl.searchParams.get('date') || undefined;
   const isSimulated = request.nextUrl.searchParams.get('simulate') === 'true';
   const isSimulatedUnder = request.nextUrl.searchParams.get('simulateUnder') === 'true';
 
   if (isSimulated || isSimulatedUnder) {
+    const targetDate = requestedDate || new Date().toISOString().slice(0, 10);
     const sleepValue = isSimulatedUnder ? 3.0 : 8.5;
     const stepsValue = isSimulatedUnder ? 4200 : 10500;
     const telemetry: HealthTelemetryRecord[] = [
@@ -89,12 +104,20 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  if (!healthEnabled()) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
+  const body = await request.json().catch(() => ({})) as { auto?: unknown; timeZone?: unknown };
+  const auto = request.nextUrl.searchParams.get('auto') === 'true' || body?.auto === true;
+  const timeZone = typeof body?.timeZone === 'string' && validTimeZone(body.timeZone) ? body.timeZone : undefined;
+
+  if (!healthEnabled()) {
+    return auto ? autoUnavailable() : NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
+  }
   try {
     const context = await authenticatedDuel(request);
     if (!context) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
-    if (!healthEnabled(context.user.id)) return NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
-    return NextResponse.json(await syncUserHealth(context.user.id, targetDate));
+    if (!healthEnabled(context.user.id)) {
+      return auto ? autoUnavailable() : NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
+    }
+    return NextResponse.json(await syncUserHealth(context.user.id, { date: requestedDate, auto, timeZone }));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Health sync failed.' }, { status: 502 });
   }
