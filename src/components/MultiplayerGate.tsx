@@ -7,6 +7,7 @@ import { useMultiplayer } from '@/lib/multiplayer';
 import { extractInviteCode, isValidInviteCode } from '@/lib/invite-navigation';
 import { useModalFocus } from '@/lib/use-modal-focus';
 import { getSignupRecommendationCode, RECOMMENDATION_STORAGE_KEY } from '@/lib/recommendation';
+import { Eye, EyeOff } from 'lucide-react';
 import { DoLogo } from './DoLogo';
 
 export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: string | null; onDismissInvite?: () => void }) {
@@ -22,6 +23,7 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -299,15 +301,26 @@ export function MultiplayerGate({ inviteCode, onDismissInvite }: { inviteCode: s
             </label>
             <label className={fieldLabel}>
               <span>Password</span>
-              <input
-                type="password"
-                minLength={6}
-                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                className="field"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  minLength={6}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  className="field !pr-12"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px]"
+                >
+                  {showPassword ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+                </button>
+              </div>
             </label>
             <div className="mt-2 flex flex-col gap-1">
               <button disabled={busy} className={primaryButton}>
