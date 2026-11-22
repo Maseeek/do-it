@@ -271,7 +271,7 @@ describe('Domain: Score Calculator & Leaderboard Engine', () => {
       ];
 
       const breakdown = getCategoryBreakdown(checkIns, mockHabits, 'weekly');
-      assert.strictEqual(breakdown.length, 11);
+      assert.strictEqual(breakdown.length, 12);
 
       const foundation = breakdown.find((b) => b.category === 'foundation');
       assert.ok(foundation);

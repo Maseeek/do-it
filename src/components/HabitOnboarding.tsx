@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { useStore } from '@/lib/store';
-import { balanceHabitPlan, catalogHabits, HABIT_SECTIONS, maximumHabitPoints, weeklyPointPotential } from '@/lib/habit-catalog';
+import { balanceHabitPlan, catalogHabits, categoryForSection, HABIT_SECTIONS, habitSectionTitle, maximumHabitPoints, weeklyPointPotential } from '@/lib/habit-catalog';
 import type { Habit, HabitCategory } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -23,7 +23,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
   });
   const [customTitle, setCustomTitle] = useState('');
   const [showMore, setShowMore] = useState(false);
-  const [customCategory, setCustomCategory] = useState<HabitCategory>('skills');
+  const [customCategory, setCustomCategory] = useState<HabitCategory>('other');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [checkingPrevious, setCheckingPrevious] = useState(firstRun);
@@ -288,12 +288,12 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
             </div>
             <select
               aria-label="New habit category"
-              value={customCategory}
-              onChange={event => setCustomCategory(event.target.value as HabitCategory)}
-              className="min-h-11 self-start rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 text-label capitalize text-foreground"
+              value={habitSectionTitle(customCategory)}
+              onChange={event => setCustomCategory(categoryForSection(event.target.value, customCategory))}
+              className="min-h-11 self-start rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 text-label text-foreground"
             >
-              {HABIT_SECTIONS.flatMap(section => section.categories).map(category => (
-                <option key={category} value={category}>{category.replaceAll('_', ' ')}</option>
+              {HABIT_SECTIONS.map(section => (
+                <option key={section.title} value={section.title}>{section.title}</option>
               ))}
             </select>
           </form>

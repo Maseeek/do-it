@@ -10,6 +10,7 @@ import { useMultiplayer } from '@/lib/multiplayer';
 import { getSupabaseClient } from '@/lib/supabase';
 import { HealthConnection } from './HealthConnection';
 import { BillingPanel } from './BillingPanel';
+import { HabitSettings } from './HabitSettings';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
 
@@ -403,6 +404,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
         </section>
       )}
 
+      {activePlayer && <HabitSettings onChooseHabits={onChooseHabits} />}
       <HealthConnection onChooseHabits={onChooseHabits} />
       <BillingPanel />
 
