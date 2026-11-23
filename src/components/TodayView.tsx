@@ -2,9 +2,9 @@
 
 import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Activity, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity,
+  Activity as ActivityIcon,
   ArrowUpRight,
   BedDouble,
   Camera,
@@ -25,8 +25,8 @@ import { createDeferredView } from './DeferredView';
 
 import { Habit } from '@/lib/types';
 
-const { View: ActivityFeed } = createDeferredView(() => import('./ActivityFeed').then(module => module.ActivityFeed));
-const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null);
+const { View: ActivityFeed, useReady: useActivityFeedReady } = createDeferredView(() => import('./ActivityFeed').then(module => module.ActivityFeed), undefined, { prefetch: true });
+const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null, { prefetch: true });
 
 export function TodayView({
   onOpenHabits,
@@ -62,6 +62,7 @@ export function TodayView({
     healthAttentionMessage,
   } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
+  const activityFeedReady = useActivityFeedReady();
   const [proofIndex, setProofIndex] = useState<number | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [lockingMap, setLockingMap] = useState<Record<string, string>>({});
@@ -76,13 +77,18 @@ export function TodayView({
   const settleTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const targetPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  // Runs when another section hides Today, too: stopping the timers would
+  // otherwise leave check-in animations frozen until Today is shown again.
+  useLayoutEffect(() => {
     const lockTimers = lockTimersRef.current;
     const settleTimers = settleTimersRef.current;
     return () => {
       Object.values(lockTimers).forEach(clearTimeout);
       Object.values(settleTimers).forEach(clearTimeout);
       if (targetPulseTimerRef.current) clearTimeout(targetPulseTimerRef.current);
+      setLockingMap(prev => (Object.keys(prev).length ? {} : prev));
+      setSettledMap(prev => (Object.keys(prev).length ? {} : prev));
+      setTargetPulse(null);
     };
   }, []);
 
@@ -199,18 +205,22 @@ export function TodayView({
     updateCheckInNote,
   });
 
-  const previous = useRef({ context, points, allDone });
+  const previous = useRef<{ context: string; points: number; allDone: boolean } | null>({ context, points, allDone });
 
   useEffect(() => {
+    const last = previous.current;
     if (
-      previous.current.context === context &&
-      ((points >= par && previous.current.points < par) || (allDone && !previous.current.allDone))
+      last?.context === context &&
+      ((points >= par && last.points < par) || (allDone && !last.allDone))
     ) {
       soundEngine.playFanfare();
       hapticCelebration();
     }
     previous.current = { context, points, allDone };
   }, [context, points, allDone, par]);
+
+  // Check-ins synced while Today was hidden should not celebrate on return.
+  useEffect(() => () => { previous.current = null; }, []);
 
   const formattedLongDate = parseDate(selectedDate).toLocaleDateString('en-US', {
     weekday: 'long',
@@ -261,9 +271,12 @@ export function TodayView({
         </div>
       </div>
 
-      {activeSubTab === 'feed' ? (
-        <ActivityFeed />
-      ) : (
+      {/* Both views stay mounted, so switching between them only reveals one. */}
+      <div>
+      <Activity mode={activeSubTab === 'feed' ? 'visible' : 'hidden'}>
+        {(activeSubTab === 'feed' || activityFeedReady) && <ActivityFeed />}
+      </Activity>
+      <Activity mode={activeSubTab === 'ritual' ? 'visible' : 'hidden'}>
         <div className="space-y-6">
           <DateNavigator />
 
@@ -274,7 +287,7 @@ export function TodayView({
               className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3 text-label text-amber-700 dark:text-amber-200"
             >
               <span className="flex min-w-0 items-center gap-2.5">
-                <Activity className="size-4 shrink-0" aria-hidden="true" />
+                <ActivityIcon className="size-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 font-normal">{healthAttentionMessage}</span>
               </span>
               {onOpenSettings && (
@@ -534,7 +547,8 @@ export function TodayView({
             </div>
           )}
         </div>
-      )}
+      </Activity>
+      </div>
 
       {proofIndex !== null && partner && partnerPhotos.length > 0 && (
         <ProofGalleryModal

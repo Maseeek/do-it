@@ -2,7 +2,7 @@
 
 import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
 import { getHealthProgressDetails } from '@/lib/health-correlation';
 import { calculateHealthPoints } from '@/lib/health-rewards';
@@ -24,8 +24,8 @@ import {
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight, hapticSuccess } from '@/lib/haptic-utils';
 
-const { View: ProofModal } = createDeferredView(() => import('./ProofModal').then(module => module.ProofModal), null);
-const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null);
+const { View: ProofModal } = createDeferredView(() => import('./ProofModal').then(module => module.ProofModal), null, { prefetch: true });
+const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null, { prefetch: true });
 
 interface HabitCardProps {
   habit: Habit;
@@ -92,9 +92,11 @@ export const HabitCard = React.memo(function HabitCard({
     return () => clearTimeout(timer);
   }, [lockedAlertMessage]);
 
-  useEffect(() => {
+  // Also runs when another section hides Today; don't leave the pulse stuck.
+  useLayoutEffect(() => {
     return () => {
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+      setLocalPulse(null);
     };
   }, []);
 

@@ -161,10 +161,15 @@ export function HabitHeatmap({
   const inspectedLabel = formatFriendlyDate(inspectedDateStr);
 
   // Recent weeks sit on the right; keep them in view when the range widens.
+  // Skip when Progress is only shown again: the browser keeps the offset, and
+  // reading scrollWidth forces a layout before the first frame.
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrolledWeekCount = useRef<number | null>(null);
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
+    if (!el || scrolledWeekCount.current === weekCount) return;
+    scrolledWeekCount.current = weekCount;
+    el.scrollLeft = el.scrollWidth;
   }, [weekCount]);
 
   const playerOptions: { id: PlayerId; tone: string }[] = [

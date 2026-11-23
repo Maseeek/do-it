@@ -1,5 +1,13 @@
 # App loading and interaction performance
 
+## 2026-11-23 section switches
+
+Opening Duel, Progress, Settings or Today's Activity for the first time waited for the deployment check (`/api/app-version`) before rendering: 155 ms on Lighthouse's mobile network, plus hosted latency. Local benchmarks never set a deployment version, so earlier passes did not see it. Every switch also rendered the destination from scratch.
+
+The other sections and dialogs now load once Today has painted and the browser is idle, behind one shared deployment check. Sections stay mounted inside React `<Activity>` boundaries and pre-render while hidden, so a switch only reveals one. Duel counts today's completions from the store's index, and scroll effects no longer re-run when a section is shown again. Sections keep their state between visits; Settings still starts fresh on each open.
+
+Production builds, Chrome 157, 14,600 Check-ins, seven alternating samples. On mobile emulation (4× CPU, 150 ms RTT), first visits fell from 216–254 ms to 51–64 ms. The slowest of 84 switches fell from 270.9 to 86.6 ms, and no switch waits on the network. On desktop, every switch takes 15–21 ms, down from up to 71 ms. Page load is unchanged within noise. Local-mode Check-ins still take about 220 ms on mobile emulation because the whole state is written to localStorage synchronously. Results, method and behavior changes are in [the November 23 evidence](performance/2026-11-23/README.md).
+
 ## 2026-10-12 follow-up
 
 Compared production builds against `e7b284e` with Chrome 148 on the same machine. The local fixture has 730 prior days across 20 seeded Habits: 14,600 Check-ins, about 2.3 MB. These results measure local client work. The mobile scenario uses a 390×844 viewport and 4× CPU throttling; it does not represent a physical phone or hosted Supabase latency.

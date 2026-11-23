@@ -1,0 +1,3074 @@
+{
+  "measuredAt": "2026-11-23T17:31:39.774Z",
+  "browser": "157.0.8103.38",
+  "profile": "desktop",
+  "throttling": {
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "mobile": false,
+    "cpu": 1,
+    "latency": 40,
+    "down": 1310720,
+    "up": 1310720
+  },
+  "samples": 7,
+  "idleMs": 1000,
+  "method": "Production build, local mode with 730 prior days across 20 seeded Habits (14,600 Check-ins). Each sample reloads the document with the HTTP cache retained, waits for Today and an idle period, then switches sections with DevTools Protocol touch (mobile) or mouse input (desktop, hovering 150 ms first). Time runs from the pointerdown event to the first frame painted after the destination content is visible.",
+  "variants": {
+    "before": {
+      "url": "http://localhost:43201/",
+      "errors": [],
+      "medians": {
+        "start→today (page load)": 130.6,
+        "today→feed": 67.9,
+        "feed→ritual": 14.8,
+        "ritual→duel": 67.5,
+        "duel→month": 21.2,
+        "month→week": 16.1,
+        "week→battles": 15.9,
+        "battles→categories": 15.6,
+        "categories→progress": 64.2,
+        "progress→today": 18.6,
+        "today→duel (again)": 17.7,
+        "duel→settings": 64.5,
+        "settings→today (again)": 18.4,
+        "today→check-in": 63.4,
+        "check-in→undo": 48.6
+      },
+      "worst": 71,
+      "samples": [
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 130.59999999403954,
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 71,
+          "contentMs": 62.900000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 6,
+              "duration": 46,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 53,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 14.800000011920929,
+          "contentMs": 12.100000023841858,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 67.7000000178814,
+          "contentMs": 63.60000002384186,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 44,
+              "bytes": 330
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 21.19999998807907,
+          "contentMs": 9.299999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 17.599999994039536,
+          "contentMs": 13.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.80000001192093,
+          "contentMs": 7.800000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.600000023841858,
+          "contentMs": 7.100000023841858,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 65.09999999403954,
+          "contentMs": 58.099999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 43,
+              "bytes": 330
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 14.5,
+          "contentMs": 11.400000005960464,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 15.599999994039536,
+          "contentMs": 12,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 63.80000001192093,
+          "contentMs": 56.10000002384186,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 45,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 56,
+              "duration": 47,
+              "bytes": 378
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 12.5,
+          "contentMs": 10.099999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 47.19999998807907,
+          "contentMs": 42.5,
+          "inpMs": 56,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 40,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 36.70000001788139,
+          "contentMs": 32.80000001192093,
+          "inpMs": 48,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 31,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 122.10000002384186,
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 66.69999998807907,
+          "contentMs": 61.89999997615814,
+          "inpMs": null,
+          "inputDelayMs": null,
+          "clickProcessingMs": 0,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 44,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 51,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 10.5,
+          "contentMs": 8.700000017881393,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 66,
+          "contentMs": 62.69999998807907,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 46,
+              "bytes": 330
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 22,
+          "contentMs": 9.199999988079071,
+          "inpMs": 32,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 15.799999982118607,
+          "contentMs": 11.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 15.699999988079071,
+          "contentMs": 8,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.599999994039536,
+          "contentMs": 7.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 64.69999998807907,
+          "contentMs": 62,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 44,
+              "bytes": 330
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 18.599999994039536,
+          "contentMs": 15,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 19.19999998807907,
+          "contentMs": 16.299999982118607,
+          "inpMs": 32,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 64,
+          "contentMs": 57.79999998211861,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 45,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 58,
+              "duration": 44,
+              "bytes": 378
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 18.399999976158142,
+          "contentMs": 14.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 64.40000000596046,
+          "contentMs": 58.5,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 55,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 51.5,
+          "contentMs": 45.69999998807907,
+          "inpMs": 56,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 42,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 128.2999999821186,
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 64.7999999821186,
+          "contentMs": 60.79999998211861,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 6,
+              "duration": 43,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 50,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 14.899999976158142,
+          "contentMs": 11.399999976158142,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 66.90000000596046,
+          "contentMs": 63.19999998807907,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 44,
+              "bytes": 330
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 22.100000023841858,
+          "contentMs": 9.300000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 15.899999976158142,
+          "contentMs": 12.599999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.5,
+          "contentMs": 7.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 13.5,
+          "contentMs": 7.399999976158142,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 64.2000000178814,
+          "contentMs": 60.80000001192093,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 44,
+              "bytes": 330
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 18.600000023841858,
+          "contentMs": 15,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 17.700000017881393,
+          "contentMs": 14.800000011920929,
+          "inpMs": 32,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 64.5,
+          "contentMs": 60.599999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 47,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 61,
+              "duration": 44,
+              "bytes": 378
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 18.69999998807907,
+          "contentMs": 15.599999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 63.400000005960464,
+          "contentMs": 56.599999994039536,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 54,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 49.70000001788139,
+          "contentMs": 44.20000001788139,
+          "inpMs": 56,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 41,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 141.89999997615814,
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 70.7000000178814,
+          "contentMs": 60.900000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 6,
+              "duration": 44,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 51,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 19.099999994039536,
+          "contentMs": 11.5,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 67.5,
+          "contentMs": 63.60000002384186,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 43,
+              "bytes": 330
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 21.700000017881393,
+          "contentMs": 10.400000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.099999994039536,
+          "contentMs": 12.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 15.299999982118607,
+          "contentMs": 8.699999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.700000017881393,
+          "contentMs": 7.300000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 64.10000002384186,
+          "contentMs": 61.60000002384186,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 43,
+              "bytes": 330
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 20.299999982118607,
+          "contentMs": 15.599999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 19.299999982118607,
+          "contentMs": 16.5,
+          "inpMs": 40,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 66.69999998807907,
+          "contentMs": 56.39999997615814,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 43,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 57,
+              "duration": 44,
+              "bytes": 378
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 18.299999982118607,
+          "contentMs": 15,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 65.09999999403954,
+          "contentMs": 59,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 56,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 51.099999994039536,
+          "contentMs": 45.400000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 42,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 147.2999999821186,
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 68.09999999403954,
+          "contentMs": 63.900000005960464,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 46,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 53,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 15,
+          "contentMs": 11.200000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 68.7000000178814,
+          "contentMs": 64.90000000596046,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 46,
+              "bytes": 330
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 17.200000017881393,
+          "contentMs": 8.800000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 15.699999988079071,
+          "contentMs": 12.099999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.19999998807907,
+          "contentMs": 7.5999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 17.5,
+          "contentMs": 7.199999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 65,
+          "contentMs": 61.10000002384186,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 45,
+              "bytes": 330
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 17.799999982118607,
+          "contentMs": 14.199999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 17.599999994039536,
+          "contentMs": 15,
+          "inpMs": 32,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 64.5,
+          "contentMs": 57.900000005960464,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 44,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 58,
+              "duration": 43,
+              "bytes": 378
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 18.69999998807907,
+          "contentMs": 15.599999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 64.40000000596046,
+          "contentMs": 57.900000005960464,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 53,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 36.099999994039536,
+          "contentMs": 31.399999976158142,
+          "inpMs": 40,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 136.2999999821186,
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 67.90000000596046,
+          "contentMs": 63.19999998807907,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 44,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 51,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 14.100000023841858,
+          "contentMs": 11.300000011920929,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 68.59999999403954,
+          "contentMs": 64.80000001192093,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 5,
+              "duration": 44,
+              "bytes": 330
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 19.299999982118607,
+          "contentMs": 10.399999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.69999998807907,
+          "contentMs": 13.199999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 15.099999994039536,
+          "contentMs": 5.5,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.199999988079071,
+          "contentMs": 7.799999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 64.19999998807907,
+          "contentMs": 62,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 45,
+              "bytes": 330
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 21.399999976158142,
+          "contentMs": 16.19999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 19.19999998807907,
+          "contentMs": 16.400000005960464,
+          "inpMs": 32,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 63.400000005960464,
+          "contentMs": 59.19999998807907,
+          "inpMs": 16,
+          "inputDelayMs": 1,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 6,
+              "duration": 44,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 60,
+              "duration": 45,
+              "bytes": 378
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 19.799999982118607,
+          "contentMs": 16.69999998807907,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 59.900000005960464,
+          "contentMs": 53.79999998211861,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 51,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 48.599999994039536,
+          "contentMs": 42.599999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 40,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 118.10000002384186,
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 61.599999994039536,
+          "contentMs": 55.599999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 43,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 48,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 10.300000011920929,
+          "contentMs": 8.400000005960464,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 59.900000005960464,
+          "contentMs": 56.69999998807907,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 3,
+              "duration": 43,
+              "bytes": 330
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 21.099999994039536,
+          "contentMs": 6.300000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.19999998807907,
+          "contentMs": 9.599999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 15.900000005960464,
+          "contentMs": 5.300000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 16.299999982118607,
+          "contentMs": 5.5,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 58.69999998807907,
+          "contentMs": 56.79999998211861,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 3,
+              "duration": 43,
+              "bytes": 330
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 13.900000005960464,
+          "contentMs": 11,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 15.5,
+          "contentMs": 12.199999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 11,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 65.19999998807907,
+          "contentMs": 53.69999998807907,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 4,
+              "duration": 43,
+              "bytes": 330
+            },
+            {
+              "url": "/api/billing/purchase",
+              "start": 54,
+              "duration": 43,
+              "bytes": 378
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 15.400000005960464,
+          "contentMs": 11.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 45.5,
+          "contentMs": 41,
+          "inpMs": 56,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 39,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 36.400000005960464,
+          "contentMs": 31.5,
+          "inpMs": 40,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        }
+      ]
+    },
+    "after": {
+      "url": "http://localhost:43202/",
+      "errors": [],
+      "medians": {
+        "start→today (page load)": 138.1,
+        "today→feed": 16.1,
+        "feed→ritual": 15.2,
+        "ritual→duel": 16,
+        "duel→month": 16.9,
+        "month→week": 16.5,
+        "week→battles": 16.4,
+        "battles→categories": 16,
+        "categories→progress": 16.3,
+        "progress→today": 16.8,
+        "today→duel (again)": 16.8,
+        "duel→settings": 15.2,
+        "settings→today (again)": 16.7,
+        "today→check-in": 72,
+        "check-in→undo": 47.6
+      },
+      "worst": 75,
+      "samples": [
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 123.30000001192093,
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 12,
+          "contentMs": 6.199999988079071,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 14.299999982118607,
+          "contentMs": 8.099999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 15.599999994039536,
+          "contentMs": 8,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 15.5,
+          "contentMs": 7.300000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.099999994039536,
+          "contentMs": 6,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.399999976158142,
+          "contentMs": 5.199999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 16,
+          "contentMs": 5.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 16.299999982118607,
+          "contentMs": 11.099999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 16.900000005960464,
+          "contentMs": 11,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 14,
+          "contentMs": 8.699999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 15.199999988079071,
+          "contentMs": 9.599999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 10,
+              "duration": 45,
+              "bytes": 378
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 16,
+          "contentMs": 9.700000017881393,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 72,
+          "contentMs": 60.70000001788139,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 57,
+          "longFrames": [
+            {
+              "duration": 60,
+              "blocking": 10
+            }
+          ],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 47.80000001192093,
+          "contentMs": 42.5,
+          "inpMs": 48,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 40,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 151.7000000178814,
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 20.799999982118607,
+          "contentMs": 8.699999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 16.700000017881393,
+          "contentMs": 7.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 16,
+          "contentMs": 8.099999994039536,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 15.800000011920929,
+          "contentMs": 6.9000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.700000017881393,
+          "contentMs": 7,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 17.400000005960464,
+          "contentMs": 6.4000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.5,
+          "contentMs": 3.7000000178813934,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 17.599999994039536,
+          "contentMs": 12.400000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 16.80000001192093,
+          "contentMs": 11.400000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 17.19999998807907,
+          "contentMs": 5.699999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 13.400000005960464,
+          "contentMs": 8.599999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 9,
+              "duration": 45,
+              "bytes": 378
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 13.600000023841858,
+          "contentMs": 7.9000000059604645,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 73.40000000596046,
+          "contentMs": 62.099999994039536,
+          "inpMs": 72,
+          "inputDelayMs": 1,
+          "clickProcessingMs": 59,
+          "longFrames": [
+            {
+              "duration": 62,
+              "blocking": 12
+            }
+          ],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 35.400000005960464,
+          "contentMs": 30.200000017881393,
+          "inpMs": 40,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 152.40000000596046,
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 20.099999994039536,
+          "contentMs": 8,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 16.299999982118607,
+          "contentMs": 8.799999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 15.800000011920929,
+          "contentMs": 8.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 17,
+          "contentMs": 6.299999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 14.5,
+          "contentMs": 6.799999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 14.200000017881393,
+          "contentMs": 5.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 16.900000005960464,
+          "contentMs": 4.5999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 15,
+          "contentMs": 11.400000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 14.800000011920929,
+          "contentMs": 10.699999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 16.400000005960464,
+          "contentMs": 7.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 14.200000017881393,
+          "contentMs": 10,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 11,
+              "duration": 43,
+              "bytes": 378
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 17.899999976158142,
+          "contentMs": 11.5,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 67.90000000596046,
+          "contentMs": 56.70000001788139,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 53,
+          "longFrames": [
+            {
+              "duration": 56,
+              "blocking": 6
+            }
+          ],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 48.5,
+          "contentMs": 42.70000001788139,
+          "inpMs": 48,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 39,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 155.69999998807907,
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 16.099999994039536,
+          "contentMs": 7.9000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 13.799999982118607,
+          "contentMs": 7.5999999940395355,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 16.19999998807907,
+          "contentMs": 8.199999988079071,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 17.899999976158142,
+          "contentMs": 6.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 13.299999982118607,
+          "contentMs": 6.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.400000005960464,
+          "contentMs": 4.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 16.30000001192093,
+          "contentMs": 3.9000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 15,
+          "contentMs": 10.900000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 18.19999998807907,
+          "contentMs": 9.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 15.799999982118607,
+          "contentMs": 6.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 15.900000005960464,
+          "contentMs": 9.900000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 11,
+              "duration": 44,
+              "bytes": 378
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 16.700000017881393,
+          "contentMs": 10.099999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 75,
+          "contentMs": 60.79999998211861,
+          "inpMs": 72,
+          "inputDelayMs": 1,
+          "clickProcessingMs": 57,
+          "longFrames": [
+            {
+              "duration": 61,
+              "blocking": 10
+            }
+          ],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 47.60000002384186,
+          "contentMs": 42.10000002384186,
+          "inpMs": 48,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 39,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 123.90000000596046,
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 14.200000017881393,
+          "contentMs": 7.700000017881393,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 12.400000005960464,
+          "contentMs": 7.5999999940395355,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 16.900000005960464,
+          "contentMs": 9.400000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 16.900000005960464,
+          "contentMs": 6.200000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.5,
+          "contentMs": 6.5999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.19999998807907,
+          "contentMs": 4.799999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.900000005960464,
+          "contentMs": 4,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 15.600000023841858,
+          "contentMs": 10.900000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 16.30000001192093,
+          "contentMs": 10.5,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 17.100000023841858,
+          "contentMs": 7.100000023841858,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 16.299999982118607,
+          "contentMs": 9.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 11,
+              "duration": 43,
+              "bytes": 378
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 16.80000001192093,
+          "contentMs": 10.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 73.09999999403954,
+          "contentMs": 60.599999994039536,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 57,
+          "longFrames": [
+            {
+              "duration": 60,
+              "blocking": 10
+            }
+          ],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 37,
+          "contentMs": 32.80000001192093,
+          "inpMs": 40,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 30,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 121.7000000178814,
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 15,
+          "contentMs": 7.9000000059604645,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 15.200000017881393,
+          "contentMs": 7.4000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 14.200000017881393,
+          "contentMs": 8,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 16,
+          "contentMs": 6.5,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.799999982118607,
+          "contentMs": 5.899999976158142,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.80000001192093,
+          "contentMs": 4.800000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 15.600000023841858,
+          "contentMs": 4.4000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 16.80000001192093,
+          "contentMs": 11.600000023841858,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 16.30000001192093,
+          "contentMs": 10.700000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 16.799999982118607,
+          "contentMs": 7.799999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 14.400000005960464,
+          "contentMs": 10.5,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 12,
+              "duration": 44,
+              "bytes": 378
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 16.69999998807907,
+          "contentMs": 10.099999994039536,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 70.80000001192093,
+          "contentMs": 59.30000001192093,
+          "inpMs": 72,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 56,
+          "longFrames": [
+            {
+              "duration": 59,
+              "blocking": 9
+            }
+          ],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 49.099999994039536,
+          "contentMs": 43.80000001192093,
+          "inpMs": 48,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 40,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 138.09999999403954,
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 16.600000023841858,
+          "contentMs": 5.800000011920929,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 16.299999982118607,
+          "contentMs": 5.699999988079071,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 4,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 17.5,
+          "contentMs": 6.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 17,
+          "contentMs": 5.200000017881393,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 16.700000017881393,
+          "contentMs": 5.4000000059604645,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 3,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 16.599999994039536,
+          "contentMs": 4.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 16.099999994039536,
+          "contentMs": 3.0999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 2,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 17.30000001192093,
+          "contentMs": 8.900000005960464,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 18.299999982118607,
+          "contentMs": 7.799999982118607,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 17.299999982118607,
+          "contentMs": 6.5999999940395355,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 16.400000005960464,
+          "contentMs": 7.800000011920929,
+          "inpMs": 24,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/billing/purchase",
+              "start": 8,
+              "duration": 42,
+              "bytes": 378
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 16,
+          "contentMs": 7.4000000059604645,
+          "inpMs": 16,
+          "inputDelayMs": 0,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 55.099999994039536,
+          "contentMs": 45.30000001192093,
+          "inpMs": 56,
+          "inputDelayMs": 1,
+          "clickProcessingMs": 42,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 37.400000005960464,
+          "contentMs": 33.19999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 1,
+          "clickProcessingMs": 31,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        }
+      ]
+    }
+  }
+}

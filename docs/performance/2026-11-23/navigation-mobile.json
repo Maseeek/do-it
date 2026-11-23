@@ -1,0 +1,3268 @@
+{
+  "measuredAt": "2026-11-23T17:30:13.995Z",
+  "browser": "157.0.8103.38",
+  "profile": "mobile",
+  "throttling": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "mobile": true,
+    "cpu": 4,
+    "latency": 150,
+    "down": 209715.2,
+    "up": 96000
+  },
+  "samples": 7,
+  "idleMs": 1000,
+  "method": "Production build, local mode with 730 prior days across 20 seeded Habits (14,600 Check-ins). Each sample reloads the document with the HTTP cache retained, waits for Today and an idle period, then switches sections with DevTools Protocol touch (mobile) or mouse input (desktop, hovering 150 ms first). Time runs from the pointerdown event to the first frame painted after the destination content is visible.",
+  "variants": {
+    "before": {
+      "url": "http://localhost:43201/",
+      "errors": [],
+      "medians": {
+        "start→today (page load)": 485.8,
+        "today→feed": 230.8,
+        "feed→ritual": 46.6,
+        "ritual→duel": 254,
+        "duel→month": 60.3,
+        "month→week": 54.4,
+        "week→battles": 50,
+        "battles→categories": 34.3,
+        "categories→progress": 228.1,
+        "progress→today": 70.7,
+        "today→duel (again)": 76.1,
+        "duel→settings": 216.3,
+        "settings→today (again)": 61.9,
+        "today→check-in": 218.3,
+        "check-in→undo": 172.6
+      },
+      "worst": 270.9,
+      "samples": [
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 485.7999999821186,
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 250.59999999403954,
+          "contentMs": 234.90000000596046,
+          "inpMs": 40,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 16,
+          "longFrames": [
+            {
+              "duration": 55,
+              "blocking": 4
+            }
+          ],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 33,
+              "duration": 155,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 191,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 66.90000000596046,
+          "contentMs": 54.599999994039536,
+          "inpMs": 64,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 40,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 270.89999997615814,
+          "contentMs": 255.89999997615814,
+          "inpMs": 56,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 15,
+          "longFrames": [
+            {
+              "duration": 58,
+              "blocking": 7
+            }
+          ],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 15,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 16,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 53,
+              "duration": 153,
+              "bytes": 330
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 67.39999997615814,
+          "contentMs": 38.099999994039536,
+          "inpMs": 48,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 26,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 83.90000000596046,
+          "contentMs": 66.19999998807907,
+          "inpMs": 80,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 37,
+          "longFrames": [
+            {
+              "duration": 50,
+              "blocking": 0
+            }
+          ],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 51.400000005960464,
+          "contentMs": 39.400000005960464,
+          "inpMs": 48,
+          "inputDelayMs": 17,
+          "clickProcessingMs": 19,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 65,
+          "contentMs": 54.900000005960464,
+          "inpMs": 48,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 239.2000000178814,
+          "contentMs": 231.09999999403954,
+          "inpMs": 40,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 25,
+              "duration": 156,
+              "bytes": 330
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 83.80000001192093,
+          "contentMs": 65.59999999403954,
+          "inpMs": 80,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 49,
+          "longFrames": [
+            {
+              "duration": 66,
+              "blocking": 15
+            }
+          ],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 103.90000000596046,
+          "contentMs": 83.90000000596046,
+          "inpMs": 88,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 46,
+          "longFrames": [
+            {
+              "duration": 66,
+              "blocking": 13
+            }
+          ],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 237.80000001192093,
+          "contentMs": 229.80000001192093,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 13,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 14,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 43,
+              "duration": 158,
+              "bytes": 330
+            }
+          ],
+          "sample": 1
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 77,
+          "contentMs": 59.5,
+          "inpMs": 72,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 42,
+          "longFrames": [
+            {
+              "duration": 59,
+              "blocking": 9
+            }
+          ],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 256.80000001192093,
+          "contentMs": 236.30000001192093,
+          "inpMs": null,
+          "inputDelayMs": null,
+          "clickProcessingMs": 0,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 236.40000000596046,
+          "contentMs": 201.40000000596046,
+          "inpMs": 200,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 157,
+          "longFrames": [
+            {
+              "duration": 173,
+              "blocking": 121
+            }
+          ],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 448.89999997615814,
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 230.2999999821186,
+          "contentMs": 218.89999997615814,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 31,
+              "duration": 156,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 190,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 43.20000001788139,
+          "contentMs": 35.30000001192093,
+          "inpMs": 40,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 27,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 238.2000000178814,
+          "contentMs": 225.90000000596046,
+          "inpMs": 32,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 7,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 8,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 32,
+              "duration": 154,
+              "bytes": 330
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 60.69999998807907,
+          "contentMs": 40.69999998807907,
+          "inpMs": 48,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 20,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 52.39999997615814,
+          "contentMs": 41.29999998211861,
+          "inpMs": 56,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 49.70000001788139,
+          "contentMs": 41.900000005960464,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 50.30000001192093,
+          "contentMs": 43.19999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 225.7999999821186,
+          "contentMs": 220,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 3,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 27,
+              "duration": 158,
+              "bytes": 330
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 72,
+          "contentMs": 60.5,
+          "inpMs": 72,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 36,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 76.09999999403954,
+          "contentMs": 66.09999999403954,
+          "inpMs": 72,
+          "inputDelayMs": 7,
+          "clickProcessingMs": 40,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 212.80000001192093,
+          "contentMs": 205.2000000178814,
+          "inpMs": 24,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 6,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 21,
+              "duration": 159,
+              "bytes": 330
+            }
+          ],
+          "sample": 2
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 61.19999998807907,
+          "contentMs": 50.79999998211861,
+          "inpMs": 56,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 35,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 203.89999997615814,
+          "contentMs": 190.7999999821186,
+          "inpMs": 184,
+          "inputDelayMs": 17,
+          "clickProcessingMs": 147,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 159.7999999821186,
+          "contentMs": 146.90000000596046,
+          "inpMs": 144,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 110,
+          "longFrames": [
+            {
+              "duration": 122,
+              "blocking": 65
+            }
+          ],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 490.5,
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 229.40000000596046,
+          "contentMs": 217,
+          "inpMs": 32,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 29,
+              "duration": 157,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 188,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 45.099999994039536,
+          "contentMs": 36.5,
+          "inpMs": 40,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 254,
+          "contentMs": 240.90000000596046,
+          "inpMs": 32,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 20,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 21,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 46,
+              "duration": 157,
+              "bytes": 330
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 58.400000005960464,
+          "contentMs": 37.69999998807907,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 48.099999994039536,
+          "contentMs": 37,
+          "inpMs": 48,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 45.69999998807907,
+          "contentMs": 38.69999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 29.80000001192093,
+          "contentMs": 23.099999994039536,
+          "inpMs": 32,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 223.09999999403954,
+          "contentMs": 215.89999997615814,
+          "inpMs": 24,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 4,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 17,
+              "duration": 159,
+              "bytes": 330
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 59.10000002384186,
+          "contentMs": 47.900000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 37,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 72.69999998807907,
+          "contentMs": 63,
+          "inpMs": 64,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 38,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 216.2999999821186,
+          "contentMs": 209.19999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 26,
+              "duration": 158,
+              "bytes": 330
+            }
+          ],
+          "sample": 3
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 58.69999998807907,
+          "contentMs": 47.79999998211861,
+          "inpMs": 56,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 33,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 211.19999998807907,
+          "contentMs": 198.09999999403954,
+          "inpMs": 192,
+          "inputDelayMs": 17,
+          "clickProcessingMs": 153,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 172.59999999403954,
+          "contentMs": 152.40000000596046,
+          "inpMs": 144,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 115,
+          "longFrames": [
+            {
+              "duration": 126,
+              "blocking": 74
+            }
+          ],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 488.59999999403954,
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 232.5,
+          "contentMs": 221.19999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 30,
+              "duration": 159,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 193,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 44.30000001192093,
+          "contentMs": 36,
+          "inpMs": 40,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 257,
+          "contentMs": 245.09999999403954,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 17,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 19,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 45,
+              "duration": 160,
+              "bytes": 330
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 53.30000001192093,
+          "contentMs": 32.19999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 19,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 49.69999998807907,
+          "contentMs": 37.79999998211861,
+          "inpMs": 48,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 50,
+          "contentMs": 40.69999998807907,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 29.799999982118607,
+          "contentMs": 23.19999998807907,
+          "inpMs": 24,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 246.39999997615814,
+          "contentMs": 240,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 20,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 43,
+              "duration": 158,
+              "bytes": 330
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 67.60000002384186,
+          "contentMs": 56.80000001192093,
+          "inpMs": 64,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 39,
+          "longFrames": [
+            {
+              "duration": 50,
+              "blocking": 0
+            }
+          ],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 96,
+          "contentMs": 84.7999999821186,
+          "inpMs": 80,
+          "inputDelayMs": 18,
+          "clickProcessingMs": 41,
+          "longFrames": [
+            {
+              "duration": 52,
+              "blocking": 0
+            }
+          ],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 229.90000000596046,
+          "contentMs": 222.40000000596046,
+          "inpMs": 32,
+          "inputDelayMs": 17,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 9,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 10,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 40,
+              "duration": 154,
+              "bytes": 330
+            }
+          ],
+          "sample": 4
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 59.400000005960464,
+          "contentMs": 48.900000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 36,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 223.5,
+          "contentMs": 208.30000001192093,
+          "inpMs": 208,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 167,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 162.7000000178814,
+          "contentMs": 149.40000000596046,
+          "inpMs": 152,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 116,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 461.90000000596046,
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 235.09999999403954,
+          "contentMs": 222.30000001192093,
+          "inpMs": 32,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 31,
+              "duration": 160,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 194,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 56.20000001788139,
+          "contentMs": 47.400000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 27,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 234.7000000178814,
+          "contentMs": 222.80000001192093,
+          "inpMs": 32,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 6,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 31,
+              "duration": 155,
+              "bytes": 330
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 61.900000005960464,
+          "contentMs": 42.70000001788139,
+          "inpMs": 48,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 20,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 54.400000005960464,
+          "contentMs": 42.19999998807907,
+          "inpMs": 56,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 57.79999998211861,
+          "contentMs": 46.69999998807907,
+          "inpMs": 48,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 21,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 57.30000001192093,
+          "contentMs": 50.69999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 228.09999999403954,
+          "contentMs": 221.40000000596046,
+          "inpMs": 32,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 5,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 4,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 28,
+              "duration": 157,
+              "bytes": 330
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 71.19999998807907,
+          "contentMs": 59.39999997615814,
+          "inpMs": 72,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 36,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 74.40000000596046,
+          "contentMs": 64.5,
+          "inpMs": 72,
+          "inputDelayMs": 3,
+          "clickProcessingMs": 41,
+          "longFrames": [
+            {
+              "duration": 50,
+              "blocking": 0
+            }
+          ],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 214.19999998807907,
+          "contentMs": 207.59999999403954,
+          "inpMs": 32,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 4,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 24,
+              "duration": 157,
+              "bytes": 330
+            }
+          ],
+          "sample": 5
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 61.900000005960464,
+          "contentMs": 50.900000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 35,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 204.40000000596046,
+          "contentMs": 190.69999998807907,
+          "inpMs": 184,
+          "inputDelayMs": 18,
+          "clickProcessingMs": 147,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 170.89999997615814,
+          "contentMs": 157.89999997615814,
+          "inpMs": 152,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 119,
+          "longFrames": [
+            {
+              "duration": 132,
+              "blocking": 79
+            }
+          ],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 489,
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 227.69999998807907,
+          "contentMs": 214.2999999821186,
+          "inpMs": 24,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 20,
+              "duration": 159,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 182,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 52.5,
+          "contentMs": 43.5,
+          "inpMs": 48,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 30,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 254.39999997615814,
+          "contentMs": 242.39999997615814,
+          "inpMs": 32,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 9,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 18,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 19,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 44,
+              "duration": 157,
+              "bytes": 330
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 52.599999994039536,
+          "contentMs": 32.79999998211861,
+          "inpMs": 40,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 20,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 57.900000005960464,
+          "contentMs": 45.70000001788139,
+          "inpMs": 56,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 31,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 49.79999998211861,
+          "contentMs": 42.5,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 34.30000001192093,
+          "contentMs": 27.200000017881393,
+          "inpMs": 32,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 246.89999997615814,
+          "contentMs": 240.09999999403954,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 20,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 44,
+              "duration": 154,
+              "bytes": 330
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 70.69999998807907,
+          "contentMs": 59.80000001192093,
+          "inpMs": 64,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 41,
+          "longFrames": [
+            {
+              "duration": 54,
+              "blocking": 3
+            }
+          ],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 93.09999999403954,
+          "contentMs": 82.5,
+          "inpMs": 80,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 41,
+          "longFrames": [
+            {
+              "duration": 51,
+              "blocking": 0
+            }
+          ],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 233.7000000178814,
+          "contentMs": 226.2000000178814,
+          "inpMs": 32,
+          "inputDelayMs": 17,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 10,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 10,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 39,
+              "duration": 160,
+              "bytes": 330
+            }
+          ],
+          "sample": 6
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 89.30000001192093,
+          "contentMs": 77.59999999403954,
+          "inpMs": 72,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 37,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 218.30000001192093,
+          "contentMs": 195,
+          "inpMs": 192,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 156,
+          "longFrames": [
+            {
+              "duration": 168,
+              "blocking": 116
+            }
+          ],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 177.89999997615814,
+          "contentMs": 163.7999999821186,
+          "inpMs": 168,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 131,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 458,
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 230.80000001192093,
+          "contentMs": 218.30000001192093,
+          "inpMs": 32,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/api/app-version",
+              "start": 30,
+              "duration": 154,
+              "bytes": 330
+            },
+            {
+              "url": "/_next/static/chunks/3jcnmg5fbozfu.js",
+              "start": 188,
+              "duration": 0,
+              "bytes": 0
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 46.599999994039536,
+          "contentMs": 36,
+          "inpMs": 40,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 27,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 246.59999999403954,
+          "contentMs": 234.69999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/272_fdh3e_nl5.js",
+              "start": 17,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/3di5_kuajau-s.js",
+              "start": 17,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 42,
+              "duration": 154,
+              "bytes": 330
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 60.30000001192093,
+          "contentMs": 41.5,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 55,
+          "contentMs": 43.900000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 53.599999994039536,
+          "contentMs": 46.29999998211861,
+          "inpMs": 40,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 32.400000005960464,
+          "contentMs": 25.599999994039536,
+          "inpMs": 32,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 218.19999998807907,
+          "contentMs": 212,
+          "inpMs": 24,
+          "inputDelayMs": 4,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/0m7k6uks_bsgf.js",
+              "start": 10,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 21,
+              "duration": 156,
+              "bytes": 330
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 64,
+          "contentMs": 53.19999998807907,
+          "inpMs": 64,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 36,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 74,
+          "contentMs": 64.19999998807907,
+          "inpMs": 64,
+          "inputDelayMs": 7,
+          "clickProcessingMs": 38,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 215.90000000596046,
+          "contentMs": 208.80000001192093,
+          "inpMs": 32,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [
+            {
+              "url": "/_next/static/chunks/2cv9j35bxgox0.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/_next/static/chunks/1u7x_suck2gxn.js",
+              "start": 5,
+              "duration": 0,
+              "bytes": 0
+            },
+            {
+              "url": "/api/app-version",
+              "start": 28,
+              "duration": 156,
+              "bytes": 330
+            }
+          ],
+          "sample": 7
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 66.19999998807907,
+          "contentMs": 55.29999998211861,
+          "inpMs": 64,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 38,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 219.30000001192093,
+          "contentMs": 204.2000000178814,
+          "inpMs": 208,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 167,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 183.10000002384186,
+          "contentMs": 169.60000002384186,
+          "inpMs": 168,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 136,
+          "longFrames": [
+            {
+              "duration": 148,
+              "blocking": 96
+            }
+          ],
+          "resources": [],
+          "sample": 7
+        }
+      ]
+    },
+    "after": {
+      "url": "http://localhost:43202/",
+      "errors": [],
+      "medians": {
+        "start→today (page load)": 482,
+        "today→feed": 51.3,
+        "feed→ritual": 56.1,
+        "ritual→duel": 59.6,
+        "duel→month": 52.3,
+        "month→week": 44.9,
+        "week→battles": 39.2,
+        "battles→categories": 45.5,
+        "categories→progress": 63.7,
+        "progress→today": 69.8,
+        "today→duel (again)": 43,
+        "duel→settings": 55.9,
+        "settings→today (again)": 68,
+        "today→check-in": 226.5,
+        "check-in→undo": 166
+      },
+      "worst": 279.6,
+      "samples": [
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 499.69999998807907,
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 66.7000000178814,
+          "contentMs": 37.30000001192093,
+          "inpMs": 48,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 19,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 68.80000001192093,
+          "contentMs": 47.599999994039536,
+          "inpMs": 64,
+          "inputDelayMs": 18,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 67.5,
+          "contentMs": 40.30000001192093,
+          "inpMs": 64,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 21,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 68,
+          "contentMs": 50.599999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 56.900000005960464,
+          "contentMs": 40.099999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 17,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 45.20000001788139,
+          "contentMs": 33.70000001788139,
+          "inpMs": 40,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 51.099999994039536,
+          "contentMs": 40.89999997615814,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 10,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 86.59999999403954,
+          "contentMs": 67.09999999403954,
+          "inpMs": 80,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 34,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 68,
+          "contentMs": 48.400000005960464,
+          "inpMs": 64,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 59.39999997615814,
+          "contentMs": 42.89999997615814,
+          "inpMs": 56,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 19,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 84.09999999403954,
+          "contentMs": 69.40000000596046,
+          "inpMs": 64,
+          "inputDelayMs": 19,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 80.90000000596046,
+          "contentMs": 53.5,
+          "inpMs": 72,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 279.59999999403954,
+          "contentMs": 228.80000001192093,
+          "inpMs": 232,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 190,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 194.40000000596046,
+          "contentMs": 163,
+          "inpMs": 176,
+          "inputDelayMs": 18,
+          "clickProcessingMs": 141,
+          "longFrames": [],
+          "resources": [],
+          "sample": 1
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 457.7000000178814,
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 54,
+          "contentMs": 35,
+          "inpMs": 48,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 41.60000002384186,
+          "contentMs": 26.200000017881393,
+          "inpMs": 40,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 17,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 60.900000005960464,
+          "contentMs": 42.80000001192093,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 33.30000001192093,
+          "contentMs": 21.69999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 46.69999998807907,
+          "contentMs": 34.19999998807907,
+          "inpMs": 48,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 50.599999994039536,
+          "contentMs": 41.69999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 45.5,
+          "contentMs": 34.900000005960464,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 7,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 58,
+          "contentMs": 45.69999998807907,
+          "inpMs": 56,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 55.30000001192093,
+          "contentMs": 41.20000001788139,
+          "inpMs": 48,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 26,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 41.900000005960464,
+          "contentMs": 32.70000001788139,
+          "inpMs": 40,
+          "inputDelayMs": 11,
+          "clickProcessingMs": 17,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 58,
+          "contentMs": 45.19999998807907,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 24,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 77.2999999821186,
+          "contentMs": 45.79999998211861,
+          "inpMs": 64,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 234.2999999821186,
+          "contentMs": 191.7999999821186,
+          "inpMs": 200,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 164,
+          "longFrames": [],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 178.89999997615814,
+          "contentMs": 158.2999999821186,
+          "inpMs": 144,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 113,
+          "longFrames": [
+            {
+              "duration": 123,
+              "blocking": 72
+            }
+          ],
+          "resources": [],
+          "sample": 2
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 463.5,
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 50.69999998807907,
+          "contentMs": 29.399999976158142,
+          "inpMs": 40,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 58.79999998211861,
+          "contentMs": 44.099999994039536,
+          "inpMs": 40,
+          "inputDelayMs": 10,
+          "clickProcessingMs": 17,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 59.60000002384186,
+          "contentMs": 42.10000002384186,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 35.10000002384186,
+          "contentMs": 23.80000001192093,
+          "inpMs": 32,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 44.900000005960464,
+          "contentMs": 33.10000002384186,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 39.80000001192093,
+          "contentMs": 31.599999994039536,
+          "inpMs": 32,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 28.69999998807907,
+          "contentMs": 18.19999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 82.2000000178814,
+          "contentMs": 66.90000000596046,
+          "inpMs": 64,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 48.5,
+          "contentMs": 35.80000001192093,
+          "inpMs": 40,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 43,
+          "contentMs": 34.400000005960464,
+          "inpMs": 40,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 54.69999998807907,
+          "contentMs": 44.29999998211861,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 22,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 66.59999999403954,
+          "contentMs": 50.80000001192093,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 24,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 208.69999998807907,
+          "contentMs": 171.39999997615814,
+          "inpMs": 176,
+          "inputDelayMs": 8,
+          "clickProcessingMs": 159,
+          "longFrames": [],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 150.60000002384186,
+          "contentMs": 130.90000000596046,
+          "inpMs": 136,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 114,
+          "longFrames": [
+            {
+              "duration": 123,
+              "blocking": 72
+            }
+          ],
+          "resources": [],
+          "sample": 3
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 482,
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 51.29999998211861,
+          "contentMs": 30.5,
+          "inpMs": 40,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 61,
+          "contentMs": 46.099999994039536,
+          "inpMs": 48,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 46.5,
+          "contentMs": 28.100000023841858,
+          "inpMs": 48,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 52.400000005960464,
+          "contentMs": 40.70000001788139,
+          "inpMs": 48,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 45,
+          "contentMs": 35.19999998807907,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 39.099999994039536,
+          "contentMs": 31.099999994039536,
+          "inpMs": 40,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 46.69999998807907,
+          "contentMs": 36.69999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 64,
+          "contentMs": 51.400000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 27,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 73.90000000596046,
+          "contentMs": 60.80000001192093,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 26,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 45,
+          "contentMs": 35.599999994039536,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 55.89999997615814,
+          "contentMs": 45,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 23,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 63.900000005960464,
+          "contentMs": 48.099999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 226.5,
+          "contentMs": 184,
+          "inpMs": 184,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 148,
+          "longFrames": [],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 141.5,
+          "contentMs": 129.40000000596046,
+          "inpMs": 136,
+          "inputDelayMs": 19,
+          "clickProcessingMs": 107,
+          "longFrames": [
+            {
+              "duration": 117,
+              "blocking": 62
+            }
+          ],
+          "resources": [],
+          "sample": 4
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 512.7000000178814,
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 46.599999994039536,
+          "contentMs": 26.5,
+          "inpMs": 40,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 56.099999994039536,
+          "contentMs": 39.599999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 17,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 58.400000005960464,
+          "contentMs": 40.10000002384186,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 19,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 52.30000001192093,
+          "contentMs": 41.400000005960464,
+          "inpMs": 40,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 34.400000005960464,
+          "contentMs": 22.19999998807907,
+          "inpMs": 32,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 36.900000005960464,
+          "contentMs": 28.599999994039536,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 44.900000005960464,
+          "contentMs": 34.30000001192093,
+          "inpMs": 40,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 63.70000001788139,
+          "contentMs": 50.30000001192093,
+          "inpMs": 64,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 29,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 70,
+          "contentMs": 56.400000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 26,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 39.5,
+          "contentMs": 30.700000017881393,
+          "inpMs": 40,
+          "inputDelayMs": 9,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 55.599999994039536,
+          "contentMs": 45.599999994039536,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 23,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 69.80000001192093,
+          "contentMs": 51.80000001192093,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 26,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 216.59999999403954,
+          "contentMs": 180.40000000596046,
+          "inpMs": 184,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 158,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 155.59999999403954,
+          "contentMs": 143.40000000596046,
+          "inpMs": 152,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 114,
+          "longFrames": [],
+          "resources": [],
+          "sample": 5
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 471.2999999821186,
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 46.599999994039536,
+          "contentMs": 25.899999976158142,
+          "inpMs": 40,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 14,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 40.79999998211861,
+          "contentMs": 25.099999994039536,
+          "inpMs": 40,
+          "inputDelayMs": 4,
+          "clickProcessingMs": 17,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 62.099999994039536,
+          "contentMs": 43.19999998807907,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 33.900000005960464,
+          "contentMs": 21.900000005960464,
+          "inpMs": 32,
+          "inputDelayMs": 6,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 31.599999994039536,
+          "contentMs": 20.099999994039536,
+          "inpMs": 32,
+          "inputDelayMs": 4,
+          "clickProcessingMs": 13,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 39.19999998807907,
+          "contentMs": 30.19999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 41.70000001788139,
+          "contentMs": 31.30000001192093,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 61.19999998807907,
+          "contentMs": 50,
+          "inpMs": 56,
+          "inputDelayMs": 16,
+          "clickProcessingMs": 27,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 74,
+          "contentMs": 61.099999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 45,
+          "contentMs": 35,
+          "inpMs": 40,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 15,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 54.79999998211861,
+          "contentMs": 46.29999998211861,
+          "inpMs": 48,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 22,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 68,
+          "contentMs": 52.400000005960464,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 219,
+          "contentMs": 182.5,
+          "inpMs": 184,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 156,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 185.69999998807907,
+          "contentMs": 172.2999999821186,
+          "inpMs": 168,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 135,
+          "longFrames": [],
+          "resources": [],
+          "sample": 6
+        },
+        {
+          "from": "load",
+          "to": "today",
+          "visit": 1,
+          "ms": 498.90000000596046,
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "feed",
+          "visit": 1,
+          "ms": 51.5,
+          "contentMs": 32.599999994039536,
+          "inpMs": 48,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "feed",
+          "to": "ritual",
+          "visit": 1,
+          "ms": 41.80000001192093,
+          "contentMs": 27.5,
+          "inpMs": 40,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "ritual",
+          "to": "duel",
+          "visit": 1,
+          "ms": 57.5,
+          "contentMs": 40.10000002384186,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 18,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "month",
+          "visit": 1,
+          "ms": 53.599999994039536,
+          "contentMs": 42.69999998807907,
+          "inpMs": 40,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "month",
+          "to": "week",
+          "visit": 1,
+          "ms": 32.099999994039536,
+          "contentMs": 20.099999994039536,
+          "inpMs": 32,
+          "inputDelayMs": 5,
+          "clickProcessingMs": 12,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "week",
+          "to": "battles",
+          "visit": 1,
+          "ms": 37.60000002384186,
+          "contentMs": 29.5,
+          "inpMs": 40,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 8,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "battles",
+          "to": "categories",
+          "visit": 1,
+          "ms": 48.30000001192093,
+          "contentMs": 38.400000005960464,
+          "inpMs": 40,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 6,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "categories",
+          "to": "progress",
+          "visit": 1,
+          "ms": 63.30000001192093,
+          "contentMs": 50.70000001788139,
+          "inpMs": 56,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 28,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "progress",
+          "to": "today",
+          "visit": 1,
+          "ms": 69.80000001192093,
+          "contentMs": 57.70000001788139,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "duel",
+          "visit": 2,
+          "ms": 42.69999998807907,
+          "contentMs": 32.599999994039536,
+          "inpMs": 40,
+          "inputDelayMs": 12,
+          "clickProcessingMs": 16,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "duel",
+          "to": "settings",
+          "visit": 1,
+          "ms": 58.70000001788139,
+          "contentMs": 46.599999994039536,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 25,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "settings",
+          "to": "today",
+          "visit": 2,
+          "ms": 64.5,
+          "contentMs": 47.5,
+          "inpMs": 56,
+          "inputDelayMs": 15,
+          "clickProcessingMs": 24,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "today",
+          "to": "check-in",
+          "visit": 1,
+          "ms": 232.60000002384186,
+          "contentMs": 197.2000000178814,
+          "inpMs": 192,
+          "inputDelayMs": 13,
+          "clickProcessingMs": 154,
+          "longFrames": [],
+          "resources": [],
+          "sample": 7
+        },
+        {
+          "from": "check-in",
+          "to": "undo",
+          "visit": 1,
+          "ms": 166,
+          "contentMs": 152.80000001192093,
+          "inpMs": 144,
+          "inputDelayMs": 14,
+          "clickProcessingMs": 111,
+          "longFrames": [
+            {
+              "duration": 121,
+              "blocking": 71
+            }
+          ],
+          "resources": [],
+          "sample": 7
+        }
+      ]
+    }
+  }
+}
