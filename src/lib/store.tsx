@@ -25,6 +25,13 @@ import { getDuelPlayers } from './duel-profile';
 import { getInitialState } from './seed';
 import { getHealthProgressDetails } from './health-correlation';
 import { reconcileSleepTelemetry } from './health-rewards';
+import {
+  HEALTH_AUTO_SYNC_COOLDOWN_MS,
+  HEALTH_AUTO_SYNC_STARTUP_DELAY_MS,
+  type HealthAutoSyncDisabledReason,
+  resolveClientTimeZone,
+  shouldRunAutoHealthSync,
+} from './health-auto-sync';
 import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
 import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, readLegacyProgress, restoreLegacyDuelProgress } from './legacy-import';
@@ -59,7 +66,27 @@ import { readDuelCache, writeDuelCache, duelCacheKey } from './duel-cache';
 import { createSyncScheduler } from './sync-scheduler';
 
 const STORAGE_KEY = 'do_it_app_data_v2';
+const HEALTH_LAST_CHECKED_PREFIX = 'do_it_health_last_checked:';
 const EMPTY_REST_DAYS: RestDay[] = [];
+
+function readStoredHealthCheckedAt(accountId: string | undefined): string | null {
+  if (!accountId || typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(`${HEALTH_LAST_CHECKED_PREFIX}${accountId}`);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredHealthCheckedAt(accountId: string | undefined, value: string | null) {
+  if (!accountId || typeof window === 'undefined') return;
+  try {
+    if (value) localStorage.setItem(`${HEALTH_LAST_CHECKED_PREFIX}${accountId}`, value);
+    else localStorage.removeItem(`${HEALTH_LAST_CHECKED_PREFIX}${accountId}`);
+  } catch {
+    // Browser storage may be restricted; server-side cooldown remains authoritative.
+  }
+}
 const EMPTY_PLAYER_SUMMARY: PlayerScoreSummary = {
   today: 0,
   weekly: 0,
@@ -153,7 +180,8 @@ interface StoreContextType {
   clearHealthTelemetry: (habitId: string, date?: string) => void;
   syncGoogleHealth: (
     simulate?: boolean,
-    simulateUnder?: boolean
+    simulateUnder?: boolean,
+    options?: { auto?: boolean; date?: string }
   ) => Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }>;
   disconnectGoogleHealth: () => void;
   themePreference: ThemePreference;
@@ -185,6 +213,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const writeEpochRef = useRef(0);
   const syncSchedulerRef = useRef<ReturnType<typeof createSyncScheduler> | null>(null);
   const proofCacheRef = useRef(new Map<string, Promise<string[]>>());
+  const autoHealthRef = useRef<{
+    accountId: string | undefined;
+    inFlight: boolean;
+    lastAttemptAt: number;
+    lastCheckedAt: string | null;
+    disabledReason: HealthAutoSyncDisabledReason | null;
+  }>({
+    accountId: undefined,
+    inFlight: false,
+    lastAttemptAt: 0,
+    lastCheckedAt: null,
+    disabledReason: null,
+  });
 
   // 1. Hydrate from localStorage on client mount
   useEffect(() => {
@@ -1157,34 +1198,94 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const syncGoogleHealth = useCallback(
     async (
       simulate = false,
-      simulateUnder = false
+      simulateUnder = false,
+      options?: { auto?: boolean; date?: string }
     ): Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }> => {
+      const isAuto = Boolean(options?.auto) && !simulate && !simulateUnder;
       try {
-        const params = new URLSearchParams({ date: selectedDate });
+        const params = new URLSearchParams();
+        if (isAuto) {
+          params.set('auto', 'true');
+        } else {
+          params.set('date', options?.date ?? selectedDate);
+        }
         if (simulate) params.set('simulate', 'true');
         if (simulateUnder) params.set('simulateUnder', 'true');
+
+        if (!isAuto && !simulate && !simulateUnder) {
+          autoHealthRef.current.disabledReason = null;
+        }
 
         const url = `/api/sync/google-health?${params.toString()}`;
         const client = getSupabaseClient();
         const session = (await client?.auth.getSession())?.data.session;
+        const headers: Record<string, string> = {};
+        if (session) headers.Authorization = `Bearer ${session.access_token}`;
+        let body: string | undefined;
+        if (!simulate && !simulateUnder) {
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify({
+            timeZone: resolveClientTimeZone(),
+            ...(isAuto ? { auto: true } : {}),
+          });
+        }
+
         const res = await fetch(url, {
           method: 'POST',
           cache: 'no-store',
-          headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+          headers,
+          body,
         });
         const data: GoogleHealthSyncResult = await res.json();
 
         if (!res.ok || !data.success) {
           return {
             success: false,
-            message: data.message || 'Failed to sync with Google Health.',
+            message: data.error || data.message || 'Failed to sync with Google Health.',
             result: data,
           };
         }
 
         if (data.simulated) return { success: true, message: `Preview only: ${data.message} Your progress has not changed.`, result: data };
 
+        if (data.available === false) {
+          autoHealthRef.current.disabledReason = 'unavailable';
+        } else if (data.connected === false) {
+          autoHealthRef.current.disabledReason = 'not_connected';
+        } else if (data.reason === 'needs_attention') {
+          autoHealthRef.current.disabledReason = 'needs_attention';
+        } else {
+          autoHealthRef.current.disabledReason = null;
+        }
+
+        if (data.lastCheckedAt) {
+          autoHealthRef.current.lastCheckedAt = data.lastCheckedAt;
+          writeStoredHealthCheckedAt(accountId, data.lastCheckedAt);
+        }
+
+        if (data.skipped) {
+          if (data.connected === false || data.lastCheckedAt) {
+            setState((prev) => ({
+              ...prev,
+              wearableConfig: {
+                ...prev.wearableConfig,
+                ...(data.connected !== undefined ? { googleConnected: data.connected } : {}),
+                ...(data.lastCheckedAt ? { googleLastCheckedAt: data.lastCheckedAt } : {}),
+              },
+            }));
+          }
+          return {
+            success: true,
+            message: data.message || 'Google Health was checked recently.',
+            count: 0,
+            result: data,
+          };
+        }
+
         const syncTimeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const checkedAtIso = data.lastCheckedAt || new Date().toISOString();
+        autoHealthRef.current.lastCheckedAt = checkedAtIso;
+        writeStoredHealthCheckedAt(accountId, checkedAtIso);
 
         setState((prev) => {
           let newCheckIns = [...prev.checkIns];
@@ -1227,12 +1328,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
               ...prev.wearableConfig,
               googleConnected: true,
               googleLastSync: syncTimeString,
+              googleLastCheckedAt: checkedAtIso,
               googleLastResult: data,
             },
           };
         });
 
-        if (data.checkInsCreated && data.checkInsCreated.length > 0) {
+        if ((data.changed ?? 0) > 0) {
+          syncSchedulerRef.current?.request();
+        }
+
+        if (!isAuto && data.checkInsCreated && data.checkInsCreated.length > 0) {
           soundEngine.playFanfare();
           hapticMedium();
           return {
@@ -1246,7 +1352,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return {
           success: true,
           message: data.message || 'Checked: No qualifying sleep or workouts found for this date.',
-          count: 0,
+          count: data.changed ?? 0,
           result: data,
         };
       } catch (e: unknown) {
@@ -1254,23 +1360,140 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return { success: false, message: msg };
       }
     },
-    [selectedDate]
+    [selectedDate, accountId]
   );
 
+  const hasAutomatedHabits = useMemo(
+    () => activeHabits.some((habit) => Boolean(habit.automation)),
+    [activeHabits]
+  );
 
+  // Foreground automatic Google Health checks: deferred past startup, cooldown-gated, paused while hidden/offline.
+  useEffect(() => {
+    if (autoHealthRef.current.accountId !== accountId) {
+      const justConnected = typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('wearable_connected') === 'google';
+      if (justConnected) {
+        writeStoredHealthCheckedAt(accountId, null);
+      }
+      autoHealthRef.current = {
+        accountId,
+        inFlight: false,
+        lastAttemptAt: 0,
+        lastCheckedAt: justConnected ? null : readStoredHealthCheckedAt(accountId),
+        disabledReason: null,
+      };
+    }
 
+    if (!isHydrated || !multiplayer.configured || !duelId || loadedDuelId !== duelId || !accountId || !hasAutomatedHabits) {
+      return;
+    }
 
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const clearTimer = () => {
+      if (timer !== undefined) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+    };
+
+    const scheduleNext = (delayMs: number) => {
+      clearTimer();
+      if (cancelled || document.visibilityState === 'hidden' || !navigator.onLine) return;
+      if (autoHealthRef.current.disabledReason !== null) return;
+      timer = setTimeout(() => {
+        timer = undefined;
+        void runAutoCheck();
+      }, Math.max(1_000, delayMs));
+    };
+
+    const nextCooldownDelay = () => {
+      const now = Date.now();
+      const attemptRemaining = autoHealthRef.current.lastAttemptAt > 0
+        ? HEALTH_AUTO_SYNC_COOLDOWN_MS - (now - autoHealthRef.current.lastAttemptAt)
+        : 0;
+      const checkedMs = autoHealthRef.current.lastCheckedAt ? Date.parse(autoHealthRef.current.lastCheckedAt) : NaN;
+      const checkedRemaining = Number.isFinite(checkedMs)
+        ? HEALTH_AUTO_SYNC_COOLDOWN_MS - (now - checkedMs)
+        : 0;
+      const remaining = Math.max(attemptRemaining, checkedRemaining);
+      return remaining > 0 ? remaining : HEALTH_AUTO_SYNC_COOLDOWN_MS;
+    };
+
+    const runAutoCheck = async () => {
+      if (cancelled) return;
+      const stateRef = autoHealthRef.current;
+      const eligible = shouldRunAutoHealthSync({
+        isHydrated,
+        multiplayerConfigured: multiplayer.configured,
+        hasUser: Boolean(accountId),
+        hasDuelLoaded: loadedDuelId === duelId,
+        hasAutomatedHabits,
+        isVisible: document.visibilityState !== 'hidden',
+        isOnline: navigator.onLine,
+        inFlight: stateRef.inFlight,
+        disabledReason: stateRef.disabledReason,
+        lastAttemptAt: stateRef.lastAttemptAt,
+        lastCheckedAt: stateRef.lastCheckedAt,
+      });
+
+      if (!eligible) {
+        if (document.visibilityState !== 'hidden' && navigator.onLine && stateRef.disabledReason === null && !stateRef.inFlight) {
+          scheduleNext(nextCooldownDelay());
+        }
+        return;
+      }
+
+      stateRef.inFlight = true;
+      stateRef.lastAttemptAt = Date.now();
+      try {
+        await syncGoogleHealth(false, false, { auto: true });
+      } finally {
+        stateRef.inFlight = false;
+        if (!cancelled && stateRef.disabledReason === null && document.visibilityState !== 'hidden' && navigator.onLine) {
+          scheduleNext(nextCooldownDelay());
+        }
+      }
+    };
+
+    const handleWake = () => {
+      if (document.visibilityState === 'hidden' || !navigator.onLine) {
+        clearTimer();
+        return;
+      }
+      void runAutoCheck();
+    };
+
+    scheduleNext(HEALTH_AUTO_SYNC_STARTUP_DELAY_MS);
+    document.addEventListener('visibilitychange', handleWake);
+    window.addEventListener('online', handleWake);
+    window.addEventListener('offline', handleWake);
+
+    return () => {
+      cancelled = true;
+      clearTimer();
+      document.removeEventListener('visibilitychange', handleWake);
+      window.removeEventListener('online', handleWake);
+      window.removeEventListener('offline', handleWake);
+    };
+  }, [isHydrated, multiplayer.configured, duelId, loadedDuelId, accountId, hasAutomatedHabits, syncGoogleHealth]);
 
   const disconnectGoogleHealth = useStableCallback(() => { if (typeof document !== 'undefined') {
     document.cookie = 'g_fit_connected=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     document.cookie = 'g_fit_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     document.cookie = 'g_fit_refresh_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
   }
+  autoHealthRef.current.lastCheckedAt = null;
+  autoHealthRef.current.disabledReason = 'not_connected';
+  writeStoredHealthCheckedAt(accountId, null);
   setState((prev) => ({
     ...prev,
     wearableConfig: {
       ...prev.wearableConfig,
       googleConnected: false,
+      googleLastCheckedAt: null,
     },
   })); });
 
