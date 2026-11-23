@@ -1,0 +1,393 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA0100012900000100000001 /* DoItApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200012900000100000001 /* DoItApp.swift */; };
+		AA0100022900000100000001 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200022900000100000001 /* Player.swift */; };
+		AA0100032900000100000001 /* HabitCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200032900000100000001 /* HabitCategory.swift */; };
+		AA0100042900000100000001 /* Habit.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200042900000100000001 /* Habit.swift */; };
+		AA0100052900000100000001 /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200052900000100000001 /* CheckIn.swift */; };
+		AA0100062900000100000001 /* Duel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200062900000100000001 /* Duel.swift */; };
+		AA0100072900000100000001 /* RestDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200072900000100000001 /* RestDay.swift */; };
+		AA0100082900000100000001 /* CouplesReaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200082900000100000001 /* CouplesReaction.swift */; };
+		AA0100092900000100000001 /* Stake.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200092900000100000001 /* Stake.swift */; };
+		AA0100102900000100000001 /* Badge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200102900000100000001 /* Badge.swift */; };
+		AA0100112900000100000001 /* HealthTelemetryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200112900000100000001 /* HealthTelemetryRecord.swift */; };
+		AA0100122900000100000001 /* ScoreSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200122900000100000001 /* ScoreSummary.swift */; };
+		AA0100132900000100000001 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200132900000100000001 /* AppState.swift */; };
+		AA0100142900000100000001 /* ScoreCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200142900000100000001 /* ScoreCalculator.swift */; };
+		AA0100152900000100000001 /* BadgeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200152900000100000001 /* BadgeCalculator.swift */; };
+		AA0100162900000100000001 /* HabitCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200162900000100000001 /* HabitCatalog.swift */; };
+		AA0100172900000100000001 /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200172900000100000001 /* PersistenceService.swift */; };
+		AA0100182900000100000001 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200182900000100000001 /* SupabaseService.swift */; };
+		AA0100192900000100000001 /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200192900000100000001 /* HealthKitService.swift */; };
+		AA0100202900000100000001 /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200202900000100000001 /* HapticsService.swift */; };
+		AA0100212900000100000001 /* SoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200212900000100000001 /* SoundService.swift */; };
+		AA0100222900000100000001 /* DuelViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200222900000100000001 /* DuelViewModel.swift */; };
+		AA0100232900000100000001 /* Color+LinearDark.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200232900000100000001 /* Color+LinearDark.swift */; };
+		AA0100242900000100000001 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200242900000100000001 /* Typography.swift */; };
+		AA0100252900000100000001 /* DateUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200252900000100000001 /* DateUtils.swift */; };
+		AA0100262900000100000001 /* TugOfWarBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200262900000100000001 /* TugOfWarBar.swift */; };
+		AA0100272900000100000001 /* DailyParRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200272900000100000001 /* DailyParRing.swift */; };
+		AA0100282900000100000001 /* ConsistencyHeatmapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200282900000100000001 /* ConsistencyHeatmapView.swift */; };
+		AA0100292900000100000001 /* HabitCheckInCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200292900000100000001 /* HabitCheckInCard.swift */; };
+		AA0100302900000100000001 /* QuantitativeInputSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200302900000100000001 /* QuantitativeInputSheet.swift */; };
+		AA0100312900000100000001 /* PhotoProofSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200312900000100000001 /* PhotoProofSheet.swift */; };
+		AA0100322900000100000001 /* SendReactionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200322900000100000001 /* SendReactionSheet.swift */; };
+		AA0100332900000100000001 /* RestDaySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200332900000100000001 /* RestDaySheet.swift */; };
+		AA0100342900000100000001 /* TodayDuelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200342900000100000001 /* TodayDuelView.swift */; };
+		AA0100352900000100000001 /* BattleAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200352900000100000001 /* BattleAnalyticsView.swift */; };
+		AA0100362900000100000001 /* StakesLedgerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200362900000100000001 /* StakesLedgerView.swift */; };
+		AA0100372900000100000001 /* TrophyCabinetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200372900000100000001 /* TrophyCabinetView.swift */; };
+		AA0100382900000100000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0200382900000100000001 /* SettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AA0200012900000100000001 /* DoItApp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoItApp.swift; sourceTree = "<group>"; };
+		AA0200022900000100000001 /* Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		AA0200032900000100000001 /* HabitCategory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HabitCategory.swift; sourceTree = "<group>"; };
+		AA0200042900000100000001 /* Habit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Habit.swift; sourceTree = "<group>"; };
+		AA0200052900000100000001 /* CheckIn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CheckIn.swift; sourceTree = "<group>"; };
+		AA0200062900000100000001 /* Duel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Duel.swift; sourceTree = "<group>"; };
+		AA0200072900000100000001 /* RestDay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RestDay.swift; sourceTree = "<group>"; };
+		AA0200082900000100000001 /* CouplesReaction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CouplesReaction.swift; sourceTree = "<group>"; };
+		AA0200092900000100000001 /* Stake.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Stake.swift; sourceTree = "<group>"; };
+		AA0200102900000100000001 /* Badge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Badge.swift; sourceTree = "<group>"; };
+		AA0200112900000100000001 /* HealthTelemetryRecord.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HealthTelemetryRecord.swift; sourceTree = "<group>"; };
+		AA0200122900000100000001 /* ScoreSummary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScoreSummary.swift; sourceTree = "<group>"; };
+		AA0200132900000100000001 /* AppState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		AA0200142900000100000001 /* ScoreCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScoreCalculator.swift; sourceTree = "<group>"; };
+		AA0200152900000100000001 /* BadgeCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BadgeCalculator.swift; sourceTree = "<group>"; };
+		AA0200162900000100000001 /* HabitCatalog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HabitCatalog.swift; sourceTree = "<group>"; };
+		AA0200172900000100000001 /* PersistenceService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersistenceService.swift; sourceTree = "<group>"; };
+		AA0200182900000100000001 /* SupabaseService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		AA0200192900000100000001 /* HealthKitService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
+		AA0200202900000100000001 /* HapticsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HapticsService.swift; sourceTree = "<group>"; };
+		AA0200212900000100000001 /* SoundService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoundService.swift; sourceTree = "<group>"; };
+		AA0200222900000100000001 /* DuelViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DuelViewModel.swift; sourceTree = "<group>"; };
+		AA0200232900000100000001 /* Color+LinearDark.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Color+LinearDark.swift"; sourceTree = "<group>"; };
+		AA0200242900000100000001 /* Typography.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		AA0200252900000100000001 /* DateUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateUtils.swift; sourceTree = "<group>"; };
+		AA0200262900000100000001 /* TugOfWarBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TugOfWarBar.swift; sourceTree = "<group>"; };
+		AA0200272900000100000001 /* DailyParRing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DailyParRing.swift; sourceTree = "<group>"; };
+		AA0200282900000100000001 /* ConsistencyHeatmapView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConsistencyHeatmapView.swift; sourceTree = "<group>"; };
+		AA0200292900000100000001 /* HabitCheckInCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HabitCheckInCard.swift; sourceTree = "<group>"; };
+		AA0200302900000100000001 /* QuantitativeInputSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuantitativeInputSheet.swift; sourceTree = "<group>"; };
+		AA0200312900000100000001 /* PhotoProofSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoProofSheet.swift; sourceTree = "<group>"; };
+		AA0200322900000100000001 /* SendReactionSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SendReactionSheet.swift; sourceTree = "<group>"; };
+		AA0200332900000100000001 /* RestDaySheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RestDaySheet.swift; sourceTree = "<group>"; };
+		AA0200342900000100000001 /* TodayDuelView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodayDuelView.swift; sourceTree = "<group>"; };
+		AA0200352900000100000001 /* BattleAnalyticsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BattleAnalyticsView.swift; sourceTree = "<group>"; };
+		AA0200362900000100000001 /* StakesLedgerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StakesLedgerView.swift; sourceTree = "<group>"; };
+		AA0200372900000100000001 /* TrophyCabinetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrophyCabinetView.swift; sourceTree = "<group>"; };
+		AA0200382900000100000001 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA0300012900000100000001 /* DoIt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DoIt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		AA0400012900000100000001 = {
+			isa = PBXGroup;
+			children = (
+				AA0400022900000100000001 /* Sources */,
+				AA0400032900000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AA0400022900000100000001 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200012900000100000001 /* DoItApp.swift */,
+				AA0400042900000100000001 /* Models */,
+				AA0400052900000100000001 /* Services */,
+				AA0400062900000100000001 /* ViewModels */,
+				AA0400072900000100000001 /* Views */,
+				AA0400082900000100000001 /* DesignSystem */,
+				AA0400092900000100000001 /* Utils */,
+			);
+			path = Sources/DoIt;
+			sourceTree = "<group>";
+		};
+		AA0400032900000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA0300012900000100000001 /* DoIt.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA0400042900000100000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200022900000100000001 /* Player.swift */,
+				AA0200032900000100000001 /* HabitCategory.swift */,
+				AA0200042900000100000001 /* Habit.swift */,
+				AA0200052900000100000001 /* CheckIn.swift */,
+				AA0200062900000100000001 /* Duel.swift */,
+				AA0200072900000100000001 /* RestDay.swift */,
+				AA0200082900000100000001 /* CouplesReaction.swift */,
+				AA0200092900000100000001 /* Stake.swift */,
+				AA0200102900000100000001 /* Badge.swift */,
+				AA0200112900000100000001 /* HealthTelemetryRecord.swift */,
+				AA0200122900000100000001 /* ScoreSummary.swift */,
+				AA0200132900000100000001 /* AppState.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA0400052900000100000001 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200142900000100000001 /* ScoreCalculator.swift */,
+				AA0200152900000100000001 /* BadgeCalculator.swift */,
+				AA0200162900000100000001 /* HabitCatalog.swift */,
+				AA0200172900000100000001 /* PersistenceService.swift */,
+				AA0200182900000100000001 /* SupabaseService.swift */,
+				AA0200192900000100000001 /* HealthKitService.swift */,
+				AA0200202900000100000001 /* HapticsService.swift */,
+				AA0200212900000100000001 /* SoundService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AA0400062900000100000001 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200222900000100000001 /* DuelViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		AA0400072900000100000001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200342900000100000001 /* TodayDuelView.swift */,
+				AA0200352900000100000001 /* BattleAnalyticsView.swift */,
+				AA0200362900000100000001 /* StakesLedgerView.swift */,
+				AA0200372900000100000001 /* TrophyCabinetView.swift */,
+				AA0200382900000100000001 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AA0400082900000100000001 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200232900000100000001 /* Color+LinearDark.swift */,
+				AA0200242900000100000001 /* Typography.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		AA0400092900000100000001 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				AA0200252900000100000001 /* DateUtils.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA0500012900000100000001 /* DoIt */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0600012900000100000001 /* Build configuration list for PBXNativeTarget "DoIt" */;
+			buildPhases = (
+				AA0700012900000100000001 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DoIt;
+			productName = DoIt;
+			productReference = AA0300012900000100000001 /* DoIt.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA0800012900000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					AA0500012900000100000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AA0600022900000100000001 /* Build configuration list for PBXProject "DoIt" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA0400012900000100000001;
+			productRefGroup = AA0400032900000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA0500012900000100000001 /* DoIt */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA0700012900000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0100012900000100000001 /* DoItApp.swift in Sources */,
+				AA0100022900000100000001 /* Player.swift in Sources */,
+				AA0100032900000100000001 /* HabitCategory.swift in Sources */,
+				AA0100042900000100000001 /* Habit.swift in Sources */,
+				AA0100052900000100000001 /* CheckIn.swift in Sources */,
+				AA0100062900000100000001 /* Duel.swift in Sources */,
+				AA0100072900000100000001 /* RestDay.swift in Sources */,
+				AA0100082900000100000001 /* CouplesReaction.swift in Sources */,
+				AA0100092900000100000001 /* Stake.swift in Sources */,
+				AA0100102900000100000001 /* Badge.swift in Sources */,
+				AA0100112900000100000001 /* HealthTelemetryRecord.swift in Sources */,
+				AA0100122900000100000001 /* ScoreSummary.swift in Sources */,
+				AA0100132900000100000001 /* AppState.swift in Sources */,
+				AA0100142900000100000001 /* ScoreCalculator.swift in Sources */,
+				AA0100152900000100000001 /* BadgeCalculator.swift in Sources */,
+				AA0100162900000100000001 /* HabitCatalog.swift in Sources */,
+				AA0100172900000100000001 /* PersistenceService.swift in Sources */,
+				AA0100182900000100000001 /* SupabaseService.swift in Sources */,
+				AA0100192900000100000001 /* HealthKitService.swift in Sources */,
+				AA0100202900000100000001 /* HapticsService.swift in Sources */,
+				AA0100212900000100000001 /* SoundService.swift in Sources */,
+				AA0100222900000100000001 /* DuelViewModel.swift in Sources */,
+				AA0100232900000100000001 /* Color+LinearDark.swift in Sources */,
+				AA0100242900000100000001 /* Typography.swift in Sources */,
+				AA0100252900000100000001 /* DateUtils.swift in Sources */,
+				AA0100262900000100000001 /* TugOfWarBar.swift in Sources */,
+				AA0100272900000100000001 /* DailyParRing.swift in Sources */,
+				AA0100282900000100000001 /* ConsistencyHeatmapView.swift in Sources */,
+				AA0100292900000100000001 /* HabitCheckInCard.swift in Sources */,
+				AA0100302900000100000001 /* QuantitativeInputSheet.swift in Sources */,
+				AA0100312900000100000001 /* PhotoProofSheet.swift in Sources */,
+				AA0100322900000100000001 /* SendReactionSheet.swift in Sources */,
+				AA0100332900000100000001 /* RestDaySheet.swift in Sources */,
+				AA0100342900000100000001 /* TodayDuelView.swift in Sources */,
+				AA0100352900000100000001 /* BattleAnalyticsView.swift in Sources */,
+				AA0100362900000100000001 /* StakesLedgerView.swift in Sources */,
+				AA0100372900000100000001 /* TrophyCabinetView.swift in Sources */,
+				AA0100382900000100000001 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA0900012900000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/DoIt/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.doit.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA0900022900000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/DoIt/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.doit.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AA0900032900000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AA0900042900000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA0600012900000100000001 /* Build configuration list for PBXNativeTarget "DoIt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0900012900000100000001 /* Debug */,
+				AA0900022900000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0600022900000100000001 /* Build configuration list for PBXProject "DoIt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0900032900000100000001 /* Debug */,
+				AA0900042900000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = AA0800012900000100000001 /* Project object */;
+}

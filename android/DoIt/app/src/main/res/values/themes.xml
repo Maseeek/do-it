@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.DoIt" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/linear_bg</item>
+        <item name="android:navigationBarColor">@color/linear_bg</item>
+        <item name="android:windowBackground">@color/linear_bg</item>
+    </style>
+</resources>

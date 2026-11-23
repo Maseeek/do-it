@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$DIR/DoIt/gradlew" ] && [ ! -f "$DIR/build.gradle.kts" ]; then
+  exec "$DIR/DoIt/gradlew" -p "$DIR/DoIt" "$@"
+fi
+exec "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"

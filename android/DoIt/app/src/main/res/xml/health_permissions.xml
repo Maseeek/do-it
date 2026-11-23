@@ -1,0 +1,8 @@
+<permissions>
+    <permission-group android:name="android.permission-group.HEALTH">
+        <permission android:name="android.permission.health.READ_STEPS" />
+        <permission android:name="android.permission.health.READ_SLEEP" />
+        <permission android:name="android.permission.health.READ_EXERCISE" />
+        <permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+    </permission-group>
+</permissions>

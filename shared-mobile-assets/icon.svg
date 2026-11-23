@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Radial Gradients -->
+    <radialGradient id="bgGlow" cx="50%" cy="46%" r="58%" fx="50%" fy="40%">
+      <stop offset="0%" stop-color="#181c2e" />
+      <stop offset="45%" stop-color="#0e111a" />
+      <stop offset="100%" stop-color="#08090a" />
+    </radialGradient>
+
+    <radialGradient id="boltCoreGlow" cx="50%" cy="48%" r="40%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.32" />
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Lightning Bolt Gradients -->
+    <linearGradient id="boltFaceGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="22%" stop-color="#e0f2fe" />
+      <stop offset="48%" stop-color="#38bdf8" />
+      <stop offset="78%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <linearGradient id="boltBevelLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#2563eb" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#4338ca" stop-opacity="0.95" />
+    </linearGradient>
+
+    <linearGradient id="boltRimLight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.8" />
+    </linearGradient>
+
+    <!-- Glow Filters -->
+    <filter id="neonDiffuseGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="36" result="blur1" />
+      <feGaussianBlur stdDeviation="72" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="coreGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Solid Obsidian Base (No Transparency for App Store strict compliance) -->
+  <rect width="1024" height="1024" fill="#08090a" />
+  <rect width="1024" height="1024" fill="url(#bgGlow)" />
+
+  <!-- Subtle Linear Precision Grid Circles & Reticles -->
+  <g opacity="0.14" stroke="#60a5fa" stroke-width="1.5" fill="none">
+    <circle cx="512" cy="512" r="380" stroke-dasharray="4 8" />
+    <circle cx="512" cy="512" r="280" />
+    <circle cx="512" cy="512" r="160" stroke-dasharray="2 6" />
+    <!-- Fine Crosshairs -->
+    <line x1="512" y1="92" x2="512" y2="124" />
+    <line x1="512" y1="900" x2="512" y2="932" />
+    <line x1="92" y1="512" x2="124" y2="512" />
+    <line x1="900" y1="512" x2="932" y2="512" />
+  </g>
+
+  <!-- Ambient Core Glow Behind Bolt -->
+  <circle cx="512" cy="512" r="320" fill="url(#boltCoreGlow)" />
+
+  <!-- Neon Aura Layer (Underneath Bolt) -->
+  <path
+    d="M 552 168 L 382 488 L 498 488 L 442 856 L 662 456 L 536 456 Z"
+    fill="#38bdf8"
+    opacity="0.38"
+    filter="url(#neonDiffuseGlow)"
+  />
+
+  <!-- Main Bolt Geometry -->
+  <g id="lightningBolt" filter="url(#coreGlow)">
+    <!-- Base Shape Outer Shadow / Dark Shading Layer -->
+    <path
+      d="M 552 168 L 382 488 L 498 488 L 442 856 L 662 456 L 536 456 Z"
+      fill="url(#boltBevelLeft)"
+    />
+
+    <!-- Main Front Facet -->
+    <path
+      d="M 552 168 L 400 482 L 498 488 L 442 856 L 656 462 L 536 456 Z"
+      fill="url(#boltFaceGrad)"
+    />
+
+    <!-- Sharp Dynamic Specular Ridge (Linear Highlight Line) -->
+    <path
+      d="M 552 168 L 498 488 L 442 856"
+      stroke="#ffffff"
+      stroke-width="5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.9"
+    />
+
+    <!-- Internal Radiant Flare Core -->
+    <path
+      d="M 546 200 L 436 476 L 504 482 L 466 760 L 626 470 L 530 466 Z"
+      fill="#ffffff"
+      opacity="0.22"
+    />
+
+    <!-- Neon Rim Border -->
+    <path
+      d="M 552 168 L 382 488 L 498 488 L 442 856 L 662 456 L 536 456 Z"
+      fill="none"
+      stroke="url(#boltRimLight)"
+      stroke-width="4.5"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <!-- Floating Energy Spark Accents (Modern High-Precision Dots) -->
+  <g fill="#38bdf8">
+    <circle cx="692" cy="380" r="4.5" opacity="0.9" />
+    <circle cx="678" cy="360" r="2.5" opacity="0.6" />
+    <circle cx="340" cy="540" r="4" opacity="0.8" />
+    <circle cx="352" cy="564" r="2" opacity="0.5" />
+    <circle cx="580" cy="220" r="3.5" opacity="0.85" />
+    <circle cx="410" cy="790" r="3.5" opacity="0.75" />
+  </g>
+</svg>

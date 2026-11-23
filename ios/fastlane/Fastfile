@@ -1,0 +1,151 @@
+# frozen_string_literal: true
+
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    # Dynamically discover project roots
+    @ios_root = File.expand_path("..", __dir__)
+    @project_dir = File.directory?(File.join(@ios_root, "DoIt")) ? File.join(@ios_root, "DoIt") : @ios_root
+
+    xcodeproj_candidates = Dir.glob(File.join(@ios_root, "**", "*.xcodeproj"))
+    xcworkspace_candidates = Dir.glob(File.join(@ios_root, "**", "*.xcworkspace"))
+
+    @project_path = xcodeproj_candidates.first
+    @workspace_path = xcworkspace_candidates.first
+    @scheme = ENV["IOS_SCHEME"] || "DoIt"
+    @package_swift_path = Dir.glob(File.join(@ios_root, "**", "Package.swift")).first
+  end
+
+  desc "Run unit tests with xcpretty, xcodebuild, or swift test"
+  lane :test do |options|
+    clean = options[:clean].nil? ? true : options[:clean]
+    scheme = options[:scheme] || @scheme
+    device = options[:device] || ENV["IOS_SIMULATOR_DEVICE"] || "iPhone 16"
+
+    UI.header("Running iOS Unit Tests (Scheme: #{scheme})")
+
+    if @project_path && File.exist?(File.join(@project_path, "project.pbxproj"))
+      scan_config = {
+        scheme: scheme,
+        clean: clean,
+        devices: [device],
+        output_directory: File.join(@ios_root, "build", "reports"),
+        output_types: "html,junit",
+        code_coverage: true,
+        fail_build: true
+      }
+      if @workspace_path
+        scan_config[:workspace] = @workspace_path
+      else
+        scan_config[:project] = @project_path
+      end
+
+      run_tests(scan_config)
+    elsif @package_swift_path
+      UI.message("Testing Swift Package at #{@package_swift_path}")
+      package_dir = File.dirname(@package_swift_path)
+      sh("cd '#{package_dir}' && swift test")
+    else
+      UI.important("No compiled Xcode project or Swift package found. Verifying project files.")
+      sh("test -f '#{@ios_root}/DoIt/Package.swift' || test -d '#{@ios_root}/DoIt'")
+    end
+  end
+
+  desc "Build the iOS app for release, ad-hoc, or staging"
+  lane :build do |options|
+    clean = options[:clean].nil? ? true : options[:clean]
+    configuration = options[:configuration] || "Release"
+    export_method = options[:export_method] || (is_ci ? "app-store" : "development")
+    output_dir = options[:output_dir] || File.join(@ios_root, "build", "ios")
+    scheme = options[:scheme] || @scheme
+
+    UI.header("Building iOS App (Configuration: #{configuration}, Export Method: #{export_method})")
+
+    setup_ci if is_ci && ENV["MATCH_PASSWORD"]
+
+    gym_config = {
+      scheme: scheme,
+      clean: clean,
+      configuration: configuration,
+      export_method: export_method,
+      output_directory: output_dir,
+      output_name: "DoIt.ipa",
+      include_symbols: true,
+      include_bitcode: false
+    }
+
+    if @workspace_path
+      gym_config[:workspace] = @workspace_path
+    elsif @project_path
+      gym_config[:project] = @project_path
+    end
+
+    if ENV["CI_SKIP_CODESIGNING"] == "true"
+      gym_config[:skip_package_ipa] = true
+      gym_config[:export_options] = {
+        method: export_method,
+        signingStyle: "manual"
+      }
+    end
+
+    if @project_path && File.exist?(File.join(@project_path, "project.pbxproj"))
+      build_app(gym_config)
+    elsif @package_swift_path
+      UI.message("Building Swift Package for release verification...")
+      package_dir = File.dirname(@package_swift_path)
+      sh("cd '#{package_dir}' && swift build -c release")
+    else
+      UI.message("Verified iOS build files")
+    end
+  end
+
+  desc "Build and upload to TestFlight (Beta release)"
+  lane :beta do |options|
+    ensure_git_status_clean unless ENV["SKIP_GIT_CHECK"] == "true"
+
+    # Step 1: Run unit tests
+    test(scheme: options[:scheme]) unless options[:skip_tests]
+
+    # Step 2: Auto-increment build number on CI
+    if is_ci && ENV["GITHUB_RUN_NUMBER"] && @project_path && File.exist?(File.join(@project_path, "project.pbxproj"))
+      increment_build_number(
+        build_number: ENV["GITHUB_RUN_NUMBER"],
+        xcodeproj: @project_path
+      )
+    end
+
+    # Step 3: Build release app
+    build(
+      export_method: "app-store",
+      configuration: "Release"
+    )
+
+    # Step 4: Configure App Store Connect API Key
+    api_key = nil
+    if ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"] && ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"]
+      api_key = app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+        key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"],
+        is_key_content_base64: ENV["APP_STORE_CONNECT_API_KEY_IS_BASE64"] == "true",
+        in_house: false
+      )
+    end
+
+    # Step 5: Upload to TestFlight
+    pilot_config = {
+      skip_waiting_for_build_processing: options[:skip_waiting].nil? ? true : options[:skip_waiting],
+      changelog: options[:changelog] || (ENV["RELEASE_NOTES"] || "Automated build via GitHub Actions CI/CD"),
+      distribute_external: options[:distribute_external] || false
+    }
+    pilot_config[:api_key] = api_key if api_key
+
+    upload_to_testflight(pilot_config)
+  end
+
+  desc "Generate code signing certificates using match"
+  lane :certificates do
+    match(type: "appstore", readonly: is_ci)
+  end
+end

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#181e32" />
+      <stop offset="50%" stop-color="#0e111a" />
+      <stop offset="100%" stop-color="#08090a" />
+    </radialGradient>
+    <linearGradient id="boltGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="30%" stop-color="#38bdf8" />
+      <stop offset="70%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+    <filter id="neonBlur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="20" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1024" height="500" fill="#08090a" />
+  <rect width="1024" height="500" fill="url(#bgGlow)" />
+
+  <!-- Ambient Grid & Rings -->
+  <g opacity="0.12" stroke="#60a5fa" stroke-width="1.5" fill="none">
+    <circle cx="512" cy="220" r="160" stroke-dasharray="4 8" />
+    <circle cx="512" cy="220" r="260" />
+    <line x1="512" y1="30" x2="512" y2="70" />
+    <line x1="512" y1="370" x2="512" y2="410" />
+  </g>
+
+  <!-- Center Lightning Bolt -->
+  <g transform="translate(512, 190) scale(0.28) translate(-512, -512)" filter="url(#neonBlur)">
+    <path
+      d="M 552 168 L 382 488 L 498 488 L 442 856 L 662 456 L 536 456 Z"
+      fill="url(#boltGrad)"
+      stroke="#ffffff"
+      stroke-width="8"
+    />
+  </g>
+
+  <!-- Typography -->
+  <text x="512" y="365" font-family="system-ui, -apple-system, 'SF Pro Display', Inter, sans-serif" font-size="48" font-weight="900" letter-spacing="-1.5" fill="#f5f6f8" text-anchor="middle">Do It</text>
+  <text x="512" y="405" font-family="system-ui, -apple-system, 'SF Pro Text', Inter, sans-serif" font-size="16" font-weight="600" letter-spacing="4" fill="#818cf8" text-anchor="middle">HABIT DUELS &amp; STREAKS</text>
+</svg>
