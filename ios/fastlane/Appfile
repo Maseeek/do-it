@@ -1,5 +1,0 @@
-# Appfile for iOS Do It Application
-app_identifier("com.doit.app")
-apple_id(ENV["APPLE_ID"] || "dev@doit.app")
-team_id(ENV["APPLE_TEAM_ID"] || "DOIT123456")
-itc_team_id(ENV["ITC_TEAM_ID"])
