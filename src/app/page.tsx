@@ -1,8 +1,8 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Activity, Suspense, memo, useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { createDeferredView } from '@/components/DeferredView';
+import { createDeferredView, prefetchDeferredViews } from '@/components/DeferredView';
 import { loadCurrentPage } from '@/lib/load-current-page';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store';
@@ -26,9 +26,10 @@ function ViewLoading() {
   return <p role="status" className="py-8 text-center text-label font-normal text-[var(--text-muted)]">Loading…</p>;
 }
 
-const { View: DuelView, preload: preloadDuel } = createDeferredView(() => import('@/components/DuelView').then(module => module.DuelView));
-const { View: ProgressView, preload: preloadProgress } = createDeferredView(() => import('@/components/ProgressView').then(module => module.ProgressView));
-const { View: SettingsView, preload: preloadSettings } = createDeferredView(() => import('@/components/SettingsView').then(module => module.SettingsView));
+const { View: DuelView, preload: preloadDuel, useReady: useDuelReady } = createDeferredView(() => import('@/components/DuelView').then(module => module.DuelView), undefined, { prefetch: true });
+const { View: ProgressView, preload: preloadProgress, useReady: useProgressReady } = createDeferredView(() => import('@/components/ProgressView').then(module => module.ProgressView), undefined, { prefetch: true });
+const { View: SettingsView, preload: preloadSettings, useReady: useSettingsReady } = createDeferredView(() => import('@/components/SettingsView').then(module => module.SettingsView), undefined, { prefetch: true });
+const TodayPanel = memo(TodayView);
 
 function preloadTab(tab: TabType) {
   if (tab === 'duel') preloadDuel();
@@ -37,7 +38,22 @@ function preloadTab(tab: TabType) {
 const { View: MultiplayerGate } = createDeferredView(() => import('@/components/MultiplayerGate').then(module => module.MultiplayerGate));
 const ExistingDuelInviteGate = dynamic(() => loadCurrentPage(() => import('@/components/ExistingDuelInviteGate')).then(module => module.ExistingDuelInviteGate), { loading: ViewLoading });
 const { View: HabitOnboarding } = createDeferredView(() => import('@/components/HabitOnboarding').then(module => module.HabitOnboarding));
-const { View: KeyboardShortcutsModal } = createDeferredView(() => import('@/components/KeyboardShortcutsModal').then(module => module.KeyboardShortcutsModal), null);
+const { View: KeyboardShortcutsModal } = createDeferredView(() => import('@/components/KeyboardShortcutsModal').then(module => module.KeyboardShortcutsModal), null, { prefetch: true });
+
+function whenIdle(callback: () => void): () => void {
+  if (typeof window.requestIdleCallback === 'function') {
+    const id = window.requestIdleCallback(callback, { timeout: 1500 });
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = window.setTimeout(callback, 200);
+  return () => window.clearTimeout(id);
+}
+
+/** Loads the other sections once Today has painted and the browser is idle. */
+function PrefetchViews() {
+  useEffect(() => whenIdle(() => { void prefetchDeferredViews(); }), []);
+  return null;
+}
 
 function AppContent() {
   const {
@@ -63,6 +79,31 @@ function AppContent() {
   const changeTab = useCallback((tab: TabType) => {
     if (tab === 'today') setSelectedDate(getTodayDateString());
     setActiveTab(tab);
+  }, [setSelectedDate]);
+
+  // Sections stay mounted inside <Activity>, so a switch only reveals one.
+  // Once their code has loaded, hidden sections render in the background.
+  const duelReady = useDuelReady();
+  const progressReady = useProgressReady();
+  const settingsReady = useSettingsReady();
+  // Settings starts fresh on every open: closing it swaps in a new instance,
+  // which renders while hidden.
+  const [settingsSession, setSettingsSession] = useState(0);
+  const [settingsWasOpen, setSettingsWasOpen] = useState(showSettings);
+  if (settingsWasOpen !== showSettings) {
+    setSettingsWasOpen(showSettings);
+    if (!showSettings) setSettingsSession(session => session + 1);
+  }
+  const openSettings = useCallback(() => setShowSettings(true), []);
+  const closeSettings = useCallback(() => setShowSettings(false), []);
+  const openPlannerFromSettings = useCallback(() => { setShowSettings(false); setOpenPlanner(true); setActiveTab('progress'); }, []);
+  const openHabits = useCallback(() => { setOpenPlanner(true); setActiveTab('progress'); }, []);
+  const openDuel = useCallback(() => { setShowSettings(false); setActiveTab('duel'); }, []);
+  const closePlanner = useCallback(() => setOpenPlanner(false), []);
+  const openDateInToday = useCallback((dateStr: string) => {
+    setSelectedDate(dateStr);
+    setOpenPlanner(false);
+    setActiveTab('today');
   }, [setSelectedDate]);
 
   const searchParams = useSearchParams();
@@ -189,6 +230,7 @@ function AppContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [changeTab, switchProfile, setSelectedDate, multiplayer.configured]);
 
+  const section = showSettings ? 'settings' : activeTab;
   const showInviteConflictModal = !multiplayer.loading && multiplayerEntry === 'invite-conflict' && inviteCode !== null;
 
   if (!multiplayer.loading && multiplayerEntry === 'gate') {
@@ -257,7 +299,8 @@ function AppContent() {
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
         <DesktopSidebar activeTab={activeTab} onWarmTab={preloadTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); changeTab(tab); }} />
-        <Header onOpenSettings={() => setShowSettings(true)} onWarmSettings={preloadSettings} />
+        <Header onOpenSettings={openSettings} onWarmSettings={preloadSettings} />
+        <PrefetchViews />
         {/* Floating Quick Action Toast */}
         {toastMessage && (
           <div
@@ -277,22 +320,25 @@ function AppContent() {
 
         <main id="main-content" className="flex-1 w-full px-[var(--page-gutter)] pt-6 lg:pt-10 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] lg:pb-12">
           {storageError && <div role="alert" className="mb-6 rounded-[var(--radius-card)] bg-amber-500/10 px-4 py-3 text-label font-normal text-amber-700 dark:text-amber-300">{storageError}</div>}
-          {showSettings ? <SettingsView onBack={() => setShowSettings(false)} onChooseHabits={() => { setShowSettings(false); setOpenPlanner(true); setActiveTab('progress'); }} /> : <>
-            {activeTab === 'today' && <TodayView onOpenHabits={() => { setOpenPlanner(true); setActiveTab('progress'); }} onOpenDuel={() => { setShowSettings(false); setActiveTab('duel'); }} onOpenSettings={() => setShowSettings(true)} />}
-            {activeTab === 'duel' && <DuelView />}
-            {activeTab === 'progress' && (
+          <Activity mode={section === 'today' ? 'visible' : 'hidden'}>
+            <TodayPanel onOpenHabits={openHabits} onOpenDuel={openDuel} onOpenSettings={openSettings} />
+          </Activity>
+          <Activity mode={section === 'duel' ? 'visible' : 'hidden'}>
+            {(duelReady || section === 'duel') && <DuelView />}
+          </Activity>
+          <Activity mode={section === 'progress' ? 'visible' : 'hidden'}>
+            {(progressReady || section === 'progress') && (
               <ProgressView
                 key={openPlanner ? 'planner' : 'progress'}
                 openPlanner={openPlanner}
-                onClosePlanner={() => setOpenPlanner(false)}
-                onOpenDateInToday={(dateStr) => {
-                  setSelectedDate(dateStr);
-                  setOpenPlanner(false);
-                  setActiveTab('today');
-                }}
+                onClosePlanner={closePlanner}
+                onOpenDateInToday={openDateInToday}
               />
             )}
-          </>}
+          </Activity>
+          <Activity mode={section === 'settings' ? 'visible' : 'hidden'}>
+            {(settingsReady || section === 'settings') && <SettingsView key={settingsSession} onBack={closeSettings} onChooseHabits={openPlannerFromSettings} />}
+          </Activity>
         </main>
 
         <BottomNav activeTab={activeTab} onWarmTab={preloadTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); changeTab(tab); }} />

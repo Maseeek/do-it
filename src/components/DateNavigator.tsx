@@ -77,7 +77,13 @@ export function DateNavigator() {
     return days;
   }, [todayStr, selectedWeekMonday]);
 
+  // Effects also re-run each time Today is shown again. The browser keeps the
+  // strip's scroll offset while hidden, so only scroll when the week changes;
+  // scrollIntoView forces a full layout of the page being revealed.
+  const scrolledWeekRef = useRef<string | null>(null);
   useEffect(() => {
+    if (scrolledWeekRef.current === selectedWeekMonday) return;
+    scrolledWeekRef.current = selectedWeekMonday;
     if (selectedWeekMondayRef.current && scrollContainerRef.current) {
       selectedWeekMondayRef.current.scrollIntoView({
         behavior: 'smooth',

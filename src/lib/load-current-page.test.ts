@@ -89,3 +89,25 @@ test('offline deferred views do not issue a deployment request', async t => {
   assert.deepEqual(resource.getSnapshot(), { status: 'ready', value: 'offline view' });
   off();
 });
+
+test('views loading together share one deployment check, and a later load asks again', async t => {
+  let checks = 0;
+  browser(t, async () => { checks++; return new Response(JSON.stringify({ version: 'deployment-old' })); });
+  const views = [1, 2, 3].map(n => createDeferredResource(async () => `view ${n}`));
+  await Promise.all(views.map(view => view.load()));
+  assert.equal(checks, 1);
+  assert.deepEqual(views.map(view => view.getSnapshot()), [1, 2, 3].map(n => ({ status: 'ready', value: `view ${n}` })));
+  await createDeferredResource(async () => 'later view').load();
+  assert.equal(checks, 2);
+});
+
+test('a deployment change found while loading ahead of time recovers before importing', async t => {
+  const context = browser(t, async () => new Response(JSON.stringify({ version: 'deployment-new' })));
+  let imports = 0;
+  const resource = createDeferredResource(async () => { imports++; return 'old view'; });
+  void resource.load();
+  await settle();
+  assert.equal(imports, 0);
+  assert.deepEqual(context.navigations, ['/?tab=today&invite=code']);
+  assert.equal(resource.getSnapshot().status, 'pending');
+});

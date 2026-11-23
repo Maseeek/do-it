@@ -110,6 +110,8 @@ export function DuelView() {
     stakes,
     players,
     isPartnerConnected,
+    isHabitCompletedOnDate,
+    getHabitCheckInOnDate,
   } = useStore();
 
   const ownerDisplayName = multiplayer.duel?.owner_name ?? players.maciek.name;
@@ -124,12 +126,11 @@ export function DuelView() {
   const myrnaHabits = habits.filter((h) => h.playerId === 'myrna' && h.isActive);
 
   const dailyDuelPoints = useMemo(() => getWeeklyDailyDuelPoints(checkIns, todayStr), [checkIns, todayStr]);
-  const categoryBreakdown = useMemo(() => getCategoryBreakdown(
-    checkIns,
-    habits,
-    selectedTier === 'karma' ? 'karma' : 'weekly',
-    todayStr
-  ), [checkIns, habits, selectedTier, todayStr]);
+  const breakdownWindow = selectedTier === 'karma' ? 'karma' : 'weekly';
+  const categoryBreakdown = useMemo(
+    () => getCategoryBreakdown(checkIns, habits, breakdownWindow, todayStr),
+    [checkIns, habits, breakdownWindow, todayStr]
+  );
   const stakesRecord = getStakesRecord(stakes);
 
   const activeCategories = useMemo(
@@ -235,13 +236,8 @@ export function DuelView() {
     }
   };
 
-  const maciekDoneHabitsCount = maciekHabits.filter((h) =>
-    checkIns.some((c) => c.habitId === h.id && c.date === todayStr)
-  ).length;
-
-  const myrnaDoneHabitsCount = myrnaHabits.filter((h) =>
-    checkIns.some((c) => c.habitId === h.id && c.date === todayStr)
-  ).length;
+  const maciekDoneHabitsCount = maciekHabits.filter((h) => isHabitCompletedOnDate(h.id, todayStr)).length;
+  const myrnaDoneHabitsCount = myrnaHabits.filter((h) => isHabitCompletedOnDate(h.id, todayStr)).length;
 
   const tierLabel =
     selectedTier === 'karma' ? 'All-time karma' : selectedTier === 'weekly' ? 'Weekly duel' : 'Monthly duel';
@@ -272,7 +268,7 @@ export function DuelView() {
         {columnHabits.length > 0 ? (
           <ul className="divide-y divide-[var(--border-subtle)]">
             {columnHabits.map((h) => {
-              const checkIn = checkIns.find((c) => c.habitId === h.id && c.date === todayStr);
+              const checkIn = getHabitCheckInOnDate(h.id, todayStr);
               const done = !!checkIn;
               const photos = getProofPhotos(checkIn);
 
