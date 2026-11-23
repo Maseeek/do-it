@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { useStore } from '@/lib/store';
-import { balanceHabitPlan, catalogHabits, categoryForSection, HABIT_SECTIONS, habitSectionTitle, maximumHabitPoints, pointsToCloseGap, weeklyPointPotential, weeklySessions } from '@/lib/habit-catalog';
+import { balanceHabitPlan, buildHabitPlan, categoryForSection, HABIT_SECTIONS, habitSectionTitle, maximumHabitPoints, pointsToCloseGap, STARTER_HABIT_TITLES, weeklyPointPotential, weeklySessions } from '@/lib/habit-catalog';
 import type { Habit, HabitCategory } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -17,17 +17,16 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
   const playerId = activePlayer?.id || 'maciek';
   const existing = habits.filter(habit => habit.playerId === playerId && !habit.isArchived);
   const partnerTotal = isPartnerConnected ? weeklyPointPotential(habits.filter(habit => habit.playerId !== playerId)) : 0;
-  const [plan, setPlan] = useState<Habit[]>(() => {
-    const catalog = catalogHabits(playerId);
-    return [...catalog.map(habit => existing.find(item => item.id === habit.id) || habit), ...existing.filter(habit => !catalog.some(item => item.id === habit.id))];
-  });
+  const [initialPlan] = useState(() => buildHabitPlan(playerId, existing));
+  const catalogIds = initialPlan.catalogIds;
+  const [plan, setPlan] = useState<Habit[]>(initialPlan.plan);
   const [customTitle, setCustomTitle] = useState('');
   const [showMore, setShowMore] = useState(false);
   const [customCategory, setCustomCategory] = useState<HabitCategory>('other');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [checkingPrevious, setCheckingPrevious] = useState(firstRun);
-  const [importedCount, setImportedCount] = useState(0);
+  const [importedIds, setImportedIds] = useState<ReadonlySet<string>>(() => new Set());
 
   useEffect(() => {
     if (!firstRun || existing.length > 0) return;
@@ -47,7 +46,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
           const ids = new Set(saved.map(habit => habit.id));
           return [...saved, ...current.filter(habit => !ids.has(habit.id)).map(habit => ({ ...habit, isActive: false }))];
         });
-        setImportedCount(saved.length);
+        setImportedIds(new Set(saved.map(habit => habit.id)));
       }
       setCheckingPrevious(false);
     });
@@ -56,14 +55,12 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
   const total = weeklyPointPotential(plan);
   const difference = partnerTotal - total;
   const activeCount = plan.filter(habit => habit.isActive).length;
-  const catalogIds = new Set(catalogHabits(playerId).map(habit => habit.id));
   const sections = [
     { title: 'Your habits', entries: plan.filter(habit => !catalogIds.has(habit.id)) },
     ...HABIT_SECTIONS.map(section => ({ title: section.title, entries: plan.filter(habit => catalogIds.has(habit.id) && section.categories.includes(habit.category)) })),
   ];
-  const starterTitles = new Set(['Sleep 8 hours', 'Step goal', 'Workout', 'Cardio session', 'Move your body', 'Read for learning']);
   const visibleSections = firstRun && !showMore
-    ? [{ title: 'Start here', entries: plan.filter(habit => habit.isActive || starterTitles.has(habit.title)) }]
+    ? [{ title: 'Start here', entries: plan.filter(habit => habit.isActive || (catalogIds.has(habit.id) && STARTER_HABIT_TITLES.includes(habit.title))) }]
     : sections;
 
   function changeHabit(id: string, changes: Partial<Habit>) {
@@ -97,8 +94,10 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
     setError(null);
     setSaving(true);
     try {
-      const savedIds = new Set(existing.map(habit => habit.id));
-      await applyHabitPlan(plan.filter(habit => !catalogIds.has(habit.id) || habit.isActive || savedIds.has(habit.id)));
+      // Unselected suggestions and custom habits added then removed before saving are dropped;
+      // saved and imported habits stay so their history keeps its habit.
+      const keepIds = new Set([...existing.map(habit => habit.id), ...importedIds]);
+      await applyHabitPlan(plan.filter(habit => habit.isActive || keepIds.has(habit.id)));
       onDone();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not save your habits. Try again.');
@@ -134,9 +133,9 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
             </button>
           )}
         </div>
-        {importedCount > 0 && (
+        {importedIds.size > 0 && (
           <p role="status" className="text-label text-emerald-600 dark:text-emerald-400">
-            Found {importedCount} of your previous habits. Review them below, then save to your account.
+            Found {importedIds.size} of your previous habits. Review them below, then save to your account.
           </p>
         )}
 
@@ -211,7 +210,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                           <select
                             aria-label={`Frequency for ${habit.title}`}
                             disabled={!habit.isActive}
-                            value={habit.weeklyTargetDays || 7}
+                            value={weeklySessions(habit)}
                             onChange={event => {
                               const days = Number(event.target.value);
                               changeHabit(habit.id, { weeklyTargetDays: days === 7 ? undefined : days, frequency: days === 7 ? 'daily' : 'weekly' });
@@ -230,7 +229,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                               min={5}
                               max={maximumHabitPoints(habit)}
                               step={1}
-                              value={habit.points}
+                              value={habit.points || ''}
                               onChange={event => changeHabit(habit.id, { points: Number(event.target.value) })}
                               className="min-h-11 w-16 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 text-right text-body text-foreground num"
                             />

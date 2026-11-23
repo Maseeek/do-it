@@ -32,6 +32,9 @@ const CATALOG: Omit<Habit, 'id' | 'playerId' | 'order' | 'isActive'>[] = [
   { title: 'Learn about money', description: 'Read or complete a personal finance lesson', category: 'finance', points: 20, iconName: 'BookOpen', frequency: 'weekly', weeklyTargetDays: 2 },
 ];
 
+/** Catalog habits offered on the collapsed first-run screen. Each must match a catalog title. */
+export const STARTER_HABIT_TITLES: readonly string[] = ['Sleep 8.5 hours', 'Step goal', 'Workout', 'Cardio session', 'Move your body', 'Read for learning'];
+
 /** The section a category is shown under; unknown categories fall under Other. */
 export function habitSectionTitle(category: HabitCategory): string {
   return HABIT_SECTIONS.find(section => section.categories.includes(category))?.title ?? 'Other';
@@ -48,6 +51,44 @@ export function catalogHabits(playerId: PlayerId): Habit[] {
   return CATALOG.map((habit, index) => ({ ...habit, id: `catalog-${playerId}-${index}`, playerId, order: index + 1, isActive: false }));
 }
 
+/**
+ * Merges the catalog with a player's saved habits for the planner.
+ *
+ * Catalog ids are positional (`catalog-<player>-<index>`), and the catalog has been reordered
+ * since some accounts saved their picks, so an id alone can point at a different catalog entry.
+ * A saved habit claims the catalog entry with its title first, then the entry with its id
+ * (a habit renamed in Settings). A catalog entry whose id is held by a different saved habit gets
+ * a fresh id, so selecting it can never overwrite that habit. `catalogIds` lists the plan entries
+ * that fill a catalog slot, saved or not; the rest are the player's own habits.
+ */
+export function buildHabitPlan(playerId: PlayerId, saved: Habit[]): { plan: Habit[]; catalogIds: Set<string> } {
+  const catalog = catalogHabits(playerId);
+  const titleKey = (title: string) => title.trim().toLowerCase();
+  const claimed = new Map<number, Habit>();
+  const used = new Set<string>();
+  const claim = (index: number, habit: Habit | undefined) => {
+    if (!habit || claimed.has(index) || used.has(habit.id)) return;
+    claimed.set(index, habit);
+    used.add(habit.id);
+  };
+  catalog.forEach((entry, index) => claim(index, saved.find(habit => habit.id === entry.id && titleKey(habit.title) === titleKey(entry.title))));
+  catalog.forEach((entry, index) => claim(index, saved.find(habit => !used.has(habit.id) && titleKey(habit.title) === titleKey(entry.title))));
+  catalog.forEach((entry, index) => claim(index, saved.find(habit => !used.has(habit.id) && habit.id === entry.id)));
+  const savedIds = new Set(saved.map(habit => habit.id));
+  const catalogIds = new Set<string>();
+  const plan = catalog.map((entry, index) => {
+    const habit = claimed.get(index);
+    if (habit) {
+      catalogIds.add(habit.id);
+      return habit;
+    }
+    const id = savedIds.has(entry.id) ? `${entry.id}-${titleKey(entry.title).replace(/[^a-z0-9]+/g, '-')}` : entry.id;
+    catalogIds.add(id);
+    return { ...entry, id };
+  });
+  return { plan: [...plan, ...saved.filter(habit => !used.has(habit.id))], catalogIds };
+}
+
 export function weeklySessions(habit: Habit): number {
   return habit.frequency === 'weekly' || habit.weeklyTargetDays
     ? Math.min(7, Math.max(1, habit.weeklyTargetDays || 1))
@@ -56,6 +97,11 @@ export function weeklySessions(habit: Habit): number {
 
 export function maximumHabitPoints(habit: Habit): number {
   return Math.min(100, habit.isQuantitative ? (habit.maxQuantity || 25) * (habit.pointsPerUnit || 1) : 100);
+}
+
+/** Per-check-in points are whole numbers from 5 up to the habit's maximum. */
+export function isValidHabitPoints(habit: Habit): boolean {
+  return Number.isInteger(habit.points) && habit.points >= 5 && habit.points <= maximumHabitPoints(habit);
 }
 
 export function weeklyPointPotential(habits: Habit[]): number {

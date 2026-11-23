@@ -32,7 +32,7 @@ import {
   resolveClientTimeZone,
   shouldRunAutoHealthSync,
 } from './health-auto-sync';
-import { maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
+import { isValidHabitPoints, maximumHabitPoints, weeklyPointPotential } from './habit-catalog';
 import { parseBackup } from './backup';
 import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, readLegacyProgress, restoreLegacyDuelProgress } from './legacy-import';
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
@@ -1061,10 +1061,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const applyHabitPlan = useStableCallback(async (plannedHabits: Habit[]) => { const playerId = state.activePlayerId;
   if (!playerId || (multiplayer.configured && playerId !== multiplayer.slot)) throw new Error('Choose your own profile first.');
-  if (plannedHabits.some(habit => habit.playerId !== playerId || !Number.isInteger(habit.points) || habit.points < 5 || habit.points > maximumHabitPoints(habit))) {
-    throw new Error('Each habit needs a valid point value. Quantity habits cannot exceed their maximum earned points.');
-  }
-  const total = weeklyPointPotential(plannedHabits);
+  if (plannedHabits.some(habit => habit.playerId !== playerId)) throw new Error('Choose your own profile first.');
+  const invalid = plannedHabits.find(habit => habit.isActive && !isValidHabitPoints(habit));
+  if (invalid) throw new Error(`${invalid.title} needs a whole number of points from 5 to ${maximumHabitPoints(invalid)}.`);
+  // Points on an unselected habit do not count, so an abandoned edit there must not block saving.
+  const planned = plannedHabits.map(habit => habit.isActive || isValidHabitPoints(habit)
+    ? habit
+    : { ...habit, points: Math.min(maximumHabitPoints(habit), Math.max(5, Math.round(habit.points) || 5)) });
+  const total = weeklyPointPotential(planned);
   const partnerSlot = playerId === 'maciek' ? 'myrna' : 'maciek';
   const partnerTotal = (!multiplayer.configured || multiplayer.hasPairedPartner)
     ? weeklyPointPotential(state.habits.filter(habit => habit.playerId === partnerSlot))
@@ -1072,16 +1076,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   if (total === 0) throw new Error('Choose at least one habit.');
   if (partnerTotal > 0 && total !== partnerTotal) throw new Error(`Your weekly point potential needs to match your partner’s ${partnerTotal} points.`);
   const previous = state.habits.filter(habit => habit.playerId === playerId);
-  const plannedIds = new Set(plannedHabits.map(habit => habit.id));
-  const next = [...plannedHabits, ...previous.filter(habit => !plannedIds.has(habit.id)).map(habit => ({ ...habit, isActive: false }))];
+  const plannedIds = new Set(planned.map(habit => habit.id));
+  const next = [...planned, ...previous.filter(habit => !plannedIds.has(habit.id)).map(habit => ({ ...habit, isActive: false }))];
   if (multiplayer.configured) {
     const client = getSupabaseClient();
     if (!client || !duelId) throw new Error('Your account is not connected. Try again.');
+    // A sync read already in flight holds the old plan; bumping the epoch makes it retry instead of publishing it.
+    writeEpochRef.current++;
     const save = duelQueueRef.current.then(async () => {
       const { error } = await client.from('duel_habits').upsert(next.map(habit => ({ duel_id: duelId, id: habit.id, player_slot: playerId, data: habit })));
       if (error) throw error;
     });
-    duelQueueRef.current = save.catch(() => {});
+    duelQueueRef.current = save.catch(() => {}).finally(() => syncSchedulerRef.current?.request());
     await save;
   } else if (supabaseRef.current) {
     const { error } = await supabaseRef.current.from('habits').upsert(next.map(habitToRow));

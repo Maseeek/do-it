@@ -11,9 +11,12 @@ import { HabitHeatmap } from './HabitHeatmap';
 
 export function ProgressView({
   openPlanner = false,
+  onClosePlanner,
   onOpenDateInToday,
 }: {
   openPlanner?: boolean;
+  /** Called when the planner closes, so a parent that opened it does not reopen it on the next mount. */
+  onClosePlanner?: () => void;
   onOpenDateInToday?: (dateStr: string) => void;
 }) {
   const { activePlayerId, activeHabits, activePlayerSummary, checkIns, updateHabit } = useStore();
@@ -28,7 +31,7 @@ export function ProgressView({
     return counts;
   }, [checkIns, activePlayerId]);
 
-  if (planner) return <HabitOnboarding onDone={() => setPlanner(false)} />;
+  if (planner) return <HabitOnboarding onDone={() => { setPlanner(false); onClosePlanner?.(); }} />;
 
   const toggleHabit = (habitId: string, isSelected: boolean) => {
     soundEngine.playClick();

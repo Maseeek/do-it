@@ -256,7 +256,7 @@ function AppContent() {
       {/* App frame */}
       <div className="relative z-10 flex flex-col flex-1 lg:pl-60">
         <a href="#main-content" className="skip-link">Skip to content</a>
-        <DesktopSidebar activeTab={activeTab} onWarmTab={preloadTab} onChangeTab={(tab) => { setShowSettings(false); changeTab(tab); }} />
+        <DesktopSidebar activeTab={activeTab} onWarmTab={preloadTab} onChangeTab={(tab) => { setShowSettings(false); setOpenPlanner(false); changeTab(tab); }} />
         <Header onOpenSettings={() => setShowSettings(true)} onWarmSettings={preloadSettings} />
         {/* Floating Quick Action Toast */}
         {toastMessage && (
@@ -284,6 +284,7 @@ function AppContent() {
               <ProgressView
                 key={openPlanner ? 'planner' : 'progress'}
                 openPlanner={openPlanner}
+                onClosePlanner={() => setOpenPlanner(false)}
                 onOpenDateInToday={(dateStr) => {
                   setSelectedDate(dateStr);
                   setOpenPlanner(false);
