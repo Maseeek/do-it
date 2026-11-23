@@ -11,14 +11,17 @@ import {
   Handshake,
   History,
   Plus,
+  Scale,
   Sliders,
   Sparkles,
   Trash2,
   Trophy,
   X,
 } from 'lucide-react';
-import type { LeaderboardTier, Player, PlayerId, Stake, StakePeriod } from '@/lib/types';
+import type { CheckIn, LeaderboardTier, Player, PlayerId, Stake, StakePeriod } from '@/lib/types';
 import type { StakesRecord } from '@/lib/score-calculator';
+import { addDays } from '@/lib/date-utils';
+import { getStakePeriodEnd, getStakePeriodScores, getStakePhase, getStakeVerdictDate } from '@/lib/stake-settlement';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticCelebration, hapticLight, hapticMedium, hapticSuccess } from '@/lib/haptic-utils';
 
@@ -36,13 +39,15 @@ export interface WagerSectionProps {
   activeWeeklyStake?: Stake | null;
   activeMonthlyStake?: Stake | null;
   stakes: Stake[];
+  /** Shared check-ins; the scoreboard, not a Player, settles each Stake from them. */
+  checkIns: CheckIn[];
+  today: string;
   stakesRecord: StakesRecord;
   players: Record<PlayerId, Player>;
   comparison: WagerComparison;
   countdownLabel: string;
   onCreateStake: (payload: { period: StakePeriod; title: string; description: string }) => void;
   onUpdateStake: (stake: Stake) => void;
-  onResolveStake: (stake: Stake, winner: PlayerId | 'tie') => void;
   onDeleteStake: (stakeId: string) => void;
   surfaceTheme?: 'app' | 'prototype';
 }
@@ -189,21 +194,21 @@ type ModalState =
       initialEmoji?: string;
       initialTitle?: string;
       initialDesc?: string;
-    }
-  | { kind: 'resolve'; stake: Stake };
+    };
 
 export function WagerSection({
   selectedTier,
   activeWeeklyStake,
   activeMonthlyStake,
   stakes,
+  checkIns,
+  today,
   stakesRecord,
   players,
   comparison,
   countdownLabel,
   onCreateStake,
   onUpdateStake,
-  onResolveStake,
   onDeleteStake,
   surfaceTheme = 'app',
 }: WagerSectionProps) {
@@ -213,12 +218,17 @@ export function WagerSection({
   const [justSealedKey, setJustSealedKey] = useState<number>(0);
 
   const isProto = surfaceTheme === 'prototype';
+  // Only a Stake whose window is still open can be edited or replaced; closed ones await the verdict.
+  const openStake = (stake?: Stake | null) =>
+    stake && stake.status === 'active' && getStakePhase(stake, today) === 'open' ? stake : null;
+  const openWeeklyStake = openStake(activeWeeklyStake);
+  const openMonthlyStake = openStake(activeMonthlyStake);
   const defaultPeriod: 'weekly' | 'monthly' = selectedTier === 'monthly' ? 'monthly' : 'weekly';
   const activeStake =
     selectedTier === 'monthly'
-      ? activeMonthlyStake ?? null
+      ? openMonthlyStake
       : selectedTier === 'weekly'
-        ? activeWeeklyStake ?? null
+        ? openWeeklyStake
         : null;
 
   const completedStakes = useMemo(
@@ -289,13 +299,6 @@ export function WagerSection({
     });
   }, []);
 
-  const openResolveModal = useCallback((stake: Stake) => {
-    soundEngine.playClick();
-    hapticLight();
-    setConfirmDeleteId(null);
-    setModal({ kind: 'resolve', stake });
-  }, []);
-
   const handleComposeComplete = useCallback(
     (payload: {
       mode: 'create' | 'edit';
@@ -312,7 +315,7 @@ export function WagerSection({
         });
       } else {
         const existingActiveForPeriod =
-          payload.period === 'monthly' ? activeMonthlyStake : activeWeeklyStake;
+          payload.period === 'monthly' ? openMonthlyStake : openWeeklyStake;
         if (existingActiveForPeriod) {
           onUpdateStake({
             ...existingActiveForPeriod,
@@ -330,15 +333,7 @@ export function WagerSection({
       }
       setModal({ kind: 'closed' });
     },
-    [activeMonthlyStake, activeWeeklyStake, onCreateStake, onUpdateStake]
-  );
-
-  const handleResolveComplete = useCallback(
-    (stake: Stake, winner: PlayerId | 'tie') => {
-      onResolveStake(stake, winner);
-      setModal({ kind: 'closed' });
-    },
-    [onResolveStake]
+    [openMonthlyStake, openWeeklyStake, onCreateStake, onUpdateStake]
   );
 
   const leaderName =
@@ -353,8 +348,40 @@ export function WagerSection({
       ? 'Dead heat — wide open'
       : `${leaderName} on track (+${comparison.delta.toLocaleString()} pts)`;
 
+  const closingStakes = stakes.filter(
+    (s) =>
+      s.status === 'active' &&
+      getStakePhase(s, today) === 'final-call' &&
+      (selectedTier === 'karma' || s.period === selectedTier)
+  );
+
   return (
     <>
+      {closingStakes.map((stake) => (
+        <FinalCallCard
+          key={stake.id}
+          stake={stake}
+          today={today}
+          scores={getStakePeriodScores(stake, checkIns)}
+          players={players}
+          ownerColor={ownerColor}
+          guestColor={guestColor}
+          cardSurfaceStyle={cardSurfaceStyle}
+          isProto={isProto}
+        />
+      ))}
+
+      <VerdictReveals
+        stakes={completedStakes}
+        checkIns={checkIns}
+        today={today}
+        players={players}
+        ownerColor={ownerColor}
+        guestColor={guestColor}
+        cardSurfaceStyle={cardSurfaceStyle}
+        isProto={isProto}
+      />
+
       {selectedTier === 'karma' ? (
         /* All-Time Wager Ledger View */
         <section
@@ -440,9 +467,9 @@ export function WagerSection({
           </div>
 
           {/* Active Wagers Snapshot */}
-          {(activeWeeklyStake || activeMonthlyStake) && (
+          {(openWeeklyStake || openMonthlyStake) && (
             <div className="space-y-1.5">
-              {[activeWeeklyStake, activeMonthlyStake].filter(Boolean).map((s) => {
+              {[openWeeklyStake, openMonthlyStake].filter(Boolean).map((s) => {
                 const stakeItem = s as Stake;
                 const { emoji, cleanTitle } = extractEmojiAndTitle(stakeItem.title);
                 return (
@@ -459,13 +486,13 @@ export function WagerSection({
                         <div className="text-xs font-semibold truncate">{cleanTitle}</div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => openResolveModal(stakeItem)}
-                      className="min-h-9 px-2.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300 text-[11px] font-mono font-semibold transition-[transform,background-color] duration-150 hover:bg-amber-500/25 active:scale-[0.96] shrink-0"
+                    <span
+                      className="inline-flex min-h-9 items-center gap-1 px-2.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[11px] font-mono font-semibold shrink-0 tabular-nums"
+                      title="The scoreboard settles this wager automatically"
                     >
-                      Crown
-                    </button>
+                      <Scale className="h-3 w-3" />
+                      {formatVerdictDay(getStakeVerdictDate(stakeItem))}
+                    </span>
                   </div>
                 );
               })}
@@ -619,15 +646,13 @@ export function WagerSection({
             </span>
 
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => openResolveModal(activeStake)}
-                aria-label="Resolve wager"
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 text-xs font-semibold text-zinc-950 shadow-xs transition-[transform,background-color] duration-150 hover:bg-amber-400 active:scale-[0.96]"
+              <span
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 text-[11px] font-mono font-semibold text-amber-700 dark:text-amber-300"
+                title={`Settled by points after ${formatVerdictDay(getStakePeriodEnd(activeStake))}. Nobody crowns themselves.`}
               >
-                <Crown className="h-3.5 w-3.5" />
-                <span>Crown Winner</span>
-              </button>
+                <Scale className="h-3.5 w-3.5" />
+                <span>Scoreboard decides</span>
+              </span>
 
               <button
                 type="button"
@@ -842,25 +867,328 @@ export function WagerSection({
         />
       )}
 
-      {/* Resolve / Crown Winner Modal */}
-      {modal.kind === 'resolve' && (
-        <ResolveWagerModal
-          stake={modal.stake}
-          players={players}
-          comparison={comparison}
-          ownerColor={ownerColor}
-          guestColor={guestColor}
-          ownerSoft={ownerSoft}
-          guestSoft={guestSoft}
-          isProto={isProto}
-          onClose={() => {
-            soundEngine.playClick();
-            hapticLight();
-            setModal({ kind: 'closed' });
-          }}
-          onResolve={handleResolveComplete}
-        />
-      )}
+    </>
+  );
+}
+
+const verdictDayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const monthNameFormatter = new Intl.DateTimeFormat('en-US', { month: 'long' });
+
+function formatVerdictDay(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return verdictDayFormatter.format(new Date(year, month - 1, day));
+}
+
+function formatStakeWindow(stake: Pick<Stake, 'period' | 'periodKey'>): string {
+  if (stake.period === 'weekly') {
+    const week = /W(\d+)$/.exec(stake.periodKey)?.[1];
+    return week ? `Week ${Number(week)}` : 'Last week';
+  }
+  if (stake.period === 'monthly') {
+    const [year, month] = stake.periodKey.split('-').map(Number);
+    return year && month ? monthNameFormatter.format(new Date(year, month - 1, 1)) : 'Last month';
+  }
+  return stake.periodKey;
+}
+
+interface ScoreDuelBarProps {
+  scores: { maciek: number; myrna: number };
+  players: Record<PlayerId, Player>;
+  ownerColor: string;
+  guestColor: string;
+  winnerId?: PlayerId | 'tie';
+}
+
+/** Head-to-head points for a Stake's own window, winner side emphasized. */
+function ScoreDuelBar({ scores, players, ownerColor, guestColor, winnerId }: ScoreDuelBarProps) {
+  const total = scores.maciek + scores.myrna;
+  const maciekPct = total === 0 ? 50 : Math.round((scores.maciek / total) * 100);
+  const dim = (id: PlayerId) => (winnerId && winnerId !== 'tie' && winnerId !== id ? 0.55 : 1);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between gap-2 font-mono tabular-nums">
+        <span className="inline-flex items-baseline gap-1.5 min-w-0" style={{ opacity: dim('maciek') }}>
+          <span className="truncate text-[11px] font-semibold" style={{ color: ownerColor }}>
+            {players.maciek.name}
+          </span>
+          <span className="text-base font-bold">{scores.maciek.toLocaleString()}</span>
+        </span>
+        <span className="inline-flex items-baseline gap-1.5 min-w-0" style={{ opacity: dim('myrna') }}>
+          <span className="text-base font-bold">{scores.myrna.toLocaleString()}</span>
+          <span className="truncate text-[11px] font-semibold" style={{ color: guestColor }}>
+            {players.myrna.name}
+          </span>
+        </span>
+      </div>
+      <div
+        role="img"
+        aria-label={`${players.maciek.name} ${scores.maciek} points, ${players.myrna.name} ${scores.myrna} points`}
+        className="h-1.5 w-full rounded-full overflow-hidden flex bg-black/[0.08] dark:bg-white/[0.08]"
+      >
+        <div className="h-full" style={{ width: `${maciekPct}%`, backgroundColor: ownerColor, opacity: dim('maciek') }} />
+        <div className="h-full" style={{ width: `${100 - maciekPct}%`, backgroundColor: guestColor, opacity: dim('myrna') }} />
+      </div>
+    </div>
+  );
+}
+
+interface StakeCardChromeProps {
+  cardSurfaceStyle: React.CSSProperties;
+  isProto: boolean;
+}
+
+/** Photo finish: the window has closed, late logs still count until the verdict is written. */
+function FinalCallCard({
+  stake,
+  today,
+  scores,
+  players,
+  ownerColor,
+  guestColor,
+  cardSurfaceStyle,
+  isProto,
+}: StakeCardChromeProps & {
+  stake: Stake;
+  today: string;
+  scores: { maciek: number; myrna: number; winnerId: PlayerId | 'tie' };
+  players: Record<PlayerId, Player>;
+  ownerColor: string;
+  guestColor: string;
+}) {
+  const { emoji, cleanTitle } = extractEmojiAndTitle(stake.title);
+  const verdictDate = getStakeVerdictDate(stake);
+  const lastLogDay = addDays(verdictDate, -1);
+  const leader = scores.winnerId === 'tie' ? null : players[scores.winnerId];
+  const margin = Math.abs(scores.maciek - scores.myrna);
+
+  return (
+    <section
+      aria-label={`Final call for ${cleanTitle}`}
+      className={`relative overflow-hidden rounded-2xl p-4 space-y-3 ${
+        isProto ? '' : 'bg-white dark:bg-[#0e1013] border shadow-xs'
+      }`}
+      style={{
+        ...cardSurfaceStyle,
+        borderColor: 'rgba(245, 158, 11, 0.4)',
+        borderStyle: 'dashed',
+        borderWidth: 1,
+      }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.15em] font-bold text-amber-600 dark:text-amber-400">
+          <span className="relative flex h-2.5 w-2.5 items-center justify-center" aria-hidden="true">
+            <span className="wager-beacon-ring absolute inline-flex h-full w-full rounded-full bg-amber-400" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+          </span>
+          Final Call · {formatStakeWindow(stake)} closed
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-black/[0.07] dark:border-white/[0.08] bg-black/[0.03] dark:bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-300">
+          <Clock className="h-2.5 w-2.5 opacity-70" />
+          Verdict {formatVerdictDay(verdictDate)}
+        </span>
+      </div>
+
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-xl" aria-hidden="true">
+          {emoji}
+        </span>
+        <div className="min-w-0 space-y-0.5">
+          <h2 className="text-sm font-bold tracking-tight truncate">{cleanTitle}</h2>
+          <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 text-pretty">
+            {leader
+              ? `${leader.name} is ahead by ${margin.toLocaleString()} pts.`
+              : 'Dead level.'}{' '}
+            Late logs for {formatStakeWindow(stake)} count {lastLogDay === today ? 'until midnight' : `through ${formatVerdictDay(lastLogDay)}`}, then the scoreboard decides.
+          </p>
+        </div>
+      </div>
+
+      <ScoreDuelBar scores={scores} players={players} ownerColor={ownerColor} guestColor={guestColor} />
+    </section>
+  );
+}
+
+const SEEN_VERDICTS_KEY = 'do-it:seen-wager-verdicts';
+const VERDICT_SPOTLIGHT_DAYS = 7;
+
+function readSeenVerdicts(): string[] {
+  try {
+    const raw = window.localStorage.getItem(SEEN_VERDICTS_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSeenVerdicts(ids: string[]) {
+  try {
+    window.localStorage.setItem(SEEN_VERDICTS_KEY, JSON.stringify(ids.slice(-40)));
+  } catch {
+    /* Private mode or blocked storage: the verdict simply shows again next visit. */
+  }
+}
+
+/**
+ * Freshly settled Stakes, announced once per device. Settlement happens in the
+ * store; this only presents the result the scoreboard already wrote.
+ */
+function VerdictReveals({
+  stakes,
+  checkIns,
+  today,
+  players,
+  ownerColor,
+  guestColor,
+  cardSurfaceStyle,
+  isProto,
+}: StakeCardChromeProps & {
+  stakes: Stake[];
+  checkIns: CheckIn[];
+  today: string;
+  players: Record<PlayerId, Player>;
+  ownerColor: string;
+  guestColor: string;
+}) {
+  const [seen, setSeen] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    setSeen(readSeenVerdicts());
+  }, []);
+
+  const fresh = useMemo(() => {
+    if (!seen) return [];
+    return stakes.filter(
+      (s) =>
+        s.winnerId &&
+        !seen.includes(s.id) &&
+        today < addDays(getStakeVerdictDate(s), VERDICT_SPOTLIGHT_DAYS)
+    );
+  }, [stakes, seen, today]);
+
+  // Accepting a win gets the fanfare; a draw stays quiet.
+  const dismiss = (id: string, isTie: boolean) => {
+    if (isTie) {
+      soundEngine.playClick();
+      hapticLight();
+    } else {
+      soundEngine.playFanfare();
+      hapticCelebration();
+    }
+    setSeen((prev) => {
+      const next = [...(prev ?? []), id];
+      writeSeenVerdicts(next);
+      return next;
+    });
+  };
+
+  return (
+    <>
+      {fresh.map((stake) => {
+        const { emoji, cleanTitle } = extractEmojiAndTitle(stake.title);
+        const scores = getStakePeriodScores(stake, checkIns);
+        const winnerId = stake.winnerId as PlayerId | 'tie';
+        const isTie = winnerId === 'tie';
+        const winner = isTie ? null : players[winnerId];
+        const loser = isTie ? null : players[winnerId === 'maciek' ? 'myrna' : 'maciek'];
+        const winnerColor = winnerId === 'maciek' ? ownerColor : winnerId === 'myrna' ? guestColor : '#f59e0b';
+        const margin = Math.abs(scores.maciek - scores.myrna);
+
+        return (
+          <section
+            key={stake.id}
+            aria-label={`Wager verdict: ${cleanTitle}`}
+            className={`wager-card-ignite relative overflow-hidden rounded-2xl p-4 sm:p-5 space-y-3.5 ${
+              isProto ? '' : 'bg-white dark:bg-[#0e1013] border shadow-sm'
+            }`}
+            style={{
+              ...cardSurfaceStyle,
+              borderColor: `color-mix(in srgb, ${winnerColor} 45%, transparent)`,
+              backgroundImage: `radial-gradient(circle at 50% -10%, color-mix(in srgb, ${winnerColor} 18%, transparent) 0%, transparent 60%)`,
+            }}
+          >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-0 h-[2px]"
+              style={{ background: `linear-gradient(90deg, transparent 0%, ${winnerColor} 50%, transparent 100%)` }}
+            />
+            <div
+              aria-hidden="true"
+              className="wager-sheen-sweep pointer-events-none absolute inset-y-0 left-0 w-1/2"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(251, 191, 36, 0.22) 50%, transparent 100%)' }}
+            />
+
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.15em] font-bold text-amber-600 dark:text-amber-400">
+                <Scale className="h-3.5 w-3.5" />
+                Verdict · {formatStakeWindow(stake)}
+              </span>
+              <span
+                className="wager-stamp-slam shrink-0 rounded-md border px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-[0.14em]"
+                style={{
+                  borderColor: `color-mix(in srgb, ${winnerColor} 60%, transparent)`,
+                  backgroundColor: `color-mix(in srgb, ${winnerColor} 14%, transparent)`,
+                  color: winnerColor,
+                }}
+              >
+                Settled
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center text-center gap-1.5 py-1">
+              <span
+                className="flex h-12 w-12 items-center justify-center rounded-full"
+                style={{ backgroundColor: `color-mix(in srgb, ${winnerColor} 16%, transparent)`, color: winnerColor }}
+                aria-hidden="true"
+              >
+                {isTie ? <Handshake className="h-6 w-6" /> : <Crown className="h-6 w-6" />}
+              </span>
+              <h2 className="text-xl font-bold tracking-tight text-balance" style={{ color: isTie ? undefined : winnerColor }}>
+                {isTie ? 'Dead heat' : `${winner!.name} takes it`}
+              </h2>
+              <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
+                {isTie
+                  ? `${scores.maciek.toLocaleString()} apiece. Split it, or run it back.`
+                  : `Won by ${margin.toLocaleString()} pt${margin === 1 ? '' : 's'}`}
+              </p>
+            </div>
+
+            <ScoreDuelBar
+              scores={scores}
+              players={players}
+              ownerColor={ownerColor}
+              guestColor={guestColor}
+              winnerId={winnerId}
+            />
+
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-lg" aria-hidden="true">
+                {emoji}
+              </span>
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono uppercase tracking-wider font-semibold text-amber-700 dark:text-amber-300">
+                  {isTie ? 'The pot' : `${loser!.name} owes ${winner!.name}`}
+                </div>
+                <div className="text-sm font-bold truncate">{cleanTitle}</div>
+                {stake.description && (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">{stake.description}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => dismiss(stake.id, isTie)}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 text-xs font-semibold text-zinc-950 shadow-xs transition-[transform,background-color] duration-150 hover:bg-amber-400 active:scale-[0.96]"
+              >
+                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>{isTie ? 'Fair enough' : 'Deal'}</span>
+              </button>
+            </div>
+          </section>
+        );
+      })}
     </>
   );
 }
@@ -1534,177 +1862,6 @@ function WagerComposerModal({
             </div>
           </form>
         )}
-      </div>
-    </div>
-  );
-}
-
-interface ResolveWagerModalProps {
-  stake: Stake;
-  players: Record<PlayerId, Player>;
-  comparison: WagerComparison;
-  ownerColor: string;
-  guestColor: string;
-  ownerSoft: string;
-  guestSoft: string;
-  isProto: boolean;
-  onClose: () => void;
-  onResolve: (stake: Stake, winner: PlayerId | 'tie') => void;
-}
-
-function ResolveWagerModal({
-  stake,
-  players,
-  comparison,
-  ownerColor,
-  guestColor,
-  ownerSoft,
-  guestSoft,
-  isProto,
-  onClose,
-  onResolve,
-}: ResolveWagerModalProps) {
-  const { emoji, cleanTitle } = extractEmojiAndTitle(stake.title);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
-  const handleCrown = (winner: PlayerId | 'tie') => {
-    soundEngine.playFanfare();
-    hapticCelebration();
-    onResolve(stake, winner);
-  };
-
-  const modalShellStyle: React.CSSProperties = isProto
-    ? {
-        backgroundColor: 'var(--p-surface-elevated, var(--p-surface))',
-        border: '1px solid var(--p-border-strong)',
-        color: 'var(--p-ink)',
-      }
-    : {};
-
-  return (
-    <div
-      className="wager-backdrop-enter fixed inset-0 z-[85] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-md sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="resolve-wager-title"
-        onClick={(e) => e.stopPropagation()}
-        style={modalShellStyle}
-        className={`wager-modal-enter w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 ${
-          isProto
-            ? ''
-            : 'bg-white dark:bg-[#0e1013] border border-black/[0.08] dark:border-zinc-800 text-zinc-900 dark:text-white'
-        }`}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600 dark:text-amber-400">
-              <Crown className="h-3.5 w-3.5" />
-              <span>Settle The Pact</span>
-            </div>
-            <h3 id="resolve-wager-title" className="mt-0.5 text-lg font-bold tracking-tight">
-              Crown the Winner
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/[0.08] dark:border-white/[0.1] text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-[transform,color] duration-150 active:scale-[0.96]"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Wager Summary Ticket */}
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-3.5 flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-xl">
-            {emoji}
-          </span>
-          <div className="min-w-0">
-            <div className="text-sm font-bold truncate">{cleanTitle}</div>
-            {stake.description && (
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">{stake.description}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Winner Selection Cards */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {(
-            [
-              {
-                id: 'maciek' as const,
-                name: players.maciek.name,
-                score: comparison.maciekScore,
-                color: ownerColor,
-                soft: ownerSoft,
-              },
-              {
-                id: 'myrna' as const,
-                name: players.myrna.name,
-                score: comparison.myrnaScore,
-                color: guestColor,
-                soft: guestSoft,
-              },
-            ]
-          ).map((candidate) => {
-            const isLeader = comparison.leader === candidate.id;
-            return (
-              <button
-                key={candidate.id}
-                type="button"
-                onClick={() => handleCrown(candidate.id)}
-                className="group relative flex flex-col items-start gap-2 rounded-2xl border p-3.5 text-left transition-[transform,box-shadow] duration-150 active:scale-[0.96]"
-                style={{
-                  backgroundColor: candidate.soft,
-                  borderColor: `color-mix(in srgb, ${candidate.color} ${isLeader ? '55%' : '28%'}, transparent)`,
-                }}
-              >
-                <div className="flex w-full items-center justify-between gap-1">
-                  <Crown className="h-4 w-4" style={{ color: candidate.color }} />
-                  {isLeader && (
-                    <span
-                      className="rounded-full px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider"
-                      style={{
-                        backgroundColor: `color-mix(in srgb, ${candidate.color} 22%, transparent)`,
-                        color: candidate.color,
-                      }}
-                    >
-                      Leading
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <div className="text-sm font-bold" style={{ color: candidate.color }}>
-                    {candidate.name} Won
-                  </div>
-                  <div className="font-mono text-[11px] opacity-75 tabular-nums">
-                    {candidate.score.toLocaleString()} pts
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => handleCrown('tie')}
-          className="w-full min-h-11 rounded-xl border border-black/[0.1] dark:border-zinc-800 text-xs font-mono font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-[transform,color,background-color] duration-150 active:scale-[0.98]"
-        >
-          Call it a Draw / Push
-        </button>
       </div>
     </div>
   );

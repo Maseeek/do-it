@@ -41,6 +41,7 @@ import { canImportLegacyDatabase, needsLegacyReplacement, prepareLegacyImport, r
 import { getTodayDateString, getWeekKey, isFutureDate, isValidDateString } from './date-utils';
 import { calculateHabitStreak, calculatePlayerScores, getVersusComparison } from './score-calculator';
 import { indexCheckIns } from './check-in-index';
+import { getStakePhase, settleDueStakes } from './stake-settlement';
 import {
   rebalanceWeeklyHabitCheckIns,
   rebalanceAllWeeklyCheckIns,
@@ -1607,8 +1608,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [state.checkIns, restDays, todayStr, checkInIndex]
   );
 
-  const activeWeeklyStake = state.stakes.find((s) => s.period === 'weekly' && s.status === 'active');
-  const activeMonthlyStake = state.stakes.find((s) => s.period === 'monthly' && s.status === 'active');
+  // A Stake is only "active" while its window is open; closed ones await the scoreboard's verdict.
+  const activeWeeklyStake = state.stakes.find((s) => s.period === 'weekly' && s.status === 'active' && getStakePhase(s, todayStr) === 'open');
+  const activeMonthlyStake = state.stakes.find((s) => s.period === 'monthly' && s.status === 'active' && getStakePhase(s, todayStr) === 'open');
+
+  // Settle Stakes from the shared scoreboard once their final call passes. Players never pick the winner.
+  // Wait for a fresh cloud read of both Players' check-ins so a stale cache cannot decide a verdict.
+  const canSettleStakes = isHydrated && (!multiplayer.configured || (paired && loadedDuelId === duelId && syncStatus === 'connected'));
+  useEffect(() => {
+    if (!canSettleStakes) return;
+    const settled = settleDueStakes(state.stakes, state.checkIns, todayStr);
+    if (settled.length === 0) return;
+    const byId = new Map(settled.map((stake) => [stake.id, stake]));
+    setState((prev) => ({ ...prev, stakes: prev.stakes.map((stake) => byId.get(stake.id) ?? stake) }));
+    for (const stake of settled) {
+      if (multiplayer.configured) {
+        syncDuel((client, id) => saveDuelStake(client, id, stake));
+      } else if (supabaseRef.current) {
+        upsertStakeSupabase(supabaseRef.current, stake);
+      }
+    }
+    // syncDuel is recreated each render; settlement only needs to rerun when its inputs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canSettleStakes, state.stakes, state.checkIns, todayStr, multiplayer.configured]);
   const getComparison = useCallback(
     (tier: LeaderboardTier) => getVersusComparison(maciekSummary, myrnaSummary, tier),
     [maciekSummary, myrnaSummary]

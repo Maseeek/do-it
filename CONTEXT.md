@@ -45,7 +45,7 @@ The time-windowed competitive point tally that resets automatically at period bo
 _Avoid_: Ranking, Level, Tier
 
 **Stake**:
-The mutual real-world reward or forfeit wagered by both Players on a given Leaderboard window (e.g., Sunday dinner date or weekend getaway), recorded in the shared Hall of Champions ledger upon period completion.
+The mutual real-world reward or forfeit wagered by both Players on a given Leaderboard window (e.g., Sunday dinner date or weekend getaway), recorded in the shared Hall of Champions ledger upon period completion. Players never pick the winner: the scoreboard settles a Stake automatically, awarding it to whoever earned more points in that window (equal points settle as a tie). A closed window gets one **Final Call** day for retroactive check-ins before the verdict is written.
 _Avoid_: Prize, Bounty, Purchase, Shop item
 
 **Rest Day**:

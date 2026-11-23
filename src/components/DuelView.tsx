@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { extractInviteCode } from '@/lib/invite-navigation';
-import { LeaderboardTier, Habit, CheckIn, Player, PlayerId, Stake, StakePeriod } from '@/lib/types';
+import { LeaderboardTier, Habit, CheckIn, Player, PlayerId, StakePeriod } from '@/lib/types';
 import { getCategoryBreakdown, getStakesRecord, getWeeklyDailyDuelPoints } from '@/lib/score-calculator';
 import { getDaysRemainingInMonth, getDaysRemainingInWeek, getMonthKey, getTodayDateString, getWeekKey } from '@/lib/date-utils';
 import {
@@ -174,14 +174,6 @@ export function DuelView() {
       { id: 'categories' as const, label: 'Categories' },
     ];
   }, [selectedTier]);
-
-  const handleResolveStake = (stakeItem: Stake, winner: PlayerId | 'tie') => {
-    updateStake({
-      ...stakeItem,
-      status: 'completed',
-      winnerId: winner,
-    });
-  };
 
   const handleCreateStake = ({
     period,
@@ -559,6 +551,8 @@ export function DuelView() {
           activeWeeklyStake={activeWeeklyStake}
           activeMonthlyStake={activeMonthlyStake}
           stakes={stakes}
+          checkIns={checkIns}
+          today={todayStr}
           stakesRecord={stakesRecord}
           players={players}
           comparison={comparison}
@@ -571,7 +565,6 @@ export function DuelView() {
           }
           onCreateStake={handleCreateStake}
           onUpdateStake={updateStake}
-          onResolveStake={handleResolveStake}
           onDeleteStake={deleteStake}
         />
       </div>
