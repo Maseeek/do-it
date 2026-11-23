@@ -62,6 +62,19 @@ export function weeklyPointPotential(habits: Habit[]): number {
   return habits.filter(habit => habit.isActive).reduce((sum, habit) => sum + habit.points * weeklySessions(habit), 0);
 }
 
+/**
+ * Per-check-in points that close a weekly gap by changing this habit alone,
+ * or null when the gap does not divide evenly into its sessions or would leave the 5–max range.
+ * `gap` is target minus current weekly potential.
+ */
+export function pointsToCloseGap(habit: Habit, gap: number): number | null {
+  if (!habit.isActive || gap === 0) return null;
+  const sessions = weeklySessions(habit);
+  if (gap % sessions !== 0) return null;
+  const points = habit.points + gap / sessions;
+  return points >= 5 && points <= maximumHabitPoints(habit) ? points : null;
+}
+
 export function balanceHabitPlan(habits: Habit[], target: number): Habit[] | null {
   const active = habits.filter(habit => habit.isActive);
   if (!active.length || !Number.isInteger(target) || target <= 0) return null;
