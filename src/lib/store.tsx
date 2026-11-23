@@ -28,7 +28,10 @@ import { reconcileSleepTelemetry } from './health-rewards';
 import {
   HEALTH_AUTO_SYNC_COOLDOWN_MS,
   HEALTH_AUTO_SYNC_STARTUP_DELAY_MS,
+  HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS,
   type HealthAutoSyncDisabledReason,
+  hasTelemetryForDate,
+  pruneHealthTelemetry,
   resolveClientTimeZone,
   shouldRunAutoHealthSync,
 } from './health-auto-sync';
@@ -67,6 +70,7 @@ import { createSyncScheduler } from './sync-scheduler';
 
 const STORAGE_KEY = 'do_it_app_data_v2';
 const HEALTH_LAST_CHECKED_PREFIX = 'do_it_health_last_checked:';
+const HEALTH_TELEMETRY_PREFIX = 'do_it_health_telemetry:';
 const EMPTY_REST_DAYS: RestDay[] = [];
 
 function readStoredHealthCheckedAt(accountId: string | undefined): string | null {
@@ -85,6 +89,40 @@ function writeStoredHealthCheckedAt(accountId: string | undefined, value: string
     else localStorage.removeItem(`${HEALTH_LAST_CHECKED_PREFIX}${accountId}`);
   } catch {
     // Browser storage may be restricted; server-side cooldown remains authoritative.
+  }
+}
+
+function readStoredHealthTelemetry(accountId: string | undefined, today: string): Record<string, HealthTelemetryRecord> {
+  if (!accountId || typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(`${HEALTH_TELEMETRY_PREFIX}${accountId}`);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, HealthTelemetryRecord>;
+    return pruneHealthTelemetry(parsed, today);
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredHealthTelemetry(
+  accountId: string | undefined,
+  records: Record<string, HealthTelemetryRecord> | null,
+  today: string,
+) {
+  if (!accountId || typeof window === 'undefined') return;
+  try {
+    if (!records) {
+      localStorage.removeItem(`${HEALTH_TELEMETRY_PREFIX}${accountId}`);
+      return;
+    }
+    const pruned = pruneHealthTelemetry(records, today);
+    if (Object.keys(pruned).length === 0) {
+      localStorage.removeItem(`${HEALTH_TELEMETRY_PREFIX}${accountId}`);
+    } else {
+      localStorage.setItem(`${HEALTH_TELEMETRY_PREFIX}${accountId}`, JSON.stringify(pruned));
+    }
+  } catch {
+    // Browser storage may be restricted.
   }
 }
 const EMPTY_PLAYER_SUMMARY: PlayerScoreSummary = {
@@ -174,6 +212,7 @@ interface StoreContextType {
   exportStateToJson: () => Promise<string>;
   importStateFromJson: (jsonStr: string) => { success: boolean; error?: string };
   wearableConfig: WearableConfig | undefined;
+  healthAttentionMessage: string | null;
   healthTelemetry?: Record<string, HealthTelemetryRecord>;
   getHealthTelemetryOnDate: (habitId: string, date?: string) => HealthTelemetryRecord | undefined;
   setHealthTelemetry: (record: HealthTelemetryRecord) => void;
@@ -181,7 +220,7 @@ interface StoreContextType {
   syncGoogleHealth: (
     simulate?: boolean,
     simulateUnder?: boolean,
-    options?: { auto?: boolean; date?: string }
+    options?: { auto?: boolean; needTelemetry?: boolean; date?: string }
   ) => Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }>;
   disconnectGoogleHealth: () => void;
   themePreference: ThemePreference;
@@ -204,6 +243,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>('system');
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>('dark');
+  const [healthAttentionMessage, setHealthAttentionMessage] = useState<string | null>(null);
 
   const supabaseRef = useRef(getSupabaseClient());
   const duelQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -514,6 +554,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ...(sameDuel ? prev : getInitialState()),
         activePlayerId: playerSlot,
         players: sameDuel ? prev.players : getInitialState().players,
+        healthTelemetry: sameDuel ? prev.healthTelemetry : readStoredHealthTelemetry(accountId, getTodayDateString()),
         habits: paired ? data.habits : data.habits.filter(h => h.playerId === playerSlot),
         checkIns: paired ? data.checkIns : data.checkIns.filter(c => c.playerId === playerSlot),
         stakes: data.stakes,
@@ -1205,13 +1246,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     async (
       simulate = false,
       simulateUnder = false,
-      options?: { auto?: boolean; date?: string }
+      options?: { auto?: boolean; needTelemetry?: boolean; date?: string }
     ): Promise<{ success: boolean; message: string; count?: number; result?: GoogleHealthSyncResult }> => {
       const isAuto = Boolean(options?.auto) && !simulate && !simulateUnder;
       try {
         const params = new URLSearchParams();
         if (isAuto) {
           params.set('auto', 'true');
+          if (options?.needTelemetry) params.set('needTelemetry', 'true');
         } else {
           params.set('date', options?.date ?? selectedDate);
         }
@@ -1232,7 +1274,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           headers['Content-Type'] = 'application/json';
           body = JSON.stringify({
             timeZone: resolveClientTimeZone(),
-            ...(isAuto ? { auto: true } : {}),
+            ...(isAuto ? { auto: true, ...(options?.needTelemetry ? { needTelemetry: true } : {}) } : {}),
           });
         }
 
@@ -1245,9 +1287,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const data: GoogleHealthSyncResult = await res.json();
 
         if (!res.ok || !data.success) {
+          const message = data.error || data.message || 'Failed to sync with Google Health.';
+          if (isAuto && res.status !== 401) {
+            setHealthAttentionMessage(message);
+          }
           return {
             success: false,
-            message: data.error || data.message || 'Failed to sync with Google Health.',
+            message,
             result: data,
           };
         }
@@ -1256,12 +1302,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
         if (data.available === false) {
           autoHealthRef.current.disabledReason = 'unavailable';
+          setHealthAttentionMessage(null);
         } else if (data.connected === false) {
           autoHealthRef.current.disabledReason = 'not_connected';
+          setHealthAttentionMessage(null);
         } else if (data.reason === 'needs_attention') {
           autoHealthRef.current.disabledReason = 'needs_attention';
+          setHealthAttentionMessage(data.message || 'Google Health permission needs attention. Reconnect in Settings.');
         } else {
           autoHealthRef.current.disabledReason = null;
+          setHealthAttentionMessage(data.needsAttention ? (data.message || 'Some Google Health permissions are missing. Reconnect in Settings.') : null);
         }
 
         if (data.lastCheckedAt) {
@@ -1325,6 +1375,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
 
           newCheckIns = rebalanceAllWeeklyCheckIns(newCheckIns, prev.habits);
+          writeStoredHealthTelemetry(accountId, newTelemetry, getTodayDateString());
 
           return {
             ...prev,
@@ -1373,6 +1424,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => activeHabits.some((habit) => Boolean(habit.automation)),
     [activeHabits]
   );
+  const activeHabitsRef = useRef(activeHabits);
+  const healthTelemetryRef = useRef(state.healthTelemetry);
+  useLayoutEffect(() => {
+    activeHabitsRef.current = activeHabits;
+    healthTelemetryRef.current = state.healthTelemetry;
+  }, [activeHabits, state.healthTelemetry]);
 
   // Foreground automatic Google Health checks: deferred past startup, cooldown-gated, paused while hidden/offline.
   useEffect(() => {
@@ -1389,6 +1446,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         lastCheckedAt: justConnected ? null : readStoredHealthCheckedAt(accountId),
         disabledReason: null,
       };
+      setHealthAttentionMessage(null);
     }
 
     if (!isHydrated || !multiplayer.configured || !duelId || loadedDuelId !== duelId || !accountId || !hasAutomatedHabits) {
@@ -1415,14 +1473,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }, Math.max(1_000, delayMs));
     };
 
-    const nextCooldownDelay = () => {
+    const nextCooldownDelay = (missingTodayTelemetry: boolean) => {
       const now = Date.now();
+      const cooldown = missingTodayTelemetry
+        ? Math.min(HEALTH_AUTO_SYNC_COOLDOWN_MS, HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS)
+        : HEALTH_AUTO_SYNC_COOLDOWN_MS;
       const attemptRemaining = autoHealthRef.current.lastAttemptAt > 0
-        ? HEALTH_AUTO_SYNC_COOLDOWN_MS - (now - autoHealthRef.current.lastAttemptAt)
+        ? cooldown - (now - autoHealthRef.current.lastAttemptAt)
         : 0;
       const checkedMs = autoHealthRef.current.lastCheckedAt ? Date.parse(autoHealthRef.current.lastCheckedAt) : NaN;
       const checkedRemaining = Number.isFinite(checkedMs)
-        ? HEALTH_AUTO_SYNC_COOLDOWN_MS - (now - checkedMs)
+        ? cooldown - (now - checkedMs)
         : 0;
       const remaining = Math.max(attemptRemaining, checkedRemaining);
       return remaining > 0 ? remaining : HEALTH_AUTO_SYNC_COOLDOWN_MS;
@@ -1431,6 +1492,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const runAutoCheck = async () => {
       if (cancelled) return;
       const stateRef = autoHealthRef.current;
+      const missingTodayTelemetry = !hasTelemetryForDate(
+        healthTelemetryRef.current,
+        activeHabitsRef.current,
+        getTodayDateString(),
+      );
       const eligible = shouldRunAutoHealthSync({
         isHydrated,
         multiplayerConfigured: multiplayer.configured,
@@ -1443,11 +1509,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         disabledReason: stateRef.disabledReason,
         lastAttemptAt: stateRef.lastAttemptAt,
         lastCheckedAt: stateRef.lastCheckedAt,
+        missingTodayTelemetry,
       });
 
       if (!eligible) {
         if (document.visibilityState !== 'hidden' && navigator.onLine && stateRef.disabledReason === null && !stateRef.inFlight) {
-          scheduleNext(nextCooldownDelay());
+          scheduleNext(nextCooldownDelay(missingTodayTelemetry));
         }
         return;
       }
@@ -1455,11 +1522,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       stateRef.inFlight = true;
       stateRef.lastAttemptAt = Date.now();
       try {
-        await syncGoogleHealth(false, false, { auto: true });
+        await syncGoogleHealth(false, false, { auto: true, needTelemetry: missingTodayTelemetry });
       } finally {
         stateRef.inFlight = false;
         if (!cancelled && stateRef.disabledReason === null && document.visibilityState !== 'hidden' && navigator.onLine) {
-          scheduleNext(nextCooldownDelay());
+          const stillMissing = !hasTelemetryForDate(
+            healthTelemetryRef.current,
+            activeHabitsRef.current,
+            getTodayDateString(),
+          );
+          scheduleNext(nextCooldownDelay(stillMissing));
         }
       }
     };
@@ -1474,6 +1546,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     scheduleNext(HEALTH_AUTO_SYNC_STARTUP_DELAY_MS);
     document.addEventListener('visibilitychange', handleWake);
+    window.addEventListener('focus', handleWake);
+    window.addEventListener('pageshow', handleWake);
     window.addEventListener('online', handleWake);
     window.addEventListener('offline', handleWake);
 
@@ -1481,6 +1555,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       clearTimer();
       document.removeEventListener('visibilitychange', handleWake);
+      window.removeEventListener('focus', handleWake);
+      window.removeEventListener('pageshow', handleWake);
       window.removeEventListener('online', handleWake);
       window.removeEventListener('offline', handleWake);
     };
@@ -1493,9 +1569,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }
   autoHealthRef.current.lastCheckedAt = null;
   autoHealthRef.current.disabledReason = 'not_connected';
+  setHealthAttentionMessage(null);
   writeStoredHealthCheckedAt(accountId, null);
+  writeStoredHealthTelemetry(accountId, null, getTodayDateString());
   setState((prev) => ({
     ...prev,
+    healthTelemetry: {},
     wearableConfig: {
       ...prev.wearableConfig,
       googleConnected: false,
@@ -1552,7 +1631,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addHabit, updateHabit, deleteHabit, applyHabitPlan, importPreviousProgress, updateStake,
     addStake, deleteStake, activeWeeklyStake, activeMonthlyStake, getComparison,
     resetToDefaults, updateSupabaseConfig, resolveProofImages, exportStateToJson, importStateFromJson,
-    wearableConfig: state.wearableConfig, healthTelemetry: state.healthTelemetry,
+    wearableConfig: state.wearableConfig, healthAttentionMessage, healthTelemetry: state.healthTelemetry,
     getHealthTelemetryOnDate, setHealthTelemetry, clearHealthTelemetry,
     syncGoogleHealth, disconnectGoogleHealth,
     themePreference, effectiveTheme, setThemePreference, toggleTheme,
@@ -1567,7 +1646,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toggleRestDay, isRestDay, addHabit, updateHabit, deleteHabit, applyHabitPlan,
     importPreviousProgress, updateStake, addStake, deleteStake, activeWeeklyStake, activeMonthlyStake,
     getComparison, resetToDefaults, updateSupabaseConfig, resolveProofImages, exportStateToJson, importStateFromJson,
-    getHealthTelemetryOnDate, setHealthTelemetry, clearHealthTelemetry,
+    healthAttentionMessage, getHealthTelemetryOnDate, setHealthTelemetry, clearHealthTelemetry,
     syncGoogleHealth, disconnectGoogleHealth, themePreference, effectiveTheme, setThemePreference, toggleTheme,
   ]);
 

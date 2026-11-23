@@ -1,4 +1,7 @@
-export const HEALTH_AUTO_SYNC_COOLDOWN_MS = 15 * 60_000;
+import type { Habit, HealthTelemetryRecord } from './types';
+
+export const HEALTH_AUTO_SYNC_COOLDOWN_MS = 5 * 60_000;
+export const HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS = 60_000;
 export const HEALTH_AUTO_SYNC_STARTUP_DELAY_MS = 1_500;
 
 export type HealthAutoSyncDisabledReason = 'unavailable' | 'not_connected' | 'needs_attention';
@@ -15,6 +18,7 @@ export interface AutoHealthSyncEligibility {
   disabledReason: HealthAutoSyncDisabledReason | null;
   lastAttemptAt: number;
   lastCheckedAt?: string | null;
+  missingTodayTelemetry?: boolean;
   nowMs?: number;
   cooldownMs?: number;
 }
@@ -70,6 +74,35 @@ export function resolveClientTimeZone(fallback = 'UTC'): string {
   }
 }
 
+export function pruneHealthTelemetry(
+  records: Record<string, HealthTelemetryRecord> | undefined,
+  today: string,
+  keepDays = 3,
+): Record<string, HealthTelemetryRecord> {
+  if (!records) return {};
+  const cutoff = shiftDate(today, -(Math.max(1, keepDays) - 1));
+  const kept: Record<string, HealthTelemetryRecord> = {};
+  for (const [key, record] of Object.entries(records)) {
+    if (!record || typeof record !== 'object') continue;
+    if (record.source === 'simulated') continue;
+    if (typeof record.date !== 'string' || record.date < cutoff) continue;
+    if (!Number.isFinite(record.value)) continue;
+    kept[key] = record;
+  }
+  return kept;
+}
+
+export function hasTelemetryForDate(
+  records: Record<string, HealthTelemetryRecord> | undefined,
+  habits: Habit[],
+  date: string,
+): boolean {
+  if (!records) return false;
+  return habits.some(
+    habit => Boolean(habit.automation) && Boolean(records[`${habit.id}:${date}`]),
+  );
+}
+
 export function shouldRunAutoHealthSync(input: AutoHealthSyncEligibility): boolean {
   if (
     !input.isHydrated ||
@@ -86,11 +119,15 @@ export function shouldRunAutoHealthSync(input: AutoHealthSyncEligibility): boole
   }
 
   const nowMs = input.nowMs ?? Date.now();
-  const cooldownMs = input.cooldownMs ?? HEALTH_AUTO_SYNC_COOLDOWN_MS;
-  if (input.lastAttemptAt > 0 && nowMs - input.lastAttemptAt < cooldownMs) {
+  const baseCooldownMs = input.cooldownMs ?? HEALTH_AUTO_SYNC_COOLDOWN_MS;
+  const effectiveCooldownMs = input.missingTodayTelemetry
+    ? Math.min(baseCooldownMs, HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS)
+    : baseCooldownMs;
+
+  if (input.lastAttemptAt > 0 && nowMs - input.lastAttemptAt < effectiveCooldownMs) {
     return false;
   }
-  if (isHealthCooldownActive(input.lastCheckedAt, nowMs, cooldownMs)) {
+  if (isHealthCooldownActive(input.lastCheckedAt, nowMs, effectiveCooldownMs)) {
     return false;
   }
   return true;

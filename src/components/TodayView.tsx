@@ -4,6 +4,7 @@ import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   ArrowUpRight,
   BedDouble,
   Camera,
@@ -27,7 +28,15 @@ import { Habit } from '@/lib/types';
 const { View: ActivityFeed } = createDeferredView(() => import('./ActivityFeed').then(module => module.ActivityFeed));
 const { View: ProofGalleryModal } = createDeferredView(() => import('./ProofGalleryModal').then(module => module.ProofGalleryModal), null);
 
-export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => void; onOpenDuel?: () => void }) {
+export function TodayView({
+  onOpenHabits,
+  onOpenDuel,
+  onOpenSettings,
+}: {
+  onOpenHabits: () => void;
+  onOpenDuel?: () => void;
+  onOpenSettings?: () => void;
+}) {
   const multiplayer = useMultiplayer();
   const {
     habits,
@@ -50,6 +59,7 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
     partnerCleanSpaceHabit,
     isRestDay,
     getHealthTelemetryOnDate,
+    healthAttentionMessage,
   } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
   const [proofIndex, setProofIndex] = useState<number | null>(null);
@@ -256,6 +266,32 @@ export function TodayView({ onOpenHabits, onOpenDuel }: { onOpenHabits: () => vo
       ) : (
         <div className="space-y-6">
           <DateNavigator />
+
+          {/* Google Health attention notice (only when a check reports an expired token, missing scope, or failure) */}
+          {healthAttentionMessage && (
+            <div
+              role="status"
+              className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3 text-label text-amber-700 dark:text-amber-200"
+            >
+              <span className="flex min-w-0 items-center gap-2.5">
+                <Activity className="size-4 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 font-normal">{healthAttentionMessage}</span>
+              </span>
+              {onOpenSettings && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    hapticLight();
+                    onOpenSettings();
+                  }}
+                  className="shrink-0 font-medium underline underline-offset-2"
+                >
+                  Settings
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Rest Day note */}
           {isRest && (

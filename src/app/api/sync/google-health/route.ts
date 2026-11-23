@@ -104,8 +104,9 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const body = await request.json().catch(() => ({})) as { auto?: unknown; timeZone?: unknown };
+  const body = await request.json().catch(() => ({})) as { auto?: unknown; needTelemetry?: unknown; timeZone?: unknown };
   const auto = request.nextUrl.searchParams.get('auto') === 'true' || body?.auto === true;
+  const needTelemetry = request.nextUrl.searchParams.get('needTelemetry') === 'true' || body?.needTelemetry === true;
   const timeZone = typeof body?.timeZone === 'string' && validTimeZone(body.timeZone) ? body.timeZone : undefined;
 
   if (!healthEnabled()) {
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     if (!healthEnabled(context.user.id)) {
       return auto ? autoUnavailable() : NextResponse.json({ error: 'Google Health is not available yet.' }, { status: 503 });
     }
-    return NextResponse.json(await syncUserHealth(context.user.id, { date: requestedDate, auto, timeZone }));
+    return NextResponse.json(await syncUserHealth(context.user.id, { date: requestedDate, auto, needTelemetry, timeZone }));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Health sync failed.' }, { status: 502 });
   }

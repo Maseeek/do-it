@@ -7,6 +7,7 @@ import { decryptToken, encryptToken, healthDatabase, localDate, validTimeZone } 
 import { healthEnabled } from './health-access';
 import {
   HEALTH_AUTO_SYNC_COOLDOWN_MS,
+  HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS,
   isHealthCooldownActive,
   needsHealthReconnect,
   nextDate,
@@ -34,6 +35,7 @@ export interface SyncUserHealthOptions {
   date?: string;
   dates?: string[];
   auto?: boolean;
+  needTelemetry?: boolean;
   timeZone?: string;
   cooldownMs?: number;
   skipIfAuthError?: boolean;
@@ -299,7 +301,10 @@ export async function syncUserHealth(
     };
   }
 
-  const cooldownMs = options.cooldownMs ?? HEALTH_AUTO_SYNC_COOLDOWN_MS;
+  const baseCooldownMs = options.cooldownMs ?? HEALTH_AUTO_SYNC_COOLDOWN_MS;
+  const cooldownMs = options.needTelemetry
+    ? Math.min(baseCooldownMs, HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS)
+    : baseCooldownMs;
   if (isAuto && isHealthCooldownActive(connection.last_checked_at, Date.now(), cooldownMs)) {
     return {
       success: true,
