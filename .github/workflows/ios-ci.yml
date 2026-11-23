@@ -65,27 +65,6 @@ jobs:
           chmod +x scripts/build-ios.sh scripts/verify-mobile.sh
           ./scripts/build-ios.sh --test
 
-      - name: Run iOS Unit Tests via xcodebuild / Swift
-        run: |
-          set -o pipefail
-          mkdir -p build/reports
-          if [ -f "ios/DoIt/DoIt.xcodeproj/project.pbxproj" ]; then
-            echo "Running xcodebuild unit tests..."
-            xcodebuild test \
-              -project ios/DoIt/DoIt.xcodeproj \
-              -scheme DoIt \
-              -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-              -resultBundlePath build/ios-test-results.xcresult \
-              CODE_SIGNING_ALLOWED=NO \
-              | xcpretty --color --simple
-          elif [ -f "ios/DoIt/Package.swift" ]; then
-            echo "Running Swift Package unit tests..."
-            cd ios/DoIt && swift test
-          else
-            echo "Testing via Fastlane..."
-            cd ios && bundle exec fastlane test
-          fi
-
       - name: Build iOS Application (Release)
         run: |
           set -o pipefail

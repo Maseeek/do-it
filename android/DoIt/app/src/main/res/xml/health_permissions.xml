@@ -1,4 +1,4 @@
-<permissions>
+<permissions xmlns:android="http://schemas.android.com/apk/res/android">
     <permission-group android:name="android.permission-group.HEALTH">
         <permission android:name="android.permission.health.READ_STEPS" />
         <permission android:name="android.permission.health.READ_SLEEP" />

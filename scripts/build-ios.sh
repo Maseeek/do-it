@@ -111,6 +111,29 @@ fi
 echo -e "Xcode project : ${YELLOW}${PROJECT_FILE:-None (SPM mode)}${NC}"
 echo -e "Package.swift : ${YELLOW}${PACKAGE_SWIFT:-None}${NC}"
 
+# Runs the Swift package's test target on the iOS Simulator via xcodebuild.
+run_package_tests_on_simulator() {
+  local pkg_dir="$1"
+  local pkg_scheme
+  pkg_scheme=$(cd "$pkg_dir" && xcodebuild -list -json 2>/dev/null | python3 -c '
+import json, sys
+schemes = json.load(sys.stdin).get("workspace", {}).get("schemes", [])
+pick = [s for s in schemes if s.endswith("-Package")] or [s for s in schemes if s.endswith("Kit")] or schemes
+print(pick[0] if pick else "")
+')
+  if [[ -z "$pkg_scheme" ]]; then
+    echo -e "${RED}Error: no testable scheme found in $pkg_dir${NC}" >&2
+    exit 1
+  fi
+  echo -e "${BLUE}Running Swift package tests (scheme ${pkg_scheme}) on iOS Simulator...${NC}"
+  (cd "$pkg_dir" && xcodebuild test \
+    -scheme "$pkg_scheme" \
+    -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+    -resultBundlePath "$BUILD_DIR/test-results.xcresult" \
+    CODE_SIGNING_ALLOWED=NO \
+    | eval "$FORMATTER")
+}
+
 # Check Host OS
 IS_MACOS=false
 if [[ "$(uname -s)" == "Darwin" ]]; then
@@ -150,14 +173,19 @@ if [[ "$IS_MACOS" == true ]]; then
     fi
 
     if [[ "$RUN_TESTS" == true ]]; then
-      echo -e "${BLUE}Running iOS unit tests...${NC}"
-      xcodebuild test \
-        -project "$PROJECT_FILE" \
-        -scheme "$SCHEME" \
-        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-        -resultBundlePath "$BUILD_DIR/test-results.xcresult" \
-        CODE_SIGNING_ALLOWED=NO \
-        | eval "$FORMATTER"
+      if [[ -n "$PACKAGE_SWIFT" ]]; then
+        # The unit tests live in the Swift package; the app project has no test target.
+        run_package_tests_on_simulator "$(dirname "$PACKAGE_SWIFT")"
+      else
+        echo -e "${BLUE}Running iOS unit tests...${NC}"
+        xcodebuild test \
+          -project "$PROJECT_FILE" \
+          -scheme "$SCHEME" \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -resultBundlePath "$BUILD_DIR/test-results.xcresult" \
+          CODE_SIGNING_ALLOWED=NO \
+          | eval "$FORMATTER"
+      fi
       echo -e "${GREEN}✓ iOS Unit Tests passed.${NC}"
     fi
 
