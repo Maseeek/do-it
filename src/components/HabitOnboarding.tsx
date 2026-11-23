@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { useStore } from '@/lib/store';
-import { balanceHabitPlan, catalogHabits, categoryForSection, HABIT_SECTIONS, habitSectionTitle, maximumHabitPoints, weeklyPointPotential } from '@/lib/habit-catalog';
+import { balanceHabitPlan, catalogHabits, categoryForSection, HABIT_SECTIONS, habitSectionTitle, maximumHabitPoints, pointsToCloseGap, weeklyPointPotential, weeklySessions } from '@/lib/habit-catalog';
 import type { Habit, HabitCategory } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -144,13 +144,13 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
           <div className="sticky top-2 z-10 flex items-center justify-between gap-4 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-1)]/95 px-4 py-3 shadow-sm backdrop-blur">
             <div>
               <div className="text-caption text-muted">Weekly potential · {activeCount} habits</div>
-              <div className="text-title num text-foreground">{total} <span className="text-label font-normal text-muted">pts</span></div>
+              <div className="text-title num text-foreground">{total} <span className="text-label font-normal text-muted">pts/wk</span></div>
             </div>
             <div className={`text-right text-label num ${partnerTotal > 0 && difference === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-secondary'}`}>
               {partnerTotal > 0 ? (
                 <>
-                  {difference === 0 ? 'Matched' : difference > 0 ? `${difference} pts below` : `${-difference} pts above`}
-                  <span className="block text-caption text-muted">Partner: {partnerTotal} pts</span>
+                  {difference === 0 ? 'Matched' : difference > 0 ? `${difference} pts/wk below` : `${-difference} pts/wk above`}
+                  <span className="block text-caption text-muted">Partner: {partnerTotal} pts/wk</span>
                 </>
               ) : (
                 <span>You set the first total</span>
@@ -237,6 +237,24 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                             <span>pts</span>
                           </label>
                         )}
+                        {!firstRun && (
+                          <span className="text-label text-muted num">
+                            × {weeklySessions(habit)} = <span className="text-foreground">{habit.points * weeklySessions(habit)}</span>/wk
+                          </span>
+                        )}
+                        {!firstRun && partnerTotal > 0 && (() => {
+                          const matchPoints = pointsToCloseGap(habit, difference);
+                          return matchPoints === null ? null : (
+                            <button
+                              type="button"
+                              onClick={() => changeHabit(habit.id, { points: matchPoints })}
+                              aria-label={`Set ${habit.title} to ${matchPoints} points to match your partner`}
+                              className="min-h-11 rounded-full bg-emerald-500/10 px-3 text-label text-emerald-700 num transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+                            >
+                              Match with {matchPoints}
+                            </button>
+                          );
+                        })()}
                         {habit.automation?.metric === 'steps' && (
                           <div className="flex gap-1.5" role="group" aria-label="Daily step goal">
                             {[6000, 10000, 14000].map(target => (
@@ -300,7 +318,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
         )}
 
         <p className="px-1 text-caption text-muted">
-          Daily habits count seven times; weekly habits count their target sessions. {partnerTotal > 0 ? 'Match your partner’s weekly potential.' : 'Your partner will match the weekly potential you choose.'} Past check-ins stay in your history.
+          Points are per check-in. Daily habits count seven times a week; weekly habits count their target sessions, so 1 point on a daily habit adds 7 to your weekly total. {partnerTotal > 0 ? 'Match your partner’s weekly potential.' : 'Your partner will match the weekly potential you choose.'} Past check-ins stay in your history.
         </p>
 
         <div className={firstRun

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { balanceHabitPlan, catalogHabits, categoryForSection, HABIT_SECTIONS, habitSectionTitle, weeklyPointPotential } from './habit-catalog';
+import { balanceHabitPlan, catalogHabits, pointsToCloseGap, categoryForSection, HABIT_SECTIONS, habitSectionTitle, weeklyPointPotential } from './habit-catalog';
 import { INITIAL_HABITS } from './seed';
 
 test('general catalog starts unselected and covers every onboarding section', () => {
@@ -36,4 +36,18 @@ test('category dropdown maps sections to stored categories', () => {
   assert.equal(categoryForSection('Health', 'cardio'), 'cardio');
   assert.equal(categoryForSection('Health', 'finance'), 'foundation');
   assert.equal(categoryForSection('Other', 'skills'), 'other');
+});
+
+test('a single habit closes the gap only when it divides into its sessions', () => {
+  const [daily, weekly] = catalogHabits('maciek');
+  const dailyHabit = { ...daily, points: 20, isActive: true };
+  const weeklyHabit = { ...weekly, points: 30, frequency: 'weekly' as const, weeklyTargetDays: 3, isActive: true };
+  assert.equal(pointsToCloseGap(dailyHabit, 35), 25);
+  assert.equal(pointsToCloseGap(dailyHabit, -70), 10);
+  assert.equal(pointsToCloseGap(dailyHabit, 6), null);
+  assert.equal(pointsToCloseGap(weeklyHabit, 6), 32);
+  assert.equal(pointsToCloseGap(dailyHabit, -105), 5);
+  assert.equal(pointsToCloseGap(dailyHabit, -112), null);
+  assert.equal(pointsToCloseGap(dailyHabit, 0), null);
+  assert.equal(pointsToCloseGap({ ...dailyHabit, isActive: false }, 35), null);
 });
