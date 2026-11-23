@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   HEALTH_AUTO_SYNC_COOLDOWN_MS,
+  HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS,
+  hasTelemetryForDate,
   isHealthCooldownActive,
   needsHealthReconnect,
   nextDate,
   previousDate,
+  pruneHealthTelemetry,
   resolveSyncDates,
   shiftDate,
   shouldRunAutoHealthSync,
 } from './health-auto-sync';
+import type { Habit, HealthTelemetryRecord } from './types';
 
 test('date shifting handles month, year, and leap-year boundaries', () => {
   assert.equal(previousDate('2026-01-01'), '2025-12-31');
@@ -29,9 +33,9 @@ test('cooldown detects recent checks and expires cleanly at boundary', () => {
   const now = Date.parse('2026-10-15T12:00:00Z');
   assert.equal(isHealthCooldownActive(null, now), false);
   assert.equal(isHealthCooldownActive('not-a-date', now), false);
-  assert.equal(isHealthCooldownActive('2026-10-15T11:50:00Z', now), true);
-  assert.equal(isHealthCooldownActive('2026-10-15T11:45:00Z', now), false);
-  assert.equal(isHealthCooldownActive('2026-10-15T11:45:01Z', now), true);
+  assert.equal(isHealthCooldownActive('2026-10-15T11:57:00Z', now), true);
+  assert.equal(isHealthCooldownActive('2026-10-15T11:55:00Z', now), false);
+  assert.equal(isHealthCooldownActive('2026-10-15T11:55:01Z', now), true);
 });
 
 test('needsHealthReconnect matches auth/permission failures and ignores transient errors', () => {
@@ -40,6 +44,30 @@ test('needsHealthReconnect matches auth/permission failures and ignores transien
   assert.equal(needsHealthReconnect('Google Health is busy right now. Try again shortly.'), false);
   assert.equal(needsHealthReconnect('Google Health could not be checked (503).'), false);
   assert.equal(needsHealthReconnect(null), false);
+});
+
+test('pruneHealthTelemetry retains recent real records and drops stale or simulated entries', () => {
+  const records: Record<string, HealthTelemetryRecord> = {
+    'steps:2026-10-15': { habitId: 'steps', playerId: 'maciek', date: '2026-10-15', metric: 'steps', value: 4200, target: 10000, unit: 'steps', source: 'google_health' },
+    'sleep:2026-10-13': { habitId: 'sleep', playerId: 'maciek', date: '2026-10-13', metric: 'sleep', value: 7.5, target: 8.5, unit: 'hrs', source: 'google_health' },
+    'sleep:2026-10-12': { habitId: 'sleep', playerId: 'maciek', date: '2026-10-12', metric: 'sleep', value: 8.0, target: 8.5, unit: 'hrs', source: 'google_health' },
+    'sim:2026-10-15': { habitId: 'sleep', playerId: 'maciek', date: '2026-10-15', metric: 'sleep', value: 3.0, target: 8.5, unit: 'hrs', source: 'simulated' },
+  };
+  const pruned = pruneHealthTelemetry(records, '2026-10-15', 3);
+  assert.deepEqual(Object.keys(pruned).sort(), ['sleep:2026-10-13', 'steps:2026-10-15']);
+});
+
+test('hasTelemetryForDate checks whether any automated habit has telemetry on that day', () => {
+  const habits: Habit[] = [
+    { id: 'steps', playerId: 'maciek', title: 'Steps', description: '', category: 'physical', points: 20, iconName: 'Footprints', order: 1, isActive: true, automation: { metric: 'steps', target: 10000 } },
+    { id: 'read', playerId: 'maciek', title: 'Read', description: '', category: 'intellect', points: 20, iconName: 'BookOpen', order: 2, isActive: true },
+  ];
+  const records: Record<string, HealthTelemetryRecord> = {
+    'steps:2026-10-15': { habitId: 'steps', playerId: 'maciek', date: '2026-10-15', metric: 'steps', value: 4200, target: 10000, unit: 'steps', source: 'google_health' },
+  };
+  assert.equal(hasTelemetryForDate(records, habits, '2026-10-15'), true);
+  assert.equal(hasTelemetryForDate(records, habits, '2026-10-14'), false);
+  assert.equal(hasTelemetryForDate({}, habits, '2026-10-15'), false);
 });
 
 test('shouldRunAutoHealthSync enforces foreground, connectivity, habits, disabled state, and cooldowns', () => {
@@ -68,6 +96,9 @@ test('shouldRunAutoHealthSync enforces foreground, connectivity, habits, disable
   assert.equal(shouldRunAutoHealthSync({ ...base, disabledReason: 'needs_attention' }), false);
   assert.equal(shouldRunAutoHealthSync({ ...base, lastAttemptAt: nowMs - HEALTH_AUTO_SYNC_COOLDOWN_MS + 1000 }), false);
   assert.equal(shouldRunAutoHealthSync({ ...base, lastAttemptAt: nowMs - HEALTH_AUTO_SYNC_COOLDOWN_MS }), true);
-  assert.equal(shouldRunAutoHealthSync({ ...base, lastCheckedAt: '2026-10-15T11:55:00Z' }), false);
-  assert.equal(shouldRunAutoHealthSync({ ...base, lastCheckedAt: '2026-10-15T11:40:00Z' }), true);
+  assert.equal(shouldRunAutoHealthSync({ ...base, lastCheckedAt: '2026-10-15T11:57:00Z' }), false);
+  assert.equal(shouldRunAutoHealthSync({ ...base, lastCheckedAt: '2026-10-15T11:54:00Z' }), true);
+  // Missing today telemetry uses the shorter 1-minute refresh cooldown so reopening after cron/other device populates steps & sleep.
+  assert.equal(shouldRunAutoHealthSync({ ...base, lastCheckedAt: '2026-10-15T11:57:00Z', missingTodayTelemetry: true }), true);
+  assert.equal(shouldRunAutoHealthSync({ ...base, lastCheckedAt: new Date(nowMs - HEALTH_TELEMETRY_REFRESH_COOLDOWN_MS + 5000).toISOString(), missingTodayTelemetry: true }), false);
 });
