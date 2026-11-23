@@ -113,7 +113,13 @@ echo -e "Package.swift : ${YELLOW}${PACKAGE_SWIFT:-None}${NC}"
 
 # Runs the Swift package's test target on the iOS Simulator via xcodebuild.
 run_package_tests_on_simulator() {
-  local pkg_dir="$1"
+  local src_dir="$1"
+  # xcodebuild prefers an .xcodeproj over Package.swift in the same folder,
+  # so test a copy of the package that leaves the app project behind.
+  local pkg_dir="$BUILD_DIR/package-under-test"
+  rm -rf "$pkg_dir" && mkdir -p "$pkg_dir"
+  cp "$src_dir/Package.swift" "$pkg_dir/"
+  cp -R "$src_dir/Sources" "$src_dir/Tests" "$pkg_dir/"
   local pkg_scheme
   pkg_scheme=$(cd "$pkg_dir" && xcodebuild -list -json 2>/dev/null | python3 -c '
 import json, sys
