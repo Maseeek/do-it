@@ -16,8 +16,7 @@ import {
 import type { Habit } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 
-const inputClass =
-  'min-h-11 w-full rounded-xl border border-black/10 dark:border-white/[0.15] bg-zinc-100 dark:bg-[#101113] px-3 text-sm text-foreground outline-none focus:border-player-400';
+const inputClass = 'field outline-none focus:border-player-400';
 
 export function HabitSettings({ onChooseHabits }: { onChooseHabits?: () => void }) {
   const { activeHabits, updateHabit } = useStore();
@@ -25,10 +24,10 @@ export function HabitSettings({ onChooseHabits }: { onChooseHabits?: () => void 
   const [message, setMessage] = useState<string | null>(null);
 
   return (
-    <section className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#17181b] p-4 space-y-3 shadow-xs">
+    <section className="settings-panel flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <ListChecks size={17} /> Habits
+        <h2 className="flex items-center gap-2">
+          <ListChecks size={18} className="text-secondary" /> Habits
         </h2>
         {onChooseHabits && (
           <button type="button" className="control min-h-11" onClick={onChooseHabits}>
@@ -36,7 +35,7 @@ export function HabitSettings({ onChooseHabits }: { onChooseHabits?: () => void 
           </button>
         )}
       </div>
-      <p className="text-xs text-zinc-500">
+      <p>
         Rename or describe a habit without losing its check-ins. Points and frequency stay in your habit plan.
       </p>
       {activeHabits.length === 0 ? (
@@ -56,7 +55,7 @@ export function HabitSettings({ onChooseHabits }: { onChooseHabits?: () => void 
                   }}
                 />
               ) : (
-                <div className="flex min-h-14 items-center gap-3 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-zinc-100 dark:bg-[#101113] px-3.5">
+                <div className="flex min-h-14 items-center gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3.5">
                   <HabitIcon name={habit.iconName} className="size-4 shrink-0 text-player-400" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm text-foreground">{habit.title}</div>
@@ -100,7 +99,7 @@ function HabitDetailsForm({ habit, onSave, onCancel }: { habit: Habit; onSave: (
     <form
       onSubmit={submit}
       onKeyDown={event => { if (event.key === 'Escape') onCancel(); }}
-      className="space-y-3 rounded-xl border border-player-500/40 bg-zinc-100 dark:bg-[#101113] p-3.5"
+      className="space-y-3 rounded-xl border border-player-500/40 bg-[var(--surface-2)] p-3.5"
     >
       <div className="space-y-1">
         <label htmlFor={`${idPrefix}-title`} className="block text-xs text-zinc-400">Name</label>
