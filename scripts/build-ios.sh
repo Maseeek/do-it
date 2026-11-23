@@ -158,7 +158,7 @@ if [[ "$IS_MACOS" == true ]]; then
     exit 1
   fi
 
-  XCODE_VER=$(xcodebuild -version | head -n 1)
+  XCODE_VER=$(xcodebuild -version | sed -n 1p)
   echo -e "Detected Xcode: ${GREEN}${XCODE_VER}${NC}"
 
   # Pipe filter (xcpretty / xcbeautify if available)
