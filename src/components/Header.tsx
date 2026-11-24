@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Moon, Sun, Monitor } from 'lucide-react';
+import { Flame, Moon, Sun } from 'lucide-react';
 import { DoLogo } from './DoLogo';
 import { useStore } from '@/lib/store';
 import { soundEngine } from '@/lib/sound-utils';
@@ -8,7 +8,7 @@ import { hapticLight } from '@/lib/haptic-utils';
 import { getPlayerColorStyles } from '@/lib/player-colors';
 
 export function Header({ onOpenSettings, onWarmSettings }: { onOpenSettings: () => void; onWarmSettings?: () => void }) {
-  const { activePlayer, activePlayerSummary, themePreference, effectiveTheme, toggleTheme } = useStore();
+  const { activePlayer, activePlayerSummary, effectiveTheme, toggleTheme } = useStore();
 
   const handleProfileClick = () => {
     soundEngine.playClick();
@@ -43,13 +43,11 @@ export function Header({ onOpenSettings, onWarmSettings }: { onOpenSettings: () 
               hapticLight();
               toggleTheme();
             }}
-            aria-label={`Switch theme (current: ${themePreference})`}
-            title={`Switch theme (current: ${themePreference})`}
+            aria-label={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
             className="flex size-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-2)] hover:text-foreground"
           >
-            {themePreference === "system" ? (
-              <Monitor size={18} />
-            ) : effectiveTheme === "dark" ? (
+            {effectiveTheme === "dark" ? (
               <Moon size={18} />
             ) : (
               <Sun size={18} />
