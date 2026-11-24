@@ -7,7 +7,7 @@ import { useStore } from '@/lib/store';
 import { MembershipOffer } from './MembershipOffer';
 
 export function DesktopWelcomePage() {
-  const { themePreference, effectiveTheme, toggleTheme } = useStore();
+  const { effectiveTheme, toggleTheme } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function DesktopWelcomePage() {
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label={`Switch theme (current: ${themePreference})`}
+            aria-label={mounted ? `Switch to ${effectiveTheme === 'dark' ? 'light' : 'dark'} mode` : 'Switch theme'}
             title={mounted ? `Switch to ${effectiveTheme === 'dark' ? 'light' : 'dark'} mode` : 'Switch theme'}
             className="flex size-7 items-center justify-center rounded-md text-[#627064] dark:text-[#95a498] hover:text-[#19231e] dark:hover:text-[#f4f7f4] transition-colors"
           >

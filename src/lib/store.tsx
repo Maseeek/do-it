@@ -226,7 +226,7 @@ interface StoreContextType {
   disconnectGoogleHealth: () => void;
   themePreference: ThemePreference;
   effectiveTheme: EffectiveTheme;
-  setThemePreference: (pref: ThemePreference) => void;
+  setThemePreference: (pref: 'light' | 'dark') => void;
   toggleTheme: () => void;
 }
 
@@ -305,8 +305,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
 
       const savedTheme = localStorage.getItem('theme_preference') as ThemePreference | null;
-      if (savedTheme && ['system', 'light', 'dark'].includes(savedTheme)) {
+      if (savedTheme === 'light' || savedTheme === 'dark') {
         setThemePreferenceState(savedTheme);
+      } else if (savedTheme !== null) {
+        localStorage.removeItem('theme_preference');
       }
 
       if (typeof document !== 'undefined') {
@@ -387,7 +389,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, [themePreference, applyThemeToDocument]);
 
-  const setThemePreference = useCallback((pref: ThemePreference) => {
+  const setThemePreference = useCallback((pref: 'light' | 'dark') => {
     setThemePreferenceState(pref);
     try {
       localStorage.setItem('theme_preference', pref);
@@ -398,14 +400,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    if (themePreference === 'system') {
-      setThemePreference(effectiveTheme === 'dark' ? 'light' : 'dark');
-    } else if (themePreference === 'light') {
-      setThemePreference('dark');
-    } else {
-      setThemePreference('system');
-    }
-  }, [themePreference, effectiveTheme, setThemePreference]);
+    setThemePreference(effectiveTheme === 'dark' ? 'light' : 'dark');
+  }, [effectiveTheme, setThemePreference]);
 
   // 3. Supabase Cloud Sync & Realtime Subscription
   useEffect(() => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { PLAYER_COLORS } from '@/lib/types';
 import { getPlayerColorStyles, isPlayerColorUnlocked } from '@/lib/player-colors';
 import { getRecommendationShareData, getRecommendationUrl, isRecommendationCode } from '@/lib/recommendation';
-import { ArrowLeft, Copy, Gift, LogOut, Monitor, Moon, Palette, Share2, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
+import { ArrowLeft, Copy, Gift, LogOut, Moon, Palette, Share2, Sun, SunMedium, UserRound, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { getSupabaseClient } from '@/lib/supabase';
@@ -26,7 +26,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     updateLocalPlayerName,
     updatePlayerColor,
     activePlayerSummary,
-    themePreference,
+    effectiveTheme,
     setThemePreference,
   } = useStore();
 
@@ -144,7 +144,7 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
     }
   };
 
-  const handleSelectTheme = (pref: 'system' | 'light' | 'dark') => {
+  const handleSelectTheme = (pref: 'light' | 'dark') => {
     soundEngine.playClick();
     hapticLight();
     setThemePreference(pref);
@@ -153,7 +153,6 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
   const inviteCount = activePlayer?.inviteCount ?? 0;
   const opponent = activePlayer && isPartnerConnected ? players[activePlayer.id === 'maciek' ? 'myrna' : 'maciek'] : null;
   const themeOptions = [
-    { id: 'system', label: 'Auto', Icon: Monitor },
     { id: 'light', label: 'Light', Icon: Sun },
     { id: 'dark', label: 'Dark', Icon: Moon },
   ] as const;
@@ -331,17 +330,17 @@ export function SettingsView({ onBack, onChooseHabits }: { onBack: () => void; o
         <div
           role="radiogroup"
           aria-label="Select theme"
-          className="grid grid-cols-3 rounded-[var(--radius-control)] bg-[var(--surface-2)] p-0.5"
+          className="grid grid-cols-2 rounded-[var(--radius-control)] bg-[var(--surface-2)] p-0.5"
         >
           {themeOptions.map(({ id, label, Icon }) => (
             <button
               key={id}
               type="button"
               role="radio"
-              aria-checked={themePreference === id}
+              aria-checked={effectiveTheme === id}
               onClick={() => handleSelectTheme(id)}
               className={`flex h-10 items-center justify-center gap-1.5 rounded-[10px] text-label transition-colors ${
-                themePreference === id
+                effectiveTheme === id
                   ? 'bg-[var(--surface-1)] text-foreground font-semibold shadow-xs'
                   : 'text-secondary hover:text-foreground'
               }`}
