@@ -1,5 +1,5 @@
 import { CheckIn, Habit, HealthMetric, HealthTelemetryRecord } from './types';
-import { calculateSleepRewardRatio, SLEEP_FULL_POINTS_HOURS } from './health-rewards';
+import { calculateSleepRewardRatio, getSleepTarget, isSleepHabit, resolveSleepTarget } from './health-rewards';
 
 export type HealthProgressTier = 'perfect' | 'almost' | 'halfway' | 'low' | 'critical';
 export type HealthColorName = 'green' | 'lime' | 'yellow' | 'dark-orange' | 'red';
@@ -73,11 +73,20 @@ export function calculateHealthProgress(
   target: number,
   metric: HealthMetric
 ): HealthProgressDetails {
-  const safeTarget = metric === 'sleep' ? SLEEP_FULL_POINTS_HOURS : target > 0 ? target : 1;
-  const ratio = metric === 'sleep' ? calculateSleepRewardRatio(value) : Math.max(0, value / safeTarget);
-  // Sleep colors describe the measured hours, independently of the points curve.
+  const safeTarget = metric === 'sleep' ? resolveSleepTarget(target) : target > 0 ? target : 1;
+  const ratio = metric === 'sleep' ? calculateSleepRewardRatio(value, safeTarget) : Math.max(0, value / safeTarget);
+  // Sleep colors scale relative to the configured sleep goal, independently of the points curve.
+  const lowThreshold = Math.max(1, safeTarget - 5.5);
   const colorRatio = metric === 'sleep'
-    ? value >= 8.5 ? 1 : value >= 7.5 ? 0.75 : value >= 7 ? 0.5 : value >= 3 ? 0.3 : 0
+    ? value >= safeTarget
+      ? 1
+      : value >= safeTarget - 1
+      ? 0.75
+      : value >= safeTarget - 1.5
+      ? 0.5
+      : value >= lowThreshold
+      ? 0.3
+      : 0
     : ratio;
   const percentage = Math.round(ratio * 100);
   const barPercentage = Math.min(100, Math.max(0, percentage));
@@ -192,9 +201,10 @@ export function getHealthProgressDetails(
   telemetry: HealthTelemetryRecord | undefined,
   checkIn?: CheckIn
 ): HealthProgressDetails | null {
-  if (!habit.automation) return null;
-  const metric = habit.automation.metric;
-  const target = habit.automation.target;
+  const sleepHabit = isSleepHabit(habit);
+  if (!habit.automation && !sleepHabit) return null;
+  const metric: HealthMetric = habit.automation?.metric ?? 'sleep';
+  const target = sleepHabit ? getSleepTarget(habit) : habit.automation!.target;
 
   // 1. Explicit telemetry record from sync or simulation
   if (telemetry && Number.isFinite(telemetry.value)) {
@@ -212,4 +222,20 @@ export function getHealthProgressDetails(
   // 3. No health data recorded (e.g. watch was not worn to sleep)
   // Return null to leave completely blank and allow manual check-in!
   return null;
+}
+
+/**
+ * Returns the manually logged sleep hours for a sleep habit check-in, or null when unlogged
+ * or when the check-in came from Google Health.
+ */
+export function getManualSleepHours(habit: Habit, checkIn?: CheckIn): number | null {
+  if (!isSleepHabit(habit) || !checkIn || checkIn.source === 'google_health') return null;
+  if (typeof checkIn.healthValue === 'number' && Number.isFinite(checkIn.healthValue)) {
+    return checkIn.healthValue;
+  }
+  const fromNote = parseHealthValueFromNote(checkIn.note, 'sleep');
+  if (fromNote !== null && Number.isFinite(fromNote)) {
+    return fromNote;
+  }
+  return getSleepTarget(habit);
 }

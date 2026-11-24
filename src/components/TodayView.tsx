@@ -46,6 +46,8 @@ export function TodayView({
     getHabitCheckInOnDate,
     getWeeklyHabitCompletions,
     toggleHabit,
+    logSleepHours,
+    updateHabit,
     updateCheckInNote,
     selectedDate,
     isTodaySelected,
@@ -60,6 +62,7 @@ export function TodayView({
     isRestDay,
     getHealthTelemetryOnDate,
     healthAttentionMessage,
+    wearableConfig,
   } = useStore();
   const [activeSubTab, setActiveSubTab] = useState<'ritual' | 'feed'>('ritual');
   const activityFeedReady = useActivityFeedReady();
@@ -202,7 +205,10 @@ export function TodayView({
     partnerCleanSpaceCheckIn: habit.category === 'environment' && habit.requiresProof ? partnerCleanSpaceCheckIn : undefined,
     partnerCleanSpaceHabit: habit.category === 'environment' && habit.requiresProof ? partnerCleanSpaceHabit : undefined,
     toggleHabit,
+    logSleepHours,
+    updateHabit,
     updateCheckInNote,
+    isGoogleHealthConnected: Boolean(wearableConfig?.googleConnected),
   });
 
   const previous = useRef<{ context: string; points: number; allDone: boolean } | null>({ context, points, allDone });

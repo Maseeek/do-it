@@ -4,9 +4,10 @@ import { proofPhotos as getProofPhotos } from '@/lib/duel-data';
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CheckIn, Habit, HealthTelemetryRecord, Player } from '@/lib/types';
-import { getHealthProgressDetails } from '@/lib/health-correlation';
-import { calculateHealthPoints } from '@/lib/health-rewards';
+import { getHealthProgressDetails, getManualSleepHours } from '@/lib/health-correlation';
+import { applySleepTarget, calculateHealthPoints, getSleepTarget, isAutoSleepNote, isSleepHabit } from '@/lib/health-rewards';
 import { createDeferredView } from './DeferredView';
+import { SleepSlider } from './SleepSlider';
 
 
 import {
@@ -40,7 +41,10 @@ interface HabitCardProps {
   partnerCleanSpaceCheckIn: CheckIn | undefined;
   partnerCleanSpaceHabit: Habit | undefined;
   toggleHabit: (habitId: string, proofUrl?: string | string[], quantity?: number, note?: string, targetDate?: string) => void;
+  logSleepHours?: (habitId: string, hours: number, targetDate?: string) => void;
+  updateHabit?: (habit: Habit) => void;
   updateCheckInNote: (checkInId: string, note: string) => void;
+  isGoogleHealthConnected?: boolean;
   isLocking?: boolean;
   justSettled?: boolean;
   onCheckIn?: (habitId: string, pointsEarned: number, wasAlreadySatisfied: boolean) => void;
@@ -60,7 +64,10 @@ export const HabitCard = React.memo(function HabitCard({
   partnerCleanSpaceCheckIn,
   partnerCleanSpaceHabit,
   toggleHabit,
+  logSleepHours,
+  updateHabit,
   updateCheckInNote,
+  isGoogleHealthConnected = false,
   isLocking = false,
   justSettled = false,
   onCheckIn,
@@ -81,6 +88,10 @@ export const HabitCard = React.memo(function HabitCard({
     () => getHealthProgressDetails(habit, telemetry, checkIn),
     [habit, telemetry, checkIn]
   );
+  const sleepHabit = isSleepHabit(habit);
+  const sleepTarget = sleepHabit ? getSleepTarget(habit) : 8.5;
+  const showManualSleepSlider = Boolean(sleepHabit && !isGoogleHealthConnected && !healthProgress && logSleepHours);
+  const manualSleepHours = showManualSleepSlider ? getManualSleepHours(habit, checkIn) : null;
   const isHealthLocked = Boolean(healthProgress && (healthProgress.metric === 'sleep' || (healthProgress.isLocked && !completed)));
   const availablePoints = healthProgress ? calculateHealthPoints(habit, healthProgress.value) : habit.points;
 
@@ -136,6 +147,22 @@ export const HabitCard = React.memo(function HabitCard({
       return;
     }
 
+    if (showManualSleepSlider && logSleepHours) {
+      if (completed) {
+        clearKineticPulse();
+        logSleepHours(habit.id, 0, selectedDate);
+      } else if (habit.requiresProof && proofPhotos.length === 0) {
+        soundEngine.playClick();
+        hapticLight();
+        setIsProofModalOpen(true);
+      } else {
+        const earnedPts = isWeeklyTargetMet ? 0 : habit.points;
+        triggerKineticPulse(earnedPts);
+        logSleepHours(habit.id, sleepTarget, selectedDate);
+      }
+      return;
+    }
+
     if (habit.isQuantitative) {
       soundEngine.playClick();
       hapticLight();
@@ -166,6 +193,26 @@ export const HabitCard = React.memo(function HabitCard({
         toggleHabit(habit.id, undefined, undefined, undefined, selectedDate);
       }
     }
+  };
+
+  const handleCommitSleepHours = (hours: number) => {
+    if (!logSleepHours) return;
+    const earnedPts = isWeeklyTargetMet && !completed ? 0 : calculateHealthPoints(habit, hours);
+    const prevPts = completed ? (checkIn?.pointsEarned ?? 0) : 0;
+    if (earnedPts > 0) {
+      if (!completed) {
+        triggerKineticPulse(earnedPts);
+      } else if (earnedPts > prevPts) {
+        triggerKineticPulse(earnedPts - prevPts);
+      }
+    } else if (completed) {
+      clearKineticPulse();
+    }
+    logSleepHours(habit.id, hours, selectedDate);
+  };
+
+  const handleUpdateSleepTarget = (nextTarget: number) => {
+    updateHabit?.(applySleepTarget(habit, nextTarget));
   };
 
   const handleProofConfirmed = (proofUrls?: string[]) => {
@@ -210,10 +257,12 @@ export const HabitCard = React.memo(function HabitCard({
     setIsEditingNote(false);
   };
 
+  const hasDisplayNote = Boolean(checkIn?.note && !(showManualSleepSlider && isAutoSleepNote(checkIn.note)));
+
   const openNoteEditor = () => {
     soundEngine.playClick();
     hapticLight();
-    setNoteText(checkIn?.note || '');
+    setNoteText(hasDisplayNote ? (checkIn?.note || '') : '');
     setIsEditingNote(true);
   };
 
@@ -390,10 +439,10 @@ export const HabitCard = React.memo(function HabitCard({
               </p>
             )}
 
-            {checkIn?.note && (
+            {hasDisplayNote && (
               <p className="mt-1 flex min-w-0 items-center gap-1.5 text-label font-normal italic text-[var(--text-secondary)]">
                 <MessageSquare className="size-3.5 shrink-0 text-player-500" aria-hidden="true" />
-                <span className="truncate">{checkIn.note}</span>
+                <span className="truncate">{checkIn?.note}</span>
               </p>
             )}
 
@@ -474,15 +523,15 @@ export const HabitCard = React.memo(function HabitCard({
 
             <button
               onClick={openNoteEditor}
-              aria-label={checkIn?.note ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
+              aria-label={hasDisplayNote ? `Edit note for ${habit.title}` : `Add note for ${habit.title}`}
               className={`relative flex size-11 items-center justify-center rounded-full transition-colors ${
-                checkIn?.note
+                hasDisplayNote
                   ? 'text-player-500'
                   : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-foreground'
               }`}
-              title={checkIn?.note ? 'Edit note' : 'Add note'}
+              title={hasDisplayNote ? 'Edit note' : 'Add note'}
             >
-              {checkIn?.note ? (
+              {hasDisplayNote ? (
                 <MessageSquare className="size-4" />
               ) : (
                 <MessageSquarePlus className="size-4" />
@@ -490,6 +539,18 @@ export const HabitCard = React.memo(function HabitCard({
             </button>
           </div>
         </div>
+
+        {/* Interactive manual sleep slider when Google Health is not connected */}
+        {showManualSleepSlider && (
+          <SleepSlider
+            habit={habit}
+            target={sleepTarget}
+            loggedHours={manualSleepHours}
+            isWeeklyTargetMet={isWeeklyTargetMet}
+            onCommitSleep={handleCommitSleepHours}
+            onUpdateTarget={handleUpdateSleepTarget}
+          />
+        )}
 
         {/* Inline warning alert when user attempts to check off a locked habit */}
         {lockedAlertMessage && (

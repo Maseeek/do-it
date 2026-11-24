@@ -1,4 +1,5 @@
 import type { Habit, HabitCategory } from './types';
+import { applySleepTarget, getSleepTarget, isSleepHabit, resolveSleepTarget } from './health-rewards';
 
 export const HABIT_ICON_NAMES = [
   'Activity', 'Moon', 'Sun', 'Dumbbell', 'Heart', 'Footprints', 'Flame', 'Zap', 'Apple', 'Coffee',
@@ -14,6 +15,7 @@ export interface HabitDetails {
   category: HabitCategory;
   iconName: string;
   requiresProof: boolean;
+  sleepTarget?: number;
 }
 
 export function habitDetails(habit: Habit): HabitDetails {
@@ -23,6 +25,7 @@ export function habitDetails(habit: Habit): HabitDetails {
     category: habit.category,
     iconName: habit.iconName,
     requiresProof: Boolean(habit.requiresProof),
+    ...(isSleepHabit(habit) ? { sleepTarget: getSleepTarget(habit) } : {}),
   };
 }
 
@@ -37,7 +40,23 @@ export function applyHabitDetails(habit: Habit, details: HabitDetails): Habit {
   if (title.length > HABIT_TITLE_MAX) throw new Error(`Name must be ${HABIT_TITLE_MAX} characters or fewer.`);
   if (description.length > HABIT_DESCRIPTION_MAX) throw new Error(`Description must be ${HABIT_DESCRIPTION_MAX} characters or fewer.`);
   const iconName = (HABIT_ICON_NAMES as readonly string[]).includes(details.iconName) ? details.iconName : habit.iconName;
-  return { ...habit, title, description, category: details.category, iconName, requiresProof: details.requiresProof };
+  let updated: Habit = { ...habit, title, description, category: details.category, iconName, requiresProof: details.requiresProof };
+  if (isSleepHabit(habit) && details.sleepTarget !== undefined) {
+    const nextTarget = resolveSleepTarget(details.sleepTarget);
+    const titleUnchanged = title === habit.title.trim();
+    const descriptionUnchanged = description === habit.description.trim();
+    if (nextTarget !== getSleepTarget(habit) && (titleUnchanged || descriptionUnchanged)) {
+      const withTarget = applySleepTarget(updated, nextTarget);
+      updated = {
+        ...withTarget,
+        title: titleUnchanged ? withTarget.title : title,
+        description: descriptionUnchanged ? withTarget.description : description,
+      };
+    } else {
+      updated = { ...updated, automation: { metric: 'sleep', target: nextTarget } };
+    }
+  }
+  return updated;
 }
 
 export function habitDetailsChanged(habit: Habit, details: HabitDetails): boolean {
@@ -46,5 +65,6 @@ export function habitDetailsChanged(habit: Habit, details: HabitDetails): boolea
     || current.description !== details.description.trim()
     || current.category !== details.category
     || current.iconName !== details.iconName
-    || current.requiresProof !== details.requiresProof;
+    || current.requiresProof !== details.requiresProof
+    || (isSleepHabit(habit) && details.sleepTarget !== undefined && current.sleepTarget !== resolveSleepTarget(details.sleepTarget));
 }

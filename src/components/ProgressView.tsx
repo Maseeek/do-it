@@ -5,6 +5,7 @@ import { Pencil, Flame, TrendingUp } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { soundEngine } from '@/lib/sound-utils';
 import { hapticLight } from '@/lib/haptic-utils';
+import { applySleepTarget, formatSleepHours, getSleepTarget, isSleepHabit, SLEEP_TARGET_OPTIONS } from '@/lib/health-rewards';
 import { HabitOnboarding } from './HabitOnboarding';
 import { HabitIcon } from './HabitIcon';
 import { HabitHeatmap } from './HabitHeatmap';
@@ -76,11 +77,12 @@ export function ProgressView({
           {activeHabits.map((habit) => {
             const isSelected = selectedHabitId === habit.id;
             const totalCompletions = completionCounts.get(habit.id) ?? 0;
+            const hasGoalSelect = habit.automation?.metric === 'steps' || isSleepHabit(habit);
             const meta = [
               habit.automation ? 'Auto' : null,
               `${habit.points} pts`,
               habit.weeklyTargetDays ? `${habit.weeklyTargetDays}×/wk` : null,
-              habit.automation?.metric === 'steps' && totalCompletions > 0 ? `${totalCompletions} ${totalCompletions === 1 ? 'check-in' : 'check-ins'}` : null,
+              hasGoalSelect && totalCompletions > 0 ? `${totalCompletions} ${totalCompletions === 1 ? 'check-in' : 'check-ins'}` : null,
             ].filter(Boolean).join(' · ');
 
             return (
@@ -108,7 +110,7 @@ export function ProgressView({
                     </span>
                     <span className="block truncate text-caption text-muted num">{meta}</span>
                   </span>
-                  {habit.automation?.metric !== 'steps' && totalCompletions > 0 && (
+                  {!hasGoalSelect && totalCompletions > 0 && (
                     <span className="shrink-0 text-right text-caption text-muted num">
                       {totalCompletions} {totalCompletions === 1 ? 'check-in' : 'check-ins'}
                     </span>
@@ -129,6 +131,20 @@ export function ProgressView({
                     {[6000, 10000, 14000].map((target) => (
                       <option key={target} value={target}>
                         {target.toLocaleString()} steps
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {isSleepHabit(habit) && (
+                  <select
+                    aria-label="Sleep goal"
+                    className="min-h-11 shrink-0 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 text-label text-foreground num"
+                    value={getSleepTarget(habit)}
+                    onChange={(event) => updateHabit(applySleepTarget(habit, Number(event.target.value)))}
+                  >
+                    {SLEEP_TARGET_OPTIONS.map((target) => (
+                      <option key={target} value={target}>
+                        {formatSleepHours(target)} hrs
                       </option>
                     ))}
                   </select>

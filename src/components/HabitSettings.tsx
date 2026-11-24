@@ -13,6 +13,7 @@ import {
   habitDetailsChanged,
   type HabitDetails,
 } from '@/lib/habit-details';
+import { formatSleepHours, isSleepHabit, SLEEP_TARGET_OPTIONS, sleepMinimumRewardHours } from '@/lib/health-rewards';
 import type { Habit } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 
@@ -136,6 +137,25 @@ function HabitDetailsForm({ habit, onSave, onCancel }: { habit: Habit; onSave: (
           ))}
         </select>
       </div>
+      {isSleepHabit(habit) && details.sleepTarget !== undefined && (
+        <div className="space-y-1">
+          <label htmlFor={`${idPrefix}-sleep-target`} className="block text-xs text-zinc-400">
+            Target sleep goal (partial points from {formatSleepHours(sleepMinimumRewardHours(details.sleepTarget))} hrs)
+          </label>
+          <select
+            id={`${idPrefix}-sleep-target`}
+            value={details.sleepTarget}
+            onChange={event => change({ sleepTarget: Number(event.target.value) })}
+            className={`${inputClass} num`}
+          >
+            {SLEEP_TARGET_OPTIONS.map(target => (
+              <option key={target} value={target}>
+                {formatSleepHours(target)} hours
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <fieldset className="space-y-1">
         <legend className="mb-1 text-xs text-zinc-400">Icon</legend>
         <div className="flex flex-wrap gap-1.5">
