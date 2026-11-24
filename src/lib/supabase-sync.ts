@@ -43,6 +43,7 @@ export function rowToHabit(row: any): Habit {
     requiresProof: !!row.requires_proof,
     order: row.order || 0,
     isActive: row.is_active !== false,
+    ...(typeof row.id === 'string' && row.id.endsWith('-sleep') ? { automation: { metric: 'sleep' as const, target: 8.5 } } : {}),
   };
 }
 

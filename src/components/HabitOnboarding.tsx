@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { balanceHabitPlan, buildHabitPlan, categoryForSection, HABIT_SECTIONS, habitSectionTitle, maximumHabitPoints, pointsToCloseGap, STARTER_HABIT_TITLES, weeklyPointPotential, weeklySessions } from '@/lib/habit-catalog';
+import { applySleepTarget, formatSleepHours, getSleepTarget, isSleepHabit, SLEEP_TARGET_OPTIONS } from '@/lib/health-rewards';
 import type { Habit, HabitCategory } from '@/lib/types';
 import { HabitIcon } from './HabitIcon';
 import { useMultiplayer } from '@/lib/multiplayer';
@@ -204,7 +205,7 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                       </span>
                     </button>
 
-                    {habit.isActive && (!firstRun || habit.automation?.metric === 'steps') && (
+                    {habit.isActive && (!firstRun || habit.automation?.metric === 'steps' || isSleepHabit(habit)) && (
                       <div className="-mt-1 flex flex-wrap items-center gap-2 pb-3 pl-[4.25rem] pr-4">
                         {!firstRun && (
                           <select
@@ -268,6 +269,23 @@ export function HabitOnboarding({ onDone, firstRun = false }: { onDone: () => vo
                               </button>
                             ))}
                           </div>
+                        )}
+                        {isSleepHabit(habit) && (
+                          <label className="flex items-center gap-1.5 text-label text-secondary">
+                            <span>Sleep goal</span>
+                            <select
+                              aria-label="Daily sleep goal"
+                              value={getSleepTarget(habit)}
+                              onChange={event => changeHabit(habit.id, applySleepTarget(habit, Number(event.target.value)))}
+                              className="min-h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2.5 text-label text-foreground num"
+                            >
+                              {SLEEP_TARGET_OPTIONS.map(target => (
+                                <option key={target} value={target}>
+                                  {formatSleepHours(target)} hrs
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                         )}
                       </div>
                     )}

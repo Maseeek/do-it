@@ -5,6 +5,7 @@ import { Activity, ArrowUpRight, RefreshCw } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useMultiplayer } from '@/lib/multiplayer';
 import { useStore } from '@/lib/store';
+import { calculateSleepRewardRatio, formatSleepHours, getSleepTarget, isSleepHabit } from '@/lib/health-rewards';
 
 type Status = { available?: boolean; connected: boolean; scopes: string[]; lastCheckedAt?: string | null; needsAttention?: boolean; message?: string | null };
 
@@ -27,15 +28,20 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
     clearHealthTelemetry,
     syncGoogleHealth,
     disconnectGoogleHealth,
+    setGoogleHealthConnected,
   } = useStore();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const refresh = useCallback(async () => {
     if (!multiplayer.user || !multiplayer.duel) return;
-    try { setStatus(await healthRequest('/api/sync/google-health', 'GET')); }
+    try {
+      const nextStatus: Status = await healthRequest('/api/sync/google-health', 'GET');
+      setStatus(nextStatus);
+      setGoogleHealthConnected(Boolean(nextStatus.connected));
+    }
     catch (caught) { if (!compact) setError(caught instanceof Error ? caught.message : 'Health status unavailable.'); }
-  }, [multiplayer.user, multiplayer.duel, compact]);
+  }, [multiplayer.user, multiplayer.duel, compact, setGoogleHealthConnected]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -81,24 +87,24 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
   }
 
 
+  const sleepHabit = activeHabits.find(h => isSleepHabit(h));
+  const sleepTarget = sleepHabit ? getSleepTarget(sleepHabit) : 8.5;
+
   function simulateSleepTelemetry(hours: number) {
-    const sleepHabit = activeHabits.find(h => h.automation?.metric === "sleep") || activeHabits.find(h => h.id.endsWith("-sleep"));
     if (!sleepHabit) return;
-    const target = 8.5;
     setHealthTelemetry({
       habitId: sleepHabit.id,
       playerId: sleepHabit.playerId,
       date: selectedDate,
       metric: "sleep",
       value: hours,
-      target,
+      target: sleepTarget,
       unit: "hrs",
       source: "simulated",
     });
   }
 
   function simulateNoWatchData() {
-    const sleepHabit = activeHabits.find(h => h.automation?.metric === "sleep") || activeHabits.find(h => h.id.endsWith("-sleep"));
     if (!sleepHabit) return;
     clearHealthTelemetry(sleepHabit.id, selectedDate);
   }
@@ -129,12 +135,12 @@ export function HealthConnection({ compact = false, onChooseHabits }: { compact?
         <summary className="flex min-h-12 items-center text-foreground">Test sleep points</summary>
         <p className="font-normal text-secondary">Try sleep readings for {selectedDate} in your local progress:</p>
         <div className="mt-3 mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => simulateSleepTelemetry(8.5)} className={`${pill} border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20`}>
-            8.5h · 100%
+          <button type="button" onClick={() => simulateSleepTelemetry(sleepTarget)} className={`${pill} border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20`}>
+            {formatSleepHours(sleepTarget)}h · 100%
           </button>
-          {[8, 7.5, 7, 6.5].map((hours, index) => (
+          {[sleepTarget - 0.5, sleepTarget - 1, sleepTarget - 1.5, sleepTarget - 2].filter(hours => hours > 0).map((hours) => (
             <button key={hours} type="button" onClick={() => simulateSleepTelemetry(hours)} className={`${pill} border-[var(--border-medium)] text-foreground hover:bg-[var(--surface-2)]`}>
-              {hours}h · {[90, 60, 40, 20][index]}%
+              {formatSleepHours(hours)}h · {Math.round(calculateSleepRewardRatio(hours, sleepTarget) * 100)}%
             </button>
           ))}
           <button type="button" onClick={() => simulateSleepTelemetry(3.0)} className={`${pill} border-orange-600/50 bg-orange-600/10 text-orange-700 dark:text-orange-300 hover:bg-orange-600/20`}>

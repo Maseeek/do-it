@@ -24,7 +24,7 @@ import { isPlayerColorUnlocked } from './player-colors';
 import { getDuelPlayers } from './duel-profile';
 import { getInitialState } from './seed';
 import { getHealthProgressDetails } from './health-correlation';
-import { reconcileSleepTelemetry } from './health-rewards';
+import { createManualSleepCheckIn, getSleepTarget, isSleepHabit, reconcileSleepTelemetry } from './health-rewards';
 import {
   HEALTH_AUTO_SYNC_COOLDOWN_MS,
   HEALTH_AUTO_SYNC_STARTUP_DELAY_MS,
@@ -72,7 +72,27 @@ import { createSyncScheduler } from './sync-scheduler';
 const STORAGE_KEY = 'do_it_app_data_v2';
 const HEALTH_LAST_CHECKED_PREFIX = 'do_it_health_last_checked:';
 const HEALTH_TELEMETRY_PREFIX = 'do_it_health_telemetry:';
+const HEALTH_CONNECTED_PREFIX = 'do_it_health_connected:';
 const EMPTY_REST_DAYS: RestDay[] = [];
+
+function readStoredGoogleConnected(accountId: string | undefined): boolean {
+  if (!accountId || typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(`${HEALTH_CONNECTED_PREFIX}${accountId}`) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeStoredGoogleConnected(accountId: string | undefined, connected: boolean | undefined) {
+  if (!accountId || typeof window === 'undefined' || connected === undefined) return;
+  try {
+    if (connected) localStorage.setItem(`${HEALTH_CONNECTED_PREFIX}${accountId}`, 'true');
+    else localStorage.removeItem(`${HEALTH_CONNECTED_PREFIX}${accountId}`);
+  } catch {
+    // Browser storage may be restricted.
+  }
+}
 
 function readStoredHealthCheckedAt(accountId: string | undefined): string | null {
   if (!accountId || typeof window === 'undefined') return null;
@@ -180,6 +200,8 @@ interface StoreContextType {
     note?: string,
     targetDate?: string
   ) => void;
+  logSleepHours: (habitId: string, hours: number, targetDate?: string) => void;
+  setGoogleHealthConnected: (connected: boolean) => void;
   updateCheckInNote: (checkInId: string, note: string) => void;
   isHabitCompletedToday: (habitId: string) => boolean;
   getHabitCheckInToday: (habitId: string) => CheckIn | undefined;
@@ -556,6 +578,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         activePlayerId: playerSlot,
         players: sameDuel ? prev.players : getInitialState().players,
         healthTelemetry: sameDuel ? prev.healthTelemetry : readStoredHealthTelemetry(accountId, getTodayDateString()),
+        wearableConfig: sameDuel
+          ? prev.wearableConfig
+          : { ...getInitialState().wearableConfig, googleConnected: readStoredGoogleConnected(accountId) },
         habits: paired ? data.habits : data.habits.filter(h => h.playerId === playerSlot),
         checkIns: paired ? data.checkIns : data.checkIns.filter(c => c.playerId === playerSlot),
         stakes: data.stakes,
@@ -969,6 +994,101 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   } });
 
+  const logSleepHours = useStableCallback((habitId: string, hours: number, targetDate = selectedDate) => {
+    if (!state.activePlayerId) return;
+    if (!isValidDateString(targetDate) || isFutureDate(targetDate)) return;
+    if (!Number.isFinite(hours) || hours < 0) return;
+
+    const habit = state.habits.find((h) => h.id === habitId);
+    if (!habit || !habit.isActive || habit.playerId !== state.activePlayerId || !isSleepHabit(habit)) return;
+
+    const targetWeekKey = getWeekKey(targetDate);
+    const existingCheckIn = checkInIndex.byHabitAndDate.get(habitId)?.get(targetDate);
+    const telemetry = state.healthTelemetry?.[`${habitId}:${targetDate}`];
+    const healthProgress = getHealthProgressDetails(habit, telemetry, existingCheckIn);
+    if (healthProgress?.metric === 'sleep') {
+      soundEngine.playUncheck();
+      hapticLight();
+      return;
+    }
+
+    const nextCheckIn = createManualSleepCheckIn(habit, targetDate, hours, existingCheckIn, { today: todayStr });
+
+    if (!nextCheckIn) {
+      if (!existingCheckIn) return;
+      soundEngine.playUncheck();
+      hapticLight();
+
+      let nextCheckIns = state.checkIns.filter((c) => c.id !== existingCheckIn.id);
+      const syncedCheckIns: CheckIn[] = [];
+      if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+        const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
+        rebalanced.forEach((c, index) => {
+          const orig = nextCheckIns[index];
+          if (orig && orig.pointsEarned !== c.pointsEarned) {
+            syncedCheckIns.push(c);
+          }
+        });
+        nextCheckIns = rebalanced;
+      }
+
+      setState((prev) => ({ ...prev, checkIns: nextCheckIns }));
+
+      if (multiplayer.configured) {
+        syncDuel(async (client, id) => {
+          await deleteDuelCheckIn(client, id, existingCheckIn.id);
+          await saveDuelCheckIns(client, id, syncedCheckIns);
+        });
+      } else if (supabaseRef.current) {
+        deleteCheckInSupabase(supabaseRef.current, habitId, targetDate);
+        syncedCheckIns.forEach((c) => {
+          insertCheckInSupabase(supabaseRef.current!, c);
+        });
+      }
+      return;
+    }
+
+    if (existingCheckIn) {
+      soundEngine.playCheck();
+      hapticLight();
+    } else {
+      soundEngine.playCheck();
+      hapticSuccess();
+    }
+
+    let nextCheckIns = existingCheckIn
+      ? state.checkIns.map((c) => (c.id === existingCheckIn.id ? nextCheckIn : c))
+      : [...state.checkIns, nextCheckIn];
+    const syncedCheckIns: CheckIn[] = [];
+
+    if (habit.weeklyTargetDays && habit.weeklyTargetDays > 0) {
+      const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, habit, targetWeekKey);
+      rebalanced.forEach((c, index) => {
+        const orig = nextCheckIns[index];
+        if (orig && orig.pointsEarned !== c.pointsEarned) {
+          syncedCheckIns.push(c);
+        }
+      });
+      nextCheckIns = rebalanced;
+    }
+
+    const finalEntry = nextCheckIns.find((c) => c.id === nextCheckIn.id) || nextCheckIn;
+    setState((prev) => ({ ...prev, checkIns: nextCheckIns }));
+
+    if (multiplayer.configured) {
+      syncDuel(async (client, id) => {
+        await saveDuelCheckIns(client, id, [...syncedCheckIns, finalEntry]);
+      });
+    } else if (supabaseRef.current) {
+      insertCheckInSupabase(supabaseRef.current, finalEntry);
+      syncedCheckIns.forEach((c) => {
+        if (c.id !== finalEntry.id) {
+          insertCheckInSupabase(supabaseRef.current!, c);
+        }
+      });
+    }
+  });
+
   const updateCheckInNote = useStableCallback((checkInId: string, note: string) => { const existing = state.checkIns.find(c => c.id === checkInId);
   if (!existing || (multiplayer.configured && existing.playerId !== multiplayer.slot)) return;
   soundEngine.playClick();
@@ -1052,18 +1172,80 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     upsertHabitSupabase(supabaseRef.current, fullHabit);
   } });
 
-  const updateHabit = useStableCallback((updatedHabit: Habit) => { if (multiplayer.configured && (updatedHabit.playerId !== multiplayer.slot || state.habits.find(h => h.id === updatedHabit.id)?.playerId !== multiplayer.slot)) return;
-  soundEngine.playClick();
-  setState((prev) => ({
-    ...prev,
-    habits: prev.habits.map((h) => (h.id === updatedHabit.id ? updatedHabit : h)),
-  }));
-  
-  if (multiplayer.configured) {
-    syncDuel((client, id) => saveDuelHabit(client, id, updatedHabit));
-  } else if (supabaseRef.current) {
-    upsertHabitSupabase(supabaseRef.current, updatedHabit);
-  } });
+  const updateHabit = useStableCallback((updatedHabit: Habit) => {
+    const previousHabit = state.habits.find(h => h.id === updatedHabit.id);
+    if (multiplayer.configured && (updatedHabit.playerId !== multiplayer.slot || previousHabit?.playerId !== multiplayer.slot)) return;
+    soundEngine.playClick();
+
+    // When a player changes their sleep target, recalculate today's (selectedDate) manual sleep check-in if present.
+    let updatedCheckIn: CheckIn | null = null;
+    let deletedCheckInId: string | null = null;
+    const syncedCheckIns: CheckIn[] = [];
+    let nextCheckIns = state.checkIns;
+
+    if (
+      previousHabit &&
+      isSleepHabit(updatedHabit) &&
+      getSleepTarget(previousHabit) !== getSleepTarget(updatedHabit)
+    ) {
+      const currentEntry = checkInIndex.byHabitAndDate.get(updatedHabit.id)?.get(selectedDate);
+      if (currentEntry && currentEntry.source !== 'google_health' && typeof currentEntry.healthValue === 'number' && Number.isFinite(currentEntry.healthValue)) {
+        const recalculated = createManualSleepCheckIn(updatedHabit, selectedDate, currentEntry.healthValue, currentEntry, { today: todayStr });
+        if (recalculated) {
+          nextCheckIns = state.checkIns.map((c) => (c.id === currentEntry.id ? recalculated : c));
+          if (updatedHabit.weeklyTargetDays && updatedHabit.weeklyTargetDays > 0) {
+            const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, updatedHabit, getWeekKey(selectedDate));
+            rebalanced.forEach((c, index) => {
+              const orig = nextCheckIns[index];
+              if (orig && orig.pointsEarned !== c.pointsEarned) syncedCheckIns.push(c);
+            });
+            nextCheckIns = rebalanced;
+          }
+          updatedCheckIn = nextCheckIns.find((c) => c.id === currentEntry.id) || recalculated;
+        } else {
+          deletedCheckInId = currentEntry.id;
+          nextCheckIns = state.checkIns.filter((c) => c.id !== currentEntry.id);
+          if (updatedHabit.weeklyTargetDays && updatedHabit.weeklyTargetDays > 0) {
+            const rebalanced = rebalanceWeeklyHabitCheckIns(nextCheckIns, updatedHabit, getWeekKey(selectedDate));
+            rebalanced.forEach((c, index) => {
+              const orig = nextCheckIns[index];
+              if (orig && orig.pointsEarned !== c.pointsEarned) syncedCheckIns.push(c);
+            });
+            nextCheckIns = rebalanced;
+          }
+        }
+      }
+    }
+
+    setState((prev) => ({
+      ...prev,
+      habits: prev.habits.map((h) => (h.id === updatedHabit.id ? updatedHabit : h)),
+      ...(updatedCheckIn || deletedCheckInId ? { checkIns: nextCheckIns } : {}),
+    }));
+
+    if (multiplayer.configured) {
+      syncDuel(async (client, id) => {
+        await saveDuelHabit(client, id, updatedHabit);
+        if (deletedCheckInId) {
+          await deleteDuelCheckIn(client, id, deletedCheckInId);
+          await saveDuelCheckIns(client, id, syncedCheckIns);
+        } else if (updatedCheckIn) {
+          await saveDuelCheckIns(client, id, [...syncedCheckIns, updatedCheckIn]);
+        }
+      });
+    } else if (supabaseRef.current) {
+      upsertHabitSupabase(supabaseRef.current, updatedHabit);
+      if (deletedCheckInId) {
+        deleteCheckInSupabase(supabaseRef.current, updatedHabit.id, selectedDate);
+        syncedCheckIns.forEach((c) => insertCheckInSupabase(supabaseRef.current!, c));
+      } else if (updatedCheckIn) {
+        insertCheckInSupabase(supabaseRef.current, updatedCheckIn);
+        syncedCheckIns.forEach((c) => {
+          if (c.id !== updatedCheckIn!.id) insertCheckInSupabase(supabaseRef.current!, c);
+        });
+      }
+    }
+  });
 
   const deleteHabit = useStableCallback((habitId: string) => { if (multiplayer.configured && state.habits.find(h => h.id === habitId)?.playerId !== multiplayer.slot) return;
   soundEngine.playClick();
@@ -1321,7 +1503,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (data.skipped) {
-          if (data.connected === false || data.lastCheckedAt) {
+          if (data.connected !== undefined) {
+            writeStoredGoogleConnected(accountId, data.connected);
+          }
+          if (data.connected !== undefined || data.lastCheckedAt) {
             setState((prev) => ({
               ...prev,
               wearableConfig: {
@@ -1343,6 +1528,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const checkedAtIso = data.lastCheckedAt || new Date().toISOString();
         autoHealthRef.current.lastCheckedAt = checkedAtIso;
         writeStoredHealthCheckedAt(accountId, checkedAtIso);
+        writeStoredGoogleConnected(accountId, true);
 
         setState((prev) => {
           let newCheckIns = [...prev.checkIns];
@@ -1563,6 +1749,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isHydrated, multiplayer.configured, duelId, loadedDuelId, accountId, hasAutomatedHabits, syncGoogleHealth]);
 
+  const setGoogleHealthConnected = useStableCallback((connected: boolean) => {
+    writeStoredGoogleConnected(accountId, connected);
+    setState((prev) => {
+      if (prev.wearableConfig?.googleConnected === connected) return prev;
+      return {
+        ...prev,
+        wearableConfig: {
+          ...prev.wearableConfig,
+          googleConnected: connected,
+        },
+      };
+    });
+  });
+
   const disconnectGoogleHealth = useStableCallback(() => { if (typeof document !== 'undefined') {
     document.cookie = 'g_fit_connected=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     document.cookie = 'g_fit_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -1573,6 +1773,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   setHealthAttentionMessage(null);
   writeStoredHealthCheckedAt(accountId, null);
   writeStoredHealthTelemetry(accountId, null, getTodayDateString());
+  writeStoredGoogleConnected(accountId, false);
   setState((prev) => ({
     ...prev,
     healthTelemetry: {},
@@ -1646,6 +1847,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     selectedDate, isTodaySelected, setSelectedDate, maciekSummary, myrnaSummary,
     activePlayerSummary, getHabitStreak, soundEnabled,
     setSoundEnabled, selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit,
+    logSleepHours, setGoogleHealthConnected,
     updateCheckInNote, isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate,
     getHabitCheckInOnDate, getCheckInForHabit, getWeeklyHabitCompletions,
     isHabitWeeklyTargetMet, isHabitSatisfiedOnDate, isPartnerConnected, partnerId,
@@ -1661,7 +1863,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     isHydrated, loadedDuelId, syncStatus, storageError, state, players, activePlayer, activeHabits,
     selectedDate, isTodaySelected, maciekSummary, myrnaSummary, activePlayerSummary,
     getHabitStreak, soundEnabled, setSoundEnabled,
-    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit, updateCheckInNote,
+    selectProfile, switchProfile, updateLocalPlayerName, updatePlayerColor, toggleHabit, logSleepHours, setGoogleHealthConnected, updateCheckInNote,
     isHabitCompletedToday, getHabitCheckInToday, isHabitCompletedOnDate, getHabitCheckInOnDate,
     getCheckInForHabit, getWeeklyHabitCompletions, isHabitWeeklyTargetMet, isHabitSatisfiedOnDate,
     isPartnerConnected, partnerId, partnerCleanSpaceHabit, partnerCleanSpaceCheckIn, addReaction,

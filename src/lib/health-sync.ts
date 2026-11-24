@@ -179,7 +179,7 @@ async function applyResults(
     const settled = date < settledCutoff;
     if (!hasData && !settled) continue;
     let detail: string | null = null;
-    if (automation.metric === 'sleep' && values.sleep !== null && calculateSleepRewardRatio(values.sleep) > 0) detail = `${values.sleep.toFixed(2)} h sleep`;
+    if (automation.metric === 'sleep' && values.sleep !== null && calculateSleepRewardRatio(values.sleep, automation.target) > 0) detail = `${values.sleep.toFixed(2)} h sleep`;
     if (automation.metric === 'steps' && values.steps !== null && values.steps >= automation.target) detail = `${values.steps.toLocaleString('en-GB')} steps`;
     if (automation.metric === 'workout' || automation.metric === 'cardio') {
       const matched = values.exercise.filter(item => item.metric === automation.metric && item.minutes >= automation.target).sort((a, b) => b.minutes - a.minutes)[0];
