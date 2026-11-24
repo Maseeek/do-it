@@ -38,6 +38,9 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
   const refreshSequence = useRef(0);
   const colorSaveInFlight = useRef(false);
   const refreshAfterSave = useRef(false);
+  const duelSubscribedRef = useRef(false);
+  const hasUserRef = useRef(false);
+  const profileSchedulerRef = useRef<ReturnType<typeof createSyncScheduler> | null>(null);
 
   const refresh = useCallback(async () => {
     if (!client) return;
@@ -51,6 +54,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
       if (authError && authError.name !== 'AuthSessionMissingError') throw authError;
       const rawUser = sessionData.session?.user ?? null;
       const currentUser = hasMatchedAccount(rawUser) ? rawUser : null;
+      hasUserRef.current = !!currentUser;
       setUser(currentUser);
       setDuel(previous => previous && currentUser && (previous.owner_id === currentUser.id || previous.guest_id === currentUser.id) ? previous : null);
       if (!currentUser) { setDuel(null); setError(null); return; }
@@ -78,19 +82,16 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!client) return;
-    let subscribed = false;
     const scheduler = createSyncScheduler({
       read: refresh,
       active: () => document.visibilityState !== 'hidden' && navigator.onLine,
-      subscribed: () => subscribed,
+      subscribed: () => duelSubscribedRef.current || !hasUserRef.current,
       failed: () => {},
     });
+    profileSchedulerRef.current = scheduler;
     const { data: { subscription } } = client.auth.onAuthStateChange(event => {
       if (event !== 'TOKEN_REFRESHED') scheduler.request();
     });
-    const channel = client.channel('multiplayer-duels')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duels' }, () => scheduler.request())
-      .subscribe(status => { subscribed = status === 'SUBSCRIBED'; });
     const wake = () => { if (document.visibilityState === 'hidden' || !navigator.onLine) scheduler.pause(); else scheduler.request(); };
     document.addEventListener('visibilitychange', wake);
     window.addEventListener('online', wake);
@@ -98,13 +99,46 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     scheduler.request();
     return () => {
       scheduler.stop();
+      if (profileSchedulerRef.current === scheduler) profileSchedulerRef.current = null;
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', wake);
       window.removeEventListener('online', wake);
       window.removeEventListener('offline', wake);
-      void client.removeChannel(channel);
     };
   }, [refresh]);
+
+  const activeDuelId = duel && user && hasMatchedAccount(user) ? duel.id : null;
+  useEffect(() => {
+    if (!client || !activeDuelId) {
+      duelSubscribedRef.current = false;
+      return;
+    }
+    let hasSubscribedOnce = false;
+    let wasDisconnected = false;
+    const channel = client.channel('multiplayer-duel-' + activeDuelId)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'duels', filter: 'id=eq.' + activeDuelId },
+        () => profileSchedulerRef.current?.request()
+      )
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          duelSubscribedRef.current = true;
+          if (hasSubscribedOnce && wasDisconnected) profileSchedulerRef.current?.request();
+          hasSubscribedOnce = true;
+          wasDisconnected = false;
+        } else {
+          duelSubscribedRef.current = false;
+          if (hasSubscribedOnce && (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED')) {
+            wasDisconnected = true;
+          }
+        }
+      });
+    return () => {
+      duelSubscribedRef.current = false;
+      void client.removeChannel(channel);
+    };
+  }, [activeDuelId]);
 
   const createDuel = async (name: string) => {
     if (!client) throw new Error('Supabase is not configured');

@@ -65,7 +65,17 @@ import {
   deleteStakeSupabase,
 } from './supabase-sync';
 
-import { proofPhotos, proofReference, type DuelData, type DuelSnapshot } from './duel-data';
+import {
+  applyLocalStakeDelete,
+  applyLocalStakeSave,
+  proofPhotos,
+  proofReference,
+  replaceOptimisticStake,
+  shouldSyncRevision,
+  stakesEqual,
+  type DuelData,
+  type DuelSnapshot,
+} from './duel-data';
 import { readDuelCache, writeDuelCache, duelCacheKey } from './duel-cache';
 import { createSyncScheduler } from './sync-scheduler';
 
@@ -275,6 +285,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const restorationInProgressRef = useRef<Record<string, boolean>>({});
   const writeEpochRef = useRef(0);
   const syncSchedulerRef = useRef<ReturnType<typeof createSyncScheduler> | null>(null);
+  const duelSyncStateRef = useRef<{ duelId: string; snapshot: DuelSnapshot | null; cacheKey: string } | null>(null);
   const proofCacheRef = useRef(new Map<string, Promise<string[]>>());
   const autoHealthRef = useRef<{
     accountId: string | undefined;
@@ -561,9 +572,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     let cancelled = false;
-    let snapshot: DuelSnapshot | null = null;
     let subscribed = false;
+    let hasSubscribedOnce = false;
+    let wasDisconnected = false;
     const key = duelCacheKey(process.env.NEXT_PUBLIC_SUPABASE_URL || '', accountId, duelId);
+    const syncState: { duelId: string; snapshot: DuelSnapshot | null; cacheKey: string } = {
+      duelId,
+      snapshot: null,
+      cacheKey: key,
+    };
+    duelSyncStateRef.current = syncState;
     proofCacheRef.current.clear();
     const publish = (data: DuelData) => {
       const sameDuel = stateDuelRef.current === duelId && stateSlotRef.current === playerSlot;
@@ -589,7 +607,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setSyncStatus('syncing');
     const ready = readDuelCache(key).then(cached => {
       if (cancelled || !cached || typeof cached.cursor !== 'string' || !cached.data?.checkIns) return;
-      snapshot = cached;
+      syncState.snapshot = cached;
       publish(cached.data);
     }).catch(() => { /* A denied device cache still permits cloud synchronization. */ });
     const scheduler = createSyncScheduler({
@@ -601,7 +619,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         await duelQueueRef.current;
         if (cancelled) return;
         const epoch = writeEpochRef.current;
-        let next = await syncDuelData(client, duelId, snapshot);
+        let next = await syncDuelData(client, duelId, syncState.snapshot);
         const restoreKey = duelId + ':' + playerSlot;
         if (canImportLegacyDatabase(playerSlot, multiplayer.user?.email) && needsLegacyReplacement(playerSlot, next.data.habits) && !restorationInProgressRef.current[restoreKey]) {
           restorationInProgressRef.current[restoreKey] = true;
@@ -612,8 +630,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
         if (cancelled) return;
         if (writeEpochRef.current !== epoch) { scheduler.request(); return; }
-        const changed = snapshot?.cursor !== next.cursor;
-        snapshot = next;
+        const changed = syncState.snapshot?.cursor !== next.cursor;
+        syncState.snapshot = next;
         if (changed) {
           publish(next.data);
           await writeDuelCache(key, next).catch(() => {});
@@ -623,8 +641,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
     syncSchedulerRef.current = scheduler;
     const channel = client.channel('duel-revision-' + duelId)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_sync_heads', filter: 'duel_id=eq.' + duelId }, () => scheduler.request())
-      .subscribe(status => { subscribed = status === 'SUBSCRIBED'; if (subscribed) scheduler.request(); });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duel_sync_heads', filter: 'duel_id=eq.' + duelId }, (payload) => {
+        const remoteRevision = (payload.new as { revision?: string | number } | null)?.revision;
+        if (shouldSyncRevision(syncState.snapshot?.cursor, remoteRevision)) {
+          scheduler.request();
+        }
+      })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          subscribed = true;
+          if (hasSubscribedOnce && wasDisconnected) scheduler.request();
+          hasSubscribedOnce = true;
+          wasDisconnected = false;
+        } else {
+          subscribed = false;
+          if (hasSubscribedOnce && (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED')) {
+            wasDisconnected = true;
+          }
+        }
+      });
     const wake = () => { if (document.visibilityState === 'hidden' || !navigator.onLine) scheduler.pause(); else scheduler.request(); };
     document.addEventListener('visibilitychange', wake);
     window.addEventListener('online', wake);
@@ -634,6 +669,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       scheduler.stop();
       if (syncSchedulerRef.current === scheduler) syncSchedulerRef.current = null;
+      if (duelSyncStateRef.current === syncState) duelSyncStateRef.current = null;
       document.removeEventListener('visibilitychange', wake);
       window.removeEventListener('online', wake);
       window.removeEventListener('offline', wake);
@@ -641,14 +677,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isHydrated, multiplayer.configured, duelId, playerSlot, accountId, paired, multiplayer.user?.email]);
 
-  const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void>) => {
+  const syncDuel = (operation: (client: NonNullable<ReturnType<typeof getSupabaseClient>>, id: string) => Promise<void | 'synced'>) => {
     const client = getSupabaseClient();
     if (!multiplayer.configured || !client || !duelId) return;
     writeEpochRef.current++;
-    duelQueueRef.current = duelQueueRef.current.then(() => operation(client, duelId)).catch(error => {
-      setSyncStatus('offline');
-      setStorageError(error instanceof Error ? error.message : 'Could not save duel change.');
-    }).finally(() => syncSchedulerRef.current?.request());
+    duelQueueRef.current = duelQueueRef.current
+      .then(() => operation(client, duelId))
+      .then(outcome => {
+        if (outcome === 'synced') {
+          setSyncStatus('connected');
+          setStorageError(null);
+        } else {
+          syncSchedulerRef.current?.request();
+        }
+      })
+      .catch(error => {
+        setSyncStatus('offline');
+        setStorageError(error instanceof Error ? error.message : 'Could not save duel change.');
+        syncSchedulerRef.current?.request();
+      });
   };
 
   const resolveProofImages = useStableCallback(async (images: string[]) => {
@@ -1342,14 +1389,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   duelQueueRef.current = save.then(() => {}, () => {});
   return save; });
 
+  const syncStakeSave = (optimisticId: string, stake: Stake) => {
+    syncDuel(async (client, id) => {
+      const result = await saveDuelStake(client, id, stake);
+      if (!result) return;
+      if (result.stake.id !== optimisticId || !stakesEqual(result.stake, stake)) {
+        setState((prev) => ({
+          ...prev,
+          stakes: replaceOptimisticStake(prev.stakes, optimisticId, result.stake),
+        }));
+      }
+      const syncState = duelSyncStateRef.current;
+      if (syncState && syncState.duelId === id) {
+        const fastForwarded = applyLocalStakeSave(syncState.snapshot, result, optimisticId);
+        if (fastForwarded) {
+          syncState.snapshot = fastForwarded;
+          if (result.changed) {
+            await writeDuelCache(syncState.cacheKey, fastForwarded).catch(() => {});
+          }
+          return 'synced';
+        }
+      }
+    });
+  };
+
   const updateStake = useStableCallback((updatedStake: Stake) => { soundEngine.playClick();
+  const existing = state.stakes.find((s) => s.id === updatedStake.id);
+  if (existing && stakesEqual(existing, updatedStake)) return;
   setState((prev) => ({
     ...prev,
     stakes: prev.stakes.map((s) => (s.id === updatedStake.id ? updatedStake : s)),
   }));
   
   if (multiplayer.configured) {
-    syncDuel((client, id) => saveDuelStake(client, id, updatedStake));
+    syncStakeSave(updatedStake.id, updatedStake);
   } else if (supabaseRef.current) {
     upsertStakeSupabase(supabaseRef.current, updatedStake);
   } });
@@ -1363,7 +1436,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }));
   
   if (multiplayer.configured) {
-    syncDuel((client, id) => saveDuelStake(client, id, fullStake));
+    syncStakeSave(id, fullStake);
   } else if (supabaseRef.current) {
     upsertStakeSupabase(supabaseRef.current, fullStake);
   } });
@@ -1375,7 +1448,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }));
   
   if (multiplayer.configured) {
-    syncDuel((client, id) => deleteDuelStake(client, id, stakeId));
+    syncDuel(async (client, id) => {
+      const result = await deleteDuelStake(client, id, stakeId);
+      if (!result) return;
+      const syncState = duelSyncStateRef.current;
+      if (syncState && syncState.duelId === id) {
+        const fastForwarded = applyLocalStakeDelete(syncState.snapshot, result, stakeId);
+        if (fastForwarded) {
+          syncState.snapshot = fastForwarded;
+          if (result.deleted) {
+            await writeDuelCache(syncState.cacheKey, fastForwarded).catch(() => {});
+          }
+          return 'synced';
+        }
+      }
+    });
   } else if (supabaseRef.current) {
     deleteStakeSupabase(supabaseRef.current, stakeId);
   } });
@@ -1820,7 +1907,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, stakes: prev.stakes.map((stake) => byId.get(stake.id) ?? stake) }));
     for (const stake of settled) {
       if (multiplayer.configured) {
-        syncDuel((client, id) => saveDuelStake(client, id, stake));
+        syncStakeSave(stake.id, stake);
       } else if (supabaseRef.current) {
         upsertStakeSupabase(supabaseRef.current, stake);
       }

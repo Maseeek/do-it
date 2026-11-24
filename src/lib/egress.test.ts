@@ -1,11 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSyncScheduler } from './sync-scheduler';
-import { applyDuelDelta, checkInPatch, proofPhotos, proofReference, type DuelSnapshot } from './duel-data';
+import {
+  applyDuelDelta,
+  applyLocalStakeDelete,
+  applyLocalStakeSave,
+  checkInPatch,
+  proofPhotos,
+  proofReference,
+  replaceOptimisticStake,
+  shouldSyncRevision,
+  stakesEqual,
+  type DuelSnapshot,
+} from './duel-data';
 import { duelCacheKey } from './duel-cache';
-import { saveDuelCheckIns, syncDuelData } from './duel-sync';
+import { deleteDuelStake, saveDuelCheckIns, saveDuelStake, syncDuelData } from './duel-sync';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CheckIn } from './types';
+import type { CheckIn, Stake } from './types';
 
 const checkIn: CheckIn = { id:'check:1', habitId:'habit', playerId:'maciek', date:'2026-10-13', pointsEarned:20, completedAt:'2026-10-13T12:00:00Z', proofCount:1, proofVersion:'version' };
 const snapshot: DuelSnapshot = { cursor:'0', data:{ habits:[],checkIns:[checkIn],stakes:[],reactions:[],restDays:[] } };
@@ -60,4 +71,80 @@ test('a repeated reopen sends the cached cursor and duplicate rebalanced writes 
   const patches=requests[1].args.p_check_ins as CheckIn[];assert.equal(patches.length,1);assert.equal(patches[0].note,'latest');assert.equal(patches[0].proofCount,undefined);
   assert.notEqual(duelCacheKey('project','a','duel'),duelCacheKey('project','b','duel'));
   assert.notEqual(duelCacheKey('project','a','duel'),duelCacheKey('other','a','duel'));
+});
+
+test('wager sync uses atomic RPCs, fast-forwards local snapshots, skips self-echoes, and falls back on PGRST202', async () => {
+  const stake: Stake = {
+    id: 'stake-temp',
+    period: 'weekly',
+    periodKey: '2026-W42',
+    title: 'Sunday Dinner 🍕',
+    description: 'Winner picks spot',
+    status: 'active',
+    dueDate: '2026-10-18',
+  };
+  const canonical: Stake = { ...stake, id: 'stake-canonical' };
+
+  assert.equal(shouldSyncRevision('10', 10), false);
+  assert.equal(shouldSyncRevision('10', '9'), false);
+  assert.equal(shouldSyncRevision('10', 11), true);
+  assert.equal(shouldSyncRevision(null, 10), true);
+  assert.equal(stakesEqual(stake, { ...stake, title: '  Sunday Dinner 🍕  ' }), true);
+  assert.equal(stakesEqual(stake, { ...stake, status: 'completed', winnerId: 'maciek' }), false);
+
+  const calls: string[] = [];
+  const rpcClient = {
+    rpc: async (name: string) => {
+      calls.push(name);
+      if (name === 'save_duel_stake') {
+        return { data: { cursor: '1', previousCursor: '0', changed: true, stake: canonical }, error: null };
+      }
+      return { data: { cursor: '2', previousCursor: '1', deleted: true }, error: null };
+    },
+  } as unknown as SupabaseClient;
+
+  const saved = await saveDuelStake(rpcClient, 'duel', stake);
+  assert.ok(saved);
+  assert.equal(saved.stake.id, 'stake-canonical');
+  const fastForwarded = applyLocalStakeSave(snapshot, saved, stake.id);
+  assert.ok(fastForwarded);
+  assert.equal(fastForwarded.cursor, '1');
+  assert.deepEqual(fastForwarded.data.stakes, [canonical]);
+  assert.equal(shouldSyncRevision(fastForwarded.cursor, 1), false);
+
+  // Concurrent partner change (previousCursor mismatch) declines fast-forward so delta sync runs.
+  assert.equal(
+    applyLocalStakeSave(snapshot, { cursor: '3', previousCursor: '2', changed: true, stake: canonical }, stake.id),
+    null
+  );
+
+  // Optimistic ID reconciliation avoids duplicate entries.
+  assert.deepEqual(replaceOptimisticStake([stake, canonical], stake.id, { ...canonical, title: 'Updated' }), [
+    { ...canonical, title: 'Updated' },
+  ]);
+
+  const deleted = await deleteDuelStake(rpcClient, 'duel', canonical.id);
+  assert.ok(deleted);
+  const afterDelete = applyLocalStakeDelete(fastForwarded, deleted, canonical.id);
+  assert.ok(afterDelete);
+  assert.equal(afterDelete.cursor, '2');
+  assert.equal(afterDelete.data.stakes.length, 0);
+  assert.deepEqual(calls, ['save_duel_stake', 'delete_duel_stake']);
+
+  // Graceful PGRST202 fallback before wagers.sql is applied.
+  const fallbackOps: string[] = [];
+  const fallbackClient = {
+    rpc: async () => ({ data: null, error: { code: 'PGRST202', message: 'not found' } }),
+    from: (table: string) => ({
+      upsert: async () => { fallbackOps.push('upsert:' + table); return { error: null }; },
+      delete: () => ({
+        eq: () => ({
+          eq: async () => { fallbackOps.push('delete:' + table); return { error: null }; },
+        }),
+      }),
+    }),
+  } as unknown as SupabaseClient;
+  assert.equal(await saveDuelStake(fallbackClient, 'duel', stake), null);
+  assert.equal(await deleteDuelStake(fallbackClient, 'duel', stake.id), null);
+  assert.deepEqual(fallbackOps, ['upsert:duel_stakes', 'delete:duel_stakes']);
 });
