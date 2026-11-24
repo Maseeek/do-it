@@ -186,6 +186,19 @@ export function DuelView() {
     description: string;
   }) => {
     const periodKey = period === 'weekly' ? getWeekKey(todayStr) : getMonthKey(todayStr);
+    const existingActive =
+      period === 'monthly' ? activeMonthlyStake : period === 'weekly' ? activeWeeklyStake : undefined;
+    if (existingActive && existingActive.periodKey === periodKey) {
+      updateStake({
+        ...existingActive,
+        periodKey,
+        title: title.trim(),
+        description: description.trim(),
+        status: 'active',
+        dueDate: todayStr,
+      });
+      return;
+    }
     addStake({
       period,
       periodKey,

@@ -314,26 +314,16 @@ export function WagerSection({
           description: payload.description,
         });
       } else {
-        const existingActiveForPeriod =
-          payload.period === 'monthly' ? openMonthlyStake : openWeeklyStake;
-        if (existingActiveForPeriod) {
-          onUpdateStake({
-            ...existingActiveForPeriod,
-            title: payload.title,
-            description: payload.description,
-          });
-        } else {
-          onCreateStake({
-            period: payload.period,
-            title: payload.title,
-            description: payload.description,
-          });
-        }
+        onCreateStake({
+          period: payload.period,
+          title: payload.title,
+          description: payload.description,
+        });
         setJustSealedKey(Date.now());
       }
       setModal({ kind: 'closed' });
     },
-    [openMonthlyStake, openWeeklyStake, onCreateStake, onUpdateStake]
+    [onCreateStake, onUpdateStake]
   );
 
   const leaderName =
@@ -1303,6 +1293,20 @@ function WagerComposerModal({
   const closeTimerRef = useRef<number | null>(null);
   const quickTapTimerRef = useRef<number | null>(null);
   const sealedRef = useRef(false);
+  const dispatchedRef = useRef(false);
+
+  const dispatchComplete = useCallback(
+    (payload: Parameters<WagerComposerModalProps['onComplete']>[0]) => {
+      if (dispatchedRef.current) return;
+      dispatchedRef.current = true;
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      onComplete(payload);
+    },
+    [onComplete]
+  );
 
   const presetsForPeriod = useMemo(
     () => WAGER_PRESETS.filter((p) => p.period === period),
@@ -1350,7 +1354,7 @@ function WagerComposerModal({
     if (mode === 'edit') {
       soundEngine.playCheck();
       hapticSuccess();
-      onComplete({
+      dispatchComplete({
         mode: 'edit',
         period,
         title: finalTitle,
@@ -1366,14 +1370,14 @@ function WagerComposerModal({
     setSealedOverlay(true);
 
     closeTimerRef.current = window.setTimeout(() => {
-      onComplete({
+      dispatchComplete({
         mode: 'create',
         period,
         title: finalTitle,
         description: finalDesc,
       });
     }, 900);
-  }, [clearHoldTimers, description, emoji, existingStake, mode, onComplete, period, title]);
+  }, [clearHoldTimers, description, dispatchComplete, emoji, existingStake, mode, period, title]);
 
   const applyPreset = (preset: WagerPreset) => {
     soundEngine.playClick();
@@ -1461,8 +1465,7 @@ function WagerComposerModal({
       className="wager-backdrop-enter fixed inset-0 z-[85] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-md sm:p-4"
       onClick={() => {
         if (sealedOverlay) {
-          if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-          onComplete({
+          dispatchComplete({
             mode: 'create',
             period,
             title: combineTitleAndEmoji(title, emoji),
@@ -1490,8 +1493,7 @@ function WagerComposerModal({
           <div
             className="py-6 sm:py-8 text-center space-y-5 cursor-pointer"
             onClick={() => {
-              if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-              onComplete({
+              dispatchComplete({
                 mode: 'create',
                 period,
                 title: combineTitleAndEmoji(title, emoji),
@@ -1758,6 +1760,7 @@ function WagerComposerModal({
                 <input
                   type="text"
                   required
+                  maxLength={150}
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value);
@@ -1775,6 +1778,7 @@ function WagerComposerModal({
                 </span>
                 <textarea
                   rows={2}
+                  maxLength={500}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Winner picks the spot, loser covers the bill..."

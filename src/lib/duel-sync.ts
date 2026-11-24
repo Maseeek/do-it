@@ -1,5 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { applyDuelDelta, checkInPatch, type DuelDelta, type DuelSnapshot } from './duel-data';
+import {
+  applyDuelDelta,
+  checkInPatch,
+  type DuelDelta,
+  type DuelSnapshot,
+  type StakeDeleteResult,
+  type StakeSaveResult,
+} from './duel-data';
 import type { CheckIn, CouplesReaction, Habit, RestDay, Stake } from './types';
 
 export async function syncDuelData(client: SupabaseClient, duelId: string, previous: DuelSnapshot | null) {
@@ -43,13 +50,64 @@ export async function deleteDuelCheckIn(client: SupabaseClient, duelId: string, 
   const { error } = await client.rpc('delete_duel_check_in', { p_duel_id: duelId, p_id: id });
   if (error) throw error;
 }
-export async function saveDuelStake(client: SupabaseClient, duelId: string, stake: Stake) {
-  const { error } = await client.from('duel_stakes').upsert({ duel_id: duelId, id: stake.id, data: stake });
-  if (error) throw error;
+function parseStakeSaveResult(data: unknown): StakeSaveResult | null {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  if (
+    typeof record.cursor !== 'string' ||
+    typeof record.previousCursor !== 'string' ||
+    typeof record.changed !== 'boolean' ||
+    !record.stake ||
+    typeof record.stake !== 'object'
+  ) {
+    return null;
+  }
+  return {
+    cursor: record.cursor,
+    previousCursor: record.previousCursor,
+    changed: record.changed,
+    stake: record.stake as Stake,
+  };
 }
-export async function deleteDuelStake(client: SupabaseClient, duelId: string, id: string) {
-  const { error } = await client.from('duel_stakes').delete().eq('duel_id', duelId).eq('id', id);
-  if (error) throw error;
+function parseStakeDeleteResult(data: unknown): StakeDeleteResult | null {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  if (
+    typeof record.cursor !== 'string' ||
+    typeof record.previousCursor !== 'string' ||
+    typeof record.deleted !== 'boolean'
+  ) {
+    return null;
+  }
+  return {
+    cursor: record.cursor,
+    previousCursor: record.previousCursor,
+    deleted: record.deleted,
+  };
+}
+export async function saveDuelStake(client: SupabaseClient, duelId: string, stake: Stake): Promise<StakeSaveResult | null> {
+  const { data, error } = await client.rpc('save_duel_stake', { p_duel_id: duelId, p_stake: stake });
+  if (error) {
+    if (error.code === 'PGRST202') {
+      const { error: fallbackError } = await client.from('duel_stakes').upsert({ duel_id: duelId, id: stake.id, data: stake });
+      if (fallbackError) throw fallbackError;
+      return null;
+    }
+    throw error;
+  }
+  return parseStakeSaveResult(data);
+}
+export async function deleteDuelStake(client: SupabaseClient, duelId: string, id: string): Promise<StakeDeleteResult | null> {
+  const { data, error } = await client.rpc('delete_duel_stake', { p_duel_id: duelId, p_id: id });
+  if (error) {
+    if (error.code === 'PGRST202') {
+      const { error: fallbackError } = await client.from('duel_stakes').delete().eq('duel_id', duelId).eq('id', id);
+      if (fallbackError) throw fallbackError;
+      return null;
+    }
+    throw error;
+  }
+  return parseStakeDeleteResult(data);
 }
 export async function saveDuelReaction(client: SupabaseClient, duelId: string, reaction: CouplesReaction) {
   const { error } = await client.from('duel_reactions').insert({ duel_id: duelId, id: reaction.id, player_slot: reaction.fromPlayerId, data: reaction });

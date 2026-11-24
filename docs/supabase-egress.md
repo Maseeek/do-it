@@ -42,3 +42,19 @@ Rolling back the application does not require deleting any data or added synchro
 ## Integration verification (2026-10-14)
 
 The conflict resolution keeps delta synchronization and its write-epoch barrier, combines metadata proof counts with the faster badge calculation, and retains the other PR #64 view/history optimizations. Tests for the superseded `fetchDuelRows` loader are removed; delta, deletion, caching, proof, scheduler and SQL/RLS tests exercise its replacement. Type checking, lint, the domain suite and PostgreSQL suite pass. The configured production build and browser fixture pass all recorded flow checks with no page errors. Hosted multi-session load and interactive production checks remain unverified; the Vercel connector returns a team-scope 403 and the deployed app is behind Vercel Authentication.
+
+## Wager integrity & free-tier optimization (`supabase/wagers.sql`)
+
+Applies additively and idempotently after `supabase/egress.sql`:
+
+1. **Single active wager per window**: Deduplicates any pre-existing duplicate active wagers per `(duel_id, period, periodKey)` into `rolled_over` without deleting history, adds the partial unique index `duel_stakes_one_active_per_period_key` (preserving Final Call wagers alongside newly opened windows), and bounds/validates `duel_stakes.data` JSONB payloads.
+2. **Atomic, no-op-safe wager RPCs**: Adds `save_duel_stake` and `delete_duel_stake` (`security invoker`, `pg_advisory_xact_lock`). Concurrent active-wager creation for the same `(period, periodKey)` merges cleanly into the existing active row, unknown keys are stripped, and unchanged edits or duplicate deterministic scoreboard settlements skip `UPDATE` so `duel_sync_heads` does not bump and zero Realtime messages fire. Both RPCs return `{ cursor, previousCursor, ... }` so the writing client fast-forwards its local IndexedDB snapshot without a redundant post-write `sync_duel` round trip. Clients fall back cleanly to table writes on `PGRST202` before the SQL is applied.
+3. **Free-tier Realtime & CPU savings**:
+   - `sync_duel` short-circuits `changes` when `p_after >= revision`, skipping the 6-table join on unchanged reopens and 5-minute reconciliations.
+   - Trims `supabase_realtime` publication to only `public.duels` and `public.duel_sync_heads` (dropping `duel_habits`, `duel_check_ins`, `duel_stakes`, `duel_reactions`, `duel_rest_days`, and legacy tables) to stop unnecessary WAL decoding of photo-bearing rows.
+   - Clients ignore `duel_sync_heads` Realtime self-echoes when `remoteRevision <= snapshot.cursor`, skip the duplicate initial `sync_duel` on first `SUBSCRIBED`, and only open the `duels` Realtime channel when signed in with an active Duel (`id=eq.<duel_id>`).
+
+### Rollout
+
+1. Run `supabase/wagers.sql` in the Supabase SQL Editor for the target project (after `duels.sql`, `duels-extras.sql`, and `egress.sql`).
+2. Deploy the frontend changes. (The client tolerates `PGRST202` before SQL rollout, so frontend and SQL can be deployed in either order.)
